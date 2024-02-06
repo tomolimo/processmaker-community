@@ -281,7 +281,7 @@ Ext.onReady(function(){
     cmodelColumns.push({header: _('ID_NAME'), dataIndex: 'ADD_TAB_NAME', width: 300, align:'left', renderer: function(v,p,r){
       return r.get('TYPE') == 'CLASSIC'? v + '&nbsp<span style="font-size:9px; color:green">('+ _('ID_OLD_VERSION') +')</font>' : v;
     }});
-    cmodelColumns.push({header: _('ID_DESCRIPTION'), dataIndex: 'ADD_TAB_DESCRIPTION', sortable:false, width: 400, hidden:false, align:'left', renderer: function(v,p,r){
+    cmodelColumns.push({header: _('ID_DESCRIPTION'), dataIndex: 'ADD_TAB_DESCRIPTION', sortable: true, width: 400, hidden: false, align: 'left', renderer: function (v, p, r) {
       if (r.get('ADD_TAB_TAG')) {
         tag = r.get('ADD_TAB_TAG').replace('plugin@', '');
         tag = tag.charAt(0).toUpperCase() + tag.slice(1);
@@ -304,7 +304,9 @@ Ext.onReady(function(){
 
     cmodelColumns.push({dataIndex: "DBS_UID", hidden: true, hideable: false});
 
-    cmodelColumns.push({header: _('ID_RECORDS'), dataIndex: 'NUM_ROWS', width: 90, align:'left'});
+    cmodelColumns.push({header: _('ID_RECORDS'), dataIndex: 'NUM_ROWS', width: 90, align:'left', renderer: function (v, p, r) {
+        return '<div style="text-align:' + (isNaN(v) ? 'left' : 'right') + ';">' + v + '</div>';
+    }});
 
     if (PRO_UID === false) {
       cmodelColumns.push({header: _('ID_PROCESS'), dataIndex: 'PRO_TITLE', width: 180, align:'left'});

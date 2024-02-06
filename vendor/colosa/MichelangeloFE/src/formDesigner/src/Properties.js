@@ -16,8 +16,8 @@
             value: "",
             type: "text",
             on: "change",
-            regExp: /^[a-zA-Z0-9-_]+$/,
-            regExpInv: /[^a-zA-Z0-9-_]/gi,
+            regExp: new RegExp(__env.pmVariable.regEx.substr(1, __env.pmVariable.regEx.length - 2)),
+            regExpInv: new RegExp(__env.pmVariable.regEx.substr(1, __env.pmVariable.regEx.length - 2), "gi"),
             required: true
         };
         this.name = {label: "name".translate(), value: "", type: "hidden", labelButton: "...", required: true};

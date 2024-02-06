@@ -2,6 +2,7 @@
 
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Exception\RBACException;
+use ProcessMaker\Util\DateTime;
 
 $req = (isset($_REQUEST['request']) ? $_REQUEST['request'] : '');
 
@@ -130,8 +131,8 @@ switch ($req) {
         $tasTitleDefault = G::LoadTranslation('ID_TASK_NOT_RELATED');
         while ($result->next()) {
             $row = $result->getRow();
-            $row['APP_MSG_FROM'] = htmlentities($row['APP_MSG_FROM'], ENT_QUOTES, "UTF-8");
             $row['APP_MSG_STATUS'] = ucfirst($row['APP_MSG_STATUS']);
+            $row['APP_MSG_DATE'] = DateTime::convertUtcToTimeZone($row['APP_MSG_DATE']);
 
             switch ($filterBy) {
                 case 'CASES':

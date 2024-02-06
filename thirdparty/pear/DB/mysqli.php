@@ -379,7 +379,13 @@ class DB_mysqli extends DB_common
 # need to come up with different means for next line
 # since $result is object (int)$result won't fly...
 //        unset($this->num_rows[(int)$result]);
-        return @mysqli_free_result($result);
+        
+        //for compatibility the method must return a boolean.
+        if (is_resource($result)) {
+            @mysqli_free_result($result);
+            return true;
+        }
+        return false;
     }
 
     // }}}
@@ -902,7 +908,9 @@ class DB_mysqli extends DB_common
 
         // free the result only if we were called on a table
         if ($got_string) {
-            @mysqli_free_result($id);
+            if (is_resource($id)) {
+                @mysqli_free_result($id);
+            }
         }
         return $res;
     }

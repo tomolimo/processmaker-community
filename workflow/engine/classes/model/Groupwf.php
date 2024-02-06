@@ -98,13 +98,13 @@ class Groupwf extends BaseGroupwf
                 $this->setGrpTitle('Default Group Title');
             }
 
-            if (!empty($aData['GRP_STATUS'])) {
+            if (!empty($data['GRP_STATUS'])) {
                 $this->setGrpStatus($data['GRP_STATUS']);
             } else {
                 $this->setGrpStatus('ACTIVE');
             }
 
-            if (!empty($aData['GRP_LDAP_DN'])) {
+            if (!empty($data['GRP_LDAP_DN'])) {
                 $this->setGrpLdapDn($data['GRP_LDAP_DN']);
             } else {
                 $this->setGrpLdapDn('');

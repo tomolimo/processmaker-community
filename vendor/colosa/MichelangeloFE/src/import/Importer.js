@@ -847,7 +847,7 @@ importBpmnDiagram.prototype.completeImportFlows = function () {
             flo_element_dest: dest,
             flo_element_origin: origin,
             flo_is_inmediate: "1",
-            flo_name: null,
+            flo_name: element.name || null,
             flo_state: state,
             flo_type: conectionMap[element.$type],
             flo_x1: state[0].x,

@@ -315,7 +315,7 @@ class Calendar extends CalendarDefinition
      * @param string(32) $proUid
      * @param string(32) $tasUid
      */
-    function Calendar ($userUid = NULL, $proUid = NULL, $tasUid = NULL)
+    function __construct($userUid = NULL, $proUid = NULL, $tasUid = NULL)
     {
         $this->userUid = $userUid;
         $this->proUid = $proUid;

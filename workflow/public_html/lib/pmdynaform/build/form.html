@@ -73,9 +73,9 @@
 <script type="text/template" id="tpl-text">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%-namespace%>-<%-mode%>-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%>  pmdynaform-field<%}%>">
         <% if(group === "form") {%>
-        	<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+        	<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 	            <label for="form[<%-id%>]" class="control-label pmdynaform-label">
-	            	<span data-toggle="tooltip" data-placement="bottom" title="<%-tooltipLabel%>" class="textlabel"><%=label%></span>
+	            	<span data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-tooltipLabel%>" class="textlabel"><%=label%></span>
 		            <%if(required){%>
 			  			<span class="pmdynaform-field-required">*</span>
 			  		<%}%>
@@ -88,34 +88,43 @@
 	  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 	  		<%}%>
 		>
-			<input
-				<% if  ( group === "grid") { %>
-					id= "form<%-id%>"
-					name= "form<%-name%>"
-				<%} else{%>
-					<% if (type === "suggest"){ %>
-						id= "form[<%-id%>_label]"
-						name="form[<%-name%>_label]"
-					<%}else{%>
-						id= "form[<%-id%>]"
-						name="form[<%-name%>]"
+			<div class="control-group">
+				<input
+					<% if  ( group === "grid") { %>
+						id= "form<%-id%>"
+						name= "form<%-name%>"
+					<%} else{%>
+						<% if (type === "suggest"){ %>
+							id= "form[<%-id%>_label]"
+							name="form[<%-name%>_label]"
+						<%}else{%>
+							id= "form[<%-id%>]"
+							name="form[<%-name%>]"
+						<%}%>
 					<%}%>
-				<%}%>
-				type = <%-type%>
-				class="<%-namespace%>-control-<%-type%> form-control"
-				placeholder= "<%-placeholder%>"
-				<%if(type === "suggest"){%>
-					value = "<%-data['label']%>"
-				<%}else{%>
-					value = "<%-data['value']%>"
-				<%}%>
-				<% if(disabled === true){%>disabled<%}%>
-				<% if (autoComplete === "on" || autoComplete === "off") { %>
-					autocomplete = "<%-autoComplete%>"
-				<%} else{%>
-					autoComplete = "off"
-				<%}%>
-			>
+					type = <%-type%>
+					class="<%-namespace%>-control-<%-type%> form-control"
+					placeholder= "<%-placeholder%>"
+					<%if(type === "suggest"){%>
+						value = "<%-data['label']%>"
+					<%}else{%>
+						value = "<%-data['value']%>"
+					<%}%>
+					<% if(disabled === true){%>disabled<%}%>
+					<% if (autoComplete === "on" || autoComplete === "off") { %>
+						autocomplete = "<%-autoComplete%>"
+					<%} else{%>
+						autoComplete = "off"
+					<%}%>
+				>
+				<% if (group === "form") { %>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}%>
+				<% } %>
+				<span class="content-print"></span>
+			</div>
+
 				<% if (type === "suggest"){ %>
 					<input type="hidden" value="<%-data['value']%>"
 						<% if  ( group === "grid") { %>
@@ -131,9 +140,6 @@
 					<%if (type === "suggest"){%>
 						<span class="spinner-icon"></span>
 					<%}%>
-					<%if (hint !== "" && hint !== null){%>
-						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-					<%}%>
 				<% } %>
 				<% if (type !== "suggest"){ %>
 					<input type="hidden"
@@ -147,7 +153,7 @@
 						<%}%>
 					>
 				<%}%>
-				<span class="content-print"></span>
+
 		</div>
     </div>
 </script>
@@ -155,7 +161,7 @@
 <script type="text/template" id="tpl-textarea">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
 		<% if(group === "form") {%>
-        	<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+        	<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 				<label for="form[<%-id%>]" class="control-label pmdynaform-label">
 					<span class="textlabel"><%=label%></span>
 					<%if(required){%>
@@ -168,45 +174,50 @@
 		  			class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
 		  		<%} else if (layout === "responsive") {%>
 		  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
-		  		<%}%>>
-			<textarea
-						<% if  ( group === "grid") { %>
-							id = "form<%-id%>"
-							<%if(name !== ""){%>
-								name ="form<%-name%>"
+				  <%}%>>
+			<div class="control-group">
+				<textarea
+							<% if  ( group === "grid") { %>
+								id = "form<%-id%>"
+								<%if(name !== ""){%>
+									name ="form<%-name%>"
+								<%}%>
+							<%} else{%>
+								<%if(name !== ""){%>
+									id = "form[<%-id%>]"
+									name ="form[<%-name%>]"
+								<%}%>
 							<%}%>
-						<%} else{%>
-							<%if(name !== ""){%>
-								id = "form[<%-id%>]"
-								name ="form[<%-name%>]"
-							<%}%>
-						<%}%>
-						class="<%-namespace%>-control-<%-type%> form-control"
-                        <% if ((new RegExp('^[0-9]+$')).test(rows)) { %>
-                            rows="<%- rows %>"
-                        <% } else { %>
-                            rows= "2"
-                        <% } %>
-						placeholder= "<%- placeholder %>"
-				<% if(disabled === true){%>disabled<%}%>
-			><%-value%></textarea>
-			<% if (group === "form") { %>
-				<%if (hint !== "" && hint !== null){%>
-					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-				<%}%>
-			<% } %>
-			<input type="hidden"
-				<% if  ( group === "grid") { %>
-					id = "form<%-id%>_label"
-					name ="form<%-name%>_label"
-					value="<%-data['label']%>"
-				<%} else{%>
-					id = "form[<%-id%>_label]"
-					name ="form[<%-name%>_label]"
- 					value="<%-data['label']%>"
-				<%}%>
-			>
-			<span class="content-print"></span>
+							class="<%-namespace%>-control-<%-type%> form-control"
+							<% if ((new RegExp('^[0-9]+$')).test(rows)) { %>
+								rows="<%- rows %>"
+							<% } else { %>
+								rows= "2"
+							<% } %>
+							placeholder= "<%- placeholder %>"
+					<% if(disabled === true){%>disabled<%}%>
+				><%-value%></textarea>
+
+
+				<% if (group === "form") { %>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}%>
+				<% } %>
+				<input type="hidden"
+					<% if  ( group === "grid") { %>
+						id = "form<%-id%>_label"
+						name ="form<%-name%>_label"
+						value="<%-data['label']%>"
+					<%} else{%>
+						id = "form[<%-id%>_label]"
+						name ="form[<%-name%>_label]"
+						value="<%-data['label']%>"
+					<%}%>
+				>
+				<span class="content-print"></span>
+			</div>
+
 		</div>
 	</div>
 </script>
@@ -214,7 +225,7 @@
 <script type="text/template" id="tpl-checkgroup">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
     	<% if(group === "form") {%>
-			<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 		    	<label for="form[<%-id%>]" class="control-label pmdynaform-label">
 		    		<span class="textlabel"><%= label %></span>
 		    		<%if(required){%>
@@ -228,58 +239,61 @@
 		  		<%} else if (layout === "responsive") {%>
 		  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 		  		<%}%>>
-    		<div class="pmdynaform-control-checkbox-list form-control">
-    			<div class="pmdynaform-checkbox-items">
-	    			<% for(var i=0; i<options.length; i+=1) { %>
-						<div class="checkbox">
-				        	<label>
-				        		<input
-									<% if  ( group === "grid") { %>
-										id = "form<%-id%>"
-										name ="form<%-name%>"
-									<%} else {%>
-										id = "form[<%-id%>][<%-options[i].value%>]"
-										name ="form[<%-name%>][]"
-									<%}%>
-				        			class="<%-namespace%>-control-<%-type%>"
-					        		value="<%-options[i].value%>"
-					        		type="checkbox"
+			<div class="control-group">
+				<div class="pmdynaform-control-checkbox-list form-control">
+					<div class="pmdynaform-checkbox-items">
+						<% for(var i=0; i<options.length; i+=1) { %>
+							<div class="checkbox">
+								<label>
+									<input
+										<% if  ( group === "grid") { %>
+											id = "form<%-id%>"
+											name ="form<%-name%>"
+										<%} else {%>
+											id = "form[<%-id%>][<%-options[i].value%>]"
+											name ="form[<%-name%>][]"
+										<%}%>
+										class="<%-namespace%>-control-<%-type%>"
+										value="<%-options[i].value%>"
+										type="checkbox"
 
-									<% if(data.value && data.value.length){
-										for(var j=0; j< data.value.length; j+=1) {
-												if(data.value[j] == options[i].value){%>
-												checked
-								    <%}}}%>
+										<% if(data.value && data.value.length){
+											for(var j=0; j< data.value.length; j+=1) {
+													if(data.value[j] == options[i].value){%>
+													checked
+										<%}}}%>
 
-									<% if(disabled === true){%>disabled<%}%>>
-					        		<%if(dataType !== "boolean"){%>
-										<span><%-options[i].label%></span>
-					        		<%}%>
-				        	</label>
-						</div>
-				    <% } %>
-	    		</div>
-				<% if (group === "form") { %>
-					<%if (hint !== "" && hint !== null){%>
-						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+										<% if(disabled === true){%>disabled<%}%>>
+										<%if(dataType !== "boolean"){%>
+											<span><%-options[i].label%></span>
+										<%}%>
+								</label>
+							</div>
+						<% } %>
+					</div>
+					<% if (group === "form") { %>
+						<%if (hint !== "" && hint !== null){%>
+							<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+						<%}%>
+					<% } %>
+				</div>
+				<input type="hidden"
+					<% if  ( group === "grid") { %>
+						id = "form<%-id%>_label"
+						name ="form<%-name%>_label"
+					<%} else{%>
+						id = "form[<%-id%>_label]"
+						name ="form[<%-name%>_label]"
 					<%}%>
-				<% } %>
-    		</div>
-			<input type="hidden"
-				<% if  ( group === "grid") { %>
-					id = "form<%-id%>_label"
-					name ="form<%-name%>_label"
-				<%} else{%>
-					id = "form[<%-id%>_label]"
-					name ="form[<%-name%>_label]"
-				<%}%>
-			>
-			<ul class="content-print">
-				<% var items = JSON.parse(data.label) %>
-				<% for(var i=0; i < items.length; i += 1) { %>
-					<li><%-items[i]%></li>
-				<% } %>
-			</ul>
+				>
+				<ul class="content-print">
+					<% var items = JSON.parse(data.label) %>
+					<% for(var i=0; i < items.length; i += 1) { %>
+						<li><%-items[i]%></li>
+					<% } %>
+				</ul>
+			</div>
+
 		</div>
 	</div>
  </script>
@@ -287,7 +301,7 @@
 <script type="text/template" id="tpl-checkbox_yes_no">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
 		<% if(group === "form") {%>
-		<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+		<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 			<label for="form[<%-id%>]" class="control-label pmdynaform-label">
 				<span class="textlabel"><%= label %></span>
 				<%if(required){%>
@@ -333,7 +347,7 @@
 		</div>
 		<% if (group === "form") { %>
 		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 		<%}%>
 		<% } %>
 	</div>
@@ -354,7 +368,7 @@
 <script type="text/template" id="tpl-radio">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
 		<% if(group === "form") {%>
-		<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+		<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 			<label for="form[<%-name%>]" class="control-label pmdynaform-label">
 				<span class="textlabel"><%= label %></span>
 				<%if(required){%>
@@ -370,46 +384,48 @@
 		<%} else if (layout === "responsive") {%>
 		class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 		<%}%>>
-		<div class="pmdynaform-control-radio-list">
-			<div class="pmdynaform-radio-items">
-				<% for(var i=0; i<options.length; i+=1) { %>
-				<div class="radio">
-					<label>
-						<input
-						<% if  ( group === "grid") { %>
-						id = "form<%-id%>"
-						name ="form<%-name%>"
-						<%} else{%>
-						id = "form[<%-id%>]"
-						name ="form[<%-name%>]"
-						<%}%>
-						class="<%-namespace%>-control-<%-type%>"
-						value="<%-options[i].value%>"
-						type="<%-type%>"
-						<% if(value == options[i].value){%>checked<%}%>
-						<% if(disabled === true){%>disabled<%}%>
-						>
-						<span><%-options[i].label%></span>
-					</label>
+		<div class="control-group">
+			<div class="pmdynaform-control-radio-list">
+				<div class="pmdynaform-radio-items">
+					<% for(var i=0; i<options.length; i+=1) { %>
+					<div class="radio">
+						<label>
+							<input
+							<% if  ( group === "grid") { %>
+							id = "form<%-id%>"
+							name ="form<%-name%>"
+							<%} else{%>
+							id = "form[<%-id%>]"
+							name ="form[<%-name%>]"
+							<%}%>
+							class="<%-namespace%>-control-<%-type%>"
+							value="<%-options[i].value%>"
+							type="<%-type%>"
+							<% if(value == options[i].value){%>checked<%}%>
+							<% if(disabled === true){%>disabled<%}%>
+							>
+							<span><%-options[i].label%></span>
+						</label>
+					</div>
+					<% } %>
 				</div>
+				<input type="hidden" value="<%-data['label']%>"
+				<% if  ( group === "grid") { %>
+				id = "form<%-id%>_label"
+				name ="form<%-name%>_label"
+				<%} else{%>
+				id = "form[<%-id%>_label]"
+				name ="form[<%-name%>_label]"
+				<%}%>
+				>
+				<% if (group === "form") { %>
+				<%if (hint !== "" && hint !== null){%>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+				<%}%>
 				<% } %>
 			</div>
-			<input type="hidden" value="<%-data['label']%>"
-			<% if  ( group === "grid") { %>
-			id = "form<%-id%>_label"
-			name ="form<%-name%>_label"
-			<%} else{%>
-			id = "form[<%-id%>_label]"
-			name ="form[<%-name%>_label]"
-			<%}%>
-			>
-			<% if (group === "form") { %>
-			<%if (hint !== "" && hint !== null){%>
-			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-			<%}%>
-			<% } %>
+			<span class="content-print"></span>
 		</div>
-		<span class="content-print"></span>
 	</div>
 	</div>
 </script>
@@ -417,7 +433,7 @@
 <script type="text/template" id="tpl-dropdown">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
 		<% if(group === "form") {%>
-		<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+		<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 			<label for="form[<%-id%>]" class="control-label pmdynaform-label">
 				<span class="textlabel"><%=label%></span>
 				<%if(required && enableValidate){%>
@@ -426,49 +442,51 @@
 			</label>
 		</div>
 		<%}%>
-		<div <%if (group === 'form'){ %>
-		class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
-		<%} else if (layout === "form"){ %>
-		class="pmdynaform-dropdown-control col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12"
-		<%} else if (layout === "responsive") {%>
-		class="pmdynaform-dropdown-control col-xs-12 col-sm-12 col-md-12 col-lg-12"
-		<%}%>>
-		<select
-		<% if  ( group === "grid") { %>
-		id = "form<%-id%>"
-		name ="form<%-name%>"
-		<%} else{%>
-		id = "form[<%-id%>]"
-		name ="form[<%-name%>]"
-		<%}%>
-		class="<%-namespace%>-control-<%-type%> form-control"
-		<% if(disabled === true){%>disabled<%}%>>
-		<%if(therePlaceholder){%>
-		<option disabled id="placeholder-option" value=<%-placeholderOption["value"]%> ><%-placeholderOption["label"]%></option>
-		<%}%>
-		<% for(var i=0; i<options.length; i+=1) { %>
-		<option value="<%-options[i].value%>"
-		<%if( options[i].value == value ){%>
-		selected<%}%>
-		><%-options[i].label%></option>
-		<% } %>
-		</select>
-		<% if (group === "form") { %>
-		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-		<%}%>
-		<% } %>
-		<input type="hidden" value="<%-data['label']%>"
-		<% if  ( group === "grid") { %>
-		id = "form<%-id%>_label"
-		name ="form<%-name%>_label"
-		<%} else{%>
-		id = "form[<%-id%>_label]"
-		name ="form[<%-name%>_label]"
-		<%}%>
-		>
-		<span class="content-print"></span>
-	</div>
+		<div
+			<%if (group === 'form'){ %>
+				class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
+			<%} else if (layout === "form"){ %>
+				class="pmdynaform-dropdown-control col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12"
+			<%} else if (layout === "responsive") {%>
+				class="pmdynaform-dropdown-control col-xs-12 col-sm-12 col-md-12 col-lg-12"
+			<%}%>>
+			<div class="control-group">
+				<select
+					<% if  ( group === "grid") { %>
+						id = "form<%-id%>"
+						name ="form<%-name%>"
+					<%} else{%>
+						id = "form[<%-id%>]"
+						name ="form[<%-name%>]"
+					<%}%>
+					class="<%-namespace%>-control-<%-type%> form-control"
+					<% if(disabled === true){%>disabled<%}%>>
+					<%if(therePlaceholder){%>
+						<option disabled id="placeholder-option" value=<%-placeholderOption["value"]%> ><%-placeholderOption["label"]%></option>
+					<%}%>
+					<% for(var i=0; i<options.length; i+=1) { %>
+						<option value="<%-options[i].value%>"
+						<%if( options[i].value == value ){%>
+							selected<%}%>
+						><%-options[i].label%></option>
+					<% } %>
+				</select>
+				<% if (group === "form") { %>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="top" title="<%-hint%>"></span>
+					<%}%>
+				<% } %>
+				<input type="hidden" value="<%-data['label']%>"
+					<% if  ( group === "grid") { %>
+						id = "form<%-id%>_label"
+						name ="form<%-name%>_label"
+					<%} else{%>
+						id = "form[<%-id%>_label]"
+						name ="form[<%-name%>_label]"
+					<%}%>
+				>
+			<span class="content-print"></span>
+		</div>
 	</div>
 </script>
 
@@ -504,53 +522,55 @@
 		<%}%>
 		<div <%if(group === 'form'){ %> class="pmdynaform-file-control col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control" <%}%> >
 		<div class="pmdynaform-file-container col-xs-12 col-sm-12 col-md-12 col-lg-12">
+			<div class="control-group">
 			<div class="pmdynaform-file-btn-container">
 				<button type="button" class="<%-namespace%>-control-<%-type%> form-control"
-				<% if(disabled === true){%>disabled<%}%>
-				<% if(mode === "view"){%>style="display:none;"<%}%>
+					<% if(disabled === true){%>disabled<%}%>
+						<% if(mode === "view"){%>style="display:none;"<%}%>
 				>
-				<%-labelButton%>
+					<%-labelButton%>
 				</button>
 			</div>
 			<input
-			<% if  ( group === "grid") { %>
-			id = "form<%-id%>"
-			name ="form<%-name%>"
-			<%} else{%>
-			id = "form[<%-name%>]"
-			name ="form[<%-name%>]"
-			<%}%>
-			type="file" style="visibility:hidden;display:none;"
-			<% if(disabled === true){%>disabled<%}%>
-			<% if(multiple === true){%>multiple<%}%>
+				<% if (group === "grid") { %>
+					id = "form<%-id%>"
+					name ="form<%-name%>"
+				<%} else{%>
+					id = "form[<%-name%>]"
+					name ="form[<%-name%>]"
+				<%}%>
+				type="file" style="visibility:hidden;display:none;"
+				<% if(disabled === true){%>disabled<%}%>
+				<% if(multiple === true){%>multiple<%}%>
 			>
-			<%if (group === "form"){%>
-			<%if (hint !== "" && hint !== null){%>
-			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-			<%}%>
-			<%}%>
-			<input type="hidden"
-			<% if  ( group === "grid") { %>
-			id = "form<%-id%>_label"
-			name ="form<%-name%>_label"
-			<%} else {%>
-			id = "form[<%-id%>_label]"
-			name ="form[<%-name%>_label]"
-			<%}%>
-			>
-			<%if(data['value'].length){%>
-			<div class= "col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> link-container pmdynaform-field-control">
-				<% for(var i = 0; i < data['label'].length; i+=1) { %>
-				<a style="float:left"
-				   href = "<%-data['value'][i]%>" class="btn btn-link <%-namespace%>-control-<%-type%>">
-					<span> <%-data['label'][i]%></span>
-				</a>
-				<% } %>
+				<%if (group === "form"){%>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}%>
+				<%}%>
+				<input type="hidden"
+					<% if (group === "grid") { %>
+						id = "form<%-id%>_label"
+						name ="form<%-name%>_label"
+					<%} else {%>
+						id = "form[<%-id%>_label]"
+						name ="form[<%-name%>_label]"
+					<%}%>
+				>
 			</div>
-			<%}%>
+				<%if(data['value'].length){%>
+					<div class= "col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> link-container pmdynaform-field-control">
+						<% for(var i = 0; i < data['label'].length; i+=1) { %>
+							<a style="float:left"
+				   				href = "<%-data['value'][i]%>" class="btn btn-link <%-namespace%>-control-<%-type%>">
+								<span> <%-data['label'][i]%></span>
+							</a>
+						<% } %>
+					</div>
+				<%}%>
 		</div>
 		<span class="content-print"></span>
-	</div>
+		</div>
 	</div>
 </script>
 
@@ -582,6 +602,7 @@
 		  		<%} else if (layout === "responsive") {%>
 		  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 		  		<%}%>>
+		<div class="control-group">
 			<a
 				<% if  ( group === "grid") { %>
 					id = "form<%-id%>"
@@ -596,9 +617,10 @@
 			<span class="content-print"></span>
 			<% if (group === "form") { %>
 				<%if (hint !== "" && hint !== null){%>
-					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 				<%}%>
 			<% } %>
+		</div>
 		</div>
     </div>
  </script>
@@ -631,7 +653,7 @@
 <script type="text/template" id="tpl-label">
 	<div id="<%-id%>" name="field-<%-name%>" class="<%-namespace%>-field-<%-originalType%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
 		<% if(group === "form") {%>
-			<div class="col-sm-<%-colSpanLabel%>  col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 				<label class="control-label pmdynaform-label">
 					<span class="textlabel"><%=label %></span>
 					<%if(required){%>
@@ -691,7 +713,7 @@
 		</div>
 		<% if (group === "form") { %>
 		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%=hint%>"></span>
+		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
 		<%}%>
 		<% } %>
 	</div>
@@ -737,7 +759,7 @@
         	</p>
 			<% if (group === "form") { %>
 			<%if (hint !== "" && hint !== null){%>
-			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 			<%}%>
 			<% } %>
 		</div>
@@ -778,7 +800,7 @@
 		<% if(group === 'form') {%>
 			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 	            <label for='form[<%-name%>]' class='control-label pmdynaform-label'>
-					<span data-toggle='tooltip' data-placement='bottom' class="textlabel"><%=label%></span>
+					<span data-toggle='tooltip' data-container="body" data-placement='bottom' class="textlabel"><%=label%></span>
 		            <%if(required){%>
 			  			<span class='pmdynaform-field-required'>*</span>
 			  		<%}%>
@@ -791,52 +813,57 @@
 	  			class='col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12'
 	  		<%} else if (layout === 'responsive') {%>
 	  			class='col-xs-12 col-sm-12 col-md-12 col-lg-12'
-	  		<%}%>>
-			    <div class='datetime-container'>
-					<div id ='datetime-container-control' class='input-group date' <%if (group === 'form'){ %>
-				  			class='form-control'
-				  		<%} else if (layout === 'form'){ %>
-				  			class='col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12'
-				  		<%} else if (layout === 'responsive') {%>
-				  			class='col-xs-12 col-sm-12 col-md-12 col-lg-12'
-				  		<%}%>>
-				        <input type='text' class='pmdynaform-control-<%-type%> form-control' readonly="readonly"
-							<% if  ( group === 'grid') { %>
-								id = 'form<%-id%>'
-								name ='form<%-name%>'
-							<%} else{%>
-								id = 'form[<%-id%>]'
-								name ='form[<%-name%>_label]'
-							<%}%>
-				    			class='<%-namespace%>-control-<%-
-				    			type%> form-control'
-				    			type='text'
-				    			placeholder= '<%- placeholder %>'
-								value= '<%-value%>'
-				    			<% if(disabled === true){%>disabled<%}%>
-				    			>
-				    	</input>
-						<input type='hidden'
-							<% if  ( group === 'grid') { %>
-								id = 'form<%-id%>'
-								name ='form<%-name%>'
-							<%} else{%>
-								id = 'form[<%-id%>_label]'
-								name ='form[<%-name%>]'
-								value = '<%-data['label']%>'
-							<%}%>
-						>
-				        <span class='input-group-addon'><span class='<%if (format === 'LT'){%>glyphicon glyphicon-time<%}else{%>glyphicon glyphicon-calendar<%}%>'>
-					        </span>
-						</span>
+				<%}%>>
+				<div class="control-group">
+						<div class='datetime-container'>
+						<div id ='datetime-container-control' class='input-group date' <%if (group === 'form'){ %>
+									class='form-control'
+								<%} else if (layout === 'form'){ %>
+									class='col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12'
+								<%} else if (layout === 'responsive') {%>
+									class='col-xs-12 col-sm-12 col-md-12 col-lg-12'
+								<%}%>>
+
+
+									<input type='text' class='pmdynaform-control-<%-type%> form-control' readonly="readonly"
+								<% if  ( group === 'grid') { %>
+									id = 'form<%-id%>'
+									name ='form<%-name%>'
+								<%} else{%>
+									id = 'form[<%-id%>]'
+									name ='form[<%-name%>_label]'
+								<%}%>
+										class='<%-namespace%>-control-<%-
+										type%> form-control'
+										type='text'
+										placeholder= '<%- placeholder %>'
+									value= '<%-value%>'
+										<% if(disabled === true){%>disabled<%}%>
+										>
+								</input>
+							<input type='hidden'
+								<% if  ( group === 'grid') { %>
+									id = 'form<%-id%>'
+									name ='form<%-name%>'
+								<%} else{%>
+									id = 'form[<%-id%>_label]'
+									name ='form[<%-name%>]'
+									value = '<%-data['label']%>'
+								<%}%>
+							>
+									<span class='input-group-addon'><span class='<%if (format === 'LT'){%>glyphicon glyphicon-time<%}else{%>glyphicon glyphicon-calendar<%}%>'>
+										</span>
+							</span>
+						</div>
 					</div>
-				</div>
-				<span class="content-print"></span>
-				<% if (group === 'form') { %>
-					<%if (hint !== "" && hint !== null){%>
-						<span class='glyphicon glyphicon-info-sign' data-toggle='tooltip' data-placement='bottom' title='<%-hint%>'></span>
-					<%}%>
-				<% } %>
+					<% if (group === 'form') { %>
+						<%if (hint !== "" && hint !== null){%>
+							<span class='glyphicon glyphicon-info-sign' data-toggle='tooltip' data-placement='bottom' title='<%-hint%>'></span>
+						<%}%>
+					<% } %>
+			</div>
+			<span class="content-print"></span>
+
 		</div>
 	</div>
 </script>
@@ -932,7 +959,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				<span class="pmdynaform-field-required">*</span>
 				<%}%>
 				<%if (hint !== "" && hint !== null) {%>
-					<span style="float:right; margin-left:30px;" class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+					<span style="float:right; margin-left:30px;" class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 				<%}%>
 			</p>
 			<% if  ( mode !== "view" && mode !== "disabled" && addRow) { %>
@@ -970,9 +997,9 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 <script type="text/template" id="tpl-grid-pagination">
  	<ul class="pagination">
 		<li class="toFirst"><a data-target="#<%-id%>" data-slide-to="0" href="#">&laquo;</a></li>
-		<% 
+		<%
 		var pointer;
-		var display = ""; 
+		var display = "";
 		var sectionSize = 5;
 		var name;
 		for (var i=0; i<paginationItems; i+=1) {
@@ -980,11 +1007,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
     		if(pointer > sectionSize && !paginationRotate) {
                 display = "none";
     		}
-		%>	
-			<% 
+		%>
+			<%
 				name = "sec_" + i
 			%>
-			<li 
+			<li
 				<%if(i === 0){%>
 					class = "sec_<%=i+1%>"
 				<%}else{%>
@@ -1011,10 +1038,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 		<span class="grid-empty-message"> <%=message%> </span>
 	</div>
 </script>
+
 <script type="text/template" id="tpl-map">
 	<div id="<%=id%>" name="<%=name%>" class="pmdynaform-field-geomap <%=namespace%>-<%=mode%>-<%=type%> form-group col-sm-<%=colSpan%> col-md-<%=colSpan%> col-lg-<%=colSpan%> pmdynaform-field">
 		<label class="col-sm-<%=colSpanLabel%> col-md-<%=colSpanLabel%> col-lg-<%=colSpanLabel%> control-label pmdynaform-label">
-        	<span data-toggle="tooltip" data-placement="bottom" class="textlabel"><%=label%></span>
+        	<span data-toggle="tooltip" data-container="body" data-placement="bottom" class="textlabel"><%=label%></span>
             <%if(required){%>
 	  			<span class="pmdynaform-field-required">*</span>
 	  		<%}%>
@@ -1026,7 +1054,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         	<div id="PMD-<%-id%>" class="pmdynaform-map-canvas">
         	</div>
         	<%if (hint !== "" && hint !== null){%>
-                <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%=hint%>"></span>
+                <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
 			<%}%>
         </div>
 	</div>
@@ -1104,25 +1132,25 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 		            <%if(required){%>
 			  			<span class="pmdynaform-field-required">*</span>
 			  		<%}%>
-		        </label>			
+		        </label>
 			</div>
 		<%}%>
-		<div <%if (group === 'form'){ %> 
+		<div <%if (group === 'form'){ %>
 		  			class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
 		  		<%} else if (layout === "responsive") {%>
 		  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 		  		<%}%>>
 		  		<scanner id="PMD-<%-id%>">
 				<div class="pmdynaform-label-options">
-							<span><%-value%></span>							
+							<span><%-value%></span>
 				</div>
 				</scanner>
 		  		<button type="button" class="btn btn-default btn-md">
 				  	<span class="glyphicon glyphicon-qrcode"></span> <%-labelButton%>
 				</button>
-				
+
 			<%if (hint !== "" && hint !== null){%>
-				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 			<%}%>
 		</div>
 	</div>
@@ -1168,7 +1196,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 					<% if(multiple === true){%>multiple<%}%>
 				>
 				<%if (hint !== "" && hint !== null){%>
-					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 				<%}%>
 				<% if(dnd) {%>
 					<p style="float:left;" class="help-block"><%-dndMessage%></p>
@@ -1199,45 +1227,45 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 	</div>
 </script>
 
-<script type="text/template" id="tpl-extfile-plus-audio">	
+<script type="text/template" id="tpl-extfile-plus-audio">
 	<div class="pmdynaform-file-containerimage">
-		<buttonImage>	
+		<buttonImage>
 			<span class= "pmdynaform-file-preview">
 				<div class = "pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-play-circle" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>	
-	</div>	
+		</buttonImage>
+	</div>
 </script>
 
-<script type="text/template" id="tpl-extfile-plus-video">	
+<script type="text/template" id="tpl-extfile-plus-video">
 	<div class="pmdynaform-file-containerimage">
-		<buttonImage>	
+		<buttonImage>
 			<span class= "pmdynaform-file-preview">
 				<div class = "pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-film" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>	
-	</div>	
+		</buttonImage>
+	</div>
 </script>
 
-<script type="text/template" id="tpl-extfile-plus-image">	
+<script type="text/template" id="tpl-extfile-plus-image">
 	<div class="pmdynaform-file-containerimage">
-		<buttonImage>	
+		<buttonImage>
 			<span class= "pmdynaform-file-preview">
 				<div class = "pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-picture" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>	
-	</div>	
+		</buttonImage>
+	</div>
 </script>
 
 <script type="text/template" id="tpl-media-video">
 	<div class="pmdynaform-media-videoContainer">
-	    <video src="<%-src%>" preload="none" controls="true">	       
+	    <video src="<%-src%>" preload="none" controls="true">
 			<p>Your browser does not support the video tag.</p>
 		</video>
 			<div class="pmdynaform-media-caption"></div>
@@ -1255,14 +1283,14 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 						</div>
 						<div class="pmdynaform-media-progress-external">
 						</div>
-					</div>					
+					</div>
 					<div class="sound sound2 btn" title="Mute/Unmute sound">
 						<span class="glyphicon glyphicon-volume-up"></span></div>
 					<div class="btnFS btn" title="Switch to full screen">
 						<span class="glyphicon glyphicon-fullscreen"></span>
 					</div>
 				</div>
-				
+
 			</div>
 		</div>
 </script>
@@ -1270,8 +1298,8 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 <script type="text/template" id="tpl-media-audio">
 	<div class="pmdynaform-media-audioContainer">
 	    <audio preload="auto" src="<%-src%>">
-	    	<source src="<%-src%>" type="audio/mp3">  					
-			<source src="<%-src%>" type="audio/m4a">  								
+	    	<source src="<%-src%>" type="audio/mp3">
+			<source src="<%-src%>" type="audio/m4a">
 	    	<p>Your browser does not support the video tag.</p>
 		</audio>
 			<div class="pmdynaform-media-caption"></div>
@@ -1287,15 +1315,15 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 							<span class="pmdynaform-media-timeBar"></span>
 						</div>
 						<div class="pmdynaform-media-progress-external">
-						</div>						
-					</div>					
+						</div>
+					</div>
 					<div class="sound sound2 btn" title="Mute/Unmute sound">
 						<span class="glyphicon glyphicon-volume-up"></span></div>
 					<div class="btnFS btn" title="Switch to full screen">
 						<span class="glyphicon glyphicon-fullscreen"></span>
 					</div>
 				</div>
-				
+
 			</div>
 		</div>
 </script>
@@ -1332,7 +1360,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 	<div id="<%=id%>" class="<%=namespace%>-field-<%=type%> <%if (group === 'form'){%> form-group col-sm-<%=colSpan%> col-md-<%=colSpan%> col-lg-<%=colSpan%> <%}%> <%=namespace%>-<%=mode%>-<%=type%> pmdynaform-field">
 	    <% if(group === "form") {%>
 		    <div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
-			    <label class="control-label pmdynaform-label"> 
+			    <label class="control-label pmdynaform-label">
 			    	<span class="textlabel"><%= label %></span>
 			        <%if(required){%>
 			  			<span class="pmdynaform-field-required">*</span>
@@ -1340,7 +1368,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 			    </label>
 		    </div>
 		<%} else if((group !== "form") && (layout === "form")){%>
-			<label class="hidden-lg hidden-md hidden-sm visible-xs control-label pmdynaform-label col-xs-<%=colSpanLabel%>">  
+			<label class="hidden-lg hidden-md hidden-sm visible-xs control-label pmdynaform-label col-xs-<%=colSpanLabel%>">
 		  		<span><%= label %></span>
 		  	</label>
 		<%}%>
@@ -1351,7 +1379,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				<span class="glyphicon glyphicon-map-marker"></span> <%=labelButton%>
 			</button>
 			<%if (hint){%>
-			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%=hint%>"></span>
+			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
 			<%}%>
 			<%if(preview) {%>
 			<div class="pmdynaform-ext-geo" style="height:<%=height%>;"></div>
@@ -1369,25 +1397,25 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 		            <%if(required){%>
 			  			<span class="pmdynaform-field-required">*</span>
 			  		<%}%>
-		        </label>			
+		        </label>
 			</div>
 		<%}%>
-		<div <%if (group === 'form'){ %> 
+		<div <%if (group === 'form'){ %>
 		  			class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
 		  		<%} else if (layout === "responsive") {%>
 		  			class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
 		  		<%}%>>
 		  		<scanner id="PMD-<%-id%>">
 				<div class="pmdynaform-label-options">
-							<span><%-value%></span>							
+							<span><%-value%></span>
 				</div>
 				</scanner>
 		  		<button type="button" class="btn btn-default btn-md">
 				  	<span class="glyphicon glyphicon-qrcode"></span> <%-labelButton%>
 				</button>
-				
+
 			<%if (hint !== "" && hint !== null){%>
-				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
 			<%}%>
 		</div>
 	</div>
@@ -1428,11 +1456,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				<button type="button" class="btn btn-default btn-md">
 				  	<span class="glyphicon glyphicon-edit"></span><%-labelButton%></button>
 				<%if (hint !== "" && hint !== null){%>
-					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom" title="<%-hint%>"></span>
-				<%}%>								
+					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+				<%}%>
 				<%if(preview) {%>
 					<div class="pmdynaform-ext-signature" style="height:<%-height%>;"></div>
-				<% } %> 
+				<% } %>
 			</div>
 		</div>
 	</div>
@@ -1485,6 +1513,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
                     <span
                             class="glyphicon glyphicon-info-sign"
                             data-toggle="tooltip"
+                            data-container="body"
                             data-placement="bottom"
                             title="<%-hint%>">
                     </span>
@@ -1570,7 +1599,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         <div class="row">
             <div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
                 <label for="<%-name%>" class="control-label pmdynaform-label">
-                    <span data-toggle="tooltip" data-placement="bottom" class="textlabel"><%= label %></span>
+                    <span data-toggle="tooltip" data-container="body" data-placement="bottom" class="textlabel"><%= label %></span>
                     <%if(required){%>
                     <span class="pmdynaform-field-required">*</span>
                     <%}%>
@@ -1638,7 +1667,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 <script type="text/template" id="tpl-multiplefile-grid">
     <div class="pm-multiplefile-grid">
         <div class="pm-multiplefile-grid-label">
-            <span class="multiple-file-grid-web"  data-toggle="tooltip" data-placement="top" title="Tooltip on top">Choose File</span>
+            <span class="multiple-file-grid-web"  data-toggle="tooltip" data-container="body" data-placement="top" title="Tooltip on top">Choose File</span>
 
         </div>
         <div class="pm-multiplefile-grid-icon">
@@ -1653,10 +1682,10 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         <ul>
             <% if (gridDetailArray.length != 0) { %>
                 <% for(var i = 0;i < gridDetailArray.length; i += 1) { %>
-                    <li class="multiple-file-grid-web"  data-toggle="tooltip" data-placement="bottom" title="<%-gridDetailArray[i]%>"><%-gridDetailArray[i]%></li>
+                    <li class="multiple-file-grid-web"  data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-gridDetailArray[i]%>"><%-gridDetailArray[i]%></li>
                 <% } %>
             <% } else {%>
-                <li class="multiple-file-grid-web"  data-toggle="tooltip" data-placement="bottom" title="<%-gridDetail%>"><%-gridDetail%></li>
+                <li class="multiple-file-grid-web"  data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-gridDetail%>"><%-gridDetail%></li>
             <% }%>
         </ul>
     </div>

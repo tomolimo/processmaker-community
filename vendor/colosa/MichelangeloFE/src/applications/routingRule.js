@@ -402,10 +402,9 @@ PMDesigner.RoutingRule = function (shape) {
      * @param connection
      */
     function removeConnection(connection) {
-
         PMUI.getActiveCanvas().emptyCurrentSelection();
         PMUI.getActiveCanvas().setCurrentConnection(connection);
-        PMUI.getActiveCanvas().removeElements();
+        PMUI.getActiveCanvas().executeCommandDelete();
         connection.saveAndDestroy();
         PMUI.getActiveCanvas().removeConnection(connection);
     }

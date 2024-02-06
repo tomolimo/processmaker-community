@@ -1,9 +1,17 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
-use G;
-use DbSource;
+use Content;
+use ContentPeer;
+use Criteria;
 use DbConnections;
+use DbSource;
+use DbSourcePeer;
+use Exception;
+use G;
+use Net;
+use Process;
+use ResultSet;
 
 class DataBaseConnection
 {
@@ -23,8 +31,8 @@ class DataBaseConnection
         $oDBSource = new DbSource();
         $oCriteria = $oDBSource->getCriteriaDBSList($pro_uid);
 
-        $rs = \DbSourcePeer::doSelectRS($oCriteria);
-        $rs->setFetchmode( \ResultSet::FETCHMODE_ASSOC );
+        $rs = DbSourcePeer::doSelectRS($oCriteria);
+        $rs->setFetchmode( ResultSet::FETCHMODE_ASSOC );
         $rs->next();
 
         $dbConnecions = array();
@@ -73,13 +81,13 @@ class DataBaseConnection
 
             $dbDescription = '';
 
-            $criteria2 = new \Criteria('workflow');
+            $criteria2 = new Criteria('workflow');
 
-            $criteria2->addSelectColumn(\ContentPeer::CON_VALUE);
-            $criteria2->add(\ContentPeer::CON_ID, $aFields['DBS_UID'], \Criteria::EQUAL);
+            $criteria2->addSelectColumn(ContentPeer::CON_VALUE);
+            $criteria2->add(ContentPeer::CON_ID, $aFields['DBS_UID'], Criteria::EQUAL);
 
-            $rsCriteria2 = \ContentPeer::doSelectRS($criteria2);
-            $rsCriteria2->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
+            $rsCriteria2 = ContentPeer::doSelectRS($criteria2);
+            $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
             if ($rsCriteria2->next()) {
                 $row2 = $rsCriteria2->getRow();
@@ -97,7 +105,7 @@ class DataBaseConnection
 
             $response = array_change_key_case($aFields, CASE_LOWER);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -123,11 +131,9 @@ class DataBaseConnection
         }
 
         $oDBSource = new DbSource();
-        $oContent  = new \Content();
+        $oContent  = new Content();
         $dataDBConnection = array_change_key_case($dataDBConnection, CASE_UPPER);
-
-        $flagTns = ($dataDBConnection["DBS_TYPE"] == "oracle" && $dataDBConnection["DBS_CONNECTION_TYPE"] == "TNS")? 1 : 0;
-
+        
         $dataDBConnection['PRO_UID'] = $pro_uid;
 
         if (isset($dataDBConnection['DBS_TYPE'])) {
@@ -137,27 +143,40 @@ class DataBaseConnection
                 $typesExists[] = $value['id'];
             }
             if (!in_array($dataDBConnection['DBS_TYPE'], $typesExists)) {
-                throw (new \Exception(\G::LoadTranslation("ID_DBC_TYPE_INVALID", array($dataDBConnection['DBS_TYPE']))));
+                throw (new Exception(G::LoadTranslation("ID_DBC_TYPE_INVALID", array($dataDBConnection['DBS_TYPE']))));
             }
         }
 
+        if ($dataDBConnection["DBS_TYPE"] == "oracle") {
+            if (empty($dataDBConnection["DBS_CONNECTION_TYPE"])) {
+                throw (new Exception(G::LoadTranslation("ID_UNDEFINED_VALUE_IS_REQUIRED", ["dbs_connection_type"])));
+            }
+            if ($dataDBConnection["DBS_CONNECTION_TYPE"] == "TNS") {
+                if (empty($dataDBConnection["DBS_TNS"])) {
+                    throw (new Exception(G::LoadTranslation("ID_UNDEFINED_VALUE_IS_REQUIRED", ["dbs_tns"])));
+                }
+            }
+        }
+
+        $flagTns = ($dataDBConnection["DBS_TYPE"] == "oracle" && $dataDBConnection["DBS_CONNECTION_TYPE"] == "TNS") ? 1 : 0;
+
         if (isset($dataDBConnection["DBS_SERVER"]) && $dataDBConnection["DBS_SERVER"] == "" && $flagTns == 0) {
-            throw (new \Exception(\G::LoadTranslation("ID_DBC_SERVER_INVALID", array($dataDBConnection['DBS_SERVER']))));
+            throw (new Exception(G::LoadTranslation("ID_DBC_SERVER_INVALID", array($dataDBConnection['DBS_SERVER']))));
         }
 
         if (isset($dataDBConnection["DBS_DATABASE_NAME"]) && $dataDBConnection["DBS_DATABASE_NAME"] == "" && $flagTns == 0) {
-            throw (new \Exception(\G::LoadTranslation("ID_DBC_DBNAME_INVALID", array($dataDBConnection['DBS_DATABASE_NAME']))));
+            throw (new Exception(G::LoadTranslation("ID_DBC_DBNAME_INVALID", array($dataDBConnection['DBS_DATABASE_NAME']))));
         }
 
         if (isset($dataDBConnection['DBS_PORT']) &&
             ($dataDBConnection['DBS_PORT'] == ''|| $dataDBConnection['DBS_PORT'] == 0)) {
                 if ($flagTns == 0) {
-                    throw (new \Exception(\G::LoadTranslation("ID_DBC_PORT_INVALID", array($dataDBConnection["DBS_PORT"]))));
+                    throw (new Exception(G::LoadTranslation("ID_DBC_PORT_INVALID", array($dataDBConnection["DBS_PORT"]))));
                 }
         }
 
         if (isset($dataDBConnection["DBS_TNS"]) && $dataDBConnection["DBS_TNS"] == "" && $flagTns == 1) {
-            throw (new \Exception(\G::LoadTranslation("ID_DBC_TNS_NOT_EXIST", array($dataDBConnection["DBS_TNS"]))));
+            throw (new Exception(G::LoadTranslation("ID_DBC_TNS_NOT_EXIST", array($dataDBConnection["DBS_TNS"]))));
         }
 
         if (isset($dataDBConnection['DBS_ENCODE'])) {
@@ -168,7 +187,7 @@ class DataBaseConnection
                 $encodesExists[] = $value['0'];
             }
             if (!in_array($dataDBConnection['DBS_ENCODE'], $encodesExists)) {
-                throw (new \Exception(\G::LoadTranslation("ID_DBC_ENCODE_INVALID", array($dataDBConnection['DBS_ENCODE']))));
+                throw (new Exception(G::LoadTranslation("ID_DBC_ENCODE_INVALID", array($dataDBConnection['DBS_ENCODE']))));
             }
         }
 
@@ -179,9 +198,9 @@ class DataBaseConnection
                 $dataDBConnection['DBS_PASSWORD'] = '';
             } else {
                 if ($flagTns == 0) {
-                    $pass = \G::encrypt( $dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_DATABASE_NAME"]) . "_2NnV3ujj3w";
+                    $pass = G::encrypt( $dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_DATABASE_NAME"]) . "_2NnV3ujj3w";
                 } else {
-                    $pass = \G::encrypt($dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_TNS"]) . "_2NnV3ujj3w";
+                    $pass = G::encrypt($dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_TNS"]) . "_2NnV3ujj3w";
                 }
 
                 $dataDBConnection['DBS_PASSWORD'] = $pass;
@@ -203,7 +222,7 @@ class DataBaseConnection
             $dataTest = array_merge($dataDBConnection, array('DBS_PASSWORD' => $passOrigin));
             $resTest = $this->testConnection($dataTest);
             if (!$resTest['resp']) {
-                throw (new \Exception($resTest['message']));
+                throw (new Exception($resTest['message']));
             }
             $newDBConnectionUid = $oDBSource->create($dataDBConnection);
             $oContent->addContent('DBS_DESCRIPTION', '', $newDBConnectionUid,
@@ -217,7 +236,7 @@ class DataBaseConnection
             $dataTest = array_merge($allData, $dataDBConnection, array('DBS_PASSWORD' => $passOrigin));
             $resTest = $this->testConnection($dataTest);
             if (!$resTest['resp']) {
-                throw (new \Exception($resTest['message']));
+                throw (new Exception($resTest['message']));
             }
             $oDBSource->update($dataDBConnection);
             if (isset($dataDBConnection['DBS_DESCRIPTION'])) {
@@ -244,7 +263,7 @@ class DataBaseConnection
         $dbs_uid = $this->validateDbsUid($dbs_uid, $pro_uid);
 
         $oDBSource = new DbSource();
-        $oContent  = new \Content();
+        $oContent  = new Content();
 
         $oDBSource->remove($dbs_uid, $pro_uid);
         $oContent->removeContent( 'DBS_DESCRIPTION', "", $dbs_uid );
@@ -271,7 +290,7 @@ class DataBaseConnection
         $flagTns = ($dataCon["DBS_TYPE"] == "oracle" && $dataCon["DBS_CONNECTION_TYPE"] == "TNS")? 1 : 0;
 
         if ($flagTns == 0) {
-            $Server = new \Net($dataCon['DBS_SERVER']);
+            $Server = new Net($dataCon['DBS_SERVER']);
 
             // STEP 1 : Resolving Host Name
             $respTest['0'] = array();
@@ -356,7 +375,7 @@ class DataBaseConnection
                 }
             }
         } else {
-            $net = new \Net();
+            $net = new Net();
 
             //STEP 0: Trying to open database type TNS
             $respTest["0"] = array();
@@ -441,11 +460,11 @@ class DataBaseConnection
     {
         $pro_uid = trim($pro_uid);
         if ($pro_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_PROJECT_NOT_EXIST", array('prj_uid',''))));
+            throw (new Exception(G::LoadTranslation("ID_PROJECT_NOT_EXIST", array('prj_uid',''))));
         }
-        $oProcess = new \Process();
+        $oProcess = new Process();
         if (!($oProcess->processExists($pro_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_PROJECT_NOT_EXIST", array('prj_uid', $pro_uid))));
+            throw (new Exception(G::LoadTranslation("ID_PROJECT_NOT_EXIST", array('prj_uid', $pro_uid))));
         }
         return $pro_uid;
     }
@@ -464,11 +483,11 @@ class DataBaseConnection
     {
         $dbs_uid = trim($dbs_uid);
         if ($dbs_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_DBC_NOT_EXIST", array('dbs_uid',''))));
+            throw (new Exception(G::LoadTranslation("ID_DBC_NOT_EXIST", array('dbs_uid',''))));
         }
         $oDBSource = new DbSource();
         if (!($oDBSource->Exists($dbs_uid, $pro_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_DBC_NOT_EXIST", array('dbs_uid',$dbs_uid))));
+            throw (new Exception(G::LoadTranslation("ID_DBC_NOT_EXIST", array('dbs_uid',$dbs_uid))));
         }
         return $dbs_uid;
     }

@@ -392,6 +392,12 @@ class Ajax
         print(G::json_encode($processData));
     }
 
+    /**
+     * Get the task information of the current task
+     *
+     * @see workflow/engine/templates/cases/open->taskInformation()
+     * @link https://wiki.processmaker.com/3.3/Cases/Information#Task_Information
+     */
     public function getTaskInformation()
     {
         if (!isset($_SESSION['USER_LOGGED'])) {
@@ -406,7 +412,15 @@ class Ajax
         if ($_SESSION['TASK'] == '-1') {
             $_SESSION['TASK'] = $_SESSION['CURRENT_TASK'];
         }
-        $taskData = $task->getDelegatedTaskData($_SESSION['TASK'], $_SESSION['APPLICATION'], $_SESSION['INDEX']);
+
+        $arrayTaskUid = explode('|', $_SESSION['TASK']);
+
+        if (count($arrayTaskUid) > 1) {
+            $arrayTaskUid = array_unique($arrayTaskUid);
+        }
+        $taskUid = $arrayTaskUid[0];
+
+        $taskData = $task->getDelegatedTaskData($taskUid, $_SESSION['APPLICATION'], $_SESSION['INDEX']);
 
         $taskData = \ProcessMaker\Util\DateTime::convertUtcToTimeZone($taskData);
 

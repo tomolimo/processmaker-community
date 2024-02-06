@@ -1,10 +1,11 @@
 <?php
 namespace ProcessMaker\Services\Api\Cases;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
-use ProcessMaker\BusinessModel\Cases\InputDocument AS CasesInputDocument;
 use Exception;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\Cases\InputDocument as CasesInputDocument;
+use ProcessMaker\BusinessModel\Cases as BussinessModelCases;
+use ProcessMaker\Services\Api;
 
 /**
  * Cases\InputDocument Api Controller
@@ -16,23 +17,44 @@ class InputDocument extends Api
     /**
      * @url GET /:app_uid/input-documents
      *
-     * @param string $app_uid     {@min 32}{@max 32}
+     * @param string $app_uid {@min 32}{@max 32}
+     *
+     * @return array
+     * @throws RestException
      */
     public function doGetInputDocuments($app_uid)
     {
         try {
             $userUid = $this->getUserId();
-            $inputDocument = new \ProcessMaker\BusinessModel\Cases\InputDocument();
+            //We will to get list of documents that the user can be access
+            $bmCases = new BussinessModelCases();
+            $arrayApplicationData = $bmCases->getApplicationRecordByPk($app_uid, [], false);
+            $userAuthorization = $bmCases->userAuthorization(
+                $userUid,
+                $arrayApplicationData['PRO_UID'],
+                $app_uid,
+                [],
+                ['INPUT_DOCUMENTS' => 'VIEW', 'ATTACHMENTS' => 'VIEW'],
+                true
+            );
+            $documentsCanAccess = array_merge(
+                $userAuthorization['objectPermissions']['INPUT_DOCUMENTS'],
+                $userAuthorization['objectPermissions']['ATTACHMENTS']
+            );
 
-            $response = $inputDocument->getCasesInputDocuments($app_uid, $userUid);
+            //We will to get documents information that the user uploaded and/or that the user has permission
+            $inputDocument = new CasesInputDocument();
+            //@todo we need to review the function getCasesInputDocuments with the ticket HOR-4755
+            $response = $inputDocument->getCasesInputDocuments($app_uid, $userUid, $documentsCanAccess);
 
-            if (empty($response)) {
+            //If the user is a supervisor we will to get the documents can be access
+            if (empty($response) && $userAuthorization['supervisor']) {
                 $response = $inputDocument->getCasesInputDocumentsBySupervisor($app_uid, $userUid);
             }
 
             //Return
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }

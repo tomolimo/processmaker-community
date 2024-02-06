@@ -698,7 +698,10 @@ PMShape.prototype.getBpmnElementType = function () {
 
 PMShape.prototype.createWithBpmn = function (bpmnElementType, name) {
     var businessObject = {};
-    businessObject.elem = PMDesigner.bpmnFactory.create(bpmnElementType, {id: 'el_' + this.id, name: this.getName()});
+    businessObject.elem = PMDesigner.bpmnFactory.create(bpmnElementType, {
+        id: 'el_' + this.id,
+        name: this.getName() ? PMDesigner.escapeXMLCharacters(this.getName()) : ""
+    });
     if (!businessObject.di) {
         if (this.type === 'PMParticipant' || this.type === 'PMPool' || this.type === 'PMLane') {
             businessObject.di = PMDesigner.bpmnFactory.createDiShape(businessObject.elem, {}, {

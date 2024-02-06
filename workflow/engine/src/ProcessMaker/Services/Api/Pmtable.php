@@ -1,8 +1,10 @@
 <?php
 namespace ProcessMaker\Services\Api;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Exception;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\Table as BusinessModelTable;
+use ProcessMaker\Services\Api;
 
 /**
  * Pmtable Api Controller
@@ -149,6 +151,7 @@ class Pmtable extends Api
      *
      * @access protected
      * @class AccessControl {@permission PM_SETUP_PM_TABLES}
+     * @throws RestException
      */
     public function doPutPmTable(
         $pmt_uid,
@@ -156,9 +159,9 @@ class Pmtable extends Api
     ) {
         try {
             $request_data['pmt_uid'] = $pmt_uid;
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
-            $response = $oReportTable->updateTable($request_data);
-        } catch (\Exception $e) {
+            $pmTable = new BusinessModelTable();
+            $response = $pmTable->updateTable($request_data);
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }

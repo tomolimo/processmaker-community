@@ -55,7 +55,7 @@ class RBAC
     /**
      *
      * @access private
-     * @var $userObj
+     * @var RbacUsers $userObj
      */
     public $userObj;
     public $usersPermissionsObj;
@@ -801,6 +801,80 @@ class RBAC
         $this->aUserInfo[$sSystem]['SYS_UID'] = $fieldsSystem['SYS_UID'];
         $this->aUserInfo[$sSystem]['ROLE'] = $fieldsRoles;
         $this->aUserInfo[$sSystem]['PERMISSIONS'] = $fieldsPermissions;
+    }
+
+    /**
+     * Verification of a user through the class RBAC_user
+     * verify if the user has permissions to stay in the application
+     * -4: expired user
+     * @access public
+     * @throws Exception
+     */
+    public function verifyDueDateUserLogged()
+    {
+        if (empty($this->userObj)) {
+            return;
+        }
+        $uid = !empty($this->userObj) ? $this->userObj->getUsrUid() : null;
+        //if the expired user
+        if ($this->userObj->getUsrDueDate() < date('Y-m-d')) {
+            $uid = -4;
+            $errLabel = 'ID_USER_INACTIVE_BY_DATE';
+        }
+
+        if (!isset($uid) || $uid < 0) {
+            if (!defined('PPP_FAILED_LOGINS')) {
+                define('PPP_FAILED_LOGINS', 0);
+            }
+            //start new session
+            @session_destroy();
+            session_start();
+            session_regenerate_id();
+
+            throw new RBACException($errLabel);
+        }
+    }
+
+    /**
+     * Destroy all active sessions of a user (browser, soap, oauth)
+     * @param string $usrUid User uid
+     */
+    public static function destroySessionUser($usrUid)
+    {
+        //remove all register of tables related to the token
+        (new OauthAccessTokens())->removeByUser($usrUid);
+        (new OauthRefreshTokens())->removeByUser($usrUid);
+        (new PmoauthUserAccessTokens())->removeByUser($usrUid);
+        (new OauthAuthorizationCodes())->removeByUser($usrUid);
+
+        $loginLog = new LoginLog();
+        $sessionId = $loginLog->getSessionsIdByUser($usrUid);
+        if ($sessionId) {
+            //remove all login log row's of LOGIN_LOG table
+            $loginLog->removeByUser($usrUid);
+            //remove all register of tables
+            (new Session())->removeByUser($usrUid);
+
+            // 1. commit session if it's started.
+            if (session_id()) {
+                session_commit();
+            }
+            // 2. store current session id
+            session_start();
+            $currentSessionId = session_id();
+            session_commit();
+            // 3. then destroy session specified.
+            foreach ($sessionId as $sid) {
+                session_id($sid['LOG_SID']);
+                session_start();
+                session_destroy();
+                session_commit();
+            }
+            // 4. restore current session id. If don't restore it, your current session will refer to the session you just destroyed!
+            session_id($currentSessionId);
+            session_start();
+            session_commit();
+        }
     }
 
     /**

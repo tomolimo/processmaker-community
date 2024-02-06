@@ -75,6 +75,44 @@ class Groups
     }
 
     /**
+     * Get the IDs of the active groups for an user
+     *
+     * @param string $usrUid
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function getActiveGroupsForAnUserById($usrUid)
+    {
+        try {
+            $criteria = new Criteria();
+            $criteria->addSelectColumn(GroupUserPeer::GRP_ID);
+            $criteria->addJoin(GroupUserPeer::GRP_ID, GroupwfPeer::GRP_ID, Criteria::LEFT_JOIN);
+            //@todo: we need to add a new column  GROUP_USER.USR_ID
+            $criteria->add(GroupUserPeer::USR_UID, $usrUid);
+            //@todo: we need to add a new column  GROUPWF.GRP_STATUS_ID
+            $criteria->add(GroupwfPeer::GRP_STATUS, 'ACTIVE');
+            $dataset = GroupUserPeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataset->next();
+
+            //If the user does not relate with any group we will to return a default value for avoiding problems with the IN
+            $groups = [-1];
+            $row = $dataset->getRow();
+            while (is_array($row)) {
+                $groups[] = $row['GRP_ID'];
+                $dataset->next();
+                $row = $dataset->getRow();
+            }
+
+            return $groups;
+        } catch (Exception $error) {
+            throw ($error);
+        }
+    }
+
+
+    /**
      * Set a user to group
      *
      * @param string $grpUid

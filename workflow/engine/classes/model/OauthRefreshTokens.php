@@ -14,6 +14,19 @@ require_once 'classes/model/om/BaseOauthRefreshTokens.php';
  *
  * @package    classes.model
  */
-class OauthRefreshTokens extends BaseOauthRefreshTokens {
-
+class OauthRefreshTokens extends BaseOauthRefreshTokens
+{
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(OauthRefreshTokensPeer::USER_ID, $userUid);
+        $resultSet = OauthRefreshTokensPeer::doDelete($criteria);
+        return $resultSet;
+    }
 } // OauthRefreshTokens

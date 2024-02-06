@@ -940,7 +940,7 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
                 prf_content: null
             },
             functionSuccess: function (xhr, response) {
-                var win = window, fd = new FormData(), xhr, val = 'prf_file';
+                var win = window, fd = new FormData(), xhr, val = 'prf_file', resp = null;
                 fd.append(val, fileSelector.files[0]);
                 if (win.XMLHttpRequest)
                     xhr = new XMLHttpRequest();
@@ -949,7 +949,8 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
                 xhr.open('POST', '/api/1.0/' + WORKSPACE + '/project/' + PMDesigner.project.id + '/file-manager/' + response.prf_uid + '/upload', true);
                 xhr.setRequestHeader('Authorization', 'Bearer ' + PMDesigner.project.keys.access_token);
                 xhr.onload = function () {
-                    if (this.status === 200) {
+                    switch (this.status) {
+                        case 200:
                         formUploadField.reset();
                         windowUpload.close();
                         if (processFileManagerOptionPath == "templates") {
@@ -960,6 +961,15 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
                             PMDesigner.msgFlash('File uploaded successfully'.translate(), gridPublic);
                             loadPublic();
                         }
+                            break;
+                        case 403:
+                        case 415:
+                        case 429:
+                            if (this.response) {
+                                resp = JSON.parse(this.response);
+                                PMDesigner.msgWinError(resp.message ? resp.message : resp.error.message);
+                            }
+                            break;
                     }
                 };
                 xhr.send(fd);

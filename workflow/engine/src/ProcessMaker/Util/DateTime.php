@@ -7,6 +7,7 @@ class DateTime
 
     const REGEXPDATE = '[1-9]\d{3}\-(?:0[1-9]|1[0-2])\-(?:0[1-9]|[12][0-9]|3[01])';
     const REGEXPTIME = '(?:[0-1]\d|2[0-3])\:[0-5]\d\:[0-5]\d';
+    const REGEX_IS_DATE = '/^([1-9]\d{3})\-(0[1-9]|1[0-2])\-(0[1-9]|[12][0-9]|3[01])(?:\s([0-1]\d|2[0-3])\:([0-5]\d)\:([0-5]\d))?$/';
 
     /**
      * Get Time Zone Offset by Time Zone ID

@@ -1,9 +1,6 @@
 <?php
-/**
- * process_webEntryValidate
- * validates if the username and password are valid data and if the user assigned
- * to the webentry has the rights and persmissions required
- */
+
+use ProcessMaker\Core\System;
 
 $sPRO_UID = $oData->PRO_UID;
 $sTASKS = $oData->TASKS;
@@ -16,20 +13,12 @@ $sWS_PASS = trim( $oData->WS_PASS );
 $sWS_ROUNDROBIN = $oData->WS_ROUNDROBIN;
 $sWE_USR = $oData->WE_USR;
 
-//echo ($sPRO_UID."<br>");
-//echo ($sTASKS."<br>");
-//echo ($sDYNAFORM."<br>");
-
 $streamContext = [];
-
 if (G::is_https()) {
-    $http = 'https://';
     $streamContext = ['stream_context' => stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]])]; //lsl
-} else {
-    $http = 'http://';
 }
 
-$endpoint = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2';
+$endpoint = System::getServerMainPath() . '/services/wsdl2';
 $client = new SoapClient( $endpoint, $streamContext );
 
 $user = $sWS_USER;

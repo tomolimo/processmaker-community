@@ -870,5 +870,23 @@ class AppFolder extends BaseAppFolder
         $oCriteria->add( AppFolderPeer::FOLDER_UID, $FolderUid );
         AppFolderPeer::doDelete( $oCriteria );
     }
+
+    /**
+     * This function will create a folder related to the input document
+     *
+     * @param string $docUid
+     * @param string $appUid
+     *
+     * @return string
+     */
+    public function createFolderFromInputDoc($docUid, $appUid)
+    {
+        $inputDocument = new InputDocument();
+        $inputDocumentData = $inputDocument->load($docUid);
+        $folder = $this->createFromPath($inputDocumentData["INP_DOC_DESTINATION_PATH"], $appUid);
+
+        return $folder;
+    }
+
 }
 

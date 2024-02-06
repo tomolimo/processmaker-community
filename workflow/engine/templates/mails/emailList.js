@@ -33,19 +33,39 @@ Ext.onReady(function(){
           '<span> {APP_PRO_TITLE}</span>',
       '</div></tpl>'
     );
-
     var columnRenderer = function(data, metadata, record, rowIndex,columnIndex, store) {
-    var new_text = metadata.style.split(';');
-    var style = '';
-    for (var i = 0; i < new_text.length -1 ; i++) {
-      var chain = new_text[i] +";";
-      if (chain.indexOf('width') == -1) {
-        style = style + chain;
-      }
-    }
-    metadata.attr = 'ext:qtip="' + data + '" style="'+ style +' white-space: normal; "';
-    return data;
-  };
+        if(metadata.id == PMExt.emailConst.taskColumn.name){
+            if((PMExt.emailConst.appMsgTypeWithoutTask.includes(record.data.APP_MSG_TYPE)) || (PMExt.emailConst.appMsgTypeWithConditionalTask.includes(record.data.APP_MSG_TYPE) && record.data.DEL_INDEX == 0)){
+                data = PMExt.emailConst.taskColumn.defaultValue;
+            }
+        }
+        if(metadata.id == PMExt.emailConst.caseColumn.name){
+            if(PMExt.emailConst.appMsgTypeWithoutCase.includes(record.data.APP_MSG_TYPE)){
+                data = PMExt.emailConst.caseColumn.defaultValue;
+            }
+        }
+        if(metadata.id == PMExt.emailConst.processColumn.name){
+            if(PMExt.emailConst.appMsgTypeWithoutProcess.includes(record.data.APP_MSG_TYPE)){
+                data = PMExt.emailConst.processColumn.defaultValue;
+            }
+        }
+        if(metadata.id == PMExt.emailConst.numberColumn.name){
+            if(PMExt.emailConst.appMsgTypeWithoutNumber.includes(record.data.APP_MSG_TYPE)){
+                data = PMExt.emailConst.numberColumn.defaultValue;
+            }
+        }
+        var new_text = metadata.style.split(';');
+        var style = '';
+        for (var i = 0; i < new_text.length -1 ; i++) {
+          var chain = new_text[i] +";";
+          if (chain.indexOf('width') == -1) {
+            style = style + chain;
+          }
+        }
+        metadata.attr = 'ext:qtip="' + data + '" style="'+ style +' white-space: normal; "';
+
+        return PMExt.escapeHtml(data);
+    };
 
     var dateFrom = new Ext.form.DateField({
         id:'dateFrom',

@@ -452,7 +452,17 @@ class AutowirePass extends AbstractRecursivePass
 
     private function createTypeNotFoundMessage(TypedReference $reference, $label)
     {
-        if (!$r = $this->container->getReflectionClass($type = $reference->getType(), false)) {
+        $trackResources = $this->container->isTrackingResources();
+        $this->container->setResourceTracking(false);
+        try {
+            if ($r = $this->container->getReflectionClass($type = $reference->getType(), false)) {
+                $alternatives = $this->createTypeAlternatives($reference);
+            }
+        } finally {
+            $this->container->setResourceTracking($trackResources);
+        }
+
+        if (!$r) {
             // either $type does not exist or a parent class does not exist
             try {
                 $resource = new ClassExistenceResource($type, false);
@@ -465,7 +475,6 @@ class AutowirePass extends AbstractRecursivePass
 
             $message = sprintf('has type "%s" but this class %s.', $type, $parentMsg ? sprintf('is missing a parent class (%s)', $parentMsg) : 'was not found');
         } else {
-            $alternatives = $this->createTypeAlternatives($reference);
             $message = $this->container->has($type) ? 'this service is abstract' : 'no such service exists';
             $message = sprintf('references %s "%s" but %s.%s', $r->isInterface() ? 'interface' : 'class', $type, $message, $alternatives);
 
@@ -542,7 +551,7 @@ class AutowirePass extends AbstractRecursivePass
         }
 
         $extraContext = $extraContext ? ' '.$extraContext : '';
-        if (1 < $len = count($aliases)) {
+        if (1 < $len = \count($aliases)) {
             $message = sprintf('Try changing the type-hint%s to one of its parents: ', $extraContext);
             for ($i = 0, --$len; $i < $len; ++$i) {
                 $message .= sprintf('%s "%s", ', class_exists($aliases[$i], false) ? 'class' : 'interface', $aliases[$i]);

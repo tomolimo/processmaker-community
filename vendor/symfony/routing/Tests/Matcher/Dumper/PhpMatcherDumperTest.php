@@ -36,7 +36,7 @@ class PhpMatcherDumperTest extends TestCase
         parent::setUp();
 
         $this->matcherClass = uniqid('ProjectUrlMatcher');
-        $this->dumpPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'php_matcher.'.$this->matcherClass.'.php';
+        $this->dumpPath = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'php_matcher.'.$this->matcherClass.'.php';
     }
 
     protected function tearDown()
@@ -430,9 +430,6 @@ class PhpMatcherDumperTest extends TestCase
         );
     }
 
-    /**
-     * @param $dumper
-     */
     private function generateDumpedMatcher(RouteCollection $collection, $redirectableStub = false)
     {
         $options = array('class' => $this->matcherClass);

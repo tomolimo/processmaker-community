@@ -38,31 +38,30 @@ class MSSQLDatabaseInfo extends DatabaseInfo
     protected function initTables()
     {
         include_once 'creole/drivers/mssql/metadata/MSSQLTableInfo.php';
-        
         $dsn = $this->conn->getDSN();
-        
-
+        $sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> 'dtproperties'";
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_query(
-                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> 'dtproperties'",
-                $this->conn->getResource()
-            );
+            $result = sqlsrv_query($sql, $this->conn->getResource());
+            if (!$result) {
+                throw new SQLException("Could not list tables", print_r(sqlsrv_errors(), true));
+            }
+            while ($row = sqlsrv_fetch_array($result)) {
+                $this->tables[strtoupper($row[0])] = new MSSQLTableInfo($this, $row[0]);
+            }
         } else {
             if (!@mssql_select_db($this->dbname, $this->conn->getResource())) {
                 throw new SQLException('No database selected');
             }
-            $result = mssql_query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> 'dtproperties'", $this->conn->getResource());
-        }
-
-        if (!$result) {
-            throw new SQLException("Could not list tables", mssql_get_last_message());
-        }
-        
-        while ($row = mssql_fetch_row($result)) {
-            $this->tables[strtoupper($row[0])] = new MSSQLTableInfo($this, $row[0]);
+            $result = mssql_query($sql, $this->conn->getResource());
+            if (!$result) {
+                throw new SQLException("Could not list tables", mssql_get_last_message());
+            }
+            while ($row = mssql_fetch_row($result)) {
+                $this->tables[strtoupper($row[0])] = new MSSQLTableInfo($this, $row[0]);
+            }
         }
     }
-    
+
     /**
      *
      * @return void

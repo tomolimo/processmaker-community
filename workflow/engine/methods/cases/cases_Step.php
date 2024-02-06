@@ -444,7 +444,8 @@ try {
                     }
                     //END: If there is a Break Step registered from Plugin
 
-                    $sFilenameOriginal = $sFilename = preg_replace('[^A-Za-z0-9_]', '_', G::replaceDataField($aOD['OUT_DOC_FILENAME'], $Fields['APP_DATA']));
+                    $outDocFile = replacePrefixes($aOD['OUT_DOC_FILENAME']);
+                    $sFilenameOriginal = $sFilename = preg_replace('[^A-Za-z0-9_]', '_', G::replaceDataField($outDocFile, $Fields['APP_DATA']));
 
                     //Get the Custom Folder ID (create if necessary)
                     $oFolder = new AppFolder();

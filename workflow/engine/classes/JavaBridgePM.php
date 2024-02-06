@@ -1,5 +1,7 @@
 <?php
 
+use ProcessMaker\Core\System;
+
 if (! defined( 'JAVA_BRIDGE_PATH' )) {
     define( 'JAVA_BRIDGE_PATH', 'JavaBridgePM' );
 }
@@ -9,11 +11,6 @@ if (! defined( 'JAVA_BRIDGE_PORT' )) {
 if (! defined( 'JAVA_BRIDGE_HOST' )) {
     define( 'JAVA_BRIDGE_HOST', '127.0.0.1' );
 }
-
-/**
- *
- * @package workflow.engine.classes
- */
 
 class JavaBridgePM
 {
@@ -125,7 +122,7 @@ class JavaBridgePM
         $template->assign( 'heightDetail', count( $xmlFields ) * 15 + 20 );
         $template->assign( 'PAGE_NUMBER', '{PAGE_NUMBER}' );
 
-        $logoReporte = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/images/processmaker.logo.jpg';
+        $logoReporte = System::getServerProtocolHost() . '/images/processmaker.logo.jpg';
         $template->assign( 'logoReporte', $logoReporte );
 
         foreach ($xmlFields as $key => $val) {

@@ -1,43 +1,12 @@
 <?php
 
 /**
- * class.dbtable.php
- *
- * @package gulliver.system
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
-
-/**
  * i18n_PO
- * This class build biggers PO files without size limit and this not use much memory that the allowed
- *
- * @package gulliver.system
- * @author Erik Amaru Ortiz <erik@colosa.com>
- * date Aug 31th, 2010
- * @copyright (C) 2002 by Colosa Development Team.
+ * This class build biggers PO files without size limit and this not use much 
+ * memory that the allowed.
  */
 class i18n_PO
 {
-
     private $_file = null;
     private $_string = '';
     private $_meta;
@@ -55,11 +24,22 @@ class i18n_PO
     public $flags;
     public $previousUntranslatedStrings;
 
+    /**
+     * Constructor.
+     * 
+     * @param string $file
+     */
     public function __construct($file)
     {
         $this->file = $file;
     }
 
+    /**
+     * Prepares the construction of the .po file.
+     * 
+     * @return boolean|undefined
+     * @throws Exception
+     */
     public function buildInit()
     {
         $this->_fp = fopen($this->file, 'w');
@@ -82,6 +62,11 @@ class i18n_PO
         $this->_editingHeader = true;
     }
 
+    /**
+     * Start reading the .po file.
+     * 
+     * @throws Exception
+     */
     public function readInit()
     {
         $this->_fp = fopen($this->file, 'r');
@@ -90,17 +75,23 @@ class i18n_PO
             throw new Exception('Could\'t open ' . $this->file . ' file');
         }
         //skipping comments
-        $this->skipCommets();
+        $this->skipComments();
         //deaing headers
         $this->readHeaders();
 
-        $this->translatorComments = Array();
-        $this->extractedComments = Array();
-        $this->references = Array();
-        $this->flags = Array();
-        $this->previousUntranslatedStrings = Array();
+        $this->translatorComments = [];
+        $this->extractedComments = [];
+        $this->references = [];
+        $this->flags = [];
+        $this->previousUntranslatedStrings = [];
     }
 
+    /**
+     * Add header information.
+     * 
+     * @param string $id
+     * @param string $value
+     */
     public function addHeader($id, $value)
     {
         if ($this->_editingHeader) {
@@ -109,6 +100,11 @@ class i18n_PO
         }
     }
 
+    /**
+     * Add a translator comment.
+     * 
+     * @param string $str
+     */
     public function addTranslatorComment($str)
     {
         $this->headerStroke();
@@ -116,6 +112,11 @@ class i18n_PO
         $this->_writeLine($comment);
     }
 
+    /**
+     * Add a extracted comment.
+     * 
+     * @param string $str
+     */
     public function addExtractedComment($str)
     {
         $this->headerStroke();
@@ -123,6 +124,11 @@ class i18n_PO
         $this->_writeLine($comment);
     }
 
+    /**
+     * Add a reference comment.
+     * 
+     * @param string $str
+     */
     public function addReference($str)
     {
         $this->headerStroke();
@@ -130,6 +136,11 @@ class i18n_PO
         $this->_writeLine($reference);
     }
 
+    /**
+     * Add a flag comment.
+     * 
+     * @param string $str
+     */
     public function addFlag($str)
     {
         $this->headerStroke();
@@ -137,6 +148,11 @@ class i18n_PO
         $this->_writeLine($flag);
     }
 
+    /**
+     * Add previous untranslated string.
+     * 
+     * @param string $str
+     */
     public function addPreviousUntranslatedString($str)
     {
         $this->headerStroke();
@@ -144,6 +160,12 @@ class i18n_PO
         $this->_writeLine($str);
     }
 
+    /**
+     * Add a translation.
+     * 
+     * @param string $msgid
+     * @param string $msgstr
+     */
     public function addTranslation($msgid, $msgstr)
     {
         $this->headerStroke();
@@ -152,22 +174,35 @@ class i18n_PO
         $this->_writeLine('');
     }
 
+    /**
+     * Write line into file.
+     * 
+     * @param string $str
+     */
     public function _writeLine($str)
     {
         $this->_write($str . "\n");
     }
 
+    /**
+     * Write into file.
+     * 
+     * @param string $str
+     */
     public function _write($str)
     {
         fwrite($this->_fp, $str);
     }
 
+    /**
+     * Prepare string for add to file.
+     * 
+     * @param string $string
+     * @param boolean $reverse
+     * @return string
+     */
     public function prepare($string, $reverse = false)
     {
-        //$string = str_replace('\"', '"', $string);
-        //$string = stripslashes($string);
-
-
         if ($reverse) {
             $smap = array('"', "\n", "\t", "\r");
             $rmap = array('\"', '\\n"' . "\n" . '"', '\\t', '\\r');
@@ -180,19 +215,24 @@ class i18n_PO
         }
     }
 
+    /**
+     * Add a header stroke.
+     */
     public function headerStroke()
     {
         if ($this->_editingHeader) {
             $this->_editingHeader = false;
             $this->_writeLine('');
-
         }
     }
-
     /**
      * read funtions *
      */
-    private function skipCommets()
+
+    /**
+     * Skip comments
+     */
+    private function skipComments()
     {
         $this->_fileComments = '';
         do {
@@ -200,10 +240,14 @@ class i18n_PO
             $line = fgets($this->_fp);
             $this->_fileComments .= $line;
         } while ((substr($line, 0, 1) == '#' || trim($line) == '') && !feof($this->_fp));
-
         fseek($this->_fp, $lastPos);
     }
 
+    /**
+     * Read headers information from .po file.
+     * 
+     * @throws Exception
+     */
     private function readHeaders()
     {
         $this->flagEndHeaders = false;
@@ -283,19 +327,30 @@ class i18n_PO
         }
     }
 
+    /**
+     * Get headers information.
+     * 
+     * @return array
+     */
     public function getHeaders()
     {
         return $this->_meta;
     }
 
+    /**
+     * Get translations.
+     * 
+     * @return array|boolean
+     * @throws Exception
+     */
     public function getTranslation()
     {
 
         $flagReadingComments = true;
-        $this->translatorComments = Array();
-        $this->extractedComments = Array();
-        $this->references = Array();
-        $this->flags = Array();
+        $this->translatorComments = [];
+        $this->extractedComments = [];
+        $this->references = [];
+        $this->flags = [];
 
         //getting the new line
         while ($flagReadingComments && !$this->flagError) {
@@ -388,15 +443,15 @@ class i18n_PO
             preg_match('/^"(.*)"\s*/s', $this->_fileLine, $match);
         } while (sizeof($match) == 2);
 
-        /* g::pr($this->translatorComments);
-          g::pr($this->references);
-          g::pr($match);
-          die; */
-
-        return Array('msgid' => trim($msgid), 'msgstr' => trim($msgstr));
+        return [
+            'msgid' => trim($msgid),
+            'msgstr' => trim($msgstr)
+        ];
     }
 
-    //garbage
+    /**
+     * Destructor.
+     */
     public function __destruct()
     {
         if ($this->_fp) {
@@ -404,4 +459,3 @@ class i18n_PO
         }
     }
 }
-

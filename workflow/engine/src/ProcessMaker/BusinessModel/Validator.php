@@ -1,5 +1,9 @@
 <?php
+
 namespace ProcessMaker\BusinessModel;
+
+use Exception;
+use G;
 
 /**
  * Validator fields
@@ -13,8 +17,8 @@ class Validator
 {
     /**
      * Validate dep_uid
-     * @var string $dep_uid. Uid for Departament
-     * @var string $nameField. Name of field for message
+     * @var string $dep_uid . Uid for Departament
+     * @var string $nameField . Name of field for message
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -26,19 +30,19 @@ class Validator
     {
         $dep_uid = trim($dep_uid);
         if ($dep_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField, ''))));
         }
         $oDepartment = new \Department();
         if (!($oDepartment->existsDepartment($dep_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField,$dep_uid))));
+            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField, $dep_uid))));
         }
         return $dep_uid;
     }
 
     /**
      * Validate dep_status
-     * @var string $dep_uid. Uid for Departament
-     * @var string $nameField. Name of field for message
+     * @var string $dep_uid . Uid for Departament
+     * @var string $nameField . Name of field for message
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -51,7 +55,7 @@ class Validator
         $dep_status = trim($dep_status);
         $values = array('ACTIVE', 'INACTIVE');
         if (!in_array($dep_status, $values)) {
-            throw (new \Exception(\G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array('dep_status',$dep_status))));
+            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array('dep_status', $dep_status))));
         }
         return $dep_status;
     }
@@ -59,7 +63,7 @@ class Validator
     /**
      * Validate usr_uid
      *
-     * @param string $usr_uid, Uid for user
+     * @param string $usr_uid , Uid for user
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -72,11 +76,11 @@ class Validator
     {
         $usr_uid = trim($usr_uid);
         if ($usr_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField, ''))));
         }
         $oUsers = new \Users();
         if (!($oUsers->userExists($usr_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField,$usr_uid))));
+            throw (new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField, $usr_uid))));
         }
         return $usr_uid;
     }
@@ -84,7 +88,7 @@ class Validator
     /**
      * Validate app_uid
      *
-     * @param string $app_uid, Uid for application
+     * @param string $app_uid , Uid for application
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -97,11 +101,11 @@ class Validator
     {
         $app_uid = trim($app_uid);
         if ($app_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField, ''))));
         }
         $oApplication = new \Application();
         if (!($oApplication->exists($app_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField,$app_uid))));
+            throw (new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField, $app_uid))));
         }
         return $app_uid;
     }
@@ -109,7 +113,7 @@ class Validator
     /**
      * Validate app_uid
      *
-     * @param string $tri_uid, Uid for trigger
+     * @param string $tri_uid , Uid for trigger
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -122,11 +126,11 @@ class Validator
     {
         $tri_uid = trim($tri_uid);
         if ($tri_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField, ''))));
         }
         $oTriggers = new \Triggers();
         if (!($oTriggers->TriggerExists($tri_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField,$tri_uid))));
+            throw (new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField, $tri_uid))));
         }
         return $tri_uid;
     }
@@ -134,7 +138,7 @@ class Validator
     /**
      * Validate pro_uid
      *
-     * @param string $pro_uid, Uid for process
+     * @param string $pro_uid , Uid for process
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -147,11 +151,11 @@ class Validator
     {
         $pro_uid = trim($pro_uid);
         if ($pro_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField, ''))));
         }
         $oProcess = new \Process();
         if (!($oProcess->exists($pro_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField,$pro_uid))));
+            throw (new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField, $pro_uid))));
         }
         return $pro_uid;
     }
@@ -159,7 +163,7 @@ class Validator
     /**
      * Validate cat_uid
      *
-     * @param string $cat_uid, Uid for category
+     * @param string $cat_uid , Uid for category
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -172,11 +176,11 @@ class Validator
     {
         $cat_uid = trim($cat_uid);
         if ($cat_uid == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField,''))));
+            throw (new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField, ''))));
         }
         $oCategory = new \ProcessCategory();
         if (!($oCategory->exists($cat_uid))) {
-            throw (new \Exception(\G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField,$cat_uid))));
+            throw (new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField, $cat_uid))));
         }
         return $cat_uid;
     }
@@ -184,7 +188,7 @@ class Validator
     /**
      * Validate date
      *
-     * @param string $date, Date for validate
+     * @param string $date , Date for validate
      * @param string $nameField . Name of field for message
      *
      * @access public
@@ -197,18 +201,18 @@ class Validator
     {
         $date = trim($date);
         if ($date == '') {
-            throw (new \Exception(\G::LoadTranslation("ID_DATE_NOT_VALID", array('',$format))));
+            throw (new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", array('', $format))));
         }
         $d = \DateTime::createFromFormat($format, $date);
         if (!($d && $d->format($format) == $date)) {
-            throw (new \Exception(\G::LoadTranslation("ID_DATE_NOT_VALID", array($date,$format))));
+            throw (new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", array($date, $format))));
         }
         return $date;
     }
 
     /**
      * Validate is array
-     * @var array $field. Field type array
+     * @var array $field . Field type array
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -219,13 +223,13 @@ class Validator
     static public function isArray($field, $nameField)
     {
         if (!is_array($field)) {
-            throw (new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_ARRAY", array($nameField))));
+            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_ARRAY", array($nameField))));
         }
     }
 
     /**
      * Validate is string
-     * @var array $field. Field type string
+     * @var array $field . Field type string
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -236,13 +240,13 @@ class Validator
     static public function isString($field, $nameField)
     {
         if (!is_string($field)) {
-            throw (new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_STRING", array($nameField))));
+            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_STRING", array($nameField))));
         }
     }
 
     /**
      * Validate is integer
-     * @var array $field. Field type integer
+     * @var array $field . Field type integer
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -253,13 +257,13 @@ class Validator
     static public function isInteger($field, $nameField)
     {
         if (!is_integer($field)) {
-            throw (new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_INTEGER", array($nameField))));
+            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_INTEGER", array($nameField))));
         }
     }
 
     /**
      * Validate is boolean
-     * @var boolean $field. Field type boolean
+     * @var boolean $field . Field type boolean
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -270,13 +274,13 @@ class Validator
     static public function isBoolean($field, $nameField)
     {
         if (!is_bool($field)) {
-            throw (new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_BOOLEAN", array($nameField))));
+            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_BOOLEAN", array($nameField))));
         }
     }
 
     /**
      * Validate is boolean
-     * @var boolean $field. Field type boolean
+     * @var boolean $field . Field type boolean
      *
      * @access public
      * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
@@ -287,14 +291,28 @@ class Validator
     static public function isNotEmpty($field, $nameField)
     {
         if (empty($field)) {
-            throw (new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_IS_EMPTY", array($nameField))));
+            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_IS_EMPTY", array($nameField))));
+        }
+    }
+
+    /**
+     * Validate a variable name
+     * @param $nameField
+     * @throws \Exception
+     * @return void
+     */
+    static public function isValidVariableName($nameField)
+    {
+        $resp = preg_match(config('constants.validation.pmVariable.regEx'), $nameField, $matches);
+        if (isset($resp) && $resp === 0) {
+            throw (new Exception(G::LoadTranslation("ID_INVALID_NAME", array($nameField))));
         }
     }
 
     /**
      * Verify if data is array
      *
-     * @param string $data                 Data
+     * @param string $data Data
      * @param string $dataNameForException Data name for the exception
      *
      * return void Throw exception if data is not array
@@ -303,9 +321,9 @@ class Validator
     {
         try {
             if (!is_array($data)) {
-                throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_THIS_MUST_BE_ARRAY", array($dataNameForException)));
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_THIS_MUST_BE_ARRAY", array($dataNameForException)));
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -313,7 +331,7 @@ class Validator
     /**
      * Verify if data is empty
      *
-     * @param string $data                 Data
+     * @param string $data Data
      * @param string $dataNameForException Data name for the exception
      *
      * return void Throw exception if data is empty
@@ -322,9 +340,9 @@ class Validator
     {
         try {
             if (empty($data)) {
-                throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_CAN_NOT_BE_EMPTY", array($dataNameForException)));
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_CAN_NOT_BE_EMPTY", array($dataNameForException)));
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -332,7 +350,7 @@ class Validator
     /**
      * Validate data by ISO 8601 format
      *
-     * @param mixed $data  Data
+     * @param mixed $data Data
      * @param mixed $field Fields
      *
      * @return void Throw exception if data has an invalid value
@@ -352,7 +370,7 @@ class Validator
             switch (gettype($data)) {
                 case 'string':
                     if (trim($data) != '' && !preg_match('/^' . $regexpIso8601 . '$/', $data)) {
-                        throw new \Exception(\G::LoadTranslation('ID_ISO8601_INVALID_FORMAT', [(!is_null($field) && is_string($field))? $field : $data]));
+                        throw new Exception(G::LoadTranslation('ID_ISO8601_INVALID_FORMAT', [(!is_null($field) && is_string($field)) ? $field : $data]));
                     }
                     break;
                 case 'array':
@@ -360,17 +378,17 @@ class Validator
                         foreach ($field as $value) {
                             $fieldName = $value;
 
-                            $fieldName = (isset($data[strtoupper($fieldName)]))? strtoupper($fieldName) : $fieldName;
-                            $fieldName = (isset($data[strtolower($fieldName)]))? strtolower($fieldName) : $fieldName;
+                            $fieldName = (isset($data[strtoupper($fieldName)])) ? strtoupper($fieldName) : $fieldName;
+                            $fieldName = (isset($data[strtolower($fieldName)])) ? strtolower($fieldName) : $fieldName;
 
                             if (isset($data[$fieldName]) && trim($data[$fieldName]) != '' && !preg_match('/^' . $regexpIso8601 . '$/', $data[$fieldName])) {
-                                throw new \Exception(\G::LoadTranslation('ID_ISO8601_INVALID_FORMAT', [$fieldName]));
+                                throw new Exception(G::LoadTranslation('ID_ISO8601_INVALID_FORMAT', [$fieldName]));
                             }
                         }
                     }
                     break;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -378,7 +396,7 @@ class Validator
     /**
      * Validate pager data
      *
-     * @param array $arrayData                     Data
+     * @param array $arrayData Data
      * @param array $arrayVariableNameForException Variable name for exception
      *
      * @return mixed Returns TRUE when pager data is valid, Message Error otherwise
@@ -387,7 +405,7 @@ class Validator
     {
         try {
             foreach ($arrayPagerData as $key => $value) {
-                $nameForException = (isset($arrayVariableNameForException[$key]))?
+                $nameForException = (isset($arrayVariableNameForException[$key])) ?
                     $arrayVariableNameForException[$key] : $key;
 
                 if (!is_null($value) &&
@@ -403,7 +421,7 @@ class Validator
 
             //Return
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }

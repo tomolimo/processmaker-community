@@ -4,50 +4,56 @@ namespace ProcessMaker\BusinessModel;
 
 use AppCacheView;
 use AppCacheViewPeer;
-use Applications;
-use ApplicationPeer;
-use AppSolr;
-use AppDelegation;
-use AppDelegationPeer;
 use AppDelay;
 use AppDelayPeer;
+use AppDelegation;
+use AppDelegationPeer;
 use AppDocument;
 use AppDocumentPeer;
 use AppHistoryPeer;
-use AppThreadPeer;
+use ApplicationPeer;
+use Applications;
 use AppNotesPeer;
+use AppSolr;
 use BasePeer;
+use Bootstrap;
 use BpmnEngineServicesSearchIndex;
 use Cases as ClassesCases;
 use CasesPeer;
-use Criteria;
 use Configurations;
+use CreoleTypes;
+use Criteria;
 use DBAdapter;
-use Exception;
 use EntitySolrRequestData;
+use Exception;
 use G;
 use Groups;
 use GroupUserPeer;
+use InputDocument;
 use InvalidIndexSearchTextException;
 use ListParticipatedLast;
 use PmDynaform;
+use PmTable;
+use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
 use ProcessMaker\BusinessModel\Task as BmTask;
 use ProcessMaker\BusinessModel\User as BmUser;
-use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
 use ProcessMaker\Core\System;
+use ProcessMaker\Exception\UploadException;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services\OAuth2\Server;
+use ProcessMaker\Util\DateTime as UtilDateTime;
+use ProcessMaker\Validation\ExceptionRestApi;
+use ProcessMaker\Validation\Validator as FileValidator;
+
+use ProcessPeer;
 use ProcessUser;
 use ProcessUserPeer;
-use ProcessPeer;
 use RBAC;
 use ResultSet;
-use RoutePeer;
 use SubApplication;
-use SubProcessPeer;
 use Task as ModelTask;
-use Tasks as ClassesTasks;
 use TaskPeer;
+use Tasks as ClassesTasks;
 use TaskUserPeer;
 use Users as ModelUsers;
 use UsersPeer;
@@ -57,6 +63,10 @@ class Cases
 {
     private $formatFieldNameInUppercase = true;
     private $messageResponse = [];
+    private $solr = null;
+    private $solrEnv = null;
+    const MB_IN_KB = 1024;
+    const UNIT_MB = 'MB';
 
     /**
      * Set the format of the fields name (uppercase, lowercase)
@@ -231,26 +241,11 @@ class Cases
     public function getListCounters($userUid, array $arrayType)
     {
         try {
-            $solrEnabled = false;
-            $solrConf = System::solrEnv();
-
-            if ($solrConf !== false) {
-                $ApplicationSolrIndex = new AppSolr(
-                    $solrConf['solr_enabled'],
-                    $solrConf['solr_host'],
-                    $solrConf['solr_instance']
-                );
-
-                if ($ApplicationSolrIndex->isSolrEnabled() && $solrConf['solr_enabled'] == true) {
-                    $solrEnabled = true;
-                }
-            }
-
             $appCacheView = new AppCacheView();
 
-            if ($solrEnabled) {
+            if ($this->isSolrEnabled()) {
                 $arrayListCounter = array_merge(
-                    $ApplicationSolrIndex->getCasesCount($userUid),
+                    $this->solr->getCasesCount($userUid),
                     $appCacheView->getAllCounters(['completed', 'cancelled'], $userUid)
                 );
             } else {
@@ -417,6 +412,28 @@ class Cases
     }
 
     /**
+     * Verify if Solr is Enabled
+     *
+     * @return bool
+     */
+    private function isSolrEnabled()
+    {
+        $solrEnabled = false;
+        $this->solrEnv = !empty($this->solrEnv) ? $this->solrEnv : System::solrEnv();
+        if ($this->solrEnv !== false) {
+            $this->solr = !empty($this->solr) ? $this->solr : new AppSolr(
+                $this->solrEnv['solr_enabled'],
+                $this->solrEnv['solr_host'],
+                $this->solrEnv['solr_instance']
+            );
+            if ($this->solr->isSolrEnabled() && $this->solrEnv["solr_enabled"] == true) {
+                $solrEnabled = true;
+            }
+        }
+        return $solrEnabled;
+    }
+
+    /**
      * Get data of a Case
      *
      * @param string $applicationUid Unique id of Case
@@ -428,21 +445,11 @@ class Cases
     public function getCaseInfo($applicationUid, $userUid)
     {
         try {
-            $solrEnabled = 0;
-            if (($solrEnv = System::solrEnv()) !== false) {
-                $appSolr = new AppSolr(
-                    $solrEnv["solr_enabled"],
-                    $solrEnv["solr_host"],
-                    $solrEnv["solr_instance"]
-                );
-                if ($appSolr->isSolrEnabled() && $solrEnv["solr_enabled"] == true) {
-                    //Check if there are missing records to reindex and reindex them
-                    $appSolr->synchronizePendingApplications();
-                    $solrEnabled = 1;
-                }
-            }
-            if ($solrEnabled == 1) {
+            if ($this->isSolrEnabled()) {
                 try {
+                    //Check if there are missing records to reindex and reindex them
+                    $this->solr->synchronizePendingApplications();
+
                     $arrayData = array();
                     $delegationIndexes = array();
                     $columsToInclude = array("APP_UID");
@@ -458,7 +465,7 @@ class Cases
                     $columsToIncludeFinal = array_merge($columsToInclude, $delegationIndexes);
                     $solrRequestData = EntitySolrRequestData::createForRequestPagination(
                         array(
-                            "workspace" => $solrEnv["solr_instance"],
+                            "workspace" => $this->solrEnv["solr_instance"],
                             "startAfter" => 0,
                             "pageSize" => 1000,
                             "searchText" => $solrSearchText,
@@ -470,7 +477,7 @@ class Cases
                         )
                     );
                     //Use search index to return list of cases
-                    $searchIndex = new BpmnEngineServicesSearchIndex($appSolr->isSolrEnabled(), $solrEnv["solr_host"]);
+                    $searchIndex = new BpmnEngineServicesSearchIndex($this->solr->isSolrEnabled(), $this->solrEnv["solr_host"]);
                     //Execute query
                     $solrQueryResult = $searchIndex->getDataTablePaginatedList($solrRequestData);
                     //Get the missing data from database
@@ -478,7 +485,7 @@ class Cases
                     foreach ($solrQueryResult->aaData as $i => $data) {
                         $arrayApplicationUid[] = $data["APP_UID"];
                     }
-                    $aaappsDBData = $appSolr->getListApplicationDelegationData($arrayApplicationUid);
+                    $aaappsDBData = $this->solr->getListApplicationDelegationData($arrayApplicationUid);
                     foreach ($solrQueryResult->aaData as $i => $data) {
                         //Initialize array
                         $delIndexes = array(); //Store all the delegation indexes
@@ -507,7 +514,7 @@ class Cases
                             $aRow["APP_UID"] = $data["APP_UID"];
                             //Get delegation data from DB
                             //Filter data from db
-                            $indexes = $appSolr->aaSearchRecords($aaappsDBData, array(
+                            $indexes = $this->solr->aaSearchRecords($aaappsDBData, array(
                                 "APP_UID" => $applicationUid,
                                 "DEL_INDEX" => $delIndex
                             ));
@@ -651,6 +658,31 @@ class Cases
                 //Return
                 return $oResponse;
             }
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Get data of a sub-process case
+     *
+     * @param string $applicationUid Unique Case Id
+     * @param string $userUid Unique User Id
+     * 
+     * @return array Return an array with information of Cases
+     * @throws Exception
+     */
+    public function getCaseInfoSubProcess($applicationUid, $userUid)
+    {
+
+        try {
+            $response = [];
+            $subApplication = new SubApplication();
+            $data = $subApplication->loadByAppUidParent($applicationUid);
+            foreach ($data as $item) {
+                $response[] = $this->getCaseInfo($item['APP_UID'], $userUid);
+            }
+            return $response;
         } catch (Exception $e) {
             throw $e;
         }
@@ -2098,6 +2130,11 @@ class Cases
      *
      * @param string $applicationUid Unique id of Case
      *
+     * @see workflow/engine/src/ProcessMaker/Services/Api/Cases.php
+     * @see workflow/engine/src/ProcessMaker/Services/Api/Light.php
+     *
+     * @link https://wiki.processmaker.com/3.3/REST_API_Cases/Cases#Get_Case.27s_Tasks:_GET_.2Fcases.2F.7Bapp_uid.7D.2Ftasks
+     *
      * @return array Return an array with all Tasks of Case
      * @throws Exception
      */
@@ -2121,33 +2158,20 @@ class Cases
 
             $taskUid = "";
 
-            //Get data
-            //SQL
-            $delimiter = DBAdapter::getStringDelimiter();
+            //Obtain the list of tasks and their respectives users assigned to each one for an specific case
+            $case = new ClassesCases();
+            $rsTasks = $case->getTasksInfoForACase($applicationUid, $processUid);
 
-            $criteria = new Criteria("workflow");
+            while ($rsTasks->next()) {
+                $row = $rsTasks->getRow();
 
-            $criteria->addSelectColumn(TaskPeer::TAS_UID);
-            $criteria->addSelectColumn(TaskPeer::TAS_TITLE);
-            $criteria->addSelectColumn(TaskPeer::TAS_DESCRIPTION);
-            $criteria->addSelectColumn(TaskPeer::TAS_START);
-            $criteria->addSelectColumn(TaskPeer::TAS_TYPE);
-            $criteria->addSelectColumn(TaskPeer::TAS_DERIVATION);
-            $criteria->addSelectColumn(TaskPeer::TAS_ASSIGN_TYPE);
-            $criteria->addSelectColumn(UsersPeer::USR_UID);
-            $criteria->addSelectColumn(UsersPeer::USR_USERNAME);
-            $criteria->addSelectColumn(UsersPeer::USR_FIRSTNAME);
-            $criteria->addSelectColumn(UsersPeer::USR_LASTNAME);
-
-            $criteria->addJoin(TaskPeer::TAS_LAST_ASSIGNED, UsersPeer::USR_UID, Criteria::LEFT_JOIN);
-
-            $criteria->add(TaskPeer::PRO_UID, $processUid, Criteria::EQUAL);
-
-            $rsCriteria = TaskPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-            while ($rsCriteria->next()) {
-                $row = $rsCriteria->getRow();
+                //If the task is a multiple task
+                if ($row["TAS_ASSIGN_TYPE"] == 'MULTIPLE_INSTANCE' || $row["TAS_ASSIGN_TYPE"] == 'MULTIPLE_INSTANCE_VALUE_BASED') {
+                    $row["USR_UID"] = "";
+                    $row["USR_USERNAME"] = "";
+                    $row["USR_FIRSTNAME"] = "";
+                    $row["USR_LASTNAME"] = "";
+                }
 
                 //Task
                 if ($row["TAS_TYPE"] == "NORMAL") {
@@ -2159,17 +2183,9 @@ class Cases
                         $row["TAS_TITLE"] = $task->getTasTitle();
                     }
                 } else {
-                    $criteria2 = new Criteria("workflow");
 
-                    $criteria2->addSelectColumn(SubProcessPeer::PRO_UID);
-                    $criteria2->addSelectColumn(TaskPeer::TAS_TITLE);
-                    $criteria2->addSelectColumn(TaskPeer::TAS_DESCRIPTION);
-                    $criteria2->addJoin(SubProcessPeer::TAS_PARENT, TaskPeer::TAS_UID, Criteria::LEFT_JOIN);
-                    $criteria2->add(SubProcessPeer::PRO_PARENT, $processUid);
-                    $criteria2->add(SubProcessPeer::TAS_PARENT, $row["TAS_UID"]);
-
-                    $rsCriteria2 = SubProcessPeer::doSelectRS($criteria2);
-                    $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                    //Get the task information when the task type is different from normal
+                    $rsCriteria2 = $case->getTaskInfoForSubProcess($processUid, $row["TAS_UID"]);
 
                     $rsCriteria2->next();
 
@@ -2185,18 +2201,8 @@ class Cases
                 $routeType = "";
                 $arrayRoute = array();
 
-                $criteria2 = new Criteria("workflow");
-
-                $criteria2->addAsColumn("ROU_NUMBER", RoutePeer::ROU_CASE);
-                $criteria2->addSelectColumn(RoutePeer::ROU_TYPE);
-                $criteria2->addSelectColumn(RoutePeer::ROU_CONDITION);
-                $criteria2->addAsColumn("TAS_UID", RoutePeer::ROU_NEXT_TASK);
-                $criteria2->add(RoutePeer::PRO_UID, $processUid, Criteria::EQUAL);
-                $criteria2->add(RoutePeer::TAS_UID, $row["TAS_UID"], Criteria::EQUAL);
-                $criteria2->addAscendingOrderByColumn("ROU_NUMBER");
-
-                $rsCriteria2 = RoutePeer::doSelectRS($criteria2);
-                $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                //Get the routes of a task
+                $rsCriteria2 = $case->getTaskRoutes($processUid, $row["TAS_UID"]);
 
                 while ($rsCriteria2->next()) {
                     $row2 = $rsCriteria2->getRow();
@@ -2213,25 +2219,7 @@ class Cases
                 //Delegations
                 $arrayAppDelegation = array();
 
-                $criteria2 = new Criteria("workflow");
-
-                $criteria2->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-                $criteria2->addSelectColumn(AppDelegationPeer::DEL_INIT_DATE);
-                $criteria2->addSelectColumn(AppDelegationPeer::DEL_TASK_DUE_DATE);
-                $criteria2->addSelectColumn(AppDelegationPeer::DEL_FINISH_DATE);
-                $criteria2->addSelectColumn(UsersPeer::USR_UID);
-                $criteria2->addSelectColumn(UsersPeer::USR_USERNAME);
-                $criteria2->addSelectColumn(UsersPeer::USR_FIRSTNAME);
-                $criteria2->addSelectColumn(UsersPeer::USR_LASTNAME);
-
-                $criteria2->addJoin(AppDelegationPeer::USR_UID, UsersPeer::USR_UID, Criteria::LEFT_JOIN);
-
-                $criteria2->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
-                $criteria2->add(AppDelegationPeer::TAS_UID, $row["TAS_UID"], Criteria::EQUAL);
-                $criteria2->addAscendingOrderByColumn(AppDelegationPeer::DEL_INDEX);
-
-                $rsCriteria2 = AppDelegationPeer::doSelectRS($criteria2);
-                $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rsCriteria2 = $case->getCaseDelegations($applicationUid, $row["TAS_UID"]);
 
                 while ($rsCriteria2->next()) {
                     $row2 = $rsCriteria2->getRow();
@@ -2262,8 +2250,10 @@ class Cases
 
                     $appDelegationDuration = G::LoadTranslation("ID_NOT_FINISHED");
 
-                    if (!empty($row2["DEL_FINISH_DATE"]) && !empty($row2["DEL_INIT_DATE"])) {
-                        $t = strtotime($row2["DEL_FINISH_DATE"]) - strtotime($row2["DEL_INIT_DATE"]);
+                    $date = empty($row2["DEL_INIT_DATE"]) ? $row2["DEL_DELEGATE_DATE"] : $row2["DEL_INIT_DATE"];
+
+                    if (!empty($row2["DEL_FINISH_DATE"]) && !empty($date)) {
+                        $t = strtotime($row2["DEL_FINISH_DATE"]) - strtotime($date);
 
                         $h = $t * (1 / 60) * (1 / 60);
                         $m = ($h - (int)($h)) * (60 / 1);
@@ -2284,40 +2274,22 @@ class Cases
                         $this->getFieldNameByFormatFieldName("DEL_FINISH_DATE") => $arrayAppDelegationDate["DEL_FINISH_DATE"]["dateFormated"],
                         $this->getFieldNameByFormatFieldName("DEL_DURATION") => $appDelegationDuration,
                         $this->getFieldNameByFormatFieldName("USR_UID") => $row2["USR_UID"],
-                        $this->getFieldNameByFormatFieldName("USR_USERNAME") => $row2["USR_USERNAME"] . "",
-                        $this->getFieldNameByFormatFieldName("USR_FIRSTNAME") => $row2["USR_FIRSTNAME"] . "",
-                        $this->getFieldNameByFormatFieldName("USR_LASTNAME") => $row2["USR_LASTNAME"] . ""
+                        $this->getFieldNameByFormatFieldName("USR_USERNAME") => $row2["USR_USERNAME"],
+                        $this->getFieldNameByFormatFieldName("USR_FIRSTNAME") => $row2["USR_FIRSTNAME"],
+                        $this->getFieldNameByFormatFieldName("USR_LASTNAME") => $row2["USR_LASTNAME"]
                     );
                 }
 
                 //Status
                 $status = "";
 
-                //$criteria2
-                $criteria2 = new Criteria("workflow");
-
-                $criteria2->addAsColumn("CANT", "COUNT(" . AppDelegationPeer::APP_UID . ")");
-                $criteria2->addAsColumn("FINISH", "MIN(" . AppDelegationPeer::DEL_FINISH_DATE . ")");
-                $criteria2->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
-                $criteria2->add(AppDelegationPeer::TAS_UID, $row["TAS_UID"], Criteria::EQUAL);
-
-                $rsCriteria2 = AppDelegationPeer::doSelectRS($criteria2);
-                $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rsCriteria2 = $case->getTotalAndMinDateForACase($applicationUid, $row["TAS_UID"]);
 
                 $rsCriteria2->next();
 
                 $row2 = $rsCriteria2->getRow();
 
-                //$criteria3
-                $criteria3 = new Criteria("workflow");
-
-                $criteria3->addSelectColumn(AppDelegationPeer::DEL_FINISH_DATE);
-                $criteria3->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
-                $criteria3->add(AppDelegationPeer::TAS_UID, $row["TAS_UID"], Criteria::EQUAL);
-                $criteria3->add(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
-
-                $rsCriteria3 = AppDelegationPeer::doSelectRS($criteria3);
-                $rsCriteria3->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rsCriteria3 = $case->getDelegationFinishDate($applicationUid, $row["TAS_UID"]);
 
                 $rsCriteria3->next();
 
@@ -3532,7 +3504,7 @@ class Cases
      * @param string $listPeer , name of the list class
      * @param string $search , the parameter for search in the table
      * @param string $additionalClassName , name of the className of pmtable
-     * @param array $additionalColumns , columns related to the custom cases list
+     * @param array $additionalColumns , columns related to the custom cases list ex: TABLE_NAME.COLUMN_NAME
      *
      * @throws PropelException
      */
@@ -3541,31 +3513,35 @@ class Cases
         $listPeer,
         $search,
         $additionalClassName = '',
-        $additionalColumns = array()
+        $additionalColumns = []
     ) {
-        $oTmpCriteria = '';
+        $tmpCriteria = '';
         //If we have additional tables configured in the custom cases list, prepare the variables for search
         if (count($additionalColumns) > 0) {
             require_once(PATH_DATA_SITE . 'classes' . PATH_SEP . $additionalClassName . '.php');
-            $oNewCriteria = new Criteria("workflow");
-            $oTmpCriteria = $oNewCriteria->getNewCriterion(current($additionalColumns), "%" . $search . "%",
-                Criteria::LIKE);
+
+            $columnPivot = current($additionalColumns);
+            $tableAndColumn = explode(".", $columnPivot);
+            $type = PmTable::getTypeOfColumn($listPeer, $tableAndColumn[0], $tableAndColumn[1]);
+            $tmpCriteria = $this->defineCriteriaByColumnType($type, $columnPivot, $search);
 
             //We prepare the query related to the custom cases list
-            foreach (array_slice($additionalColumns, 1) as $value) {
-                $oTmpCriteria = $oNewCriteria->getNewCriterion($value, "%" . $search . "%",
-                    Criteria::LIKE)->addOr($oTmpCriteria);
+            foreach (array_slice($additionalColumns, 1) as $column) {
+                $tableAndColumn = explode(".", $column);
+                $type = PmTable::getTypeOfColumn($listPeer, $tableAndColumn[0], $tableAndColumn[1]);
+                $tmpCriteria = $this->defineCriteriaByColumnType($type, $column, $search)->addOr($tmpCriteria);
+
             }
         }
 
-        if (!empty($oTmpCriteria)) {
+        if (!empty($tmpCriteria)) {
             $criteria->add(
                 $criteria->getNewCriterion($listPeer::APP_TITLE, '%' . $search . '%', Criteria::LIKE)->addOr(
                     $criteria->getNewCriterion($listPeer::APP_TAS_TITLE, '%' . $search . '%', Criteria::LIKE)->addOr(
                         $criteria->getNewCriterion($listPeer::APP_PRO_TITLE, '%' . $search . '%',
                             Criteria::LIKE)->addOr(
                             $criteria->getNewCriterion($listPeer::APP_NUMBER, $search, Criteria::EQUAL)->addOr(
-                                $oTmpCriteria
+                                $tmpCriteria
                             ))))
             );
         } else {
@@ -3577,6 +3553,58 @@ class Cases
                             $criteria->getNewCriterion($listPeer::APP_NUMBER, $search, Criteria::EQUAL))))
             );
         }
+    }
+
+    /**
+     * Define the criteria according to the column type
+     *
+     * @param string $fieldType
+     * @param string $column
+     * @param string $search
+     *
+     * @return Criteria
+     */
+    private function defineCriteriaByColumnType($fieldType, $column, $search)
+    {
+        $newCriteria = new Criteria("workflow");
+
+        switch ($fieldType) {
+            case CreoleTypes::BOOLEAN:
+                $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::EQUAL);
+                break;
+            case CreoleTypes::BIGINT:
+            case CreoleTypes::INTEGER:
+            case CreoleTypes::SMALLINT:
+            case CreoleTypes::TINYINT:
+                $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::EQUAL);
+                break;
+            case CreoleTypes::REAL:
+            case CreoleTypes::DECIMAL:
+            case CreoleTypes::DOUBLE:
+            case CreoleTypes::FLOAT:
+                $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::LIKE);
+                break;
+            case CreoleTypes::CHAR:
+            case CreoleTypes::LONGVARCHAR:
+            case CreoleTypes::VARCHAR:
+                $criteria = $newCriteria->getNewCriterion($column, "%" . $search . "%", Criteria::LIKE);
+                break;
+            case CreoleTypes::DATE:
+            case CreoleTypes::TIME:
+            case CreoleTypes::TIMESTAMP://DATETIME
+                //@todo use the same constant in other places
+                if (preg_match(UtilDateTime::REGEX_IS_DATE,
+                    $search, $arrayMatch)) {
+                    $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::GREATER_EQUAL);
+                } else {
+                    $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::EQUAL);
+                }
+                break;
+            default:
+                $criteria = $newCriteria->getNewCriterion($column, $search, Criteria::EQUAL);
+        }
+
+        return $criteria;
     }
 
     /**
@@ -3733,5 +3761,143 @@ class Cases
         }
 
         return $isSupervisor;
+    }
+
+    /**
+     * Upload file in the corresponding folder
+     *
+     * @param string $userUid
+     * @param string $appUid
+     * @param string $varName
+     * @param mixed $inpDocUid
+     * @param string $appDocUid
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function uploadFiles($userUid, $appUid, $varName, $inpDocUid = -1, $appDocUid = null)
+    {
+        $response = [];
+        if (isset($_FILES["form"]["name"]) && count($_FILES["form"]["name"]) > 0) {
+            // Get the delIndex related to the case
+            $cases = new ClassesCases();
+            $delIndex = $cases->getCurrentDelegation($appUid, $userUid);
+            // Get information about the user
+            $user = new ModelUsers();
+            $userCreator = $user->loadDetailed($userUid)['USR_FULLNAME'];
+            $i = 0;
+            foreach ($_FILES["form"]["name"] as $fieldIndex => $fieldValue) {
+                if (!is_array($fieldValue)) {
+                    $arrayFileName = [
+                        'name' => $_FILES["form"]["name"][$fieldIndex],
+                        'tmp_name' => $_FILES["form"]["tmp_name"][$fieldIndex],
+                        'error' => $_FILES["form"]["error"][$fieldIndex]
+                    ];
+
+                    // We will to review the validation related to the Input document
+                    $file = [
+                        'filename' => $arrayFileName["name"],
+                        'path' => $arrayFileName["tmp_name"]
+                    ];
+                    $this->canUploadFileRelatedToInput($inpDocUid, $file);
+
+                    // There is no error, the file uploaded with success
+                    if ($arrayFileName["error"] === UPLOAD_ERR_OK) {
+                        $appDocument = new AppDocument();
+                        $objCreated = $appDocument->uploadAppDocument(
+                            $appUid,
+                            $userUid,
+                            $delIndex,
+                            $inpDocUid ,
+                            $arrayFileName,
+                            $varName,
+                            $appDocUid
+                        );
+                        $response[$i] = [
+                            'appDocUid' => $objCreated->getAppDocUid(),
+                            'docVersion' => $objCreated->getDocVersion(),
+                            'appDocFilename' => $objCreated->getAppDocFilename(),
+                            'appDocCreateDate' => $objCreated->getAppDocCreateDate(),
+                            'appDocType' => $objCreated->getAppDocType(),
+                            'appDocIndex' => $objCreated->getAppDocIndex(),
+                            'appDocCreateUser' => $userCreator
+                        ];
+
+                        $i++;
+                    } else {
+                        throw new UploadException($arrayFileName['error']);
+                    }
+                }
+            }
+        } else {
+            throw new Exception(G::LoadTranslation('ID_ERROR_UPLOAD_FILE_CONTACT_ADMINISTRATOR'));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Run the validations related to an Input Document
+     *
+     * @param array $file
+     * @param mixed $inpDocUid
+     *
+     * @return boolean
+     * @throws ExceptionRestApi
+    */
+    private function canUploadFileRelatedToInput($file, $inpDocUid = -1)
+    {
+        if ($inpDocUid !== -1) {
+            $inputDocument = new InputDocument();
+            $inputExist = $inputDocument->InputExists($inpDocUid);
+            if ($inputExist) {
+                $inputProperties = $inputDocument->load($inpDocUid);
+                $inpDocTypeFile = $inputProperties['INP_DOC_TYPE_FILE'];
+                $inpDocMaxFileSize = (int)$inputProperties["INP_DOC_MAX_FILESIZE"];
+                $inpDocMaxFileSizeUnit = $inputProperties["INP_DOC_MAX_FILESIZE_UNIT"];
+
+                $validator = new FileValidator();
+                // Rule: extension
+                $validator->addRule()
+                    ->validate($file, function ($file) use ($inpDocTypeFile) {
+                        $result = G::verifyInputDocExtension($inpDocTypeFile, $file->filename, $file->path);
+
+                        return $result->status === false;
+                    })
+                    ->status(415)
+                    ->message(G::LoadTranslation('ID_UPLOAD_INVALID_DOC_TYPE_FILE', [$inpDocTypeFile]))
+                    ->log(function ($rule) {
+                        Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(),
+                            $rule->getData()->filename);
+                    });
+                // Rule: maximum file size
+                $validator->addRule()
+                    ->validate($file, function ($file) use ($inpDocMaxFileSize, $inpDocMaxFileSizeUnit) {
+                        if ($inpDocMaxFileSize > 0) {
+                            $totalMaxFileSize = $inpDocMaxFileSize * ($inpDocMaxFileSizeUnit == self::UNIT_MB ? self::MB_TO_KB * self::MB_TO_KB : self::MB_TO_KB);
+                            $fileSize = filesize($file->path);
+                            if ($fileSize > $totalMaxFileSize) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    })
+                    ->status(413)
+                    ->message(G::LoadTranslation("ID_UPLOAD_INVALID_DOC_MAX_FILESIZE",
+                        [$inpDocMaxFileSize . $inpDocMaxFileSizeUnit]))
+                    ->log(function ($rule) {
+                        Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(),
+                            $rule->getData()->filename);
+                    });
+                $validator->validate();
+                // We will to review if the validator has some error
+                if ($validator->fails()) {
+                    throw new ExceptionRestApi($validator->getMessage(), $validator->getStatus());
+                }
+            }
+        }
+
+        return true;
     }
 }

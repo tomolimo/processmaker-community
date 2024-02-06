@@ -1,45 +1,6 @@
 <?php
 
-/**
- * class.table.php
- *
- * @package gulliver.system
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
-/**
- *
- *
- *
- *
- *
- *
- * Table class definition
- * Render table
- *
- * @package gulliver.system
- * @author Fernando Ontiveros Lira <fernando@colosa.com>
- * @copyright (C) 2002 by Colosa Development Team.
- *
- */
+use ProcessMaker\Core\System;
 
 class Table
 {
@@ -125,8 +86,8 @@ class Table
     public function SetSource ($stQry = "", $stDefaultOrder = "UID", $stDefaultOrderDir = 'ASC')
     {
         //to fix missing value for variable orderDir, when between pages changes.
-        $url1 = $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . '?';
-        $url2 = strstr( $_SERVER['HTTP_REFERER'] . '?', $_SERVER['HTTP_HOST'] );
+        $url1 = System::getServerHost() . $_SERVER['REQUEST_URI'] . '?';
+        $url2 = strstr($_SERVER['HTTP_REFERER'] . '?', System::getServerHost());
         $url1 = substr( $url1, 0, strpos( $url1, '?' ) );
         $url2 = substr( $url2, 0, strpos( $url2, '?' ) );
         if ($url1 != $url2) {

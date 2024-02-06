@@ -1,6 +1,7 @@
 <?php
 namespace ProcessMaker\BusinessModel\Cases;
 
+use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
 class OutputDocument
@@ -450,7 +451,8 @@ class OutputDocument
             $oOutputDocument = new \OutputDocument();
             $aOD = $oOutputDocument->load($outputID);
             $Fields = $oCase->loadCase($sApplication);
-            $sFilename = preg_replace('[^A-Za-z0-9_]', '_', \G::replaceDataField($aOD['OUT_DOC_FILENAME'], $Fields['APP_DATA']));
+            $outDocFile = replacePrefixes($aOD['OUT_DOC_FILENAME']);
+            $sFilename = preg_replace('[^A-Za-z0-9_]', '_', \G::replaceDataField($outDocFile, $Fields['APP_DATA']));
             require_once(PATH_TRUNK . "workflow" . PATH_SEP . "engine" . PATH_SEP . "classes" . PATH_SEP . "model" . PATH_SEP . "AppFolder.php");
             require_once(PATH_TRUNK . "workflow" . PATH_SEP . "engine" . PATH_SEP . "classes" . PATH_SEP . "model" . PATH_SEP . "AppDocument.php");
             //Get the Custom Folder ID (create if necessary)
@@ -932,7 +934,7 @@ class OutputDocument
         }
         copy($sPath . $sFilename . '.html', PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
         try {
-            $status = $pipeline->process((\G::is_https() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/files/' . $sApplication . '/outdocs/' . $sFilename . '.html', $g_media);
+            $status = $pipeline->process(System::getServerProtocolHost() . '/files/' . $sApplication . '/outdocs/' . $sFilename . '.html', $g_media);
             copy(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf', $sPath . $sFilename . '.pdf');
             unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf');
             unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');

@@ -523,19 +523,15 @@ class DBArrayConnection implements Connection
             }
         }
 
-        //prepend the headers in the resultRow
-        array_unshift($resultRow, $this->_DBArray[$tableName][0]);
-        //$resultRow[0] = $this->_DBArray[ $tableName ][0];
-
-        /* algorith to order a multiarray
-          // Obtain a list of columns
-          foreach ($data as $key => $row) {
-          $volume[$key]  = $row['volume'];
-          $edition[$key] = $row['edition'];
-          }
-          // Sort the data with volume descending, edition ascending
-          // Add $data as the last parameter, to sort by the common key
-          array_multisort($volume, SORT_DESC, $edition, SORT_ASC, $data); */
+        /**
+         * Prepend the headers in the resultRow.
+         * If the null value is not taken, $resultRow will lose an element.
+         */
+        $header = null;
+        if (isset($this->_DBArray[$tableName][0])) {
+            $header = $this->_DBArray[$tableName][0];
+        }
+        array_unshift($resultRow, $header);
 
         /*
          * Apply Limit and Offset

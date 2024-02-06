@@ -472,6 +472,37 @@ gulp.task('clean', function () {
 });
 
 /**
+ * Exports from the config/constants.php the configuration constants to the
+ * enviromentvariables.json file
+ */
+gulp.task('exportBackendConstants', function () {
+    var runner = require('child_process');
+    gutil.log(gutil.colors.green('Export ProcessMaker constants...'));
+
+    var envVarsJsonFile = 'config/enviromentvariables.json';
+
+    var code = 'require_once "gulliver/system/class.g.php";' +
+                'require_once "bootstrap/autoload.php";' +
+                'require_once "bootstrap/app.php";' +
+                'app()->make(Illuminate\\Foundation\\Http\\Kernel::class)->bootstrap();' +
+                'print(json_encode(config("constants", JSON_UNESCAPED_SLASHES)));';
+
+    runner.exec(
+        'php -r \'' + code + '\'',
+        function (err, stdout, stderr) {
+            var pmConstants = JSON.parse(stdout);
+            var envVar = JSON.parse(fs.readFileSync(envVarsJsonFile));
+
+            for (var attr in pmConstants) {
+                envVar[attr] = pmConstants[attr];
+            }
+
+            fs.writeFileSync(envVarsJsonFile, JSON.stringify(envVar, null, 2));
+            return pmConstants;
+        });
+});
+
+/**
  * This scheduled task is to be able to create the guest user constants
  */
 gulp.task('__env', function (cb) {
@@ -490,7 +521,7 @@ gulp.task('__env', function (cb) {
     );
 });
 
-gulp.task('default', ['clean', '__env'], function (cb) {
+gulp.task('default', ['clean', 'exportBackendConstants', '__env'], function (cb) {
     var i, tasks = [];
 
     gutil.log(gutil.colors.green('Initializing ProcessMaker building...'));
@@ -500,3 +531,4 @@ gulp.task('default', ['clean', '__env'], function (cb) {
     }
     executeSequence(tasks, cb);
 });
+

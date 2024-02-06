@@ -2,6 +2,7 @@
 
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 /**
  * adminProxy.php
@@ -573,8 +574,10 @@ class adminProxy extends HttpProxyController
     }
 
     /**
-     * for send email configuration
-     * @autor Alvaro  <alvaro@colosa.com>
+     * For test email configuration
+     * @return stdClass()
+     *
+     * @see adminProxy->testConnection()
      */
     public function sendTestMail()
     {
@@ -623,7 +626,7 @@ class adminProxy extends HttpProxyController
             '',
             '',
             '',
-            'TEST',
+            WsBase::MESSAGE_TYPE_TEST_EMAIL,
             $subject,
             $from,
             $_POST['TO'],
@@ -1025,7 +1028,14 @@ class adminProxy extends HttpProxyController
      */
     public function uploadImage()
     {
-        //!dataSystem
+        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+            echo G::json_encode([
+                'success' => true,
+                'failed' => true,
+                'message' => $validator->getMessage()
+            ]);
+            exit();
+        });
 
         $filter = new InputFilter();
         $_SERVER["REQUEST_URI"] = $filter->xssFilterHard($_SERVER["REQUEST_URI"]);

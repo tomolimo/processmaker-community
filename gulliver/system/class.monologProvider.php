@@ -26,7 +26,7 @@ class MonologProvider
     private $registerLogger;
 
     //the default format "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n";
-    private $output = "<%level%> %datetime% %channel% %level_name%: %message% %context% %extra%\n";
+    private $output = "<%level%> %datetime% %channel% %level_name%: %message% %context%\n";
     private $dateFormat = 'M d H:i:s';
     /**
      * The maximal amount of files to keep (0 means unlimited)

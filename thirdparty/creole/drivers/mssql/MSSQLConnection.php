@@ -191,16 +191,18 @@ class MSSQLConnection extends ConnectionCommon implements Connection
     {
         $this->lastQuery = $sql;
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_query($this->dblink, $sql);
+            $result = @sqlsrv_query($this->dblink, $sql);
+            if (!$result) {
+                throw new SQLException('Could not execute query', print_r(sqlsrv_errors(), true));
+            }
         } else {
             if (!@mssql_select_db($this->database, $this->dblink)) {
                 throw new SQLException('No database selected');
             }
-
             $result = @mssql_query($sql, $this->dblink);
-        }
-        if (!$result) {
-            throw new SQLException('Could not execute query', mssql_get_last_message());
+            if (!$result) {
+                throw new SQLException('Could not execute query', mssql_get_last_message());
+            }
         }
         return new MSSQLResultSet($this, $result, $fetchmode);
     }
@@ -210,23 +212,23 @@ class MSSQLConnection extends ConnectionCommon implements Connection
      */
     function executeUpdate($sql)
     {
+        $this->lastQuery = $sql;
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_query($this->dblink, $sql);
+            $result = @sqlsrv_query($this->dblink, $sql);
+            if (!$result) {
+                throw new SQLException('Could not execute update', print_r(sqlsrv_errors(), true), $sql);
+            }
+            return (int) sqlsrv_rows_affected($result);
         } else {
-            $this->lastQuery = $sql;
             if (!mssql_select_db($this->database, $this->dblink)) {
                 throw new SQLException('No database selected');
             }
-
             $result = @mssql_query($sql, $this->dblink);
+            if (!$result) {
+                throw new SQLException('Could not execute update', mssql_get_last_message(), $sql);
+            }
+            return (int) mssql_rows_affected($this->dblink);
         }
-
-        if (!$result) {
-            throw new SQLException('Could not execute update', mssql_get_last_message(), $sql);
-        }
-        
-        return (int) mssql_rows_affected($this->dblink);
-        // return $this->getUpdateCount();
     }
 
     /**
@@ -237,15 +239,18 @@ class MSSQLConnection extends ConnectionCommon implements Connection
     protected function beginTrans()
     {
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_begin_transaction($this->dblink);
+            $result = @sqlsrv_begin_transaction($this->dblink);
+            if (!$result) {
+                throw new SQLException('Could not begin transaction', print_r(sqlsrv_errors(), true));
+            }
         } else {
             $result = @mssql_query('BEGIN TRAN', $this->dblink);
-        }
-        if (!$result) {
-            throw new SQLException('Could not begin transaction', mssql_get_last_message());
+            if (!$result) {
+                throw new SQLException('Could not begin transaction', mssql_get_last_message());
+            }
         }
     }
-    
+
     /**
      * Commit the current transaction.
      * @throws SQLException
@@ -254,15 +259,18 @@ class MSSQLConnection extends ConnectionCommon implements Connection
     protected function commitTrans()
     {
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_commit($this->dblink);
+            $result = @sqlsrv_commit($this->dblink);
+            if (!$result) {
+                throw new SQLException('Could not commit transaction', print_r(sqlsrv_errors(), true));
+            }
         } else {
             if (!@mssql_select_db($this->database, $this->dblink)) {
                 throw new SQLException('No database selected');
             }
             $result = @mssql_query('COMMIT TRAN', $this->dblink);
-        }
-        if (!$result) {
-            throw new SQLException('Could not commit transaction', mssql_get_last_message());
+            if (!$result) {
+                throw new SQLException('Could not commit transaction', mssql_get_last_message());
+            }
         }
     }
 
@@ -274,15 +282,18 @@ class MSSQLConnection extends ConnectionCommon implements Connection
     protected function rollbackTrans()
     {
         if (extension_loaded('sqlsrv')) {
-            $result = sqlsrv_rollback($this->dblink);
+            $result = @sqlsrv_rollback($this->dblink);
+            if (!$result) {
+                throw new SQLException('Could not rollback transaction', print_r(sqlsrv_errors(), true));
+            }
         } else {
             if (!@mssql_select_db($this->database, $this->dblink)) {
                 throw new SQLException('no database selected');
             }
             $result = @mssql_query('ROLLBACK TRAN', $this->dblink);
-        }
-        if (!$result) {
-            throw new SQLException('Could not rollback transaction', mssql_get_last_message());
+            if (!$result) {
+                throw new SQLException('Could not rollback transaction', mssql_get_last_message());
+            }
         }
     }
 

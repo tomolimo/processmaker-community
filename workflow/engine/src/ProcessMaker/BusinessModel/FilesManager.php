@@ -196,11 +196,6 @@ class FilesManager
                     if ($extention == '.exe') {
                         throw new \Exception(\G::LoadTranslation('ID_FILE_UPLOAD_INCORRECT_EXTENSION'));
                     }
-                    if (\Bootstrap::getDisablePhpUploadExecution() === 1 && $extention === '.php' && !$isImport) {
-                        $message = \G::LoadTranslation('THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED');
-                        \Bootstrap::registerMonologPhpUploadExecution('phpUpload', 550, $message, $aData['prf_filename']);
-                        throw new \Exception($message);
-                    }
                     break;
                 default:
                     $sDirectory = PATH_DATA_MAILTEMPLATES . $sProcessUID . PATH_SEP . $sSubDirectory . $aData['prf_filename'];

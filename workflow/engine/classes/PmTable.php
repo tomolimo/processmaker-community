@@ -1006,4 +1006,24 @@ class PmTable
         }
         return $oCriteria;
     }
+
+    /**
+     * Get the type of the column ex: string, int, double, boolean
+     *
+     * @param string $pmTablePeer
+     * @param string $tableName
+     * @param string $columnName
+     *
+     * @return string
+    */
+    public static function getTypeOfColumn($pmTablePeer, $tableName, $columnName)
+    {
+        try {
+            $type = $pmTablePeer::getMapBuilder()->getDatabaseMap()->getTable($tableName)->getColumn($columnName)->getCreoleType();
+        } catch (Exception $e) {
+            return '';
+        }
+
+        return $type;
+    }
 }

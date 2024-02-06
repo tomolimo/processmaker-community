@@ -1,1 +1,1 @@
-var __env = __env || {};__env.USER_GUEST = {"uid":"00000000000000000000000000000002","firstname":"Guest","lastname":"Guest","username":"guest"};
+var __env = __env || {};__env.USER_GUEST = {"uid":"00000000000000000000000000000002","firstname":"Guest","lastname":"Guest","username":"guest"}; __env.pmVariable = {"regEx":"/^[a-zA-Z\\_]{1}\\w+$/"};

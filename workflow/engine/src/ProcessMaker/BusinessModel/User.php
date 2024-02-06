@@ -21,6 +21,7 @@ use IsoCountryPeer;
 use IsoLocationPeer;
 use IsoSubdivisionPeer;
 use ListParticipatedLast;
+use OauthClients;
 use PMmemcached;
 use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
 use ProcessMaker\Plugins\PluginRegistry;
@@ -986,6 +987,9 @@ class User
 
                 //Update in workflow
                 $result = $user->update($arrayData);
+                if (isset($arrayData['USR_STATUS'])) {
+                    $arrayData['USR_STATUS'] == 'INACTIVE' ? RBAC::destroySessionUser($userUid) : null;
+                }
 
                 //Save Calendar assigment
                 if (isset($arrayData["USR_CALENDAR"])) {
@@ -1114,43 +1118,23 @@ class User
      */
     public function testPassword($sPassword = '')
     {
-        $oUserProperty = new UsersProperties();
-        $aFields = array();
+        $userProperty = new UsersProperties();
+        $fields = [];
         $dateNow = date('Y-m-d H:i:s');
-        $aErrors = $oUserProperty->validatePassword($sPassword, $dateNow, 0);
-        if (!empty($aErrors)) {
+        $errorInPassword = $userProperty->validatePassword($sPassword, $dateNow, 0);
+        if (!empty($errorInPassword)) {
             if (!defined('NO_DISPLAY_USERNAME')) {
                 define('NO_DISPLAY_USERNAME', 1);
             }
-            $aFields = array();
-            $aFields['DESCRIPTION'] = G::LoadTranslation('ID_POLICY_ALERT');
-            foreach ($aErrors as $sError) {
-                switch ($sError) {
-                    case 'ID_PPP_MINIMUM_LENGTH':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ': ' . PPP_MINIMUM_LENGTH . '. ';
-                        $aFields[substr($sError, 3)] = PPP_MINIMUM_LENGTH;
-                        break;
-                    case 'ID_PPP_MAXIMUM_LENGTH':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ': ' . PPP_MAXIMUM_LENGTH . '. ';
-                        $aFields[substr($sError, 3)] = PPP_MAXIMUM_LENGTH;
-                        break;
-                    case 'ID_PPP_EXPIRATION_IN':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ' ' . PPP_EXPIRATION_IN . ' ' . G::LoadTranslation('ID_DAYS') . '. ';
-                        $aFields[substr($sError, 3)] = PPP_EXPIRATION_IN;
-                        break;
-                    default:
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError);
-                        $aFields[substr($sError, 3)] = 1;
-                        break;
-                }
-            }
-            $aFields['DESCRIPTION'] .= G::LoadTranslation('ID_PLEASE_CHANGE_PASSWORD_POLICY');
-            $aFields['STATUS'] = false;
+            //We will to get the message for test the password
+            $fields = $userProperty->getMessageValidatePassword($errorInPassword, true, true);
+            $fields['STATUS'] = false;
         } else {
-            $aFields['DESCRIPTION'] = G::LoadTranslation('ID_PASSWORD_COMPLIES_POLICIES');
-            $aFields['STATUS'] = true;
+            $fields['DESCRIPTION'] = G::LoadTranslation('ID_PASSWORD_COMPLIES_POLICIES');
+            $fields['STATUS'] = true;
         }
-        return $aFields;
+
+        return $fields;
     }
 
     /**
@@ -1313,6 +1297,9 @@ class User
                 $criteria->add(DashletInstancePeer::DAS_INS_OWNER_UID, $UID);
                 $criteria->add(DashletInstancePeer::DAS_INS_OWNER_TYPE, 'USER');
                 DashletInstancePeer::doDelete($criteria);
+                //Destroy session after delete user
+                RBAC::destroySessionUser($usrUid);
+                (new OauthClients())->removeByUser($usrUid);
             }
         } catch (Exception $e) {
             throw $e;
@@ -1974,5 +1961,112 @@ class User
             $isSupervisor = $processSupervisor->isUserProcessSupervisor($proUid, $usrUid);
             return $isSupervisor;
         }
+    }
+
+    /**
+     * It changes the password of the user specified by its identifier, optionally 
+     * the value of $userLang can be sent, otherwise the system value is taken. 
+     * In case of success, the updated user returns.
+     * 
+     * @global object $RBAC
+     * @param string $usrUid
+     * @param string $usrPassword
+     * @param string $userLang
+     * 
+     * @return string
+     * 
+     * @see workflow/engine/methods/login/authentication.php
+     * @see workflow/engine/methods/login/changePassword.php
+     * @link https://wiki.processmaker.com/3.0/Managing_Users#Creating_New_Users
+     */
+    public function changePassword($usrUid, $usrPassword, $userLang = "")
+    {
+        global $RBAC;
+
+        $users = new Users();
+        $user = $users->load($usrUid);
+
+        $data = [];
+        $data['USR_UID'] = $user['USR_UID'];
+        $data['USR_USERNAME'] = $user['USR_USERNAME'];
+        $data['USR_PASSWORD'] = Bootstrap::hashPassword($usrPassword);
+        $data['USR_FIRSTNAME'] = $user['USR_FIRSTNAME'];
+        $data['USR_LASTNAME'] = $user['USR_LASTNAME'];
+        $data['USR_EMAIL'] = $user['USR_EMAIL'];
+        $data['USR_DUE_DATE'] = $user['USR_DUE_DATE'];
+        $data['USR_UPDATE_DATE'] = date('Y-m-d H:i:s');
+
+        $RBAC->updateUser($data, $user['USR_ROLE']);
+
+        $data['USR_COUNTRY'] = $user['USR_COUNTRY'];
+        $data['USR_CITY'] = $user['USR_CITY'];
+        $data['USR_LOCATION'] = $user['USR_LOCATION'];
+        $data['USR_ADDRESS'] = $user['USR_ADDRESS'];
+        $data['USR_PHONE'] = $user['USR_PHONE'];
+        $data['USR_ZIP_CODE'] = $user['USR_ZIP_CODE'];
+        $data['USR_POSITION'] = $user['USR_POSITION'];
+
+        $users->update($data);
+
+        $usersProperties = new UsersProperties();
+        $userProperty = $usersProperties->load($usrUid);
+        $history = unserialize($userProperty['USR_PASSWORD_HISTORY']);
+
+        if (!is_array($history)) {
+            $history = [];
+        }
+
+        if (!defined('PPP_PASSWORD_HISTORY')) {
+            define('PPP_PASSWORD_HISTORY', 0);
+        }
+
+        if (PPP_PASSWORD_HISTORY > 0) {
+            if (count($history) >= PPP_PASSWORD_HISTORY) {
+                array_shift($history);
+            }
+            $history[] = $usrPassword;
+        }
+
+        $userProperty['USR_LAST_UPDATE_DATE'] = date('Y-m-d H:i:s');
+        $userProperty['USR_LOGGED_NEXT_TIME'] = 0;
+        $userProperty['USR_PASSWORD_HISTORY'] = serialize($history);
+
+        $usersProperties->update($userProperty);
+
+        if (class_exists('redirectDetail')) {
+
+            if (isset($RBAC->aUserInfo['PROCESSMAKER']['ROLE']['ROL_CODE'])) {
+                $userRole = $RBAC->aUserInfo['PROCESSMAKER']['ROLE']['ROL_CODE'];
+            }
+            $pluginRegistry = PluginRegistry::loadSingleton();
+
+            $redirectLogin = $pluginRegistry->getRedirectLogins();
+            if (isset($redirectLogin)) {
+                if (is_array($redirectLogin)) {
+                    foreach ($redirectLogin as $detail) {
+                        if (isset($detail->sPathMethod)) {
+                            if ($detail->equalRoleCodeTo($userRole)) {
+                                $user['__REDIRECT_PATH__'] = '/sys' . config('system.workspace') . '/' . SYS_LANG . '/' . SYS_SKIN . '/' . $detail->getPathMethod();
+                                return $user;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $lang = "";
+        if ($userLang !== "") {
+            $lang = $userLang;
+        } else {
+            if (defined('SYS_LANG')) {
+                $lang = SYS_LANG;
+            } else {
+                $lang = 'en';
+            }
+        }
+        $location = $usersProperties->redirectTo($usrUid, $lang);
+        $user['__REDIRECT_PATH__'] = $location;
+        return $user;
     }
 }

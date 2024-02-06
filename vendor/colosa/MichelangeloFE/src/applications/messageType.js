@@ -336,13 +336,11 @@ PMMessageType.prototype.init = function () {
     var that = this;
 
     that.buttonCreate.defineEvents();
-
-    that.winMessageType.open();
     that.winMessageType.addItem(that.gridMessages);
     that.winMessageType.addItem(that.frmMessageType);
-
     that.winMessageType.addItem(that.gridAcceptedValues);
     that.winMessageType.hideFooter();
+    that.winMessageType.open();
     that.requiredMessage = $(document.getElementById("requiredMessage"));
 
     this.buttonFieldAdd.controls[0].button.setStyle({cssProperties: {padding: "6px 15px"}});
@@ -590,7 +588,7 @@ PMMessageType.prototype.addAcceptedValue = function () {
     var that = this,
         value = $.trim(that.frmAcceptedValues.getField('txtMessageTypeVariableName').getValue()),
         message;
-        
+
     // if the form (form field's RegEx) is invalid, add a Message Field will not be allowed.
     if (!that.frmAcceptedValues.isValid()) {
         return;

@@ -27,12 +27,18 @@ class license_application extends Padl
      *
      * @access public
      * @param $use_mcrypt boolean Determines if mcrypt encryption is used or not (defaults to true,
-     * 					 however if mcrypt is not available, it is set to false)
+     *                     however if mcrypt is not available, it is set to false)
      * @param $use_time boolean Sets if time binding should be used in the key (defaults to true)
      * @param $use_server boolean Sets if server binding should be used in the key (defaults to true)
      * @param $allow_local boolean Sets if server binding is in use then localhost servers are valid (defaults to false)
-     * */
-    public function license_application($license_path = 'license.dat', $use_mcrypt = true, $use_time = true, $use_server = true, $allow_local = false, $challenge = false)
+     *
+     * @see PmLicenseManager::__construct()
+     * @see PmLicenseManager::installLicense()
+     * @see PmLicenseManager::validateLicense()
+     * @link https://wiki.processmaker.com/3.2/Enterprise_Manager_Tool#Importing_a_License
+     * @link https://wiki.processmaker.com/3.2/Upgrading_ProcessMaker#Activating_the_License
+     */
+    public function __construct($license_path = 'license.dat', $use_mcrypt = true, $use_time = true, $use_server = true, $allow_local = false, $challenge = false)
     {
         //Check to see if the class has been secured
         if (isset($_SESSION)) {
@@ -145,15 +151,15 @@ class license_application extends Padl
      *
      * @access private
      * @return string config file data
-     * */
+     * @see _get_ip_address()
+     * @see _get_mac_address()
+     */
     public function _get_config()
     {
         # check to see if the class has been secured
         $this->_check_secure();
-        if (ini_get('safe_mode')) {
-            # returns invalid because server is in safe mode thus not allowing
-            # sbin reads but will still allow it to open. a bit weird that one.
-            return 'SAFE_MODE';
+        if (!$this->USE_SERVER) {
+            return 'NOT_USE_SERVER_CONFIG';
         }
         # if anyone has any clues for windows environments
         # or other server types let me know
@@ -198,15 +204,17 @@ class license_application extends Padl
      * @return array IP Address(s) if found (Note one machine may have more than one ip)
      * @return string ERROR_OPEN means config can't be found and thus not opened
      * @return string IP_404 means ip adress doesn't exist in the config file and can't be found in the $_SERVER
-     * @return string SAFE_MODE means server is in safe mode so config can't be read
-     * */
+     * @return string NOT_USE_SERVER_CONFIG the server configuration is not used in license validation.
+     *
+     * @see set_server_vars()
+     */
     public function _get_ip_address()
     {
         $ips = array();
         # get the cofig file
         $conf = $this->_get_config();
         # if the conf has returned and error return it
-        if ($conf != 'SAFE_MODE' && $conf != 'ERROR_OPEN') {
+        if ($conf != 'NOT_USE_SERVER_CONFIG' && $conf != 'ERROR_OPEN') {
             # if anyone has any clues for windows environments
             # or other server types let me know
             $os = strtolower(PHP_OS);
@@ -266,7 +274,7 @@ class license_application extends Padl
             return $ips;
         }
         # failed to find an ip check for conf error or return 404
-        if ($conf == 'SAFE_MODE' || $conf == 'ERROR_OPEN') {
+        if ($conf == 'NOT_USE_SERVER_CONFIG' || $conf == 'ERROR_OPEN') {
             return $conf;
         }
         return 'IP_404';
@@ -283,8 +291,10 @@ class license_application extends Padl
      * @return string Mac address if found
      * @return string ERROR_OPEN means config can't be found and thus not opened
      * @return string MAC_404 means mac adress doesn't exist in the config file
-     * @return string SAFE_MODE means server is in safe mode so config can't be read
-     * */
+     * @return string NOT_USE_SERVER_CONFIG the server configuration is not used in license validation.
+     *
+     * @see __construct()
+     */
     public function _get_mac_address()
     {
         # open the config file

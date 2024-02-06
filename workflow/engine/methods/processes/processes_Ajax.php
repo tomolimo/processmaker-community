@@ -1,28 +1,22 @@
 <?php
 
-/**
- * processes_Ajax.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
 try {
+    // Validate the access to the actions of this file
+    if (!empty($_REQUEST['action']) && $_REQUEST['action'] == 'load') {
+        // Validate if exists the session variable "PROCESS", this action is requested from case tracker and running cases
+        $cannotAccess = empty($_SESSION['PROCESS']);
+    } else {
+        // Validate PM_FACTORY permission
+        global $RBAC;
+        $cannotAccess = $RBAC->userCanAccess('PM_FACTORY') !== 1;
+    }
+
+    if ($cannotAccess) {
+        G::SendTemporalMessage( 'ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels' );
+        G::header( 'Location: ../login/login' );
+        die();
+    }
+
     $filter = new InputFilter();
     $_GET = $filter->xssFilterHard($_GET);
     $_POST = $filter->xssFilterHard($_POST);
@@ -693,41 +687,38 @@ try {
             $_REQUEST['filename'] = $filter->xssFilterHard($_REQUEST['filename']);
             global $G_PUBLISH;
             $G_PUBLISH = new Publisher();
-            global $RBAC;
-            if ($RBAC->userCanAccess('PM_FACTORY') == 1) {
-                $app = new Processes();
-                if (!$app->processExists($_REQUEST['pro_uid'])) {
-                    echo G::LoadTranslation('ID_PROCESS_UID_NOT_DEFINED');
-                    die;
-                }
-
-                $sDir = "";
-                if (isset($_REQUEST['MAIN_DIRECTORY'])) {
-                    $_REQUEST['MAIN_DIRECTORY'] = $filter->xssFilterHard($_REQUEST['MAIN_DIRECTORY']);
-                    $sDir = $_REQUEST['MAIN_DIRECTORY'];
-                }
-                switch ($sDir) {
-                    case 'mailTemplates':
-                        $sDirectory = PATH_DATA_MAILTEMPLATES . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
-                        G::auditLog('ProcessFileManager', 'Save template (' . $_REQUEST['filename'] . ') in process "' . $resultProcess['PRO_TITLE'] . '"');
-                        break;
-                    case 'public':
-                        $sDirectory = PATH_DATA_PUBLIC . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
-                        G::auditLog('ProcessFileManager', 'Save public template (' . $_REQUEST['filename'] . ') in process "' . $resultProcess['PRO_TITLE'] . '"');
-                        break;
-                    default:
-                        $sDirectory = PATH_DATA_MAILTEMPLATES . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
-                        break;
-                }
-                $fp = fopen($sDirectory, 'w');
-                $content = stripslashes($_REQUEST['fcontent']);
-                $content = str_replace("@amp@", "&", $content);
-                $content = base64_decode($content);
-                fwrite($fp, $content);
-                fclose($fp);
-                $sDirectory = $filter->xssFilterHard($sDirectory);
-                echo 'saved: ' . $sDirectory;
+            $app = new Processes();
+            if (!$app->processExists($_REQUEST['pro_uid'])) {
+                echo G::LoadTranslation('ID_PROCESS_UID_NOT_DEFINED');
+                die;
             }
+
+            $sDir = "";
+            if (isset($_REQUEST['MAIN_DIRECTORY'])) {
+                $_REQUEST['MAIN_DIRECTORY'] = $filter->xssFilterHard($_REQUEST['MAIN_DIRECTORY']);
+                $sDir = $_REQUEST['MAIN_DIRECTORY'];
+            }
+            switch ($sDir) {
+                case 'mailTemplates':
+                    $sDirectory = PATH_DATA_MAILTEMPLATES . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
+                    G::auditLog('ProcessFileManager', 'Save template (' . $_REQUEST['filename'] . ') in process "' . $resultProcess['PRO_TITLE'] . '"');
+                    break;
+                case 'public':
+                    $sDirectory = PATH_DATA_PUBLIC . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
+                    G::auditLog('ProcessFileManager', 'Save public template (' . $_REQUEST['filename'] . ') in process "' . $resultProcess['PRO_TITLE'] . '"');
+                    break;
+                default:
+                    $sDirectory = PATH_DATA_MAILTEMPLATES . $_REQUEST['pro_uid'] . PATH_SEP . $_REQUEST['filename'];
+                    break;
+            }
+            $fp = fopen($sDirectory, 'w');
+            $content = stripslashes($_REQUEST['fcontent']);
+            $content = str_replace("@amp@", "&", $content);
+            $content = base64_decode($content);
+            fwrite($fp, $content);
+            fclose($fp);
+            $sDirectory = $filter->xssFilterHard($sDirectory);
+            echo 'saved: ' . $sDirectory;
             break;
         case 'getSessid':
             if (isset($_SESSION['USER_LOGGED'])) {

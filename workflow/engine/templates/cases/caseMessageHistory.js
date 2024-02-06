@@ -124,9 +124,8 @@
 
                     messageHistoryGridListMask = new Ext.LoadMask(Ext.getBody(), {msg:_('ID_LOADING')});
                     messageHistoryGridListMask.show();
-
                     var url = "caseMessageHistory_Ajax.php?actionAjax=sendMailMessage_JXP&APP_UID=" + APP_UID + "&APP_MSG_UID=" + APP_MSG_UID + "&APP_NUMBER=" + appNumber;
-                    ajaxPostRequest(url,'caseMessageHistory_RSP');
+                    ajaxPostRequest(url, caseMessageHistory_RSP);
 
                 }
 
@@ -173,9 +172,9 @@
             if (http_request.readyState === 4) {
                 if (http_request.status === 200) {
                     if (return_xml) {
-                        eval(callback_function + '(http_request.responseXML)');
+                      callback_function(http_request.responseXML);
                     } else {
-                        eval(callback_function + '(http_request.responseText, \'' + id + '\')');
+                      callback_function(http_request.responseText, id);
                     }
                 } else {
                     alert('Error found on request:(Code: ' + http_request.status + ')');
@@ -242,7 +241,7 @@ var ActionTabFrameGlobal = '';
       var idHistory = historyGridListChangeLogGlobal.idHistory;
 
       var url = "caseHistory_Ajax.php?actionAjax=historyGridListChangeLogPanelBody_JXP&idHistory="+idHistory;
-      ajaxPostRequest(url,'historyGridListChangeLogPanelBody_RSP');
+      ajaxPostRequest(url, historyGridListChangeLogPanelBody_RSP);
     }
 
     function historyGridListChangeLogPanel(){
@@ -302,22 +301,9 @@ var ActionTabFrameGlobal = '';
 
 function caseMessageHistory_RSP (response, id) {
     messageHistoryGridListMask.hide();
-    if (response === "") {
-        Ext.Msg.show({
-            title: '',
-            msg: _('ID_MAIL_SENT_SUCCESSFULLY'),
-            buttons: Ext.Msg.INFO,
-            animEl: 'elId',
-            icon: Ext.MessageBox.INFO,
-            buttons: Ext.MessageBox.OK
-        });
-        Ext.destroy(Ext.getCmp('processesGrid'));
-        store.destroy();
-        messageHistoryGridList();
-    }
-    else {
-        alert(response);
-    }
+    PMExt.notify( _('ID_SUCCESS'), response === "" ? _('ID_MAIL_SENT_SUCCESSFULLY') : response);
+    Ext.getCmp('processesGrid').store.reload();
+    Ext.getCmp('processesGrid').getView().refresh();
 }
 
   function messageHistoryGridList () {

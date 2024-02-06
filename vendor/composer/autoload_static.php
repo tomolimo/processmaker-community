@@ -4,9 +4,10 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
+class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
 {
     public static $files = array (
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
         '023d27dca8066ef29e6739335ea73bad' => __DIR__ . '/..' . '/symfony/polyfill-php70/bootstrap.php',
@@ -21,6 +22,7 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
         '6a81470282d9479c809e94c27bb9b307' => __DIR__ . '/../..' . '/thirdparty/HTMLPurifier/HTMLPurifier.auto.php',
         '4d91dd78b19c48ca08f9722f053de1a3' => __DIR__ . '/../..' . '/workflow/engine/classes/class.pmFunctions.php',
         'a7e627efa6c9d1116d0855cb05b9ae90' => __DIR__ . '/../..' . '/workflow/engine/src/ProcessMaker/Util/helpers.php',
+        '11b9e75510633a4e766ad43713ca8c86' => __DIR__ . '/../..' . '/framework/src/Maveriks/Extension/Restler/UploadFormat.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -34,6 +36,7 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
         array (
             'Symfony\\Polyfill\\Php70\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Polyfill\\Ctype\\' => 23,
             'Symfony\\Component\\VarDumper\\' => 28,
             'Symfony\\Component\\Translation\\' => 30,
             'Symfony\\Component\\Routing\\' => 26,
@@ -80,6 +83,10 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
             'Cron\\' => 5,
             'Chumper\\Zipper\\' => 15,
         ),
+        'A' => 
+        array (
+            'App\\' => 4,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -102,6 +109,10 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
+        ),
+        'Symfony\\Polyfill\\Ctype\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
         'Symfony\\Component\\VarDumper\\' => 
         array (
@@ -198,6 +209,10 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
         'Chumper\\Zipper\\' => 
         array (
             0 => __DIR__ . '/..' . '/chumper/zipper/src/Chumper/Zipper',
+        ),
+        'App\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app',
         ),
     );
 
@@ -5803,12 +5818,12 @@ class ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$prefixDirsPsr4;
-            $loader->fallbackDirsPsr4 = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$fallbackDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$prefixesPsr0;
-            $loader->fallbackDirsPsr0 = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$fallbackDirsPsr0;
-            $loader->classMap = ComposerStaticInit3b31a4ba6de6371fab2d7a48d066dc80::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixDirsPsr4;
+            $loader->fallbackDirsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$fallbackDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixesPsr0;
+            $loader->fallbackDirsPsr0 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$fallbackDirsPsr0;
+            $loader->classMap = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$classMap;
 
         }, null, ClassLoader::class);
     }

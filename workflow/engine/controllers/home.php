@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Util\DateTime;
 
 /**
  * Home controller
@@ -359,6 +360,29 @@ class Home extends Controller
         $this->render();
     }
 
+    /**
+     * Get the cases information
+     *
+     * @param string $type
+     * @param integer $start
+     * @param integer $limit
+     * @param string $user
+     * @param string $filter
+     * @param string $search
+     * @param string $process
+     * @param string $status
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @param string $callback
+     * @param string $dir
+     * @param string $sort
+     * @param string $category
+     * @return array
+     *
+     * @see \Home->appAdvancedSearch()
+     * @see \Home->appList()
+     * @see \Home->getApps()
+     */
     public function getAppsData(
         $type,
         $start = null,
@@ -404,10 +428,10 @@ class Home extends Controller
         $solrEnabled = false;
 
         if ((
-            $type == "todo" || $type == "draft" || $type == "paused" || $type == "sent" ||
-            $type == "selfservice" || $type == "unassigned" || $type == "search"
-        ) &&
-        (($solrConf = System::solrEnv()) !== false)
+                $type == "todo" || $type == "draft" || $type == "paused" || $type == "sent" ||
+                $type == "selfservice" || $type == "unassigned" || $type == "search"
+            ) &&
+            (($solrConf = System::solrEnv()) !== false)
         ) {
             $ApplicationSolrIndex = new AppSolr(
                 $solrConf["solr_enabled"],
@@ -443,21 +467,21 @@ class Home extends Controller
                 $category
             );
         } else {
-            $dataList['userId']   = $user;
-            $dataList['userUid']  = $this->userUid;
-            $dataList['start']    = $start;
-            $dataList['limit']    = $limit;
-            $dataList['filter']   = $filter;
-            $dataList['search']   = $search;
-            $dataList['process']  = $process;
-            $dataList['status']   = $status;
+            $dataList['userId'] = $user;
+            $dataList['userUid'] = $this->userUid;
+            $dataList['start'] = $start;
+            $dataList['limit'] = $limit;
+            $dataList['filter'] = $filter;
+            $dataList['search'] = $search;
+            $dataList['process'] = $process;
+            $dataList['status'] = $status;
             $dataList['dateFrom'] = $dateFrom;
-            $dataList['dateTo']   = $dateTo;
+            $dataList['dateTo'] = $dateTo;
             $dataList['callback'] = $callback;
-            $dataList['dir']      = $dir;
-            $dataList['sort']     = $sort;
+            $dataList['dir'] = $dir;
+            $dataList['sort'] = $sort;
             $dataList['category'] = $category;
-            $dataList['action']   = $type;
+            $dataList['action'] = $type;
             $dataList['dir'] = 'DESC';
                 /*----------------------------------********---------------------------------*/
                 $case = new \ProcessMaker\BusinessModel\Cases();
@@ -494,8 +518,9 @@ class Home extends Controller
                 $generalConfCasesList = $conf->getConfiguration('ENVIRONMENT_SETTINGS', '');
                 $cases['data'][$i]['DEL_DELEGATE_DATE'] = '';
                 if (!empty(config("system.workspace"))) {
-                    if (isset( $generalConfCasesList['casesListDateFormat'] ) && ! empty( $generalConfCasesList['casesListDateFormat'] )) {
-                        $cases['data'][$i]['DEL_DELEGATE_DATE'] = $conf->getSystemDate($row['DEL_DELEGATE_DATE'], 'casesListDateFormat');
+                    if (isset($generalConfCasesList['casesListDateFormat']) && !empty($generalConfCasesList['casesListDateFormat'])) {
+                        $cases['data'][$i]['DEL_DELEGATE_DATE'] = $conf->getSystemDate($row['DEL_DELEGATE_DATE'],
+                            'casesListDateFormat');
                     }
                 }
                 if ($cases['data'][$i]['DEL_DELEGATE_DATE'] == '') {
@@ -508,6 +533,12 @@ class Home extends Controller
             // Completting with Notes
             $notes = $appNotes->getNotesList($row['APP_UID'], '', $notesStart, $notesLimit);
             $notes = AppNotes::applyHtmlentitiesInNotes($notes);
+
+            $iterator = 0;
+            foreach ($notes['array']['notes'] as $val) {
+                $notes ['array']['notes'][$iterator]['NOTE_DATE'] = DateTime::convertUtcToTimeZone($val['NOTE_DATE']);
+                $iterator++;
+            }
 
             $notes = $notes['array'];
 

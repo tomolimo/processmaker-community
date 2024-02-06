@@ -117,7 +117,7 @@ class ProcessMap
             $tmpData[5] = "";
             $tmpData[6] = $lanes['lan_name'];
             $tmpData[7] = "";
-            $tmpData[8] = $lanes['lan_uid'];
+            $tmpData[8] = array_key_exists('lan_uid', $lanes) ? $lanes['lan_uid']: "";
             $tmpData[9] = "";
 
             $tmpData[10] = $lanes['bou_container'];
@@ -719,7 +719,7 @@ class ProcessMap
                     if($element['bou_container'] != "bpmnDiagram"){
                         $resRec = $this->getNewPoints($element['bou_element'],$element['bou_container']);
                     }
-                    if($element['lns_uid'] == $idElement || $element['lan_uid'] == $idElement){
+                    if ($element['lns_uid'] == $idElement || (array_key_exists('lan_uid', $element) ? $element['lan_uid'] == $idElement : false)) {
                         $result = array($element['bou_x'] + $resRec[0],$element['bou_y'] + $resRec[1]);
                     }
                 }

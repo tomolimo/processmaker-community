@@ -2,6 +2,8 @@
 
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ExceptionRestApi;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 function runBgProcessmaker($task, $log)
 {
@@ -16,6 +18,9 @@ function runBgProcessmaker($task, $log)
 }
 
 try {
+    ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        throw new ExceptionRestApi($validator->getMessage());
+    });
     if (isset($_REQUEST["action"])) {
         $action = $_REQUEST["action"];
     } else {
@@ -312,6 +317,15 @@ try {
         $result["addons"] = array();
     }
     G::outRes(G::json_encode($result));
+} catch (ExceptionRestApi $e) {
+    $token = strtotime("now");
+    PMException::registerErrorLog($e, $token);
+    G::outRes(
+        G::json_encode(array(
+            "success" => false,
+            "errors" => $e->getMessage()
+        ))
+    );
 } catch (Exception $e) {
     $token = strtotime("now");
     PMException::registerErrorLog($e, $token);

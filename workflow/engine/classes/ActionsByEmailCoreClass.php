@@ -1,6 +1,6 @@
 <?php
 
-
+use ProcessMaker\Core\System;
 
 class ActionsByEmailCoreClass extends PMPlugin
 {
@@ -23,9 +23,16 @@ class ActionsByEmailCoreClass extends PMPlugin
     }
 
     /**
-     * @param $data
-     * @param $dataAbe
+     * Send Actions By Email.
+     * 
+     * @global object $RBAC
+     * @param object $data
+     * @param array $dataAbe
+     * @return type
      * @throws Exception
+     * 
+     * @see AppDelegation->createAppDelegation()
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
      */
     public function sendActionsByEmail($data, $dataAbe)
     {
@@ -131,21 +138,8 @@ class ActionsByEmailCoreClass extends PMPlugin
                             $_SESSION['CURRENT_DYN_UID'] = $configuration['DYN_UID'];
 
                             $__ABE__ = '';
-                            $conf = new Configurations();
-                            $envSkin = defined("SYS_SKIN") ? SYS_SKIN : $conf->getConfiguration('SKIN_CRON', '');
-                            $envHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : SERVER_NAME;
-                            $envProtocol = defined("REQUEST_SCHEME") && REQUEST_SCHEME === "https";
-                            if (isset($_SERVER['SERVER_PORT'])) {
-                                $envPort = ($_SERVER['SERVER_PORT'] != "80") ? ":" . $_SERVER['SERVER_PORT'] : "";
-                            } else if (defined('SERVER_PORT')) {
-                                $envPort = (SERVER_PORT . "" != "80") ? ":" . SERVER_PORT : "";
-                            } else {
-                                $envPort = ""; // Empty by default
-                            }
-                            if (!empty($envPort) && strpos($envHost, $envPort) === false) {
-                                $envHost = $envHost . $envPort;
-                            }
-                            $link = (G::is_https() || $envProtocol ? 'https://' : 'http://') . $envHost . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . $envSkin . '/services/ActionsByEmail';
+                            
+                            $link = System::getServerMainPath() . '/services/ActionsByEmail';
 
                             switch ($configuration['ABE_TYPE']) {
                                 case 'CUSTOM':
@@ -259,14 +253,22 @@ class ActionsByEmailCoreClass extends PMPlugin
 
                             $user = new Users();
 
+                            $emailFrom = '';
                             if (!$configuration['ABE_MAILSERVER_OR_MAILCURRENT'] && $configuration['ABE_TYPE'] !== '') {
                                 if ($data->PREVIOUS_USR_UID !== '') {
                                     $userDetails = $user->loadDetails($data->PREVIOUS_USR_UID);
                                     $emailFrom = ($userDetails["USR_FULLNAME"] . ' <' . $userDetails["USR_EMAIL"] . '>');
                                 } else {
                                     global $RBAC;
-                                    $currentUser = $RBAC->aUserInfo['USER_INFO'];
-                                    $emailFrom = ($currentUser["USR_FIRSTNAME"] . ' ' . $currentUser["USR_LASTNAME"] . ' <' . $currentUser["USR_EMAIL"] . '>');
+                                    if ($RBAC != null && is_array($RBAC->aUserInfo['USER_INFO'])) {
+                                        $currentUser = $RBAC->aUserInfo['USER_INFO'];
+                                        $emailFrom = ($currentUser["USR_FIRSTNAME"] . ' ' . $currentUser["USR_LASTNAME"] . ' <' . $currentUser["USR_EMAIL"] . '>');
+                                    } else {
+                                        $usersPeer = UsersPeer::retrieveByPK($data->USR_UID);
+                                        if (!empty($usersPeer)) {
+                                            $emailFrom = ($usersPeer->getUsrFirstname() . ' ' . $usersPeer->getUsrLastname() . ' <' . $usersPeer->getUsrEmail() . '>');
+                                        }
+                                    }
                                 }
                             } else {
                                 if (isset($emailSetup["MESS_FROM_NAME"]) && isset($emailSetup["MESS_FROM_MAIL"])) {
@@ -290,7 +292,8 @@ class ActionsByEmailCoreClass extends PMPlugin
                                 true,
                                 $data->DEL_INDEX,
                                 $emailSetup,
-                                0
+                                0,
+                                WsBase::MESSAGE_TYPE_ACTIONS_BY_EMAIL
                             );
                             $abeRequest['ABE_REQ_STATUS'] = ($result->status_code == 0 ? 'SENT' : 'ERROR');
 

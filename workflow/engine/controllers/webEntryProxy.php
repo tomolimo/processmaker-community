@@ -40,13 +40,7 @@ class webEntryProxy extends HttpProxyController
         $sWS_USER = trim( $params->WS_USER );
         $sWS_PASS = trim( $params->WS_PASS );
 
-        if (G::is_https()) {
-            $http = 'https://';
-        } else {
-            $http = 'http://';
-        }
-
-        $endpoint = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2';
+        $endpoint = System::getServerMainPath() . '/services/wsdl2';
         @$client = new SoapClient( $endpoint );
 
         $user = $sWS_USER;
@@ -137,12 +131,6 @@ class webEntryProxy extends HttpProxyController
         $oTask->load( $sTASKS );
         $tas_title = $oTask->getTasTitle();
 
-        if (G::is_https()) {
-            $http = 'https://';
-        } else {
-            $http = 'http://';
-        }
-
         $sContent = '';
         $SITE_PUBLIC_PATH = '';
         if (file_exists( $SITE_PUBLIC_PATH . '' )) {
@@ -167,8 +155,8 @@ class webEntryProxy extends HttpProxyController
         $pluginTpl = PATH_CORE . 'templates' . PATH_SEP . 'processes' . PATH_SEP . 'webentryPost.tpl';
         $template = new TemplatePower( $pluginTpl );
         $template->prepare();
-        $template->assign( 'wsdlUrl', $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2' );
-        $template->assign( 'wsUploadUrl', $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/upload' );
+        $template->assign( 'wsdlUrl', System::getServerMainPath() . '/services/wsdl2');
+        $template->assign( 'wsUploadUrl', System::getServerMainPath() . '/services/upload');
         $template->assign( 'processUid', $sPRO_UID );
         $template->assign( 'dynaformUid', $sDYNAFORM );
         $template->assign( 'taskUid', $sTASKS );
@@ -218,7 +206,7 @@ class webEntryProxy extends HttpProxyController
         $aDataEvent['EVN_CONDITIONS'] = $sWS_USER;
         $output = $oEvent->update( $aDataEvent );
 
-        $link = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/' . $sPRO_UID . '/' . $dynTitle . '.php';
+        $link = System::getServerMainPath() . '/' . $sPRO_UID . '/' . $dynTitle . '.php';
 
         $this->success = true;
         $this->msg = G::LoadTranslation( 'ID_WEB_ENTRY_SUCCESS_NEW' );

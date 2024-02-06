@@ -223,7 +223,6 @@ class AppDelegation extends BaseAppDelegation
             try {
                 $res = $this->save();
             } catch (PropelException $e) {
-                error_log($e->getMessage());
                 return;
             }
         } else {
@@ -1011,5 +1010,46 @@ class AppDelegation extends BaseAppDelegation
         }
 
         return $delIndex;
+    }
+
+    /**
+     * Update the priority in AppDelegation table, using the defined variable in task
+     *
+     * @param integer $delIndex
+     * @param string $tasUid
+     * @param string $appUid
+     * @param array $fieldAppData
+     *
+     * @return void
+     *
+     * @see Cases->update()
+     *
+    */
+    public function updatePriority($delIndex, $tasUid, $appUid, $fieldAppData)
+    {
+        if (!empty($delIndex) && !empty($tasUid)) {
+            //Optimized code to avoid load task content row.
+            $criteria = new Criteria();
+            $criteria->clearSelectColumns();
+            $criteria->addSelectColumn(TaskPeer::TAS_PRIORITY_VARIABLE);
+            $criteria->add(TaskPeer::TAS_UID, $tasUid);
+            $rs = TaskPeer::doSelectRS($criteria);
+            $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $rs->next();
+            $row = $rs->getRow();
+            $tasPriority = substr($row['TAS_PRIORITY_VARIABLE'], 2);
+            //End optimized code.
+
+            $x = $fieldAppData;
+            if (!empty($x[$tasPriority])) {
+                $array = [];
+                $array['APP_UID'] = $appUid;
+                $array['DEL_INDEX'] = $delIndex;
+                $array['TAS_UID'] = $tasUid;
+                $array['DEL_PRIORITY'] = (isset($x[$tasPriority]) ?
+                    ($x[$tasPriority] >= 1 && $x[$tasPriority] <= 5 ? $x[$tasPriority] : '3') : '3');
+                $this->update($array);
+            }
+        }
     }
 }

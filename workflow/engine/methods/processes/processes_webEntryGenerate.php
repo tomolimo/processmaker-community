@@ -32,7 +32,6 @@ try {
         throw (new Exception( G::LoadTranslation('ID_TASK') . "'" . $TaskFields['TAS_TITLE'] . "'" . G::LoadTranslation('ID_NOT_HAVE_USERS')));
     }
 
-    $http = (G::is_https())? "https://" : "http://";
     $sContent = '';
 
     $infoProcess = new Process();
@@ -68,8 +67,8 @@ try {
         $pluginTpl = PATH_CORE . 'templates' . PATH_SEP . 'processes' . PATH_SEP . 'webentryPost.tpl';
         $template = new TemplatePower( $pluginTpl );
         $template->prepare();
-        $template->assign( 'wsdlUrl', $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2' );
-        $template->assign( 'wsUploadUrl', $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/upload' );
+        $template->assign( 'wsdlUrl', System::getServerMainPath() . '/services/wsdl2' );
+        $template->assign( 'wsUploadUrl', System::getServerMainPath() . '/services/upload' );
         $template->assign( 'processUid', $sPRO_UID );
         $template->assign( 'dynaformUid', $sDYNAFORM );
         $template->assign( 'taskUid', $sTASKS );
@@ -134,18 +133,18 @@ try {
         $aDataEvent['EVN_CONDITIONS'] = $sWS_USER;
         $output = $oEvent->update( $aDataEvent );
         //Show link
-        $link = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/' . $sPRO_UID . '/' . $dynTitle . '.php';
+        $link = System::getServerMainPath() . '/' . $sPRO_UID . '/' . $dynTitle . '.php';
         print $link;
         //print "\n<a href='$link' target='_new' > $link </a>";
 
     } else {
         $G_FORM = new Form( $sPRO_UID . '/' . $sDYNAFORM, PATH_DYNAFORM, SYS_LANG, false );
-        $G_FORM->action = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/cases_StartExternal.php';
+        $G_FORM->action = System::getServerMainPath() . '/services/cases_StartExternal.php';
 
         $scriptCode = '';
         $scriptCode = $G_FORM->render( PATH_CORE . 'templates/' . 'xmlform' . '.html', $scriptCode );
-        $scriptCode = str_replace( '/controls/', $http . $_SERVER['HTTP_HOST'] . '/controls/', $scriptCode );
-        $scriptCode = str_replace( '/js/maborak/core/images/', $http . $_SERVER['HTTP_HOST'] . '/js/maborak/core/images/', $scriptCode );
+        $scriptCode = str_replace( '/controls/', System::getServerProtocolHost() . '/controls/', $scriptCode );
+        $scriptCode = str_replace( '/js/maborak/core/images/', System::getServerProtocolHost() . '/js/maborak/core/images/', $scriptCode );
 
         //render the template
         $pluginTpl = PATH_CORE . 'templates' . PATH_SEP . 'processes' . PATH_SEP . 'webentry.tpl';
@@ -157,7 +156,7 @@ try {
 
         $template->assign("URL_MABORAK_JS", G::browserCacheFilesUrl("/js/maborak/core/maborak.js"));
         $template->assign("URL_TRANSLATION_ENV_JS", G::browserCacheFilesUrl("/jscore/labels/" . SYS_LANG . ".js"));
-        $template->assign("siteUrl", $http . $_SERVER["HTTP_HOST"]);
+        $template->assign("siteUrl", System::getServerProtocolHost());
         $template->assign("sysSys", config("system.workspace"));
         $template->assign("sysLang", SYS_LANG);
         $template->assign("sysSkin", SYS_SKIN);
@@ -171,7 +170,7 @@ try {
         if (sizeof( $sUidGrids ) > 0) {
             foreach ($sUidGrids as $k => $v) {
                 $template->newBlock( 'grid_uids' );
-                $template->assign( 'siteUrl', $http . $_SERVER['HTTP_HOST'] );
+                $template->assign( 'siteUrl', System::getServerProtocolHost() );
                 $template->assign( 'gridFileName', $sPRO_UID . '/' . $v );
             }
         }

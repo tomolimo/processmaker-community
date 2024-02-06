@@ -1,10 +1,12 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
-use G;
 use AdditionalTables;
-use Fields;
 use DynaformHandler;
+use Exception;
+use Fields;
+use G;
+use ProcessMaker\BusinessModel\ReportTable as BusinessModelRpt;
 
 class Table
 {
@@ -184,15 +186,16 @@ class Table
 
     /**
      * Save Data for Table
+     *
      * @var string $tab_data. Data for table
      * @var string $pro_uid. Uid for process
-     * @var string $reportFlag. If is report table
-     * @var string $createRep. Flag for create table
+     * @var boolean $reportFlag. If is report table
+     * @var boolean $createRep. Flag for create table
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @deprecated Method deprecated in Release 3.3.1
      *
      * @return array
+     * @throws Exception
      */
     public function saveTable($tab_data, $pro_uid = '', $reportFlag = false, $createRep = true)
     {
@@ -508,59 +511,163 @@ class Table
     }
 
     /**
-     * Update Data for Table
-     * @var string $tab_data. Data for table
-     * @var string $pro_uid. Uid for process
-     * @var string $reportFlag. If is report table
+     * Update Data for PmTable and Report Table
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @var string $tableData: Data for table
+     * @var string $pro_uid: Uid for process
+     * @var boolean $isReportTable: If is report table
      *
-     * @return void
+     * @return object
+     * @throws Exception
      */
-    public function updateTable($tab_data, $pro_uid = '', $reportFlag = false)
+    public function updateTable($tableData, $proUid = '', $isReportTable = false)
     {
-        if ($reportFlag) {
-            $tab_uid = $tab_data['rep_uid'];
-            $pro_uid = $this->validateProUid($pro_uid);
+        $tableDsc = false;
+        $tableFields = false;
+        if ($isReportTable) {
+            $tabUid = $tableData['rep_uid'];
+            $proUid = $this->validateProUid($proUid);
+            $tableData['pro_uid'] = $proUid;
+            $errorMssg = "The property rep_uid: '$tabUid' is incorrect.";
         } else {
-            $tab_uid = $tab_data['pmt_uid'];
+            $tabUid = $tableData['pmt_uid'];
+            $errorMssg = "The property pmt_uid: '$tabUid' is incorrect.";
         }
-        $tab_uid = $this->validateTabUid($tab_uid, $reportFlag);
+        $tabUid = $this->validateTabUid($tabUid, $isReportTable);
+        $addTables = new AdditionalTables();
+        $dataValidate = $addTables->getTableProperties($tabUid, $tableData, $isReportTable);
+        if (empty($dataValidate)) {
+            throw (new Exception($errorMssg));
+        }
+        if ($isReportTable) {
+            if (!empty($tableData['rep_tab_dsc'])) {
+                $dataValidate['rep_tab_dsc'] = $tableData['rep_tab_dsc'];
+                $tableDsc = true;
+            }
+        } else {
+            if (!empty($tableData['pmt_tab_dsc'])) {
+                $dataValidate['rep_tab_dsc'] = $tableData['pmt_tab_dsc'];
+                $tableDsc = true;
+            }
+        }
+        if (!empty($tableData['fields'])) {
+            $dataValidate['fields'] = $tableData['fields'];
+            $tableFields = true;
+        } else {
+            throw (new Exception('Body doesn\'t contain fields arguments'));
+        }
+        if (!$tableDsc && !$tableFields) {
+            throw (new Exception('Body doesn\'t contain pmt_tad_dsc or fields arguments'));
+        }
 
-        $dataValidate =  array();
-        $oCriteria = new \Criteria('workflow');
-        $oCriteria->add(\AdditionalTablesPeer::ADD_TAB_UID, $tab_uid, \Criteria::EQUAL);
-        $oDataset = \AdditionalTablesPeer::doSelectRS($oCriteria);
-        $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
+        //We will validate the fields after update the pmTable structure
+        $result = $this->validateTableBeforeUpdate($dataValidate);
 
-        if ($oDataset->next()) {
-            $row = $oDataset->getRow();
-            if ($reportFlag) {
-                $dataValidate['rep_uid']  = $tab_uid;
-                $dataValidate['rep_tab_name'] = $row['ADD_TAB_NAME'];
-                $dataValidate['rep_tab_dsc']  = $tab_data['rep_tab_dsc'];
-                $dataValidate['rep_tab_connection'] = $row['DBS_UID'];
-                $dataValidate['rep_tab_type'] = $row['ADD_TAB_TYPE'];
-                $dataValidate['rep_tab_grid'] = '';
-                if (strpos($row['ADD_TAB_GRID'], '-')) {
-                    list($gridName, $gridId) = explode( '-', $row['ADD_TAB_GRID'] );
-                    $dataValidate['rep_tab_grid'] = $gridId;
+        return $result;
+    }
+
+    /**
+     * Will be validate the fields before saveStructureOfTable
+     *
+     * @param array $tableFields Properties for table
+     *
+     * @return object
+     * @throws Exception
+     */
+    public function validateTableBeforeUpdate($tableFields)
+    {
+        $propertiesUpdate = [];
+        if (!empty($tableFields)){
+            $propertiesUpdate = array_change_key_case($tableFields, CASE_UPPER);
+            $propertiesUpdate['keepData'] = '1';
+        }
+
+        $columnsTable = [];
+        $flagKey = false;
+        if (!empty($propertiesUpdate['FIELDS'])) {
+            $columns = $propertiesUpdate['FIELDS'];
+            foreach ($columns as $i => $column) {
+                $columnsTable[$i] = [];
+                //Required fld_uid
+                if (!empty($columns[$i]['fld_uid'])) {
+                    $columnsTable[$i]['field_uid'] = $columnsTable[$i]['uid'] = G::toUpper($columns[$i]['fld_uid']);
+                } else {
+                    throw (new Exception(G::LoadTranslation("ID_CAN_NOT_BE_EMPTY", ['fld_uid'])));
                 }
-            } else {
-                $dataValidate['pmt_uid']  = $tab_uid;
-                $dataValidate['pmt_tab_name'] = $row['ADD_TAB_NAME'];
-                $dataValidate['pmt_tab_dsc']  = $tab_data['pmt_tab_dsc'];
-            }
-            $dataValidate['fields']       = $tab_data['fields'];
-        } else {
-            if ($reportFlag) {
-                throw (new \Exception("The property rep_uid: '$tab_uid' is incorrect."));
-            } else {
-                throw (new \Exception("The property pmt_uid: '$tab_uid' is incorrect."));
+                //Not required fld_dyn
+                $columnsTable[$i]['field_dyn'] = '';
+                if (!empty($columns[$i]['fld_dyn'])) {
+                    $columnsTable[$i]['field_dyn'] = G::toUpper($columns[$i]['fld_dyn']);
+                }
+                //Required fld_name
+                if (!empty($columns[$i]['fld_name'])) {
+                    $columnsTable[$i]['field_name'] = G::toUpper($columns[$i]['fld_name']);
+                } else {
+                    throw (new Exception(G::LoadTranslation("ID_CAN_NOT_BE_EMPTY", ['fld_name'])));
+                }
+                //Required fld_label
+                if (!empty($columns[$i]['fld_label'])) {
+                    $columnsTable[$i]['field_label'] = G::toUpper($columns[$i]['fld_label']);
+                } else {
+                    throw (new Exception(G::LoadTranslation("ID_CAN_NOT_BE_EMPTY", ['fld_label'])));
+                }
+
+                //We will to define the autoincrement
+                $columnsTable[$i]['field_autoincrement'] = false;
+
+                //Required fld_type
+                if (!empty($columns[$i]['fld_type'])) {
+                    $columnsTable[$i]['field_type'] = G::toUpper($columns[$i]['fld_type']);
+                    //Will be validate if is the correct type of column
+                    if (!in_array($columnsTable[$i]['field_type'], AdditionalTables::FLD_TYPE_VALUES)) {
+                        throw (new Exception("The property fld_type: '" . $columns[$i]['fld_type'] . "' is incorrect."));
+                    }
+                    //Will be review if the column type has the correct definition with autoincrement
+                    if (!empty($columns[$i]['fld_autoincrement']) && $columns[$i]['fld_autoincrement']) {
+                        if ($columns[$i]['fld_key'] && in_array($columns[$i]['fld_type'], AdditionalTables::FLD_TYPE_WITH_AUTOINCREMENT)) {
+                            $columnsTable[$i]['field_autoincrement'] = true;
+                        } else {
+                            throw (new Exception("The property field_autoincrement: '" . $columns[$i]['fld_autoincrement'] . "' is incorrect. "));
+                        }
+                    }
+                } else {
+                    throw (new Exception(G::LoadTranslation("ID_CAN_NOT_BE_EMPTY", ['fld_type'])));
+                }
+                //Required fld_size depends of fld_type
+                $columnsTable[$i]['field_size'] = 0;
+                if (in_array($columns[$i]['fld_type'], AdditionalTables::FLD_TYPE_WITH_SIZE)) {
+                    if (empty($columns[$i]['fld_size'])) {
+                        throw (new Exception(G::LoadTranslation("ID_CAN_NOT_BE_EMPTY", ['fld_size'])));
+                    }
+                    if ((integer)$columns[$i]['fld_size'] === 0) {
+                        throw (new Exception("The property fld_size: '" . $columns[$i]['fld_size'] . "' is incorrect."));
+                    }
+                    $columnsTable[$i]['field_size'] = (integer)$columns[$i]['fld_size'];
+                }
+                //Required only for one column
+                $columnsTable[$i]['field_key'] = false;
+                if (!empty($columns[$i]['fld_key'])) {
+                    $flagKey = true;
+                    $columnsTable[$i]['field_key'] = (boolean)$columns[$i]['fld_key'];
+                }
+                //Not required fld_null
+                $columnsTable[$i]['field_null'] = false;
+                if (!empty($columns[$i]['fld_null'])) {
+                    $columnsTable[$i]['field_null'] = G::toUpper($columns[$i]['fld_null']);
+                }
+                //Not required fld_filter
+                $columnsTable[$i]['field_filter'] = false;
             }
         }
-        $this->saveTable($dataValidate, $pro_uid, $reportFlag, false);
+        if (!$flagKey) {
+            throw (new Exception("The table doesn't have a primary key 'fld_key'"));
+        }
+
+        $propertiesUpdate['columns'] = G::json_encode($columnsTable);
+        $reportTable = new BusinessModelRpt();
+        $result = $reportTable->saveStructureOfTable($propertiesUpdate);
+
+        return $result;
     }
 
     /**

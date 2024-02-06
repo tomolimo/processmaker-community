@@ -1,103 +1,112 @@
 <?php
-/**
- * cases_Resume.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
-/* Permissions */
+
+use ProcessMaker\Util\DateTime;
+
 switch ($RBAC->userCanAccess('PM_CASES')) {
-    case - 2:
+    case -2:
         G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_SYSTEM', 'error', 'labels');
         G::header('location: ../login/login');
         die();
         break;
-    case - 1:
+    case -1:
         G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels');
         G::header('location: ../login/login');
         die();
         break;
 }
 
-$oCase = new Cases();
-$Fields = $oCase->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX']);
-
-/* Render page */
+/** Render page */
 require_once 'classes/model/Process.php';
 require_once 'classes/model/Task.php';
 
+//Get information about the case
+$case = new Cases();
+$fieldsCase = $case->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX']);
+
+//Get the user logged
+$userLogged = isset($RBAC->aUserInfo['USER_INFO']['USR_UID']) ? $RBAC->aUserInfo['USER_INFO']['USR_UID'] : '';
+
+//Check the authorization
+$objCase = new \ProcessMaker\BusinessModel\Cases();
+$userCanAccess = $objCase->userAuthorization(
+    $userLogged,
+    $fieldsCase['PRO_UID'],
+    $fieldsCase['APP_UID'],
+    ['PM_ALLCASES'],
+    ['SUMMARY_FORM' => 'VIEW']
+);
+
 $objProc = new Process();
-$aProc = $objProc->load($Fields['PRO_UID']);
-$Fields['PRO_TITLE'] = $aProc['PRO_TITLE'];
+$fieldsProcess = $objProc->load($fieldsCase['PRO_UID']);
+$fieldsCase['PRO_TITLE'] = $fieldsProcess['PRO_TITLE'];
 
-$objTask = new Task();
-$aTask = $objTask->load($Fields['TAS_UID']);
-$Fields['TAS_TITLE'] = $aTask['TAS_TITLE'];
+if (
+    isset($fieldsProcess['PRO_DYNAFORMS']['PROCESS']) &&
+    !empty($fieldsProcess['PRO_DYNAFORMS']['PROCESS']) &&
+    $userCanAccess['objectPermissions']['SUMMARY_FORM'] &&
+    $objProc->isBpmnProcess($fieldsCase['PRO_UID'])
+) {
+    /**We will to show the custom summary form only for BPMN process*/
+    $_REQUEST['APP_UID'] = $fieldsCase['APP_UID'];
+    $_REQUEST['DEL_INDEX'] = $fieldsCase['DEL_INDEX'];
+    $_REQUEST['DYN_UID'] = $fieldsProcess['PRO_DYNAFORMS']['PROCESS'];
+    require_once(PATH_METHODS . 'cases' . PATH_SEP . 'summary.php');
+    exit();
+} else {
+    /**We will to show the default claim case form*/
+    $objTask = new Task();
+    $fieldsTask = $objTask->load($fieldsCase['TAS_UID']);
+    $fieldsCase['TAS_TITLE'] = $fieldsTask['TAS_TITLE'];
+    $fieldsCase['STATUS'] .= ' ( ' . G::LoadTranslation('ID_UNASSIGNED') . ' )';
 
-$Fields['STATUS'] .= ' ( ' . G::LoadTranslation('ID_UNASSIGNED') . ' )';
+    //Now getting information about the PREVIOUS task. If is the first task then no previous, use 1
+    $appDelegation = new AppDelegation();
+    $appDelegation->Load(
+        $fieldsCase['APP_UID'],
+        ($fieldsCase['DEL_PREVIOUS'] == 0 ? $fieldsCase['DEL_PREVIOUS'] = 1 : $fieldsCase['DEL_PREVIOUS'])
+    );
+    $fieldsDelegation = $appDelegation->toArray(BasePeer::TYPE_FIELDNAME);
 
-//now getting information about the PREVIOUS task. If is the first task then no preious, use 1
-$oAppDel = new AppDelegation();
-$oAppDel->Load($Fields['APP_UID'], ($Fields['DEL_PREVIOUS'] == 0 ? $Fields['DEL_PREVIOUS'] = 1 : $Fields['DEL_PREVIOUS']));
+    try {
+        $userInfo = new Users();
+        $userInfo->load($fieldsDelegation['USR_UID']);
+        $fieldsCase['PREVIOUS_USER'] = $userInfo->getUsrFirstname() . ' ' . $userInfo->getUsrLastname();
+    } catch (Exception $error) {
+        $fieldsCase['PREVIOUS_USER'] = G::LoadTranslation('ID_NO_PREVIOUS_USR_UID');
+    }
 
-$aAppDel = $oAppDel->toArray(BasePeer::TYPE_FIELDNAME);
-try {
-    $oCurUser = new Users();
-    $oCurUser->load($aAppDel['USR_UID']);
-    $Fields['PREVIOUS_USER'] = $oCurUser->getUsrFirstname() . ' ' . $oCurUser->getUsrLastname();
-} catch (Exception $oError) {
-    $Fields['PREVIOUS_USER'] = G::LoadTranslation('ID_NO_PREVIOUS_USR_UID');
-}
-
-$objTask = new Task();
-$aTask = $objTask->load($aAppDel['TAS_UID']);
-$Fields['PREVIOUS_TASK'] = $aTask['TAS_TITLE'];
-
-//To enable information (dynaforms, steps) before claim a case
-$_SESSION['bNoShowSteps'] = true;
-$G_MAIN_MENU = 'processmaker';
-$G_SUB_MENU = 'caseOptions';
-$G_ID_MENU_SELECTED = 'CASES';
-$G_ID_SUB_MENU_SELECTED = '_';
-$oHeadPublisher = headPublisher::getSingleton();
-$oHeadPublisher->addScriptCode("
-if (typeof parent != 'undefined') {
-  if (parent.showCaseNavigatorPanel) {
-    parent.showCaseNavigatorPanel('{$Fields['APP_STATUS']}');
-  }
-}");
-$oHeadPublisher->addScriptCode('
-      var Cse = {};
-      Cse.panels = {};
-      var leimnud = new maborak();
-      leimnud.make();
-      leimnud.Package.Load("rpc,drag,drop,panel,app,validator,fx,dom,abbr",{Instance:leimnud,Type:"module"});
-      leimnud.Package.Load("cases",{Type:"file",Absolute:true,Path:"/jscore/cases/core/cases.js"});
-      leimnud.Package.Load("cases_Step",{Type:"file",Absolute:true,Path:"/jscore/cases/core/cases_Step.js"});
-      leimnud.Package.Load("processmap",{Type:"file",Absolute:true,Path:"/jscore/processmap/core/processmap.js"});
-      leimnud.exec(leimnud.fix.memoryLeak);
+    //To enable information (dynaforms, steps) before claim a case
+    $_SESSION['bNoShowSteps'] = true;
+    $G_MAIN_MENU = 'processmaker';
+    $G_SUB_MENU = 'caseOptions';
+    $G_ID_MENU_SELECTED = 'CASES';
+    $G_ID_SUB_MENU_SELECTED = '_';
+    $headPublisher = headPublisher::getSingleton();
+    $headPublisher->addScriptCode("
+        if (typeof parent != 'undefined') {
+            if (parent.showCaseNavigatorPanel) {
+                parent.showCaseNavigatorPanel('{$fieldsCase['APP_STATUS']}');
+            }
+        }
+    ");
+    $headPublisher->addScriptCode('
+        var Cse = {};
+        Cse.panels = {};
+        var leimnud = new maborak();
+        leimnud.make();
+        leimnud.Package.Load("rpc,drag,drop,panel,app,validator,fx,dom,abbr",{Instance:leimnud,Type:"module"});
+        leimnud.Package.Load("cases",{Type:"file",Absolute:true,Path:"/jscore/cases/core/cases.js"});
+        leimnud.Package.Load("cases_Step",{Type:"file",Absolute:true,Path:"/jscore/cases/core/cases_Step.js"});
+        leimnud.Package.Load("processmap",{Type:"file",Absolute:true,Path:"/jscore/processmap/core/processmap.js"});
+        leimnud.exec(leimnud.fix.memoryLeak);
     ');
-$oHeadPublisher = headPublisher::getSingleton();
-$oHeadPublisher->addScriptFile('/jscore/cases/core/cases_Step.js');
+    $headPublisher = headPublisher::getSingleton();
+    $headPublisher->addScriptFile('/jscore/cases/core/cases_Step.js');
 
-$Fields['isIE'] = Bootstrap::isIE();
+    $fieldsCase['isIE'] = Bootstrap::isIE();
 
-$G_PUBLISH = new Publisher();
-$G_PUBLISH->AddContent('xmlform', 'xmlform', 'cases/cases_CatchSelfService.xml', '', $Fields, 'cases_CatchExecute');
-G::RenderPage('publish', 'blank');
+    $G_PUBLISH = new Publisher();
+    $fieldsCase = DateTime::convertUtcToTimeZone($fieldsCase);
+    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'cases/cases_CatchSelfService.xml', '', $fieldsCase, 'cases_CatchExecute');
+    G::RenderPage('publish', 'blank');
+}

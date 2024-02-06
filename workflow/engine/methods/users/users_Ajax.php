@@ -149,6 +149,10 @@ try {
             $criteria->add(ProcessUserPeer::USR_UID, $usrUid, Criteria::EQUAL);
             $criteria->add(ProcessUserPeer::PU_TYPE, "SUPERVISOR", Criteria::EQUAL);
             ProcessUserPeer::doDelete($criteria);
+            //Destroy session after delete user
+            $RBAC->destroySessionUser($usrUid);
+            (new OauthClients())->removeByUser($usrUid);
+
             G::auditLog("DeleteUser", "User Name: ". $userName." User ID: (".$usrUid.") ");
             break;
         case 'changeUserStatus':
@@ -160,6 +164,8 @@ try {
                 $userData = $userInstance->load($_REQUEST['USR_UID']);
                 $userData['USR_STATUS'] = $_REQUEST['NEW_USR_STATUS'];
                 $userInstance->update($userData);
+                //Destroy session after inactive user
+                $_REQUEST['NEW_USR_STATUS'] == 'INACTIVE' ? $RBAC->destroySessionUser($_REQUEST['USR_UID']) : null;
 
                 $msg = $_REQUEST['NEW_USR_STATUS'] == 'ACTIVE'? "EnableUser" : "DisableUser";
                 G::auditLog($msg, "User Name: ".$userData['USR_USERNAME']." User ID: (".$userData['USR_UID'].") ");

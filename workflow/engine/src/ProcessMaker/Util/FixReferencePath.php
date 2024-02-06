@@ -2,17 +2,18 @@
 
 namespace ProcessMaker\Util;
 
-use Configurations;
-use Criteria;
-use ResultSet;
-use FieldsPeer;
-use ReportTablePeer;
-use CaseConsolidatedCorePeer;
-use ConsolidatedCases;
-use AdditionalTablesPeer;
-use PmTable;
-use ReportVarPeer;
 use AdditionalTables;
+use AdditionalTablesPeer;
+use CaseConsolidatedCorePeer;
+use Configurations;
+use ConsolidatedCases;
+use Criteria;
+use FieldsPeer;
+use PmTable;
+use ProcessMaker\Core\System;
+use ReportTablePeer;
+use ReportVarPeer;
+use ResultSet;
 use stdClass;
 
 /**
@@ -73,6 +74,7 @@ class FixReferencePath
      * @param string $directory
      * @param string $pathData
      * @return void
+     * @see workflow/engine/classes/WorkspaceTools.php WorkspaceTools->fixReferencePathFiles()
      */
     public function runProcess($directory, $pathData)
     {
@@ -81,8 +83,8 @@ class FixReferencePath
             //task, it is removed at the end of the method.
             $_SERVER["REQUEST_URI"] = "";
             if (!defined("SYS_SKIN")) {
-                $conf = new Configurations();
-                define("SYS_SKIN", $conf->getConfiguration('SKIN_CRON', ''));
+                $config = System::getSystemConfiguration();
+                define("SYS_SKIN", $config['default_skin']);
             }
 
             $criteria = new Criteria("workflow");

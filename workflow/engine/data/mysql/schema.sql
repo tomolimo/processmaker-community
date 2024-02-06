@@ -269,7 +269,8 @@ CREATE TABLE `DYNAFORM`
 	`DYN_VERSION` INTEGER  NOT NULL,
 	`DYN_UPDATE_DATE` DATETIME,
 	PRIMARY KEY (`DYN_UID`),
-	UNIQUE KEY `INDEX_DYN_ID` (`DYN_ID`)
+	UNIQUE KEY `INDEX_DYN_ID` (`DYN_ID`),
+	KEY `INDEX_PRO_UID`(`PRO_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Forms required';
 #-----------------------------------------------------------------------------
 #-- GROUPWF

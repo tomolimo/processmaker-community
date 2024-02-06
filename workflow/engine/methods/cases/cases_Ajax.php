@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Util\DateTime;
 
 $filter = new InputFilter();
 $_GET = $filter->xssFilterHard($_GET);
@@ -581,6 +582,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
         while ($rs->next()) {
             $result = $rs->getRow();
             $result["TYPE"] = (array_key_exists($result["TYPE"], $arrayToTranslation)) ? $arrayToTranslation[$result["TYPE"]] : $result["TYPE"];
+            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
             $aProcesses[] = $result;
         }
 
@@ -622,7 +624,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
             $result["FILEDOCEXIST"] = ($result["FILEDOC"]);
             $result["FILEPDFEXIST"] = ($result["FILEPDF"]);
             $result["DELETE_FILE"] = (isset($result['ID_DELETE']) && $result['ID_DELETE'] == 'Delete') ? true : false;
-
+            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
             $aProcesses[] = $result;
 
             $rs->next();

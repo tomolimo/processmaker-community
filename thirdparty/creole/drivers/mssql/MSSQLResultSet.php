@@ -154,12 +154,14 @@ class MSSQLResultSet extends ResultSetCommon implements ResultSet
     {
         if (extension_loaded('sqlsrv')) {
             $rows = @sqlsrv_num_rows($this->result);
+            if ($rows === null) {
+                throw new SQLException('Error getting record count', print_r(sqlsrv_errors(), true));
+            }
         } else {
             $rows = @mssql_num_rows($this->result);
-        }
-
-        if ($rows === null) {
-            throw new SQLException('Error getting record count', mssql_get_last_message());
+            if ($rows === null) {
+                throw new SQLException('Error getting record count', mssql_get_last_message());
+            }
         }
         // adjust count based on emulated LIMIT/OFFSET
         $rows -= $this->offset;

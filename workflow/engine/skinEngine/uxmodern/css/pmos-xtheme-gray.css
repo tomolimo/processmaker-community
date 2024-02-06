@@ -1631,3 +1631,74 @@ td.x-cnotes-label {
   color:#848484;
 text-decoration: none;
 }
+
+
+.cancelSummary {
+  color: #333;
+  background: #fff;
+  border:1px #ccc solid;
+}
+.claimCaseSummary {
+  color: #ffffff;
+  background-color: #337ab7;
+  border:1px #2e6da4 solid;
+}
+.claimCaseSummary .x-btn-text {
+  color: #fff;
+  padding: 6px 6px 6px 6px;
+  height: 28px !important;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+}
+.cancelSummary .x-btn-text {
+  padding: 6px 6px 6px 6px;
+  height: 25px !important;
+  -moz-border-radius: 20px;
+  -webkit-border-radius: 20px;
+  border-radius: 20px;
+}
+.claimCaseSummary td {
+  color: #ffffff;
+  background: #337ab7;
+  border-color: #2e6da4;
+}
+.claimCaseSummary tbody:hover td {
+  color: #ffffff;
+  background: #286090;
+  border-color: #204d74;
+}
+.cancelSummary td {
+  color: #333;
+  background: #fff;
+}
+.cancelSummary tbody:hover td {
+  color: #333333;
+  background: #e6e6e6;
+  border-color: #adadad;
+}
+.cancelSummary .claimCaseSummary {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 12px !important;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.navPanelBottom .x-toolbar-cell {
+  clear: both;
+  height: 50px;
+}

@@ -11,9 +11,10 @@ use ProcessMaker\Plugins\PluginRegistry;
  */
 
 use Maveriks\Util\ClassLoader;
-use \OAuth2\Request;
-use \ProcessMaker\BusinessModel\Light\Tracker;
-use \ProcessMaker\Services\OAuth2\Server;
+use OAuth2\Request;
+use ProcessMaker\BusinessModel\InputDocument;
+use ProcessMaker\BusinessModel\Light\Tracker;
+use ProcessMaker\Services\OAuth2\Server;
 
 class Designer extends Controller
 {
@@ -27,6 +28,8 @@ class Designer extends Controller
      * Index Action
      *
      * @param string $httpData (opional)
+     * 
+     * @see Controller->call()
      */
     public function index($httpData)
     {
@@ -55,6 +58,8 @@ class Designer extends Controller
         $this->setVar("SYS_LANG", SYS_LANG);
         $this->setVar("SYS_SKIN", SYS_SKIN);
         $this->setVar('HTTP_SERVER_HOSTNAME', System::getHttpServerHostnameRequestsFrontEnd());
+        $inpuDocument = new InputDocument();
+        $this->setVar('maxFileSizeInformation', G::json_encode($inpuDocument->getMaxFileSize()));
 
         if ($debug) {
             if (!file_exists(PATH_HTML . "lib-dev/pmUI/build.cache")) {

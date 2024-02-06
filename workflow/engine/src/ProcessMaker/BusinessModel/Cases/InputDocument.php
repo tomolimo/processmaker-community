@@ -1,28 +1,29 @@
 <?php
 namespace ProcessMaker\BusinessModel\Cases;
 
-use ProcessMaker\Plugins\PluginRegistry;
-use AppDocument;
-use AppDocumentPeer;
-use Exception;
-use Criteria;
-use ResultSet;
-use G;
-use ObjectPermissionPeer;
-use StepPeer;
-use StepSupervisorPeer;
 use AppDelegation;
 use AppDelegationPeer;
-use Users;
-use Configurations;
-use Bootstrap;
-use WsBase;
-use ApplicationPeer;
-use ProcessMaker\BusinessModel\ProcessSupervisor;
-use ProcessMaker\BusinessModel\Cases AS BusinessModelCases;
-use Cases;
-use ProcessUserPeer;
+use AppDocument;
+use AppDocumentPeer;
 use AppFolder;
+use ApplicationPeer;
+use Bootstrap;
+use Cases;
+use Configurations;
+use Criteria;
+use Exception;
+use G;
+use ObjectPermissionPeer;
+use ProcessMaker\BusinessModel\Cases AS BusinessModelCases;
+use ProcessMaker\BusinessModel\ProcessSupervisor;
+use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
+use ProcessUserPeer;
+use ResultSet;
+use StepPeer;
+use StepSupervisorPeer;
+use Users;
+use WsBase;
 
 
 class InputDocument
@@ -386,11 +387,12 @@ class InputDocument
      *
      * @param string $applicationUid
      * @param string $userUid
+     * @param array $documentsCanAccess
      *
      * @return array Return an array with data of an InputDocument
      * @throws Exception
      */
-    public function getCasesInputDocuments($applicationUid, $userUid)
+    public function getCasesInputDocuments($applicationUid, $userUid, $documentsCanAccess = [])
     {
         try {
             //Verify data inbox
@@ -415,7 +417,10 @@ class InputDocument
             $criteria = $this->getAppDocumentCriteriaByData($applicationUid);
 
             if (!$flagInbox) {
-                $criteria->add(AppDocumentPeer::USR_UID, $userUid, Criteria::EQUAL);
+                $criteria->add(
+                $criteria->getNewCriterion(AppDocumentPeer::USR_UID, $userUid, Criteria::EQUAL)->addOr(
+                    $criteria->getNewCriterion(AppDocumentPeer::APP_DOC_UID, $documentsCanAccess, Criteria::IN))
+                );
             }
 
             $rsCriteria = AppDocumentPeer::doSelectRS($criteria);
@@ -932,6 +937,12 @@ class InputDocument
      */
     public function uploadFileCase($files, $caseInstance, $aData, $userUid, $appUid, $delIndex)
     {
+        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+            G::SendMessageText($validator->getMessage(), "ERROR");
+            $url = explode("sys" . config("system.workspace"), $_SERVER['HTTP_REFERER']);
+            G::header("location: " . "/sys" . config("system.workspace") . $url[1]);
+            die();
+        });
         $arrayField = array();
         $arrayFileName = array();
         $arrayFileTmpName = array();
@@ -1028,16 +1039,6 @@ class InputDocument
                         $aFields = array("APP_UID" => $appUid, "DEL_INDEX" => $delIndex, "USR_UID" => $userUid, "DOC_UID" => $indocUid, "APP_DOC_TYPE" => "INPUT", "APP_DOC_CREATE_DATE" => date("Y-m-d H:i:s"), "APP_DOC_COMMENT" => "", "APP_DOC_TITLE" => "", "APP_DOC_FILENAME" => $arrayFileName[$i], "FOLDER_UID" => $oFolder->createFromPath($aID["INP_DOC_DESTINATION_PATH"]), "APP_DOC_TAGS" => $oFolder->parseTags($aID["INP_DOC_TAGS"]), "APP_DOC_FIELDNAME" => $fieldName);
                     } else {
                         $aFields = array("APP_UID" => $appUid, "DEL_INDEX" => $delIndex, "USR_UID" => $userUid, "DOC_UID" => -1, "APP_DOC_TYPE" => "ATTACHED", "APP_DOC_CREATE_DATE" => date("Y-m-d H:i:s"), "APP_DOC_COMMENT" => "", "APP_DOC_TITLE" => "", "APP_DOC_FILENAME" => $arrayFileName[$i], "APP_DOC_FIELDNAME" => $fieldName);
-                    }
-
-                    $sExtension = pathinfo($aFields["APP_DOC_FILENAME"]);
-                    if (Bootstrap::getDisablePhpUploadExecution() === 1 && $sExtension["extension"] === 'php') {
-                        $message = G::LoadTranslation('THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED');
-                        Bootstrap::registerMonologPhpUploadExecution('phpUpload', 550, $message, 'processmaker.log');
-                        G::SendMessageText($message, "ERROR");
-                        $backUrlObj = explode("sys" . config("system.workspace"), $_SERVER['HTTP_REFERER']);
-                        G::header("location: " . "/sys" . config("system.workspace") . $backUrlObj[1]);
-                        die();
                     }
 
                     $oAppDocument = new AppDocument();

@@ -68,30 +68,33 @@ PMExtJSCommon = function() {
   {
     Ext.msgBoxSlider.msg(title, msg, type, time);
   }
+  //TODO we need to review how many places using this kind of validation
+  this.escapeHtml = function (v) {
+      var pre = document.createElement('pre');
+      var text = document.createTextNode( v );
+      pre.appendChild(text);
 
-  this.getBrowser = function()
-  {
-    var browsersList = new Array("opera", "msie", "firefox", "chrome", "safari");
-    var browserMeta = navigator.userAgent.toLowerCase();
-    var name = 'Unknown';
-    var version = '';
-    var screen = {
-      width  : Ext.getBody().getViewSize().width,
-      height : Ext.getBody().getViewSize().height
-    };
-
-    var so = Ext.isLinux ? 'Linux' : ( Ext.isWindows ? 'Windows' :  (Ext.isMac ? 'Mac OS' : 'Unknown') );
-
-    for (var i = 0; i < browsersList.length; i++){
-      if ((name == "") && (browserMeta.indexOf(browsersList[i]) != -1)){
-        name = browsersList[i];
-        version = String(parseFloat(browserMeta.substr(browserMeta.indexOf(browsersList[i]) + browsersList[i].length + 1)));
-        break;
-      }
-    }
-
-    return {name:name, version:version, screen: screen}
+      return pre.innerHTML;
   }
+
+    this.getBrowser = function () {
+        var browsersList = ["opera", "msie", "firefox", "chrome", "safari", "trident"],
+            browserMeta = navigator.userAgent.toLowerCase(),
+            name = 'Unknown',
+            version = '',
+            screen = {
+                width: Ext.getBody().getViewSize().width,
+                height: Ext.getBody().getViewSize().height
+            };
+        for (var i = 0; i < browsersList.length; i++) {
+            if ((name === "") && (browserMeta.indexOf(browsersList[i]) !== -1)) {
+                name = browsersList[i];
+                version = String(parseFloat(browserMeta.substr(browserMeta.indexOf(browsersList[i]) + browsersList[i].length + 1)));
+                break;
+            }
+        }
+        return {name: name, version: version, screen: screen}
+    };
 
   this.createInfoPanel = function (url, params, columnsSize) {
     var labelColumnWidth = 170;
@@ -175,7 +178,29 @@ PMExtJSCommon = function() {
       Tools.createCookie(name,"",-1);
     }
   }
-
+  this.emailConst = {
+    appMsgTypeWithoutTask:['EXTERNAL_REGISTRATION','TEST','CASE_NOTE','SOAP','RETRIEVE_PASSWORD'],
+    appMsgTypeWithConditionalTask:['PM_FUNCTION'],
+    appMsgTypeWithoutCase:['EXTERNAL_REGISTRATION','TEST','RETRIEVE_PASSWORD'],
+    appMsgTypeWithoutProcess:['EXTERNAL_REGISTRATION','TEST','RETRIEVE_PASSWORD'],
+    appMsgTypeWithoutNumber:['EXTERNAL_REGISTRATION','TEST','RETRIEVE_PASSWORD'],
+    numberColumn:{
+      name:'APP_NUMBER',
+      defaultValue:'N/A'
+    },
+    taskColumn:{
+        name:'TAS_TITLE',
+        defaultValue:'N/A'
+    },
+    caseColumn:{
+        name:'APP_TITLE',
+        defaultValue:'N/A'
+    },
+    processColumn:{
+      name:'PRO_TITLE',
+      defaultValue:'N/A'
+    }
+  }
 }
 var PMExt = new PMExtJSCommon();
 
@@ -562,11 +587,11 @@ function getBrowserTimeZoneOffset()
 }
 
 /**
- * This is the global state manager. By default all components that are 
- * "state aware" check this class for state information if you don't pass them a 
- * custom state provider. In order for this class to be useful, it must be 
+ * This is the global state manager. By default all components that are
+ * "state aware" check this class for state information if you don't pass them a
+ * custom state provider. In order for this class to be useful, it must be
  * initialized with a provider when your application initializes.
- * 
+ *
  * @param {string} cache
  * @param {string} additionalPrefix
  * @returns {undefined}
@@ -584,8 +609,8 @@ function setExtStateManagerSetProvider(cache, additionalPrefix) {
     }
     workspace = workspace + additionalPrefix;
     cookieProvider.on('statechange', function (provider, key, value) {
-        if (value !== null && JSON.stringify(Ext.state.Manager.get(workspace + cache)) !== JSON.stringify(value)) {
-            Ext.state.Manager.set(workspace + cache, value);
+        if (value !== null && JSON.stringify(Ext.state.Manager.get(workspace + window.userUid + cache)) !== JSON.stringify(value)) {
+            Ext.state.Manager.set(workspace + window.userUid + cache, value);
         }
     });
     Ext.state.Manager.setProvider(cookieProvider);
@@ -595,7 +620,7 @@ function setExtStateManagerSetProvider(cache, additionalPrefix) {
             for (i in extJsViewState) {
                 Ext.state.Manager.clear(i);
             }
-            Ext.state.Manager.set(cache, Ext.state.Manager.getProvider().decodeValue(extJsViewState[workspace + cache]));
+            Ext.state.Manager.set(cache, Ext.state.Manager.getProvider().decodeValue(extJsViewState[workspace + window.userUid + cache]));
         }
     } catch (e) {
     }

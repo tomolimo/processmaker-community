@@ -179,6 +179,7 @@ class Derivation
                     $pmScript = new PMScript();
                     $pmScript->setFields($arrayApplicationData["APP_DATA"]);
                     $pmScript->setScript($arrayRouteData["ROU_CONDITION"]);
+                    $pmScript->setExecutedOn(PMScript::CONDITION);
                     $flagAddDelegation = $pmScript->evaluate();
                 }
 
@@ -662,14 +663,19 @@ class Derivation
     /**
      * Execute Event
      *
-     * @param string $dummyTaskUid                  Unique id of Element Origin      (unique id of Task) This is the nextTask
-     * @param array  $applicationData               Case data
-     * @param bool   $flagEventExecuteBeforeGateway Execute event before gateway
-     * @param bool   $flagEventExecuteAfterGateway  Execute event after gateway
+     * @param string $dummyTaskUid Unique id of Element Origin      (unique id of Task) This is the nextTask
+     * @param array $applicationData Case data
+     * @param bool $flagEventExecuteBeforeGateway Execute event before gateway
+     * @param bool $flagEventExecuteAfterGateway Execute event after gateway
+     * @param int $taskId
      *
      * @return void
+     * @see Derivation->derivate()
+     * @see Derivation->doRouteWithoutThread()
+     * @see Derivation->finishProcess()
+     * @see Derivation->finishTask()
      */
-    private function executeEvent($dummyTaskUid, array $applicationData, $flagEventExecuteBeforeGateway = true, $flagEventExecuteAfterGateway = true, $elementOriUid='')
+    private function executeEvent($dummyTaskUid, array $applicationData, $flagEventExecuteBeforeGateway = true, $flagEventExecuteAfterGateway = true, $elementOriUid='',$tasId = 0)
     {
         try {
             //Verify if the Project is BPMN
@@ -742,7 +748,7 @@ class Derivation
 
                                     if (preg_match("/^(?:END|INTERMEDIATE)$/", $event->getEvnType()) && $event->getEvnMarker() === 'EMAIL') {
                                         //Email-Event throw
-                                        $result = $emailEvent->sendEmail($applicationData["APP_UID"], $applicationData["PRO_UID"], $value['uid'], $applicationData);
+                                        $result = $emailEvent->sendEmail($applicationData["APP_UID"], $applicationData["PRO_UID"], $value['uid'], $applicationData, $tasId);
 
                                         $aContext['envUid'] = $value['uid'];
                                         $aContext['envType'] = $event->getEvnType();
@@ -816,7 +822,8 @@ class Derivation
         return $arrayDerivationResult;
     }
 
-    /** Route the case
+    /**
+     * Route the case
      * If need to create another thread we can execute the doDerivate
      *
      * @param array $currentDelegation
@@ -824,7 +831,11 @@ class Derivation
      * @param bool $removeList
      *
      * @return void
-     * @throws /Exception
+     * @throws Exception
+     *
+     * @see beforeDerivate()
+     * @see doDerivation()
+     * @see verifyIsCaseChild()
      */
     function derivate(array $currentDelegation, array $nextDelegations, $removeList = true)
     {
@@ -853,6 +864,9 @@ class Derivation
 
         //We close the current derivation, then we'll try to derivate to each defined route
         $this->case->CloseCurrentDelegation( $currentDelegation['APP_UID'], $currentDelegation['DEL_INDEX'] );
+
+        //Set THE APP_STATUS
+        $appFields['APP_STATUS'] = $currentDelegation['APP_STATUS'];
 
         //Get data for current delegation (current Task)
         $task = TaskPeer::retrieveByPK($currentDelegation["TAS_UID"]);
@@ -994,7 +1008,8 @@ class Derivation
                             $appFields,
                             true,
                             true,
-                            $currentDelegation["TAS_UID"]
+                            $currentDelegation["TAS_UID"],
+                            !empty($nextDel["TAS_ID"]) ? $nextDel["TAS_ID"] : 0
                         );
 
                         //Route the case
@@ -1017,6 +1032,9 @@ class Derivation
                                  break;
                             default:
                                 $iNewDelIndex = $this->doDerivation($currentDelegation, $nextDel, $appFields, $aSP);
+                                //Load Case Data again because the information could be change in method "doDerivation"
+                                $verifyApplication = $this->case->loadCase($currentDelegation['APP_UID']);
+                                $appFields['APP_DATA'] = $verifyApplication['APP_DATA'];
                                 //When the users route the case in the same time
                                 if($iNewDelIndex !== 0){
                                     $arrayDerivationResult[] = [
@@ -1086,17 +1104,12 @@ class Derivation
             unset($aSP);
         }
 
-        /* Start Block : UPDATES APPLICATION */
 
-        //Set THE APP_STATUS
-        $appFields['APP_STATUS'] = $currentDelegation['APP_STATUS'];
         /* Start Block : Count the open threads of $currentDelegation['APP_UID'] */
         $openThreads = $this->case->GetOpenThreads( $currentDelegation['APP_UID'] );
-
         $flagUpdateCase = false;
 
-        //check if there is any paused thread
-
+        //Check if there is any paused thread
         $existThreadPaused = false;
         if (isset($arraySiblings['pause'])) {
             if (!empty($arraySiblings['pause'])) {
@@ -1839,7 +1852,15 @@ class Derivation
             if (preg_match("/^(?:END-MESSAGE-EVENT|END-EMAIL-EVENT)$/", $taskDummy->getTasType())
                 && $multiInstanceCompleted && $executeEvent
             ) {
-                $this->executeEvent($nextDel["TAS_UID_DUMMY"], $appFields, $flagFirstIteration, true);
+                $nextDel["TAS_ID"] = $taskDummy->getTasId();
+                $this->executeEvent(
+                    $nextDel["TAS_UID_DUMMY"],
+                    $appFields,
+                    $flagFirstIteration,
+                    true,
+                    '',
+                    !empty($nextDel["TAS_ID"]) ? $nextDel["TAS_ID"] : 0
+                );
             }
         }
         $aContext['action'] = 'finish-task';
@@ -1866,12 +1887,27 @@ class Derivation
             $nextDel['ROU_CONDITION'] = '';
         }
         //Execute the Intermediate Event After the End of Process
-        $this->executeEvent($nextDel["TAS_UID"], $appFields, true, true);
+        $this->executeEvent(
+            $nextDel["TAS_UID"],
+            $appFields,
+            true,
+            true,
+            '',
+            !empty($nextDel["TAS_ID"]) ? $nextDel["TAS_ID"] : 0
+        );
         if (isset($nextDel["TAS_UID_DUMMY"]) ) {
             $taskDummy = TaskPeer::retrieveByPK($nextDel["TAS_UID_DUMMY"]);
             if (preg_match("/^(?:END-MESSAGE-EVENT|END-EMAIL-EVENT)$/", $taskDummy->getTasType())) {
+                $nextDel["TAS_ID"] = $taskDummy->getTasId();
                 //Throw Events
-                $this->executeEvent($nextDel["TAS_UID_DUMMY"], $appFields, $flagFirstIteration, true);
+                $this->executeEvent(
+                    $nextDel["TAS_UID_DUMMY"],
+                    $appFields,
+                    $flagFirstIteration,
+                    true,
+                    '',
+                    !empty($nextDel["TAS_ID"]) ? $nextDel["TAS_ID"] : 0
+                );
             }
         }
         $aContext['action'] = 'end-process';
@@ -2193,7 +2229,14 @@ class Derivation
                 //If the all Siblings are done execute the events
                 if (sizeof($arraySiblings) === 0 && !$flagTypeMultipleInstance) {
                     //Throw Events
-                    $this->executeEvent($nextDel["TAS_UID"], $appFields, $flagFirstIteration, false);
+                    $this->executeEvent(
+                        $nextDel["TAS_UID"],
+                        $appFields,
+                        $flagFirstIteration,
+                        false,
+                        '',
+                        !empty($nextDel["TAS_ID"]) ? $nextDel["TAS_ID"] : 0
+                    );
                 }
                 //Close thread
                 $this->case->closeAppThread( $currentDelegation['APP_UID'], $iAppThreadIndex );

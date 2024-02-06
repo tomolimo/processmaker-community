@@ -1,11 +1,14 @@
-var Actions = {};
-var showCaseNavigatorPanel;
-var hideCaseNavigatorPanel;
-var informationMenu;
-var caseMenuOpen = false;
-var menuSelectedTitle = [];
-var _ENV_CURRENT_DATE;
-var winTree;
+var Actions = {},
+    hideCaseNavigatorPanel,
+    informationMenu,
+    caseMenuOpen = false,
+    menuSelectedTitle = [],
+    _ENV_CURRENT_DATE,
+    winTree,
+    buttonCancel,
+    buttonClaimCase,
+    navPanelBottom,
+    navPanel;
 
 historyGridListChangeLogGlobal = {};
 historyGridListChangeLogGlobal.idHistory = '';
@@ -32,13 +35,14 @@ function formatAMPM(date, initVal) {
   return strTime;
 };
 
-function isBrowserIE(){
-  if ( (navigator.userAgent.indexOf("MSIE")!=-1) || (navigator.userAgent.indexOf("Trident")!=-1) ){
-   return true;
-   } else {
-     return false;
-   }
-};
+/**
+ * Verify if the browser is Internet Explorer
+ * @return {boolean}
+ */
+function isBrowserIE() {
+    var browserAgent = navigator.userAgent.toLowerCase();
+    return (browserAgent.indexOf("msie") !== -1) || (browserAgent.indexOf("trident") !== -1);
+}
 
 Ext.onReady(function(){
   openToRevisePanel = function() {
@@ -157,7 +161,7 @@ Ext.onReady(function(){
               tb.add(menu);
           }
         }
-        
+
         var olink = document.location.href;
         if(olink.search("gmail") != -1){
       	  Ext.getCmp('stepsMenu').hide();
@@ -229,7 +233,7 @@ Ext.onReady(function(){
 
             if (node.attributes.url) {
                 //Set load event
-                if (navigator.userAgent.toLowerCase().indexOf("msie") != -1) {
+                if (navigator.userAgent.toLowerCase().indexOf("msie") !== -1 || navigator.userAgent.toLowerCase().indexOf("trident") !== -1) {
                     document.getElementById("openCaseFrame").onreadystatechange = function ()
                     {
                         if (document.getElementById("openCaseFrame").readyState == "complete") {
@@ -350,109 +354,218 @@ Ext.onReady(function(){
     setNode(idfirstform);
   }
 
-  var navPanelWest = {
-    id: 'navPanelWest',
-    region: 'west',
-    xtype:'panel',
-    width: 250,
-    height: 500,
-    maxSize: 400,
-    split: true,
-    collapsible: false,
-    margins: '0 0 0 0',
-    items:[casesStepTree]
-  }
-
-  var fnChangeStatus  =function(){
-    alert('loaded');
-  }
-
-  var screenWidth = (PMExt.getBrowser().screen.width-140).toString() + 'px';
-
-  var navPanelCenter = {
-    id: 'navPanelCenter',
-    region: 'center', layout:'fit',forceLayout: true,
-    xtype:'panel',
-    items:[{
-        xtype:"tabpanel",
-        id: 'caseTabPanel',
-        deferredRender:false,
-        defaults:{autoScroll: true},
-        defaultType:"iframepanel",
-        activeTab: 0,
-        enableTabScroll: true,
-        //defaults: Ext.apply({}, Ext.isGecko? {style:{position:'absolute'},hideMode:'visibility'}:false),
-
-        items:[{
-          id: 'casesTab',
-          title: _('ID_CASE') +' ' + _APP_NUM,
-          frameConfig:{name:'openCaseFrame', id:'openCaseFrame'},
-          defaultSrc : uri,
-          loadMask:{msg: _('ID_LOADING_GRID') },
-          bodyStyle:{height: (PMExt.getBrowser().screen.height-60) + 'px', overflow:'hidden'},
-          width:screenWidth
-
-          }
-        ],
-        listeners: {
-          tabchange: function(panel){
-            panel.ownerCt.doLayout();
-          },
-          render : function(panel){
-            Ext.each([this.el, this[this.collapseEl]] ,
-            function( elm ) {
-              elm.setVisibilityMode(Ext.Element.VISIBILITY).originalDisplay ='visible';
-            });
-          }
-        }
-    }]
-  };
-
-  var navPanel = {
-    id: 'navPanel',
-    region: 'center',
-    layout: 'border',
-    items:[navPanelWest, navPanelCenter],
-    tbar:[{
-      id: 'stepsMenu',
-      text: '&nbsp;&nbsp;'+_('ID_STEPS'),
-      pressed: false,
-      enableToggle:true,
-      tooltip: {
-        title: _('ID_CASES_STEPS'),
-        text:_('ID_SHOW_HIDE_CASES_STEPS')
-      },
-      iconCls: 'ICON_STEPS',
-      toggleHandler: togglePreview,
-      disabled: true
-    }, {
-      id: 'informationMenu',
-      text: _('ID_INFORMATION'),
-      menu: []
-    }, {
-      id: 'actionMenu',
-      text: _('ID_ACTIONS'),
-      menu: []
-    }, {
-    id: 'caseNotes',
-    pressed: false,
-    enableToggle:true,
-    text: '&nbsp;&nbsp;'+_('ID_CASES_NOTES'),
-    iconCls: 'button_menu_ext ICON_CASES_NOTES',
-    tooltip: {
-      title: _('ID_CASES_NOTES'),
-      text:_('ID_SHOW_CASES_NOTES')
-    },
-    toggleHandler:function(btn, pressed){
-      if(pressed){
-        openCaseNotesWindow();
-      }else{
-        closeCaseNotesWindow();
-      }
+    var navPanelWest = {
+        id: 'navPanelWest',
+        region: 'west',
+        xtype:'panel',
+        width: 250,
+        height: 500,
+        maxSize: 400,
+        split: true,
+        collapsible: false,
+        margins: '0 0 0 0',
+        items:[casesStepTree]
     }
 
-  }]
-  }
+    var fnChangeStatus  =function(){
+        alert('loaded');
+    }
+
+    var screenWidth = (PMExt.getBrowser().screen.width-140).toString() + 'px';
+
+    var navPanelCenter = {
+        id: 'navPanelCenter',
+        region: 'center', layout:'fit',forceLayout: true,
+        xtype:'panel',
+        items:[{
+            xtype:"tabpanel",
+            id: 'caseTabPanel',
+            deferredRender:false,
+            defaults:{autoScroll: true},
+            defaultType:"iframepanel",
+            activeTab: 0,
+            enableTabScroll: true,
+            //defaults: Ext.apply({}, Ext.isGecko? {style:{position:'absolute'},hideMode:'visibility'}:false),
+
+            items:[{
+              id: 'casesTab',
+              title: _('ID_CASE') +' ' + _APP_NUM,
+              frameConfig:{name:'openCaseFrame', id:'openCaseFrame'},
+              defaultSrc : uri,
+              loadMask:{msg: _('ID_LOADING_GRID') },
+              bodyStyle:{height: (PMExt.getBrowser().screen.height-60) + 'px', overflow:'hidden'},
+              width:screenWidth
+
+              }
+            ],
+            listeners: {
+              tabchange: function(panel){
+                panel.ownerCt.doLayout();
+              },
+              render : function(panel){
+                Ext.each([this.el, this[this.collapseEl]] ,
+                function( elm ) {
+                  elm.setVisibilityMode(Ext.Element.VISIBILITY).originalDisplay ='visible';
+                });
+              }
+            }
+        }]
+    };
+
+    buttonCancel = new Ext.Button({
+        buttonAlign: 'center',
+        text: 'Cancel',
+        handler: redirectHistory,
+        cls: 'cancelSummary',
+        width: '100px',
+        flex: 1,
+        style: "height:36px"
+    });
+
+    buttonClaimCase = new Ext.Button({
+        buttonAlign: 'center',
+        ui: 'round',
+        text: 'Claim this case',
+        handler: claimCase,
+        cls: 'claimCaseSummary',
+        width: '120px',
+        flex: 1,
+        style: "height:36px"
+    });
+
+    navPanelBottom = {
+        id: 'navPanelBottom',
+        name: 'navPanelBottom',
+        cls: 'navPanelBottom',
+        region: 'south',
+        layout: 'column',
+        dock: 'bottom',
+        border: false,
+        margin: '0 0 0 0',
+        split: false,
+        collapsible: false,
+        hidden: false,
+        buttonAlign: 'center',
+        buttonHeight: 200,
+        buttons: [buttonCancel, buttonClaimCase]
+    };
+
+    /**
+     * Claim the case.
+     */
+    function claimCase() {
+        Ext.Ajax.request({
+            url: 'cases_CatchExecute',
+            success: function (response, opts) {
+                Ext.Ajax.request({
+                    url: 'ajaxListener',
+                    params: {action : 'steps'},
+                    success: function (response, opts) {
+                        Ext.getCmp('navPanelBottom').hide();
+                        Ext.getCmp('navPanel').doLayout();
+                        //Reload frame pmDynaform
+                        if (isBrowserIE()) {
+                            document.getElementById('openCaseFrame').contentWindow.location.reload(true);
+                        } else {
+                            Ext.getCmp('navPanelCenter').getUpdater().getEl().update();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Redirect to unassigned inbox.
+     */
+    function redirectHistory() {
+        if (isBrowserIE()) {
+            if (top.opener) {
+                //Is open the claim case in another tab
+                top.opener.location.reload();
+                top.close();
+            } else {
+                //When isIE with ux skin is not open another tab
+                javascript:history.back();
+            }
+        } else {
+            javascript:history.back();
+        }
+    }
+
+    navPanel = {
+        id: 'navPanel',
+        region: 'center',
+        layout: 'border',
+        items: [navPanelWest, navPanelCenter],
+        tbar: [{
+            id: 'stepsMenu',
+            text: '&nbsp;&nbsp;' + _('ID_STEPS'),
+            pressed: false,
+            enableToggle: true,
+            tooltip: {
+                title: _('ID_CASES_STEPS'),
+                text: _('ID_SHOW_HIDE_CASES_STEPS')
+            },
+            iconCls: 'ICON_STEPS',
+            toggleHandler: togglePreview,
+            disabled: true
+        }, {
+            id: 'informationMenu',
+            text: _('ID_INFORMATION'),
+            menu: []
+        }, {
+            id: 'actionMenu',
+            text: _('ID_ACTIONS'),
+            menu: []
+        }, {
+            id: 'caseNotes',
+            pressed: false,
+            enableToggle: true,
+            text: '&nbsp;&nbsp;' + _('ID_CASES_NOTES'),
+            iconCls: 'button_menu_ext ICON_CASES_NOTES',
+            tooltip: {
+                title: _('ID_CASES_NOTES'),
+                text: _('ID_SHOW_CASES_NOTES')
+            },
+            toggleHandler: function (btn, pressed) {
+                if (pressed) {
+                    openCaseNotesWindow();
+                } else {
+                    closeCaseNotesWindow();
+                }
+            }
+        }]
+    };
+
+    /**
+     * Get Parameters from URL
+     * @returns {*}
+     */
+    function getParameterURL() {
+        var item,
+            key = false,
+            result = {},
+            url = location.search.substring(1),
+            regExp = /([^&=]+)=([^&]*)/g;
+        if (arguments.length > 0 && arguments[0].length > 1) {
+            key = arguments[0];
+        }
+        while (item = regExp.exec(url)) {
+            if (key !== false && decodeURIComponent(item[1]) === key) {
+                return decodeURIComponent(item[2]);
+            }
+            else if (key === false) {
+                result[decodeURIComponent(item[1])] = decodeURIComponent(item[2]);
+            }
+        }
+        return key === false ? result : null;
+    }
+
+    var urlAction = getParameterURL('action');
+    if (this.showCustomForm && this.showCustomForm === true && (urlAction === 'unassigned' || this.canClaimCase === true)) {
+        navPanel.items[navPanel.items.length] = navPanelBottom;
+    }
 
   var viewport = new Ext.Viewport({
       layout: 'border',
@@ -1358,6 +1471,7 @@ Ext.onReady(function(){
 
   Actions.pauseCase = function()
   {
+	  Ext.getCmp('submitPauseCase').setDisabled(true);
 	  Ext.Ajax.request({
         url : 'ajaxListener' ,
         params : {action : 'verifySession'},
@@ -1389,6 +1503,7 @@ Ext.onReady(function(){
               var paramsNote = '&NOTE_REASON=' + noteReasonTxt + '&NOTIFY_PAUSE=' + notifyReasonVal;
               var unpauseDate = Ext.getCmp('unpauseDate').getValue();
               if( unpauseDate == '') {
+                Ext.getCmp('submitPauseCase').setDisabled(false);
                 return;
               } else {
                 unpauseDate = unpauseDate.format('Y-m-d');
@@ -1419,6 +1534,7 @@ Ext.onReady(function(){
                 },
                 failure: function ( res, req) {
                   PMExt.error(_('ID_ERROR'), req.result.msg);
+                  Ext.getCmp('submitPauseCase').setDisabled(false);
                 }
               });
             }
@@ -1427,6 +1543,7 @@ Ext.onReady(function(){
             if (typeof(result.responseText) != 'undefined') {
               Ext.MessageBox.alert( _('ID_FAILED'), result.responseText);
             }
+            Ext.getCmp('submitPauseCase').setDisabled(false);
         }
     });
   }
@@ -1891,4 +2008,3 @@ Ext.onReady(function(){
 
     node.select();
   }
-

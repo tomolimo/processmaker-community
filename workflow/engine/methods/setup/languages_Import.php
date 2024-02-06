@@ -2,6 +2,8 @@
 
 require_once "classes/model/Language.php";
 
+use ProcessMaker\Validation\ValidationUploadedFiles;
+
 global $RBAC;
 $access = $RBAC->userCanAccess('PM_SETUP_ADVANCE');
 
@@ -24,6 +26,9 @@ if ($access != 1) {
 $result = new stdClass();
 
 try {
+    ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        throw new Exception($validator->getMessage());
+    });
     //if the xmlform path is writeable
     if (!is_writable(PATH_XMLFORM)) {
         throw new Exception(G::LoadTranslation('IMPORT_LANGUAGE_ERR_NO_WRITABLE'));

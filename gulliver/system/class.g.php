@@ -4,6 +4,7 @@ use ProcessMaker\Core\System;
 use ProcessMaker\AuditLog\AuditLog;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services\OAuth2\Server;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 class G
 {
@@ -1183,7 +1184,7 @@ class G
                             \Bootstrap::registerMonologPhpUploadExecution('phpExecution', 200, 'Php Execution', $filename);
                             require_once($filename);
                         } else {
-                            $message = G::LoadTranslation('THE_PHP_FILES_EXECUTION_WAS_DISABLED');
+                            $message = G::LoadTranslation('ID_THE_PHP_FILES_EXECUTION_WAS_DISABLED');
                             \Bootstrap::registerMonologPhpUploadExecution('phpExecution', 550, $message, $filename);
                             echo $message;
                         }
@@ -1359,7 +1360,7 @@ class G
         return $e;
     }
 
-    /** 
+    /**
      * formatNumber
      *
      * @author David Callizaya <calidavidx21@yahoo.com.ar>
@@ -1375,7 +1376,7 @@ class G
         return $snum;
     }
 
-    /** 
+    /**
      * Returns a date formatted according to the given format string
      * @author David Callizaya <calidavidx21@hotmail.com>
      * @param string $format     The format of the outputted date string
@@ -1633,7 +1634,7 @@ class G
         return $campo;
     }
 
-    /** 
+    /**
      * Escapes special characters in a string for use in a SQL statement
      * @param string $sqlString  The string to be escaped
      * @param string $DBEngine   Target DBMS
@@ -1677,7 +1678,7 @@ class G
         }
     }
 
-    /** 
+    /**
      * Returns a sql string with @@parameters replaced with its values defined
      * in array $result using the next notation:
      * NOTATION:
@@ -1855,7 +1856,7 @@ class G
         return $sContent;
     }
 
-    /** 
+    /**
      * Load strings from a XMLFile.
      * @author David Callizaya <davidsantos@colosa.com>
      * @parameter $languageFile An xml language file.
@@ -1894,7 +1895,7 @@ class G
         }
     }
 
-    /** 
+    /**
      * Funcion auxiliar Temporal:
      * Registra en la base de datos los labels xml usados en el sistema
      * @author David Callizaya <calidavidx21@hotmail.com>
@@ -2766,7 +2767,7 @@ class G
         $image = $inputFn($path);
         imagecopyresampled($image_p, $image, 0, 0, 0, 0, $resWidth, $resHeight, $width, $height);
         $outputFn($image_p, $saveTo);
-        
+
         if (!is_null($saveTo)) {
             $filter = new InputFilter();
             $saveTo = $filter->validateInput($saveTo, "path");
@@ -3196,10 +3197,11 @@ class G
      * Inflects a string with accented characters and other characteres not suitable for file names, by defaul replace with undescore
      *
      * @author Erik Amaru Ortiz <erik@colosa.com, aortiz.erik@gamil.com>
-     * @param (string) string to convert
-     * @param (string) character for replace
-     * @param (array) additional characteres map
-     *
+     * @param string $string to convert
+     * @param string $replacement character for replace
+     * @param array $map additional characteres map
+     * @return string|string[]|null
+     * @see PMXPublisher::truncateName, Processes::saveSerializedProcess, XmlExporter::truncateName
      */
     public static function inflect($string, $replacement = '_', $map = array())
     {
@@ -3207,8 +3209,6 @@ class G
             $map = $replacement;
             $replacement = '_';
         }
-
-        $quotedReplacement = preg_quote($replacement, '/');
 
         $default = array('/à|á|å|â/' => 'a',
             '/è|é|ê|ẽ|ë/' => 'e',
@@ -5429,7 +5429,7 @@ class G
                 } elseif ($configuration['MESS_ENGINE'] == 'PHPMAILER' && preg_match('/(.+)@(.+)\.(.+)/', $configuration['MESS_ACCOUNT'], $match)) {
                     $from .= ' <' . $configuration['MESS_ACCOUNT'] . '>';
                 } else {
-                    $from .= ' <info@' . ((isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] != '') ? $_SERVER['HTTP_HOST'] : 'processmaker.com') . '>';
+                    $from .= ' <info@' . System::getDefaultMailDomain() . '>';
                 }
             }
         } else {
@@ -5438,15 +5438,15 @@ class G
             } elseif ($configuration['MESS_FROM_NAME'] != '' && $configuration['MESS_ENGINE'] == 'PHPMAILER' && preg_match('/(.+)@(.+)\.(.+)/', $configuration['MESS_ACCOUNT'], $match)) {
                 $from = $configuration['MESS_FROM_NAME'] . ' <' . $configuration['MESS_ACCOUNT'] . '>';
             } elseif ($configuration['MESS_FROM_NAME'] != '') {
-                $from = $configuration['MESS_FROM_NAME'] . ' <info@' . ((isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] != '') ? $_SERVER['HTTP_HOST'] : 'processmaker.com') . '>';
+                $from = $configuration['MESS_FROM_NAME'] . ' <info@' . System::getDefaultMailDomain() . '>';
             } elseif ($configuration['MESS_FROM_MAIL'] != '') {
                 $from = $configuration['MESS_FROM_MAIL'];
             } elseif ($configuration['MESS_ENGINE'] == 'PHPMAILER' && preg_match('/(.+)@(.+)\.(.+)/', $configuration['MESS_ACCOUNT'], $match)) {
                 $from = $configuration['MESS_ACCOUNT'];
             } elseif ($configuration['MESS_ENGINE'] == 'PHPMAILER' && $configuration['MESS_ACCOUNT'] != '' && !preg_match('/(.+)@(.+)\.(.+)/', $configuration['MESS_ACCOUNT'], $match)) {
-                $from = $configuration['MESS_ACCOUNT'] . ' <info@' . ((isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] != '') ? $_SERVER['HTTP_HOST'] : 'processmaker.com') . '>';
+                $from = $configuration['MESS_ACCOUNT'] . ' <info@' . System::getDefaultMailDomain() . '>';
             } else {
-                $from = 'info@' . ((isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] != '') ? $_SERVER['HTTP_HOST'] : 'processmaker.com');
+                $from = 'info@' . System::getDefaultMailDomain();
             }
         }
         return $from;
@@ -5466,6 +5466,16 @@ class G
      */
     public static function verifyInputDocExtension($InpDocAllowedFiles, $fileName, $filesTmpName)
     {
+        $error = null;
+        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) use(&$error) {
+            $error = new stdclass();
+            $error->status = false;
+            $error->message = $validator->getMessage();
+        });
+        if (!is_null($error)) {
+            return $error;
+        }
+
         // Initialize variables
         $res = new stdclass();
         $res->status = false;
@@ -5474,14 +5484,6 @@ class G
         // Get the file extension
         $aux = pathinfo($fileName);
         $fileExtension = isset($aux['extension']) ? strtolower($aux['extension']) : '';
-
-        if (\Bootstrap::getDisablePhpUploadExecution() === 1 && $fileExtension === 'php') {
-            $message = \G::LoadTranslation('THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED');
-            \Bootstrap::registerMonologPhpUploadExecution('phpUpload', 550, $message, $fileName);
-            $res->status = false;
-            $res->message = $message;
-            return $res;
-        }
 
         // If required extension is *.* don't validate
         if (in_array('*', $allowedTypes)) {
@@ -5799,7 +5801,7 @@ class G
             include(PATH_METHODS . "login/version-pmos.php");
         }
         //Removed default version from code.
-        
+
         /**
          * The constants defined comes from the file:
          * processmaker/workflow/engine/classes/class.plugin.php, the loading of this
@@ -5867,5 +5869,26 @@ class G
         $key = strtolower($name);
         $class = isset(self::$adapters[$key]) ? self::$adapters[$key] : $name;
         return class_exists($class);
+    }
+
+    /**
+     * Fix string corrupted related to PMC-336.
+     * To do, this method should be removed. Related to PMC-336.
+     *
+     * @param string $string
+     * @return string
+     */
+    public static function fixStringCorrupted($string)
+    {
+        $string = preg_replace_callback("/iconv\\(\\'UCS\\-4LE\\',\\'UTF\\-8\\',pack\\(\\'V\\', hexdec\\(\\'U[a-f0-9]{4}\\'\\)\\)\\)/", function($result) {
+            //This looks for the following pattern:
+            //iconv('UCS-4LE','UTF-8',pack('V', hexdec('U062f')))iconv('UCS-4LE','UTF-8',pack('V', hexdec('U0631')))
+            //So making this replacement is safe.
+            $portion = $result[0];
+            $portion = str_replace("iconv('UCS-4LE','UTF-8',pack('V', hexdec('U", "\u", $portion);
+            $portion = str_replace("')))", "", $portion);
+            return $portion;
+        }, $string);
+        return $string;
     }
 }

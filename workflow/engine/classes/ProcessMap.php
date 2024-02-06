@@ -1,5 +1,6 @@
 <?php
 
+use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
 class ProcessMap
@@ -2706,13 +2707,7 @@ class ProcessMap
             global $G_FORM;
             $G_PUBLISH = new Publisher();
 
-            if (G::is_https()) {
-                $http = 'https://';
-            } else {
-                $http = 'http://';
-            }
-
-            $link = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/' . $sProcessUID . '/';
+            $link = System::getServerMainPath() . '/' . $sProcessUID . '/';
 
             $row = array();
             $c = 0;
@@ -4209,21 +4204,37 @@ class ProcessMap
         }
     }
 
-    public function downloadFile($sProcessUID, $sMainDirectory, $sCurrentDirectory, $sFile)
+    /**
+     * Stream a file from "mailTemplates" or "public" directory thats belongs to a process
+     *
+     * @param string $processUid
+     * @param string $mainDirectory
+     * @param string $currentDirectory
+     * @param string $file
+     */
+    public function downloadFile($processUid, $mainDirectory, $currentDirectory, $file)
     {
-        switch ($sMainDirectory) {
+        // Validate directory and file requested
+        $filter = new InputFilter();
+        $currentDirectory = $filter->validatePath($currentDirectory);
+        $file = $filter->validatePath($file);
+
+        // Validate the main directory
+        switch ($mainDirectory) {
             case 'mailTemplates':
-                $sDirectory = PATH_DATA_MAILTEMPLATES . $sProcessUID . PATH_SEP . ($sCurrentDirectory != '' ? $sCurrentDirectory . PATH_SEP : '');
+                $sDirectory = PATH_DATA_MAILTEMPLATES . $processUid . PATH_SEP . ($currentDirectory != '' ? $currentDirectory . PATH_SEP : '');
                 break;
             case 'public':
-                $sDirectory = PATH_DATA_PUBLIC . $sProcessUID . PATH_SEP . ($sCurrentDirectory != '' ? $sCurrentDirectory . PATH_SEP : '');
+                $sDirectory = PATH_DATA_PUBLIC . $processUid . PATH_SEP . ($currentDirectory != '' ? $currentDirectory . PATH_SEP : '');
                 break;
             default:
                 die();
                 break;
         }
-        if (file_exists($sDirectory . $sFile)) {
-            G::streamFile($sDirectory . $sFile, true);
+
+        // Stream the file if path exists
+        if (file_exists($sDirectory . $file)) {
+            G::streamFile($sDirectory . $file, true);
         }
     }
 
@@ -4718,38 +4729,22 @@ class ProcessMap
                     $task->load($task_uid);
                     $task_name = $task->getTasTitle();
 
-                    if (G::is_https()) {
-                        $http = 'https://';
-                    } else {
-                        $http = 'http://';
-                    }
-
-                    $link = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/' . $sProcessUID . '/';
+                    $link = System::getServerMainPath() . '/' . $sProcessUID . '/';
 
                     $row = array();
                     $c = 0;
 
-                    /*
-                      $oTask = new Task ( );
-                      $TaskFields = $oTask->kgetassigType ( $sProcessUID , $tas='');
-                     */
                     $TaskFields['TAS_ASSIGN_TYPE'] = '';
-                    //$row [] = array ('W_TITLE' => '', 'W_DELETE' => '', 'TAS_ASSIGN_TYPE' => $TaskFields ['TAS_ASSIGN_TYPE'] );
-
 
                     if (is_dir(PATH_DATA . "sites" . PATH_SEP . config("system.workspace") . PATH_SEP . "public" . PATH_SEP . $sProcessUID)) {
                         $dir = opendir(PATH_DATA . "sites" . PATH_SEP . config("system.workspace") . PATH_SEP . "public" . PATH_SEP . $sProcessUID);
                         $dynTitle = str_replace(' ', '_', str_replace('/', '_', $dynTitle));
                         $arlink = $link . $dynTitle . '.php';
-                        //$arlink     = "<a href='" . $alink . "' target='blank'><font color='#9999CC'>" . $alink . "</font></a>";
                     }
                 }
             }
             $row = array('W_LINK' => $arlink, 'DYN_TITLE' => $dynTitle, 'TAS_TITLE' => $task_name, 'USR_UID' => $usr_uid_evn, 'DYN_UID' => $dynUid );
-            //     $oJSON = new Services_JSON ( );
-            //     $tmpData = $oJSON->encode( $row ) ;
-            //     $tmpData = str_replace("\\/","/",'{success:true,data:'.$tmpData.'}'); // unescape the slashes
-            //     $result = $tmpData;
+
             $result = array();
             $result['success'] = true;
             $result['data'] = $row;

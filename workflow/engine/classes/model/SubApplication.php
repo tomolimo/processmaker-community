@@ -152,5 +152,29 @@ class SubApplication extends BaseSubApplication
 
         return $result;
     }
+
+
+    /**
+     * Load all cases with the same parent case
+     *
+     * @param $appUid
+     *
+     * @return array
+     */
+    public function loadByAppUidParent($appUid)
+    {
+        $criteria = new Criteria('workflow');
+        $criteria->add(SubApplicationPeer::APP_PARENT, $appUid);
+        $dataSet = SubApplicationPeer::doSelectRS($criteria);
+
+        $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        $result = [];
+        while ($dataSet->next()) {
+            $result[] = $dataSet->getRow();
+        }
+
+        return $result;
+    }
 }
 

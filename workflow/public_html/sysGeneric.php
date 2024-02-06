@@ -4,6 +4,7 @@ use Illuminate\Foundation\Http\Kernel;
 use ProcessMaker\Core\AppEvent;
 /*----------------------------------********---------------------------------*/
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 /**
  * bootstrap - ProcessMaker Bootstrap
@@ -298,10 +299,9 @@ if (!(array_key_exists('REMOTE_USER', $_SERVER) && (string)($_SERVER['REMOTE_USE
     ini_set('session.cookie_httponly', 1);
     ini_set('session.cookie_secure', 1);
 }
-//$e_all = defined( 'E_DEPRECATED' ) ? E_ALL & ~ E_DEPRECATED : E_ALL;
-//$e_all = defined( 'E_STRICT' ) ? $e_all & ~ E_STRICT : $e_all;
-//$e_all = $config['debug'] ? $e_all : $e_all & ~ E_NOTICE;
-//$e_all = E_ALL & ~ E_DEPRECATED & ~ E_STRICT & ~ E_NOTICE  & ~E_WARNING;
+
+//Set Time Zone
+/*----------------------------------********---------------------------------*/
 
 // Do not change any of these settings directly, use env.ini instead
 ini_set('display_errors', $config['display_errors']);
@@ -310,7 +310,8 @@ ini_set('short_open_tag', 'On');
 ini_set('default_charset', "UTF-8");
 ini_set('memory_limit', $config['memory_limit']);
 ini_set('soap.wsdl_cache_enabled', $config['wsdl_cache']);
-ini_set('date.timezone', $config['time_zone']); //Set Time Zone
+ini_set('date.timezone',
+    (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $config['time_zone']); //Set Time Zone
 
 define('DEBUG_SQL_LOG', $config['debug_sql']);
 define('DEBUG_SQL', $config['debug']);
@@ -318,9 +319,7 @@ define('DEBUG_TIME_LOG', $config['debug_time']);
 define('DEBUG_CALENDAR_LOG', $config['debug_calendar']);
 define('MEMCACHED_ENABLED', $config['memcached']);
 define('MEMCACHED_SERVER', $config['memcached_server']);
-
 define('WS_IN_LOGIN', isset($config['WS_IN_LOGIN']) ? $config['WS_IN_LOGIN'] : 'serverconf');
-
 define('LOAD_HEADERS_IE', $config['load_headers_ie']);
 define('LEAVE_CASE_WARNING', $config['leave_case_warning']);
 define('REDIRECT_TO_MOBILE', $config['redirect_to_mobile']);
@@ -329,6 +328,7 @@ define('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION', $config['disable_downloa
 define('LOGS_MAX_FILES', $config['logs_max_files']);
 define('LOGS_LOCATION', $config['logs_location']);
 define('LOGGING_LEVEL', $config['logging_level']);
+define('TIME_ZONE', ini_get('date.timezone'));
 
 // IIS Compatibility, SERVER_ADDR doesn't exist on that env, so we need to define it.
 $_SERVER['SERVER_ADDR'] = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : $_SERVER['SERVER_NAME'];
@@ -562,7 +562,11 @@ ini_set('short_open_tag', 'On');
 ini_set('default_charset', "UTF-8");
 ini_set('memory_limit', $config['memory_limit']);
 ini_set('soap.wsdl_cache_enabled', $config['wsdl_cache']);
-ini_set('date.timezone', $config['time_zone']); //Set Time Zone
+ini_set('date.timezone', TIME_ZONE); //Set Time Zone
+
+date_default_timezone_set(TIME_ZONE);
+
+config(['app.timezone' => TIME_ZONE]);
 
 // Load Language Translation
 Bootstrap::LoadTranslationObject(defined('SYS_LANG') ? SYS_LANG : "en");
@@ -704,14 +708,6 @@ Bootstrap::LoadTranslationPlugins(defined('SYS_LANG') ? SYS_LANG : "en", $attrib
 // Initialization functions plugins
 $oPluginRegistry->init();
 
-//Set Time Zone
-/*----------------------------------********---------------------------------*/
-
-ini_set('date.timezone',
-    (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $config['time_zone']); //Set Time Zone
-
-define('TIME_ZONE', ini_get('date.timezone'));
-
 /*----------------------------------********---------------------------------*/
 
 Creole::registerDriver('dbarray', 'creole.contrib.DBArrayConnection');
@@ -810,7 +806,7 @@ if (substr(SYS_COLLECTION, 0, 8) === 'gulliver') {
 
         $isWebEntry = \ProcessMaker\BusinessModel\WebEntry::isWebEntry(SYS_COLLECTION, $phpFile);
         if (\Bootstrap::getDisablePhpUploadExecution() === 1 && !$isWebEntry) {
-            $message = \G::LoadTranslation('THE_PHP_FILES_EXECUTION_WAS_DISABLED');
+            $message = \G::LoadTranslation('ID_THE_PHP_FILES_EXECUTION_WAS_DISABLED');
             \Bootstrap::registerMonologPhpUploadExecution('phpExecution', 550, $message, $phpFile);
             echo $message;
             die();
@@ -928,6 +924,7 @@ if (!defined('EXECUTE_BY_CRON')) {
         $memKey = 'rbacSession' . session_id();
         if (($RBAC->aUserInfo = $memcache->get($memKey)) === false) {
             $RBAC->loadUserRolePermission($RBAC->sSystem, $_SESSION['USER_LOGGED']);
+            $RBAC->verifyDueDateUserLogged();
             $memcache->set($memKey, $RBAC->aUserInfo, PMmemcached::EIGHT_HOURS);
         }
     } else {
@@ -1044,6 +1041,8 @@ if (!defined('EXECUTE_BY_CRON')) {
     $oPluginRegistry->init();
 
     if ($isControllerCall) { //Instance the Controller object and call the request method
+        ValidationUploadedFiles::getValidationUploadedFiles()
+                ->runRulesToAllUploadedFiles();
         $controller = new $controllerClass();
         $controller->setHttpRequestData($_REQUEST);//NewRelic Snippet - By JHL
         transactionLog($controllerAction);
@@ -1058,6 +1057,8 @@ if (!defined('EXECUTE_BY_CRON')) {
         //NewRelic Snippet - By JHL
         transactionLog($phpFile);
         /*----------------------------------********---------------------------------*/
+        ValidationUploadedFiles::getValidationUploadedFiles()
+                ->runRulesToAllUploadedFiles();
         require_once $phpFile;
     }
 

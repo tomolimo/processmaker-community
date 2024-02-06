@@ -8,5 +8,10 @@
       "lastname": "Guest",
       "username": "guest"
     }
+  },
+  "validation": {
+    "pmVariable": {
+      "regEx": "/^[a-zA-Z\\_]{1}\\w+$/"
+    }
   }
 }

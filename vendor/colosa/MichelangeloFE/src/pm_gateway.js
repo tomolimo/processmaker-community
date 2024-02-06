@@ -201,15 +201,17 @@ PMGateway.prototype.setGatewayType = function (type) {
  * @return {*}
  */
 PMGateway.prototype.setDirection = function (direction) {
-    direction = direction.toLowerCase();
-    var defaultDir = {
-        unspecified: 'UNSPECIFIED',
-        diverging: 'DIVERGING',
-        converging: 'CONVERGING',
-        mixed: 'MIXED'
-    };
-    if (defaultDir[direction]) {
-        this.gat_direction = defaultDir[direction];
+    if (typeof direction !== 'undefined') {
+        direction = direction.toLowerCase();
+        var defaultDir = {
+            unspecified: 'UNSPECIFIED',
+            diverging: 'DIVERGING',
+            converging: 'CONVERGING',
+            mixed: 'MIXED'
+        };
+        if (defaultDir[direction]) {
+            this.gat_direction = defaultDir[direction];
+        }
     }
     return this;
 };
@@ -363,8 +365,16 @@ PMGateway.prototype.manualCreateMenu = function (e) {
 };
 
 PMGateway.prototype.beforeContextMenu = function () {
-    var i, port, connection, shape, defaultflowItems = [], items, item, name,
-        target, menuItem, hasMarker;
+    var i,
+        port,
+        connection,
+        shape,
+        defaultflowItems = [],
+        items,
+        name,
+        target,
+        menuItem,
+        hasMarker;
     this.canvas.hideAllCoronas();
     if (this.canvas.readOnly) {
         return;
@@ -380,7 +390,6 @@ PMGateway.prototype.beforeContextMenu = function () {
             menuItem.enable();
         }
     }
-
 
     defaultflowItems.push({
         text: 'None'.translate(),
@@ -417,8 +426,7 @@ PMGateway.prototype.beforeContextMenu = function () {
                 {
                     text: name,
                     id: connection.getID(),
-                    disabled: (connection.getID() === this.gat_default_flow)
-                        ? true : false,
+                    disabled: (connection.getID() === this.gat_default_flow),
                     onClick: function (menuOption) {
                         target = menuOption.getMenuTargetElement();
                         //target.setDefaultFlow(menuOption.id);
@@ -432,7 +440,7 @@ PMGateway.prototype.beforeContextMenu = function () {
     if (this.defaltFlowMenuItem) {
         this.menu.removeItem('defaultflowMenu');
     }
-    if ((defaultflowItems.length > 0) && (this.gat_type != "PARALLEL")) {
+    if ((defaultflowItems.length > 0) && (this.gat_type !== "PARALLEL")) {
         this.defaltFlowMenuItem = {
             id: 'defaultflowMenu',
             text: "Default Flow".translate(),
@@ -468,19 +476,20 @@ PMGateway.prototype.isSupported = function () {
     return isSupported;
 };
 /**
- * evaluates the gateway address, according to the amount of input and output connections
+ * Evaluates the gateway address, according to the amount of input and output connections, by default use Diverging.
+ * Converging multiples inputs and only an output.
+ * Diverging an input and an output.
+ * Diverging multiples inputs output and multiples outputs.
  * @returns {PMGateway}
  */
-PMGateway.prototype.evaluateGatewayDirection = function(){
+PMGateway.prototype.evaluateGatewayDirection = function () {
     var incomings = this.getIncomingConnections('SEQUENCE', 'DEFAULT') || [],
         outgoings = this.getOutgoingConnections('SEQUENCE', 'DEFAULT') || [],
+        direction;
+    if (incomings.length > 1 && outgoings.length === 1) {
+        direction = "CONVERGING";
+    } else {
         direction = "DIVERGING";
-    if (outgoings.length < incomings.length) {
-        if (incomings.length === 1 && outgoings.length === 0){
-            direction = "DIVERGING";
-        }else{
-            direction = "CONVERGING";
-        }
     }
     this.setDirection(direction);
     return this;

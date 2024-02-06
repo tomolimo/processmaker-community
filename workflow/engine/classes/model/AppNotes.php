@@ -1,7 +1,7 @@
 <?php
 
-//require_once 'classes/model/om/BaseAppNotes.php';
 use ProcessMaker\Core\System;
+use ProcessMaker\Util\DateTime;
 
 /**
  * Skeleton subclass for representing a row from the 'APP_NOTES' table.
@@ -14,9 +14,34 @@ use ProcessMaker\Core\System;
  *
  * @package classes.model
  */
+
 class AppNotes extends BaseAppNotes
 {
-    public function getNotesList (
+    /**
+     * Get the existing case notes information from a case
+     *
+     * @param string $appUid
+     * @param string $usrUid
+     * @param string $start
+     * @param int $limit
+     * @param string $sort
+     * @param string $dir
+     * @param string $dateFrom
+     * @param string $dateTo
+     * @param string $search
+     *
+     * @return array
+     *
+     * @see \Cases->getCaseNotes()
+     * @see \AppProxy->getNotesList()
+     * @see \Home->getAppsData()
+     * @see workflow/engine/methods/cases/caseNotesAjax.php->getNotesList()
+     * @see \ProcessMaker\BusinessModel\Cases->getCaseNotes()
+     * @see \ProcessMaker\Services\Api\Light->doGetCaseNotes()
+     *
+     * @link https://wiki.processmaker.com/3.2/Case_Notes#Viewing_Existing_Case_Notes
+     */
+    public function getNotesList(
         $appUid,
         $usrUid = '',
         $start = '',
@@ -25,70 +50,71 @@ class AppNotes extends BaseAppNotes
         $dir = 'DESC',
         $dateFrom = '',
         $dateTo = '',
-        $search = '')
-    {
-        $Criteria = new Criteria( 'workflow' );
-        $Criteria->clearSelectColumns();
+        $search = ''
+    ) {
+        $criteria = new Criteria('workflow');
+        $criteria->clearSelectColumns();
 
-        $Criteria->addSelectColumn( AppNotesPeer::APP_UID );
-        $Criteria->addSelectColumn( AppNotesPeer::USR_UID );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_DATE );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_CONTENT );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_TYPE );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_AVAILABILITY );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_ORIGIN_OBJ );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_AFFECTED_OBJ1 );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_AFFECTED_OBJ2 );
-        $Criteria->addSelectColumn( AppNotesPeer::NOTE_RECIPIENTS );
-        $Criteria->addSelectColumn( UsersPeer::USR_USERNAME );
-        $Criteria->addSelectColumn( UsersPeer::USR_FIRSTNAME );
-        $Criteria->addSelectColumn( UsersPeer::USR_LASTNAME );
-        $Criteria->addSelectColumn( UsersPeer::USR_EMAIL );
+        $criteria->addSelectColumn(AppNotesPeer::APP_UID);
+        $criteria->addSelectColumn(AppNotesPeer::USR_UID);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_DATE);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_CONTENT);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_TYPE);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_AVAILABILITY);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_ORIGIN_OBJ);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_AFFECTED_OBJ1);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_AFFECTED_OBJ2);
+        $criteria->addSelectColumn(AppNotesPeer::NOTE_RECIPIENTS);
+        $criteria->addSelectColumn(UsersPeer::USR_USERNAME);
+        $criteria->addSelectColumn(UsersPeer::USR_FIRSTNAME);
+        $criteria->addSelectColumn(UsersPeer::USR_LASTNAME);
+        $criteria->addSelectColumn(UsersPeer::USR_EMAIL);
 
-        $Criteria->addJoin( AppNotesPeer::USR_UID, UsersPeer::USR_UID, Criteria::LEFT_JOIN );
+        $criteria->addJoin(AppNotesPeer::USR_UID, UsersPeer::USR_UID, Criteria::LEFT_JOIN);
 
-        $Criteria->add( AppNotesPeer::APP_UID, $appUid, Criteria::EQUAL );
+        $criteria->add(AppNotesPeer::APP_UID, $appUid, Criteria::EQUAL);
 
         if ($usrUid != '') {
-            $Criteria->add( AppNotesPeer::USR_UID, $usrUid, Criteria::EQUAL );
+            $criteria->add(AppNotesPeer::USR_UID, $usrUid, Criteria::EQUAL);
         }
         if ($dateFrom != '') {
-            $Criteria->add( AppNotesPeer::NOTE_DATE, $dateFrom, Criteria::GREATER_EQUAL );
+            $criteria->add(AppNotesPeer::NOTE_DATE, $dateFrom, Criteria::GREATER_EQUAL);
         }
         if ($dateTo != '') {
-            $Criteria->add( AppNotesPeer::NOTE_DATE, $dateTo, Criteria::LESS_EQUAL );
+            $criteria->add(AppNotesPeer::NOTE_DATE, $dateTo, Criteria::LESS_EQUAL);
         }
         if ($search != '') {
-            $Criteria->add( AppNotesPeer::NOTE_CONTENT, '%'.$search.'%', Criteria::LIKE );
+            $criteria->add(AppNotesPeer::NOTE_CONTENT, '%' . $search . '%', Criteria::LIKE);
         }
 
         if ($dir == 'DESC') {
-            $Criteria->addDescendingOrderByColumn($sort);
+            $criteria->addDescendingOrderByColumn($sort);
         } else {
-            $Criteria->addAscendingOrderByColumn($sort);
+            $criteria->addAscendingOrderByColumn($sort);
         }
 
-        $response = array ();
-        $totalCount = AppNotesPeer::doCount( $Criteria );
+        $response = [];
+        $totalCount = AppNotesPeer::doCount($criteria);
         $response['totalCount'] = $totalCount;
-        $response['notes'] = array ();
+        $response['notes'] = [];
 
         if ($start != '') {
-            $Criteria->setLimit( $limit );
-            $Criteria->setOffset( $start );
+            $criteria->setLimit($limit);
+            $criteria->setOffset($start);
         }
 
-        $oDataset = appNotesPeer::doSelectRS( $Criteria );
-        $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-        $oDataset->next();
+        $dataset = AppNotesPeer::doSelectRS($criteria);
+        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $dataset->next();
 
-        while ($aRow = $oDataset->getRow()) {
-            $aRow['NOTE_CONTENT'] = stripslashes($aRow['NOTE_CONTENT']);
-            $response['notes'][] = $aRow;
-            $oDataset->next();
+        while ($row = $dataset->getRow()) {
+            $row['NOTE_CONTENT'] = stripslashes($row['NOTE_CONTENT']);
+            $response['notes'][] = $row;
+            $dataset->next();
         }
 
-        $result['criteria'] = $Criteria;
+        $result = [];
+        $result['criteria'] = $criteria;
         $result['array'] = $response;
 
         return $result;
@@ -154,8 +180,12 @@ class AppNotes extends BaseAppNotes
      * @param string $noteRecipients
      * @param string $from
      * @param integer $delIndex
-     *
+     * @return void
      * @throws Exception
+     *
+     * @see AppNotes->addCaseNote()
+     * @see AppNotes->postNewNote()
+     * @see workflow/engine/src/ProcessMaker/Util/helpers.php::postNote()
     */
     public function sendNoteNotification ($appUid, $usrUid, $noteContent, $noteRecipients, $from = '', $delIndex = 0)
     {
@@ -169,9 +199,14 @@ class AppNotes extends BaseAppNotes
                 $configuration['MESS_ENGINE'] = '';
             }
 
-            $users = new Users();
-            $userInfo = $users->load($usrUid);
-            $authorName = ((($userInfo['USR_FIRSTNAME'] != '') || ($userInfo['USR_LASTNAME'] != '')) ? $userInfo['USR_FIRSTNAME'] . ' ' . $userInfo['USR_LASTNAME'] . ' ' : '') . '<' . $userInfo['USR_EMAIL'] . '>';
+            //This value can be empty when the previous task is: 'Script Task', 'Timer Event' or other without user.
+            if (!empty($usrUid)) {
+                $users = new Users();
+                $userInfo = $users->load($usrUid);
+                $authorName = ((($userInfo['USR_FIRSTNAME'] != '') || ($userInfo['USR_LASTNAME'] != '')) ? $userInfo['USR_FIRSTNAME'] . ' ' . $userInfo['USR_LASTNAME'] . ' ' : '') . '<' . $userInfo['USR_EMAIL'] . '>';
+            } else {
+                $authorName = G::LoadTranslation('UID_UNDEFINED_USER');
+            }
 
             $cases = new Cases();
             $fieldCase = $cases->loadCase($appUid, $delIndex);
@@ -193,7 +228,7 @@ class AppNotes extends BaseAppNotes
                     '',
                     $appUid,
                     $delIndex,
-                    'DERIVATION',
+                    WsBase::MESSAGE_TYPE_CASE_NOTE,
                     G::replaceDataField($configNoteNotification['subject'], $fieldCase),
                     G::buildFrom($configuration, $from),
                     $to,
@@ -203,7 +238,7 @@ class AppNotes extends BaseAppNotes
                     '',
                     '',
                     'pending',
-                    '',
+                    1,
                     $msgError,
                     true,
                     (isset($fieldCase['APP_NUMBER'])) ? $fieldCase['APP_NUMBER'] : 0,

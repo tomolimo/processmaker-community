@@ -1,28 +1,19 @@
 <?php
-/**
- * webEntryValidate_Val_assig
- * it gets the assign type for the task
- * with pro_uid and tas_uid
- */
+
+use ProcessMaker\Core\System;
 
 $sPRO_UID = $oData->PRO_UID;
 $sTASKS = $oData->TASKS;
 $sDYNAFORM = $oData->DYNAFORM;
 
-if (G::is_https())
-    $http = 'https://';
-else
-    $http = 'http://';
-
-$endpoint = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2';
-@$client = new SoapClient( $endpoint );
+$endpoint = System::getServerMainPath() . '/services/wsdl2';
+@$client = new SoapClient($endpoint);
 
 $oTask = new Task();
-$TaskFields = $oTask->kgetassigType( $sPRO_UID, $sTASKS );
+$TaskFields = $oTask->kgetassigType($sPRO_UID, $sTASKS);
 
-if ($TaskFields['TAS_ASSIGN_TYPE'] == 'BALANCED')
+if ($TaskFields['TAS_ASSIGN_TYPE'] == 'BALANCED') {
     echo 1;
-else
+} else {
     echo 0;
-
-?>
+}

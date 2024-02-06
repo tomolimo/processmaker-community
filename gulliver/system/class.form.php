@@ -105,6 +105,10 @@ class Form extends XmlForm
             $filename = $filename . '.xml';
         }
         $this->home = $home;
+        
+        //to do: This must be removed, the post validation should only be done for the classic version.
+        self::createXMLFileIfNotExists($this->home . $filename);
+
         $res = parent::parseFile( $filename, $language, $forceParse );
         if ($res == 1) {
             trigger_error( 'Faild to parse file ' . $filename . '.', E_USER_ERROR );
@@ -750,6 +754,54 @@ class Form extends XmlForm
             }
         }
         return $data;
+    }
+
+    /**
+     * Create XML file if not exists.
+     * 
+     * @param string $filepath
+     * 
+     * @see Form->__construct()
+     * @@link https://wiki.processmaker.com/3.1/Cases
+     * @link https://wiki.processmaker.com/index.php/2.5.X/DynaForms#XML_tab
+     */
+    public static function createXMLFileIfNotExists($filepath)
+    {
+        if (file_exists($filepath)) {
+            return;
+        }
+        $pathParts = pathinfo($filepath);
+        if (empty($pathParts)) {
+            return;
+        }
+        $dynUid = $pathParts["filename"];
+        $proUid = basename($pathParts["dirname"]);
+        $pathHome = dirname($pathParts["dirname"]) . PATH_SEP;
+        self::createXMLFile($proUid, $dynUid, 'xmlform', $pathHome);
+    }
+
+    /**
+     * Create XML file.
+     * 
+     * @param string $proUid
+     * @param string $dynUid
+     * @param string $dynType
+     * @param string $pathHome
+     * 
+     * @see Dynaform->create()
+     * @see Form::createXMLFileIfNotExists()
+     * @link https://wiki.processmaker.com/3.1/Cases
+     * @link https://wiki.processmaker.com/index.php/2.5.X/DynaForms#XML_tab
+     */
+    public static function createXMLFile($proUid, $dynUid, $dynType = 'xmlform', $pathHome = PATH_XMLFORM)
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<dynaForm type="' . $dynType . '" name="' . $proUid . '/' . $dynUid . '" width="500" enabletemplate="0" mode="" nextstepsave="prompt">' . "\n";
+        $xml .= '</dynaForm>';
+        G::verifyPath($pathHome . $proUid, true);
+        $file = fopen($pathHome . $proUid . '/' . $dynUid . '.xml', 'w');
+        fwrite($file, $xml);
+        fclose($file);
     }
 }
 

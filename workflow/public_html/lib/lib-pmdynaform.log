@@ -1,30 +1,30 @@
-[3 days ago] 0c8e6dd  (origin/feature/FBI-2511) FBI-2511: [GeoMap mobile field] Google Maps shows "For development purposes only" <Rodrigo Quelca>
-[7 weeks ago] 31637c6  FBI-2477:Print button aligns the controls to the right if the dynaform is in Edit, View or Disabled mode <Fabio Guachalla>
-[8 weeks ago] ad19181  (Dynaform) The Hint icon haven't the same position for all controls <Fabio Guachalla>
-[8 weeks ago] 9cbbfa3  FBI-2465: Saveform offline <Alex Santos>
-[8 weeks ago] b7ef250  FBI-2463:Print Dynaform >> The alignment, footer and header is not correct when printing through an external link. <Fabio Guachalla>
-[2 months ago] b279f59  FBI-2453:The value of the textBox control does not works using the print button <Fabio Guachalla>
-[3 months ago] 632bcb9  (origin/bugfix/FBI-2446) FBI-2446: [checkgroup - setOnChange helper] The helper must return an array in the newValue parameter instead of an string. <Rodrigo Quelca>
-[4 months ago] df0c10f  FBI-2418:CLONE - [Zendesk - 5417]Dynaform not printed properly when accessed through link externally <Fabio Guachalla>
-[5 months ago] dc65c1d  CR <Fabio Guachalla>
-[5 months ago] 3a0b3f1  FBI-2366: Create a function to delete all the information of grid <Fabio Guachalla>
-[6 months ago] 392200a  (origin/bugfix/FBI-2376) FBI-2376: Error is displayed when the protected value property is activated in a Grid control in view mode <Rodrigo Quelca>
-[6 months ago] e827743  FBI-1869:When grid columns are populated previously the file fields are being shown always as required. <Fabio Guachalla>
-[7 months ago] b2d54e6  FBI-2352: Grid in view mode does not work if some column has formula associated <Alex Santos>
-[8 months ago] a7870ae  FBI-2112: Remove library added for download file and create a similar method <alex>
-[8 months ago] e38f92d  Tag not translated into Spanish <Fabio Guachalla>
-[8 months ago] d439d11  FBI-2187 Translations should be available for PMDynaform <dheeyi william>
-[8 months ago] d3d6e43  FBI-2185 [Zendesk - 5375]Addrow() function does not work for Dependent fields <dheeyi william>
-[8 months ago] 127134d  solve conflicts <Rodrigo Quelca>
-[8 months ago] 8b3f91c  FBI-2268:Flash Windows don't display on mobile app <Fabio Guachalla>
-[8 months ago] f83fb98  FBI-2207: TimeDate Element always shows in English even the language is set to Spanish <alex>
-[8 months ago] e13957c  FBI-2199:Unable to expand textarea in Chome 61. <Fabio Guachalla>
-[8 months ago] bb2a18b  FBI-1915: The validator of GridMobile is not working correctly when we use the setValue() helper <alex>
-[8 months ago] 67b9aba  FBI-1537:The "href" property in Links and setHref() method should not add "http://" to the url <Fabio Guachalla>
-[8 months ago] 285bbeb  FBI-2128: Error en la funcion hideColumn en Mobile <alex>
-[8 months ago] 8e24cad  FBI-1139 <dheeyi william>
-[8 months ago] a307108  FBI-2102 <Daniel>
-[8 months ago] bfe27a9  FBI-2132: (Grid) On mobile the step goes into a loop <alex>
-[11 months ago] e2e542f  FBI-2256: setText() helper doesn't work on view mode <alex>
-[11 months ago] a0a3c1e  FBI-2248: Fix old file version download for IE11 <Daniel>
-[11 months ago] b573a54  FBI-2239: MultipleFileUpload include number version in its file versions list <Daniel>
+[6 days ago] 24e0346  PMC-489 <Fabio Guachalla>
+[2 weeks ago] 3087aca  (origin/bugfix/PMC-735) PMC-735:[Zendesk - 8599] Regression: The value of checkboxes inside grids is not saved when using form.saveForm() <Rodrigo Quelca>
+[4 weeks ago] 6a40c3d  PMC-581 <Fabio Guachalla>
+[4 weeks ago] e863802  PMC-164 <Fabio Guachalla>
+[4 weeks ago] 009dc97  PMC-581 <Fabio Guachalla>
+[5 weeks ago] 4e79735  PMC-625: [Zendesk - 7296] Suggest field loading icon in version 3.3.2 is different as in version 3.2.2 <Rodrigo Quelca>
+[6 weeks ago] 84dfe3e  PMC-605: [Zendesk - 6783] Regression - Dependant dropdowns inside grids get cleared if they use a variable (from the same grid) as part of a PMTable for their queries <Rodrigo Quelca>
+[7 weeks ago] 0e54b79  (origin/bugfix/PMC-605) [Zendesk - 6783] Regression - Dependant dropdowns inside grids get cleared if they use a variable (from the same grid) as part of a PMTable for their queries <Rodrigo Quelca>
+[7 weeks ago] ded4d88  PMC-164:[Zendesk - 5952] Hints inside subforms with more than 150 characters are changing the position of the window <Fabio Guachalla>
+[7 weeks ago] aef20fb  [Zendesk - 6764] Regression - Fields alignment changed in forms <Fabio Guachalla>
+[9 weeks ago] 27889f7  PMC-542:[ZenDesk 6777] TextArea - Scroll Bar is not Present when you review the dynaform in Preview version 3.3.2 and 3.3.3 <Fabio Guachalla>
+[9 weeks ago] 51d30a6  PMC-527:[Zendesk - 6763] FIles uploaded in a multipleFIleUpload field dissapear when printing the dynaform <Fabio Guachalla>
+[4 months ago] 9b54b92  (origin/bugfix/PMC-170) PMC-170:[Mantis - 25509] There is an extra space in the html "class" property of all labels, which makes code from a client innefective after upgrading from v3.0.1.8 to v.3.2.2 <Rodrigo Quelca>
+[4 months ago] 10f3865  PMC-52:[Mantis - 26217] .setOnchange() does not correctly handle grids when rows are deleted <Fabio Guachalla>
+[5 months ago] 5e30339  PMC-108:case Summary -> more information (Print) Appear the "Error: error" message after of a reassign <Fabio Guachalla>
+[5 months ago] 48cd693  (origin/bugfix/PMC-101) PMC-101:Issue in Datetime Picker while using png Image Control in Dynaform <Fabio Guachalla>
+[5 months ago] dfb7028  (origin/bugfix/PMC-76) PMC-76 <Roly Rudy Gutierrez Pinto>
+[6 months ago] 22d2509  PMC-18:Use the new API for upload documents: POST /:app_uid/upload/:var_name/:doc_uid <Fabio Guachalla>
+[6 months ago] ae57590  FBI-2379:Multiple file control doesnt wait for files to be uploaded <Fabio Guachalla>
+[6 months ago] a1603c9  FBI-2386:Upload files: We need to show the message error sent by backend <Fabio Guachalla>
+[7 months ago] 7a1948e  FBI-2516:[Mantis 25900] Add the labels for some English fields in the English .po file <Fabio Guachalla>
+[7 months ago] ce7bd5a  FBI-2494: (Print Button) The controls of the dynaforms are overlapped with the footer and the header <Rodrigo Quelca>
+[7 months ago] 5284fa9  FBI-2493:(Print Button) The data in the Mobile controls are not preserved in the next step <Fabio Guachalla>
+[7 months ago] 911f498  FBI-2495: (Print Button) In disabled mode the dynaforms displays the Title and Number of the Case <Rodrigo Quelca>
+[7 months ago] 0c8e6dd  (origin/feature/FBI-2511) FBI-2511: [GeoMap mobile field] Google Maps shows "For development purposes only" <Rodrigo Quelca>
+[8 months ago] 01f73f3  FBI-2405:[ZenDesk 6049] Flash Message is hide behind the date field <Fabio Guachalla>
+[8 months ago] 31637c6  FBI-2477:Print button aligns the controls to the right if the dynaform is in Edit, View or Disabled mode <Fabio Guachalla>
+[9 months ago] ad19181  (Dynaform) The Hint icon haven't the same position for all controls <Fabio Guachalla>
+[9 months ago] 9cbbfa3  FBI-2465: Saveform offline <Alex Santos>
+[9 months ago] b7ef250  FBI-2463:Print Dynaform >> The alignment, footer and header is not correct when printing through an external link. <Fabio Guachalla>

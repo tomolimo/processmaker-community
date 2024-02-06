@@ -176,7 +176,10 @@ PMArtifact.prototype.createWithBpmn = function () {
     var businessObject = {};
     var bpmnElementType = this.getBpmnElementType();
 
-    businessObject.elem = PMDesigner.bpmnFactory.create(bpmnElementType, {id: this.id, text: this.getName()});
+    businessObject.elem = PMDesigner.bpmnFactory.create(bpmnElementType, {
+        id: this.id,
+        text: this.getName() ? PMDesigner.escapeXMLCharacters(this.getName()) : ""
+    });
 
     if (!businessObject.di) {
         if (this.type === 'Connection') {

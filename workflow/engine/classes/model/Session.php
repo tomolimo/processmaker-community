@@ -20,5 +20,18 @@ require_once 'classes/model/om/BaseSession.php';
  */
 class Session extends BaseSession
 {
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(SessionPeer::USR_UID, $userUid);
+        $resultSet = SessionPeer::doDelete($criteria);
+        return $resultSet;
+    }
 }
 

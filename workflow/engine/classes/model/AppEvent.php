@@ -178,99 +178,96 @@ class AppEvent extends BaseAppEvent
         }
     }
 
-    public function executeEvents ($sNow, $debug = false, &$log = array(), $cron = 0)
+    public function executeEvents($sNow, $debug = false, &$log = array(), $cron = 0)
     {
         $debug = 1;
         $oCase = new Cases();
 
         try {
-            $oCriteria = new Criteria( 'workflow' );
+            $oCriteria = new Criteria('workflow');
 
-            $oCriteria->addSelectColumn( AppEventPeer::APP_UID );
-            $oCriteria->addSelectColumn( AppEventPeer::DEL_INDEX );
-            $oCriteria->addSelectColumn( AppEventPeer::EVN_UID );
-            $oCriteria->addSelectColumn( AppEventPeer::APP_EVN_ACTION_DATE );
-            $oCriteria->addSelectColumn( AppEventPeer::APP_EVN_ATTEMPTS );
-            $oCriteria->addSelectColumn( AppEventPeer::APP_EVN_LAST_EXECUTION_DATE );
-            $oCriteria->addSelectColumn( AppEventPeer::APP_EVN_STATUS );
-            $oCriteria->addSelectColumn( EventPeer::PRO_UID );
-            $oCriteria->addSelectColumn( EventPeer::EVN_ACTION );
-            $oCriteria->addSelectColumn( EventPeer::TRI_UID );
-            $oCriteria->addSelectColumn( EventPeer::EVN_ACTION_PARAMETERS );
-            $oCriteria->addSelectColumn( EventPeer::EVN_RELATED_TO );
-            $oCriteria->addSelectColumn( AppDelegationPeer::TAS_UID );
-            $oCriteria->addSelectColumn( AppDelegationPeer::USR_UID );
-            $oCriteria->addSelectColumn( AppDelegationPeer::DEL_TASK_DUE_DATE );
-            $oCriteria->addSelectColumn( AppDelegationPeer::DEL_FINISH_DATE );
+            $oCriteria->addSelectColumn(AppEventPeer::APP_UID);
+            $oCriteria->addSelectColumn(AppEventPeer::DEL_INDEX);
+            $oCriteria->addSelectColumn(AppEventPeer::EVN_UID);
+            $oCriteria->addSelectColumn(AppEventPeer::APP_EVN_ACTION_DATE);
+            $oCriteria->addSelectColumn(AppEventPeer::APP_EVN_ATTEMPTS);
+            $oCriteria->addSelectColumn(AppEventPeer::APP_EVN_LAST_EXECUTION_DATE);
+            $oCriteria->addSelectColumn(AppEventPeer::APP_EVN_STATUS);
+            $oCriteria->addSelectColumn(EventPeer::PRO_UID);
+            $oCriteria->addSelectColumn(EventPeer::EVN_ACTION);
+            $oCriteria->addSelectColumn(EventPeer::TRI_UID);
+            $oCriteria->addSelectColumn(EventPeer::EVN_ACTION_PARAMETERS);
+            $oCriteria->addSelectColumn(EventPeer::EVN_RELATED_TO);
+            $oCriteria->addSelectColumn(AppDelegationPeer::TAS_UID);
+            $oCriteria->addSelectColumn(AppDelegationPeer::USR_UID);
+            $oCriteria->addSelectColumn(AppDelegationPeer::DEL_TASK_DUE_DATE);
+            $oCriteria->addSelectColumn(AppDelegationPeer::DEL_FINISH_DATE);
 
-            $oCriteria->addJoin( AppEventPeer::EVN_UID, EventPeer::EVN_UID, Criteria::JOIN );
+            $oCriteria->addJoin(AppEventPeer::EVN_UID, EventPeer::EVN_UID, Criteria::JOIN);
 
             $aConditions = array ();
-            array_push( $aConditions, Array (AppEventPeer::APP_UID,AppDelegationPeer::APP_UID
-            ) );
-            array_push( $aConditions, Array (AppEventPeer::DEL_INDEX,AppDelegationPeer::DEL_INDEX
-            ) );
-            $oCriteria->addJoinMC( $aConditions, Criteria::LEFT_JOIN );
+            array_push($aConditions, Array (AppEventPeer::APP_UID,AppDelegationPeer::APP_UID
+            ));
+            array_push($aConditions, Array (AppEventPeer::DEL_INDEX,AppDelegationPeer::DEL_INDEX
+            ));
+            $oCriteria->addJoinMC($aConditions, Criteria::LEFT_JOIN);
 
-            $oCriteria->addJoin( ApplicationPeer::APP_UID, AppEventPeer::APP_UID );
+            $oCriteria->addJoin(ApplicationPeer::APP_UID, AppEventPeer::APP_UID);
 
-            $oCriteria->add( AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL ); //by me
-            $oCriteria->add( AppEventPeer::APP_EVN_STATUS, 'OPEN' );
-            $oCriteria->add( AppEventPeer::APP_EVN_ACTION_DATE, $sNow, Criteria::LESS_EQUAL );
+            $oCriteria->add(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
+            $oCriteria->add(AppEventPeer::APP_EVN_STATUS, 'OPEN');
+            $oCriteria->add(AppEventPeer::APP_EVN_ACTION_DATE, $sNow, Criteria::LESS_EQUAL);
 
-            $oDataset = AppEventPeer::doSelectRS( $oCriteria );
-            $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
+            $oDataset = AppEventPeer::doSelectRS($oCriteria);
+            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
             $c = 0;
             while ($oDataset->next()) {
                 if ($cron == 1) {
-                    $arrayCron = unserialize( trim( @file_get_contents( PATH_DATA . "cron" ) ) );
+                    $arrayCron = unserialize(trim(@file_get_contents(PATH_DATA . "cron")));
                     $arrayCron["processcTimeStart"] = time();
-                    @file_put_contents( PATH_DATA . "cron", serialize( $arrayCron ) );
+                    @file_put_contents(PATH_DATA . "cron", serialize($arrayCron));
                 }
 
                 $c ++;
                 $aRow = $oDataset->getRow();
                 $oTrigger = new Triggers();
-                $aFields = $oCase->loadCase( $aRow['APP_UID'] );
-                $oAppEvent = AppEventPeer::retrieveByPK( $aRow['APP_UID'], $aRow['DEL_INDEX'], $aRow['EVN_UID'] );
-
-                //g::pr($aRow); //die;
-
+                $aFields = $oCase->loadCase($aRow['APP_UID']);
+                $oAppEvent = AppEventPeer::retrieveByPK($aRow['APP_UID'], $aRow['DEL_INDEX'], $aRow['EVN_UID']);
 
                 if ($debug) {
                     require_once 'classes/model/Application.php';
-                    $oApp = ApplicationPeer::retrieveByPk( $aRow['APP_UID'] );
-                    $oEv = EventPeer::retrieveByPk( $aRow['EVN_UID'] );
+                    $oApp = ApplicationPeer::retrieveByPk($aRow['APP_UID']);
+                    $oEv = EventPeer::retrieveByPk($aRow['EVN_UID']);
                     $log[] = 'Event ' . $oEv->getEvnDescription() . ' with ID ' . $aRow['EVN_UID'];
 
-                    println( "\nOK+ event \"" . $oEv->getEvnDescription() . "\" with ID {} was found" );
-                    println( " - PROCESS................" . $aRow['PRO_UID'] );
-                    println( " - APPLICATION............" . $aRow['APP_UID'] . " CASE #" . $oApp->getAppNumber() );
-                    println( " - ACTION DATE............" . $aRow['APP_EVN_ACTION_DATE'] );
-                    println( " - ATTEMPTS..............." . $aRow['APP_EVN_ATTEMPTS'] );
-                    println( " - INTERVAL WITH TASKS...." . $aRow['EVN_RELATED_TO'] );
+                    println("\nOK+ event \"" . $oEv->getEvnDescription() . "\" with ID {} was found");
+                    println(" - PROCESS................" . $aRow['PRO_UID']);
+                    println(" - APPLICATION............" . $aRow['APP_UID'] . " CASE #" . $oApp->getAppNumber());
+                    println(" - ACTION DATE............" . $aRow['APP_EVN_ACTION_DATE']);
+                    println(" - ATTEMPTS..............." . $aRow['APP_EVN_ATTEMPTS']);
+                    println(" - INTERVAL WITH TASKS...." . $aRow['EVN_RELATED_TO']);
                 }
 
                 if ($aRow['TRI_UID'] == '') {
                     //a rare case when the tri_uid is not set.
                     $log[] = " (!) Any trigger was set................................SKIPPED and will be CLOSED";
                     if ($debug) {
-                        println( " (!) Any trigger was set................................SKIPPED and will be CLOSED" );
+                        println(" (!) Any trigger was set................................SKIPPED and will be CLOSED");
                     }
-                    $oAppEvent->setAppEvnStatus( 'CLOSE' );
+                    $oAppEvent->setAppEvnStatus('CLOSE');
                     $oAppEvent->save();
                     continue;
                 }
 
-                $oTrigger = TriggersPeer::retrieveByPk( $aRow['TRI_UID'] );
-                if (! is_object( $oTrigger )) {
+                $oTrigger = TriggersPeer::retrieveByPk($aRow['TRI_UID']);
+                if (! is_object($oTrigger)) {
                     //the trigger record doesn't exist..
                     $log[] = ' (!) The trigger ' . $aRow['TRI_UID'] . ' ' . $oTrigger->getTriTitle() . " doesn't exist.......SKIPPED and will be CLOSED";
                     if ($debug) {
-                        println( " (!) The trigger {$aRow['TRI_UID']} {$oTrigger->getTriTitle()} doesn't exist.......SKIPPED and will be CLOSED" );
+                        println(" (!) The trigger {$aRow['TRI_UID']} {$oTrigger->getTriTitle()} doesn't exist.......SKIPPED and will be CLOSED");
                     }
-                    $oAppEvent->setAppEvnStatus( 'CLOSE' );
+                    $oAppEvent->setAppEvnStatus('CLOSE');
                     $oAppEvent->save();
                     continue;
                 }
@@ -279,38 +276,37 @@ class AppEvent extends BaseAppEvent
                 $oPMScript = new PMScript();
 
                 $task = new Task();
-                $taskFields = $task->load( $aRow['TAS_UID'] );
+                $taskFields = $task->load($aRow['TAS_UID']);
                 $aFields['APP_DATA']['APP_NUMBER'] = $aFields['APP_NUMBER'];
                 $aFields['APP_DATA']['TAS_TITLE'] = $taskFields['TAS_TITLE'];
                 $aFields['APP_DATA']['DEL_TASK_DUE_DATE'] = $aRow['DEL_TASK_DUE_DATE'];
                 $oPMScript->setDataTrigger($oTrigger->toArray(\BasePeer::TYPE_FIELDNAME));
-                $oPMScript->setFields( $aFields['APP_DATA'] );
-                $oPMScript->setScript( $oTrigger->getTriWebbot() );
-
+                $oPMScript->setFields($aFields['APP_DATA']);
+                $oPMScript->setScript($oTrigger->getTriWebbot());
+                $oPMScript->setExecutedOn(PMScript::CLASSIC_PROCESS_EVENTS);
                 $oPMScript->execute();
 
-                $oAppEvent->setAppEvnLastExecutionDate( date( 'Y-m-d H:i:s' ) );
+                $oAppEvent->setAppEvnLastExecutionDate(date('Y-m-d H:i:s'));
 
-                if (sizeof( $_SESSION['TRIGGER_DEBUG']['ERRORS'] ) == 0) {
+                if (sizeof($_SESSION['TRIGGER_DEBUG']['ERRORS']) == 0) {
                     $log[] = ' - The trigger ' . $oTrigger->getTriTitle() . ' was executed successfully!';
                     if ($debug) {
-                        println( " - The trigger '{$oTrigger->getTriTitle()}' was executed successfully!" );
-                        //g::pr($aFields);
+                        println(" - The trigger '{$oTrigger->getTriTitle()}' was executed successfully!");
                     }
                     $aFields['APP_DATA'] = $oPMScript->aFields;
-                    $oCase->updateCase( $aRow['APP_UID'], $aFields );
-                    $oAppEvent->setAppEvnStatus( 'CLOSE' );
+                    $oCase->updateCase($aRow['APP_UID'], $aFields);
+                    $oAppEvent->setAppEvnStatus('CLOSE');
                 } else {
                     if ($debug) {
                         $log[] = ' - The trigger ' . $aRow['TRI_UID'] . ' throw some errors!';
-                        println( " - The trigger {$aRow['TRI_UID']} throw some errors!" );
-                        print_r( $_SESSION['TRIGGER_DEBUG']['ERRORS'] );
+                        println(" - The trigger {$aRow['TRI_UID']} throw some errors!");
+                        print_r($_SESSION['TRIGGER_DEBUG']['ERRORS']);
                         $_SESSION['TRIGGER_DEBUG']['ERRORS'] = array();
                     }
                     if ($oAppEvent->getAppEvnAttempts() > 0) {
-                        $oAppEvent->setAppEvnAttempts( $oAppEvent->getAppEvnAttempts() - 1 );
+                        $oAppEvent->setAppEvnAttempts($oAppEvent->getAppEvnAttempts() - 1);
                     } else {
-                        $oAppEvent->setAppEvnStatus( 'CLOSE' );
+                        $oAppEvent->setAppEvnStatus('CLOSE');
                     }
                 }
                 $oAppEvent->save();
@@ -320,7 +316,7 @@ class AppEvent extends BaseAppEvent
             $log[] = ' Error execute event : ' . $oError->getMessage();
             $token = strtotime("now");
             PMException::registerErrorLog($oError, $token);
-            G::outRes( G::LoadTranslation("ID_EXCEPTION_LOG_INTERFAZ", array($token)) );
+            G::outRes(G::LoadTranslation("ID_EXCEPTION_LOG_INTERFAZ", array($token)));
             die;
             return $oError->getMessage();
         }

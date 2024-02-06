@@ -4,7 +4,6 @@ use Illuminate\Contracts\Console\Kernel as Kernel2;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as Kernel4;
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Console\Kernel;
 use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Foundation\Http\Kernel as Kernel3;
 use Monolog\Formatter\LineFormatter;
@@ -43,7 +42,7 @@ $app->singleton(
 
 $app->singleton(
     Kernel2::class,
-    Kernel::class
+    App\Console\Kernel::class
 );
 
 $app->singleton(

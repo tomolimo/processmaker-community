@@ -27,6 +27,7 @@
 global $RBAC;
 
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 $RBAC->requirePermissions("PM_SETUP_ADVANCE");
 require_once PATH_CORE . 'methods' . PATH_SEP . 'enterprise' . PATH_SEP . 'enterprise.php';
@@ -35,6 +36,9 @@ $response = array();
 $status = 1;
 
 try {
+    ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        throw new Exception($validator->getMessage());
+    });
 
     if (!isset($_FILES["form"]["error"]["PLUGIN_FILENAME"]) || $_FILES["form"]["error"]["PLUGIN_FILENAME"] == 1) {
         $str = "There was an error uploading the file, probably the file size if greater than upload_max_filesize parameter in php.ini, please check this parameter and try again.";

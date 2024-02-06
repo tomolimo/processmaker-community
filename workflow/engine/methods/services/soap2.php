@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Util\ParseSoapVariableName;
+use ProcessMaker\Util\DateTime;
 
 ini_set("soap.wsdl_cache_enabled", 0); //disabling WSDL cache
 
@@ -377,6 +378,13 @@ function removeDocument($params)
     return $res;
 }
 
+/**
+ * Send Message
+ *
+ * @param object $params
+ * @return array
+ *
+ */
 function SendMessage($params)
 {
     $vsResult = isValidSession($params->sessionId);
@@ -392,7 +400,22 @@ function SendMessage($params)
     }
 
     $ws = new WsBase();
-    $res = $ws->sendMessage($params->caseId, $params->from, $params->to, $params->cc, $params->bcc, $params->subject, $params->template);
+    $res = $ws->sendMessage(
+        $params->caseId,
+        $params->from,
+        $params->to,
+        $params->cc,
+        $params->bcc,
+        $params->subject,
+        $params->template,
+        null,
+        null,
+        true,
+        0,
+        [],
+        0,
+        WsBase::MESSAGE_TYPE_SOAP
+        );
 
     return $res->getPayloadArray();
 }
@@ -923,6 +946,13 @@ function systemInformation($params)
     return $res;
 }
 
+/**
+ * Obtains the cases notes in a soap call
+ *
+ * @param $params
+ * @return WsGetCaseNotesResponse|WsResponse
+ *
+ */
 function getCaseNotes($params)
 {
     $vsResult = isValidSession($params->sessionId);
@@ -933,6 +963,11 @@ function getCaseNotes($params)
 
     $ws = new WsBase();
     $res = $ws->getCaseNotes($params->applicationID, $params->userUid);
+
+    foreach ($res->notes as $key => $value) {
+        $res->notes[$key]['note_date'] = DateTime::convertUtcToTimeZone($res->notes[$key]['note_date']);
+
+    }
 
     return $res;
 }

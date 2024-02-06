@@ -147,8 +147,8 @@ class DataBaseConnection extends Api
      * @param string $dbs_uid {@min 1} {@max 32}
      * @param array $request_data
      * @param string $dbs_type {@from body} {@required true}
-     * @param string $dbs_server {@from body} {@required true}
-     * @param string $dbs_database_name {@from body} {@required true}
+     * @param string $dbs_server {@from body} {@required false}
+     * @param string $dbs_database_name {@from body} {@required false}
      * @param string $dbs_username {@from body}
      * @param string $dbs_encode {@from body} {@required true}
      * @param string $dbs_password {@from body}

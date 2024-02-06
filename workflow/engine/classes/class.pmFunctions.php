@@ -28,10 +28,10 @@
 //
 // License: LGPL, see LICENSE
 ////////////////////////////////////////////////////
+use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Util\ElementTranslation;
-
 
 /**
  * ProcessMaker has made a number of its PHP functions available be used in triggers and conditions.
@@ -418,18 +418,19 @@ function orderGrid ($dataM, $field, $ord = 'ASC')
  * @return array | $aGrid | Grid | Grid with executed operation
  *
  */
-function evaluateFunction ($aGrid, $sExpresion)
+function evaluateFunction($aGrid, $sExpresion)
 {
-    $sExpresion = str_replace( 'Array', '$this->aFields', $sExpresion );
+    $sExpresion = str_replace('Array', '$this->aFields', $sExpresion);
     $sExpresion .= ';';
 
     $pmScript = new PMScript();
-    $pmScript->setScript( $sExpresion );
+    $pmScript->setScript($sExpresion);
+    $pmScript->setExecutedOn(PMScript::EVALUATE_FUNCTION);
 
-    for ($i = 1; $i <= count( $aGrid ); $i ++) {
+    for ($i = 1; $i <= count($aGrid); $i ++) {
         $aFields = $aGrid[$i];
 
-        $pmScript->setFields( $aFields );
+        $pmScript->setFields($aFields);
 
         $pmScript->execute();
 
@@ -919,34 +920,34 @@ function getEmailConfiguration ()
  * @link http://wiki.processmaker.com/index.php/ProcessMaker_Functions#PMFSendMessage.28.29
  *
  * @param string(32) | $caseId | UID for case | The UID (unique identification) for a case, which is a string of 32 hexadecimal characters to identify the case.
- * @param string(32) | $sFrom | Sender | The email address of the person who sends out the email.
- * @param string(100) | $sTo | Recipient | The email address(es) to whom the email is sent. If multiple recipients, separate each email address with a comma.
- * @param string(100) | $sCc = '' | Carbon copy recipient | The email address(es) of people who will receive carbon copies of the email.
- * @param string(100) | $sBcc = ''| Carbon copy recipient | The email address(es) of people who will receive blind carbon copies of the email.
- * @param string(50) | $sSubject | Subject of the email | The subject (title) of the email.
- * @param string(50) | $sTemplate | Name of the template | The name of the template file in plain text or HTML format which will produce the body of the email.
- * @param array | $aFields = array() | Variables for email template | Optional parameter. An associative array where the keys are the variable names and the values are the variables' values.
- * @param array | $aAttachment = array() | Attachment | An Optional arrray. An array of files (full paths) to be attached to the email.
+ * @param string(32) | $from | Sender | The email address of the person who sends out the email.
+ * @param string(100) | $to | Recipient | The email address(es) to whom the email is sent. If multiple recipients, separate each email address with a comma.
+ * @param string(100) | $cc = '' | Carbon copy recipient | The email address(es) of people who will receive carbon copies of the email.
+ * @param string(100) | $bcc = ''| Carbon copy recipient | The email address(es) of people who will receive blind carbon copies of the email.
+ * @param string(50) | $subject | Subject of the email | The subject (title) of the email.
+ * @param string(50) | $template | Name of the template | The name of the template file in plain text or HTML format which will produce the body of the email.
+ * @param array | $emailTemplateVariables = [] | Variables for email template | Optional parameter. An associative array where the keys are the variable names and the values are the variables' values.
+ * @param array | $attachments = [] | Attachment | An Optional arrray. An array of files (full paths) to be attached to the email.
  * @param boolean | $showMessage = true | Show message | Optional parameter. Set to TRUE to show the message in the case's message history.
  * @param int | $delIndex = 0 | Delegation index of the case | Optional parameter. The delegation index of the current task in the case.
- * @param string(100) | $config = '' | Email server configuration | An optional array: An array of parameters to be used in the Email sent (MESS_ENGINE, MESS_SERVER, MESS_PORT, MESS_FROM_MAIL, MESS_RAUTH, MESS_ACCOUNT, MESS_PASSWORD, and SMTPSecure) Or String: UID of Email server .
+ * @param array | $config = [] | Email server configuration | An optional array: An array of parameters to be used in the Email sent (MESS_ENGINE, MESS_SERVER, MESS_PORT, MESS_FROM_MAIL, MESS_RAUTH, MESS_ACCOUNT, MESS_PASSWORD, and SMTPSecure) Or String: UID of Email server .
  * @return int | | result | Result of sending email
  *
+ * @see class.pmFunctions::PMFSendMessageToGroup()
  */
-//@param array | $aFields=array() | An associative array optional | Optional parameter. An associative array where the keys are the variable name and the values are the variable's value.
 function PMFSendMessage(
     $caseId,
-    $sFrom,
-    $sTo,
-    $sCc,
-    $sBcc,
-    $sSubject,
-    $sTemplate,
-    $aFields = array(),
-    $aAttachment = array(),
+    $from,
+    $to,
+    $cc,
+    $bcc,
+    $subject,
+    $template,
+    $emailTemplateVariables = [],
+    $attachments = [],
     $showMessage = true,
     $delIndex = 0,
-    $config = array()
+    $config = []
 ) {
     ini_set ( "pcre.backtrack_limit", 1000000 );
     ini_set ( 'memory_limit', '-1' );
@@ -954,28 +955,30 @@ function PMFSendMessage(
 
     global $oPMScript;
 
-    if (isset( $oPMScript->aFields ) && is_array( $oPMScript->aFields )) {
-        if (is_array( $aFields )) {
-            $aFields = array_merge( $oPMScript->aFields, $aFields );
+    if (isset($oPMScript->aFields) && is_array($oPMScript->aFields)) {
+        if (is_array($emailTemplateVariables)) {
+            $emailTemplateVariables = array_merge($oPMScript->aFields, $emailTemplateVariables);
         } else {
-            $aFields = $oPMScript->aFields;
+            $emailTemplateVariables = $oPMScript->aFields;
         }
     }
 
     $ws = new WsBase();
     $result = $ws->sendMessage(
         $caseId,
-        $sFrom,
-        $sTo,
-        $sCc,
-        $sBcc,
-        $sSubject,
-        $sTemplate,
-        $aFields,
-        $aAttachment,
+        $from,
+        $to,
+        $cc,
+        $bcc,
+        $subject,
+        $template,
+        $emailTemplateVariables,
+        $attachments,
         $showMessage,
         $delIndex,
-        $config
+        $config,
+        0,
+        WsBase::MESSAGE_TYPE_PM_FUNCTION
     );
 
     if ($result->status_code == 0) {
@@ -2030,13 +2033,19 @@ function PMFProcessList () //its test was successfull
  */
 function PMFSendVariables ($caseId, $variables)
 {
-    $ws = new WsBase();
+    global $oPMScript;
 
-    $result = $ws->sendVariables( $caseId, $variables );
+    if (!isset($oPMScript)) {
+        $oPMScript = new PMScript();
+    }
+
+    $ws = new WsBase();
+    $result = $ws->sendVariables($caseId, $variables,
+        $oPMScript->executedOn() === PMScript::AFTER_ROUTING);
+
     if ($result->status_code == 0) {
         if (isset($_SESSION['APPLICATION'])) {
             if ($caseId == $_SESSION['APPLICATION']) {
-                global $oPMScript;
                 if (isset($oPMScript->aFields) && is_array($oPMScript->aFields)) {
                     if (is_array($variables)) {
                         $oPMScript->aFields = array_merge($oPMScript->aFields, $variables);
@@ -2432,7 +2441,7 @@ function PMFgetLabelOption ($PROCESS, $DYNAFORM_UID, $FIELD_NAME, $FIELD_SELECTE
  * @return none | $none | None | None
  *
  */
-function PMFRedirectToStep ($sApplicationUID, $iDelegation, $sStepType, $sStepUid)
+function PMFRedirectToStep($sApplicationUID, $iDelegation, $sStepType, $sStepUid)
 {
     $g = new G();
 
@@ -2444,26 +2453,27 @@ function PMFRedirectToStep ($sApplicationUID, $iDelegation, $sStepType, $sStepUi
     $_SESSION["INDEX"] = $iDelegation;
 
     require_once 'classes/model/AppDelegation.php';
-    $oCriteria = new Criteria( 'workflow' );
-    $oCriteria->addSelectColumn( AppDelegationPeer::TAS_UID );
-    $oCriteria->add( AppDelegationPeer::APP_UID, $sApplicationUID );
-    $oCriteria->add( AppDelegationPeer::DEL_INDEX, $iDelegation );
-    $oDataset = AppDelegationPeer::doSelectRS( $oCriteria );
-    $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
+    $oCriteria = new Criteria('workflow');
+    $oCriteria->addSelectColumn(AppDelegationPeer::TAS_UID);
+    $oCriteria->add(AppDelegationPeer::APP_UID, $sApplicationUID);
+    $oCriteria->add(AppDelegationPeer::DEL_INDEX, $iDelegation);
+    $oDataset = AppDelegationPeer::doSelectRS($oCriteria);
+    $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
     $oDataset->next();
     global $oPMScript;
     $aRow = $oDataset->getRow();
     if ($aRow) {
         require_once 'classes/model/Step.php';
         $oStep = new Step();
-        $oTheStep = $oStep->loadByType( $aRow['TAS_UID'], $sStepType, $sStepUid );
+        $oTheStep = $oStep->loadByType($aRow['TAS_UID'], $sStepType, $sStepUid);
         $bContinue = true;
         $oCase = new Cases();
-        $aFields = $oCase->loadCase( $sApplicationUID );
+        $aFields = $oCase->loadCase($sApplicationUID);
         if ($oTheStep->getStepCondition() != '') {
             $pmScript = new PMScript();
-            $pmScript->setFields( $aFields['APP_DATA'] );
-            $pmScript->setScript( $oTheStep->getStepCondition() );
+            $pmScript->setFields($aFields['APP_DATA']);
+            $pmScript->setScript($oTheStep->getStepCondition());
+            $pmScript->setExecutedOn(PMScript::CONDITION);
             $bContinue = $pmScript->evaluate();
         }
         if ($bContinue) {
@@ -2485,18 +2495,18 @@ function PMFRedirectToStep ($sApplicationUID, $iDelegation, $sStepType, $sStepUi
                     break;
             }
             // save data
-            if (! is_null( $oPMScript )) {
+            if (!is_null($oPMScript)) {
                 $aFields['APP_DATA'] = $oPMScript->aFields;
                 unset($aFields['APP_STATUS']);
                 unset($aFields['APP_PROC_STATUS']);
                 unset($aFields['APP_PROC_CODE']);
                 unset($aFields['APP_PIN']);
-                $oCase->updateCase( $sApplicationUID, $aFields );
+                $oCase->updateCase($sApplicationUID, $aFields);
             }
 
             $g->sessionVarRestore();
 
-            G::header( 'Location: ' . 'cases_Step?TYPE=' . $sStepType . '&UID=' . $sStepUid . '&POSITION=' . $oTheStep->getStepPosition() . '&ACTION=' . $sAction );
+            G::header('Location: ' . 'cases_Step?TYPE=' . $sStepType . '&UID=' . $sStepUid . '&POSITION=' . $oTheStep->getStepPosition() . '&ACTION=' . $sAction);
             die();
         }
     }
@@ -2817,7 +2827,7 @@ function PMFPauseCase ($caseUid, $delIndex, $userUid, $unpauseDate = null)
 {
     $ws = new WsBase();
     $result = $ws->pauseCase($caseUid, $delIndex, $userUid, $unpauseDate);
-
+    $result = (object) $result;
     if ($result->status_code == 0) {
         if (isset($_SESSION['APPLICATION']) && isset($_SESSION['INDEX'])) {
             if ($_SESSION['APPLICATION'] == $caseUid && $_SESSION['INDEX'] == $delIndex) {
@@ -2980,11 +2990,17 @@ function PMFRemoveMask ($field, $separator = '.', $currency = '')
 function PMFSaveCurrentData ()
 {
     global $oPMScript;
+
+    if (!isset($oPMScript)) {
+        $oPMScript = new PMScript();
+    }
+
     $response = 0;
 
     if (isset($_SESSION['APPLICATION']) && isset($oPMScript->aFields)) {
         $ws = new WsBase();
-        $result = $ws->sendVariables($_SESSION['APPLICATION'], $oPMScript->aFields);
+        $result = $ws->sendVariables($_SESSION['APPLICATION'], $oPMScript->aFields,
+            $oPMScript->executedOn() === PMScript::AFTER_ROUTING);
         $response = $result->status_code == 0 ? 1 : 0;
     }
     return $response;
@@ -3215,7 +3231,7 @@ function PMFGetGroupName($grpUid, $lang = SYS_LANG) {
  * @param string | $text | Text
  * @param string | $category | Category
  * @param string | $proUid | ProcessUid
- * @param string | $lang | Languaje
+ * @param string | $lang | Language
  * @return array
  */
 function PMFGetUidFromText($text, $category, $proUid = null, $lang = SYS_LANG)
@@ -3456,25 +3472,27 @@ function PMFGetNextDerivationInfo($caseUid, $delIndex)
  * @param string | $skin = null | Skin | The skin
  *
  * @return string | $url | Direct case link | Returns the direct case link, FALSE otherwise
+ * @link https://wiki.processmaker.com/3.2/Direct_Case_Link
  */
 function PMFCaseLink($caseUid, $workspace = null, $language = null, $skin = null)
 {
     try {
-        $case = new \ProcessMaker\BusinessModel\Cases();
-
+        $case = new BusinessModelCases();
         $arrayApplicationData = $case->getApplicationRecordByPk($caseUid, [], false);
-
         if ($arrayApplicationData === false) {
             return false;
         }
-        $workspace = (!empty($workspace)) ? $workspace : config("system.workspace");
-        $language = (!empty($language)) ? $language : SYS_LANG;
-        $skin = (!empty($skin)) ? $skin : SYS_SKIN;
+
+        $workspace = !empty($workspace) ? $workspace : config("system.workspace");
+        $language = !empty($language) ? $language : SYS_LANG;
+        if (empty($skin)) {
+            $config = System::getSystemConfiguration();
+            $skin = defined("SYS_SKIN") ? SYS_SKIN : $config['default_skin'];
+        }
 
         $uri = '/sys' . $workspace . '/' . $language . '/' . $skin . '/cases/opencase/' . $caseUid;
-
-        //Return
-        return ((G::is_https()) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $uri;
+        $link = System::getServerProtocolHost() . $uri;
+        return $link;
     } catch (Exception $e) {
         throw $e;
     }

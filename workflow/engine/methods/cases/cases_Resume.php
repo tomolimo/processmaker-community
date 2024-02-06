@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\BusinessModel\Task as BusinessModelTask;
+use ProcessMaker\Util\DateTime;
 
 /* Permissions */
 switch ($RBAC->userCanAccess('PM_CASES')) {
@@ -123,6 +124,7 @@ if ($nTasksInParallel > 1) {
 }
 
 $Fields['TAS_TITLE'] = $aTask['TAS_TITLE'];
+$Fields = DateTime::convertUtcToTimeZone($Fields);
 
 $objUser = new Users();
 $oHeadPublisher = headPublisher::getSingleton();
@@ -150,10 +152,10 @@ if ($Fields['APP_STATUS'] != 'COMPLETED') {
                 $FieldsPar['CURRENT_USER'] = '';
             }
         }
-        $FieldsPar['DEL_DELEGATE_DATE'] = $row['DEL_DELEGATE_DATE'];
-        $FieldsPar['DEL_INIT_DATE']     = $row['DEL_INIT_DATE'];
-        $FieldsPar['DEL_TASK_DUE_DATE'] = $row['DEL_TASK_DUE_DATE'];
-        $FieldsPar['DEL_FINISH_DATE']   = $row['DEL_FINISH_DATE'];
+        $FieldsPar['DEL_DELEGATE_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_DELEGATE_DATE']);
+        $FieldsPar['DEL_INIT_DATE']     = DateTime::convertUtcToTimeZone($row['DEL_INIT_DATE']);
+        $FieldsPar['DEL_TASK_DUE_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_TASK_DUE_DATE']);
+        $FieldsPar['DEL_FINISH_DATE']   = DateTime::convertUtcToTimeZone($row['DEL_FINISH_DATE']);
         $G_PUBLISH->AddContent('xmlform', 'xmlform', 'cases/cases_Resume_Current_Task.xml', '', $FieldsPar);
     }
 }

@@ -3,33 +3,91 @@
  * Base class PMUI
  * @singleton
  */
-var PMUI = {};
+var PMUI = {},
+    getUsersOS;
+/**
+ * Detect the users' OS
+ * @return {string}
+ */
+getUsersOS = function () {
+    var userAgent = window.navigator.userAgent,
+        platform = window.navigator.platform,
+        macOsPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+        iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+        os = null;
+
+    if (macOsPlatforms.indexOf(platform) !== -1) {
+        os = 'MacOS';
+    } else if (iosPlatforms.indexOf(platform) !== -1) {
+        os = 'iOS';
+    } else if (windowsPlatforms.indexOf(platform) !== -1) {
+        os = 'Windows';
+    } else if (/Android/.test(userAgent)) {
+        os = 'Android';
+    } else if (!os && /Linux/.test(platform)) {
+        os = 'Linux';
+    }
+    return os;
+};
 
 PMUI.version = '0.1.1';
 PMUI.isCtrl = false;
+PMUI.isAlt = false;
 PMUI.isShift = false;
+PMUI.metaKey = false;
 PMUI.activeCanvas = null;
 PMUI.currentContextMenu = null;
 PMUI.keyCodeF5 = 116;
+PMUI.keyDown = false;
+PMUI.isDelete = false;
+PMUI.OS = getUsersOS();
 
 $(document).keydown(function (e) {
-    var elementSelected;
+    var elementSelected,
+        flowSelected;
     if (PMUI.activeCanvas) {
         elementSelected = PMUI.activeCanvas.getCurrentSelection();
+        flowSelected = PMUI.activeCanvas.getCurrentConnection();
         switch (e.which) {
+            case 8: //BACKSPACE
+                if (PMUI.metaKey && PMUI.OS === "MacOS" && !PMUI.activeCanvas.readOnly &&
+                    (elementSelected.asArray().length !== 0 || flowSelected !== null) && !PMUI.isDelete) {
+                    if (PMUI.activeCanvas && !PMUI.activeCanvas.currentLabel) {
+                        PMUI.isDelete = true;
+                        PMUI.activeCanvas.removeElements();
+                    }
+                }
+                break;
             case 16: // SHIFT KEY
                 PMUI.isShift = true;
                 break;
             case 17: // CTRL KEY
-                PMUI.isCtrl = true;
+                if (!PMUI.isAlt) {
+                    PMUI.isCtrl = true;
+                } else if (PMUI.OS !== "MacOS") {
+                    PMUI.isAlt = false;
+                    PMUI.isCtrl = false;
+                }
+                break;
+            case 18: //ALT KEY
+                if (!PMUI.isCtrl) {
+                    PMUI.isAlt = true;
+                } else if (PMUI.OS !== "MacOS") {
+                    PMUI.isCtrl = false;
+                    PMUI.isAlt = false;
+                }
                 break;
             case 116: // F5 KEY
                 e.preventDefault();
                 window.location.reload(true);
                 break;
+            case 91: //meta key - window key - command key
+                PMUI.metaKey = true;
+                break;
             case 37:
                 // Left
-                if (!PMUI.activeCanvas.currentLabel) {
+                if (!PMUI.activeCanvas.currentLabel && !PMUI.isDelete) {
                     e.preventDefault();
                     if (!PMUI.getCoordinatesElement(elementSelected.asArray(), "LEFT")) {
                         PMUI.activeCanvas.moveElements(PMUI.activeCanvas, 'LEFT');
@@ -38,7 +96,7 @@ $(document).keydown(function (e) {
                 break;
             case 38:
                 // Top
-                if (!PMUI.activeCanvas.currentLabel) {
+                if (!PMUI.activeCanvas.currentLabel && !PMUI.isDelete) {
                     e.preventDefault();
                     if (!PMUI.getCoordinatesElement(elementSelected.asArray(), "TOP")) {
                         PMUI.activeCanvas.moveElements(PMUI.activeCanvas, 'TOP');
@@ -47,7 +105,7 @@ $(document).keydown(function (e) {
                 break;
             case 39:
                 // Right
-                if (!PMUI.activeCanvas.currentLabel) {
+                if (!PMUI.activeCanvas.currentLabel && !PMUI.isDelete) {
                     e.preventDefault();
                     if (!PMUI.getCoordinatesElement(elementSelected.asArray(), "RIGHT")) {
                         PMUI.activeCanvas.moveElements(PMUI.activeCanvas, 'RIGHT');
@@ -56,7 +114,7 @@ $(document).keydown(function (e) {
                 break;
             case 40:
                 // Bottom
-                if (!PMUI.activeCanvas.currentLabel) {
+                if (!PMUI.activeCanvas.currentLabel && !PMUI.isDelete) {
                     e.preventDefault();
                     if (!PMUI.getCoordinatesElement(elementSelected.asArray(), "BOTTOM")) {
                         PMUI.activeCanvas.moveElements(PMUI.activeCanvas, 'BOTTOM');
@@ -69,7 +127,6 @@ $(document).keydown(function (e) {
                         e.preventDefault();
                         PMUI.activeCanvas.copy();
                     }
-
                 }
                 break;
             case 86:    // char 'v'
@@ -81,7 +138,8 @@ $(document).keydown(function (e) {
                 }
                 break;
             case 90:    // char 'z'
-                if (PMUI.isCtrl && !PMUI.activeCanvas.readOnly) {
+                if ((PMUI.isCtrl && PMUI.OS !== "MacOS") || (PMUI.metaKey && PMUI.OS === "MacOS")
+                    && !PMUI.activeCanvas.readOnly) {
                     if (PMUI.isShift) {
                         // ctrl + shift + z (redo)
                         PMUI.activeCanvas.redo();
@@ -93,6 +151,17 @@ $(document).keydown(function (e) {
                     }
                 }
                 break;
+            case 46: //Delete Key - Don't go to default.
+                if (!PMUI.isCtrl && !PMUI.isAlt && !PMUI.metaKey && PMUI.activeCanvas && !PMUI.keyDown &&
+                    !PMUI.activeCanvas.currentLabel && !PMUI.activeCanvas.readOnly && !PMUI.isDelete &&
+                    (elementSelected.asArray().length !== 0 || flowSelected !== null)) {
+                    PMUI.isDelete = true;
+                    PMUI.activeCanvas.removeElements();
+                }
+                break;
+            default:
+                PMUI.keyDown = true;
+                break;
         }
     }
 }).keypress(function (e) {
@@ -103,7 +172,7 @@ $(document).keydown(function (e) {
         e.preventDefault();
         switch (e.which) {
             case 8: //BACKSPACE
-                if (PMUI.isCtrl) {
+                if (PMUI.metaKey && PMUI.OS === "MacOS" && !PMUI.activeCanvas.readOnly) {
                     if (PMUI.activeCanvas && !PMUI.activeCanvas.currentLabel) {
                         PMUI.activeCanvas.removeElements();
                     }
@@ -113,17 +182,22 @@ $(document).keydown(function (e) {
                 if (PMUI.activeCanvas && PMUI.activeCanvas.currentLabel) {
                     PMUI.activeCanvas.currentLabel.loseFocus();
                 }
+                PMUI.keyDown = false;
                 break;
-            case 46: // DELETE KEY
-                if (PMUI.activeCanvas && !PMUI.activeCanvas.currentLabel) {
-                    PMUI.activeCanvas.removeElements();
-                }
+            case 91: // META KEY
+                PMUI.metaKey = false;
                 break;
             case 16: // SHIFT KEY
                 PMUI.isShift = false;
                 break;
             case 17: //CTRL KEY
                 PMUI.isCtrl = false;
+                break;
+            case 18: //ALT KEY
+                PMUI.isAlt = false;
+                break;
+            case 46:
+                //PMUI.isDelete = false;
                 break;
             case 113: //F2 KEY
                 if (PMUI.activeCanvas &&
@@ -136,6 +210,9 @@ $(document).keydown(function (e) {
                         $(current.label.text.html).focus();
                     }
                 }
+                break;
+            default:
+                PMUI.keyDown = false;
                 break;
         }
     }
@@ -12424,7 +12501,7 @@ if (typeof exports !== "undefined") {
             onChange: null,
             required: false,
             validAtChange: true,
-            requiredMessage: 'This field is required.',
+            requiredMessage: 'This field is required.'.translate(),
             labelVisible: true,
             labelPosition: 'left',
             form: null,
@@ -12451,7 +12528,7 @@ if (typeof exports !== "undefined") {
         this.data = new PMUI.data.DataField();
 
         this.message = new PMUI.ui.TextLabel({
-            text: 'This field is required.',
+            text: 'This field is required.'.translate(),
             displayMode: 'block',
             mode: 'normal',
             visible: false
@@ -13471,6 +13548,7 @@ if (typeof exports !== "undefined") {
         module.exports = Field;
     }
 }());
+
 (function () {
     /**
      * @class PMUI.field.TextField
@@ -15586,11 +15664,11 @@ if (typeof exports !== "undefined") {
      *      @example
      *      var dateTimePicker;
      *          $(function() {
-     *              dateTimePicker = new PMUI.field.DateTimeField(                   
-     *                  {   
+     *              dateTimePicker = new PMUI.field.DateTimeField(
+     *                  {
      *                      label:'Calendar',
      *                      helper: 'This is calendar Gregorian',
-     *                      value: new Date(), 
+     *                      value: new Date(),
      *                      datetime : true,
      *                      dateFormat: 'M dd yy',
      *                      minDate: -90,
@@ -15659,8 +15737,8 @@ if (typeof exports !== "undefined") {
      * @cfg {String} [dateFormat="yy-mm-dd H:i:s"|"yy-mm-dd"],necessary to set the date format property of the control
      * [PMUI.control.DateTimeControl]
      * You can see more about the configuration in  {@link PMUI.control.DateTimeControl#cfg-dateFormat dateFormat}
-     * @cfg {Object} [months={"january": "January", "february": "February", "march": "March", "april": "April", 
-     * "may": "May", "june": "June", "july": "July", "august": "August", "september": "September", 
+     * @cfg {Object} [months={"january": "January", "february": "February", "march": "March", "april": "April",
+     * "may": "May", "june": "June", "july": "July", "august": "August", "september": "September",
      * "october": "October", "november": "November", "december": "December"}], A JSON object to set the names and
      * shortnames for every month in year.
      * You can see more about the configuration in {@link PMUI.control.DateTimeControl#cfg-months months}
@@ -15703,27 +15781,27 @@ if (typeof exports !== "undefined") {
             datetime: false,
             dateFormat: settings && settings.datetime ? 'yy-mm-dd H:i:s' : 'yy-mm-dd',
             months: {
-                "january": "January",
-                "february": "February",
-                "march": "March",
-                "april": "April",
-                "may": "May",
-                "june": "June",
-                "july": "July",
-                "august": "August",
-                "september": "September",
-                "october": "October",
-                "november": "November",
-                "december": "December"
+                "january": "January".translate(),
+                "february": "February".translate(),
+                "march": "March".translate(),
+                "april": "April".translate(),
+                "may": "May".translate(),
+                "june": "June".translate(),
+                "july": "July".translate(),
+                "august": "August".translate(),
+                "september": "September".translate(),
+                "october": "October".translate(),
+                "november": "November".translate(),
+                "december": "December".translate()
             },
             days: {
-                "sunday": "Sunday",
-                "monday": "Monday",
-                "tuesday": "Tuesday",
-                "wednesday": "Wednesday",
-                "thursday": "Thursday",
-                "friday": "Friday",
-                "saturday": "Saturday"
+                "sunday": "Sunday".translate(),
+                "monday": "Monday".translate(),
+                "tuesday": "Tuesday".translate(),
+                "wednesday": "Wednesday".translate(),
+                "thursday": "Thursday".translate(),
+                "friday": "Friday".translate(),
+                "saturday": "Saturday".translate()
             },
             minDate: -365,
             maxDate: 365,
@@ -15931,6 +16009,7 @@ if (typeof exports !== "undefined") {
         module.exports = DateTimeField;
     }
 }());
+
 (function () {
     var TextAnnotationField = function (settings) {
         TextAnnotationField.superclass.call(this, settings);
@@ -22471,8 +22550,10 @@ if (typeof exports !== "undefined") {
             tr.className = 'pmui-gridpanel-emptyrow pmui-nodrag';
             td.colSpan = this.columns.getSize();
             tr.appendChild(td);
-            $(this.dom.tbody).find('.pmui-gridpanel-emptyrow').remove().end().append(tr);
+            $(this.dom.tbody).find('.pmui-gridpanel-emptyrow').remove();
             if (!sizeItems) {
+                // the empty row will be added only if there is not items in the container 
+                $(this.dom.tbody).append(tr);
                 if (typeof this.emptyMessage === 'function') {
                     message = this.emptyMessage(this, !!this.filterCriteria);
                 } else if (typeof this.emptyMessage === 'string') {
@@ -51475,3 +51556,4 @@ if (typeof exports !== "undefined") {
 
 }());
 PMUI.init();
+

@@ -71,7 +71,7 @@ class PdoSessionHandler extends AbstractSessionHandler
     private $pdo;
 
     /**
-     * @var string|null|false DSN string or null for session.save_path or false when lazy connection disabled
+     * @var string|false|null DSN string or null for session.save_path or false when lazy connection disabled
      */
     private $dsn = false;
 
@@ -178,7 +178,7 @@ class PdoSessionHandler extends AbstractSessionHandler
 
             $this->pdo = $pdoOrDsn;
             $this->driver = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        } elseif (is_string($pdoOrDsn) && false !== strpos($pdoOrDsn, '://')) {
+        } elseif (\is_string($pdoOrDsn) && false !== strpos($pdoOrDsn, '://')) {
             $this->dsn = $this->buildDsnFromUrl($pdoOrDsn);
         } else {
             $this->dsn = $pdoOrDsn;
@@ -616,6 +616,7 @@ class PdoSessionHandler extends AbstractSessionHandler
         $selectSql = $this->getSelectSql();
         $selectStmt = $this->pdo->prepare($selectSql);
         $selectStmt->bindParam(':id', $sessionId, \PDO::PARAM_STR);
+        $insertStmt = null;
 
         do {
             $selectStmt->execute();
@@ -628,10 +629,15 @@ class PdoSessionHandler extends AbstractSessionHandler
                     return '';
                 }
 
-                return is_resource($sessionRows[0][0]) ? stream_get_contents($sessionRows[0][0]) : $sessionRows[0][0];
+                return \is_resource($sessionRows[0][0]) ? stream_get_contents($sessionRows[0][0]) : $sessionRows[0][0];
             }
 
-            if (!ini_get('session.use_strict_mode') && self::LOCK_TRANSACTIONAL === $this->lockMode && 'sqlite' !== $this->driver) {
+            if (null !== $insertStmt) {
+                $this->rollback();
+                throw new \RuntimeException('Failed to read session: INSERT reported a duplicate id but next SELECT did not return any data.');
+            }
+
+            if (!filter_var(ini_get('session.use_strict_mode'), FILTER_VALIDATE_BOOLEAN) && self::LOCK_TRANSACTIONAL === $this->lockMode && 'sqlite' !== $this->driver) {
                 // In strict mode, session fixation is not possible: new sessions always start with a unique
                 // random id, so that concurrency is not possible and this code path can be skipped.
                 // Exclusive-reading of non-existent rows does not block, so we need to do an insert to block
@@ -676,14 +682,16 @@ class PdoSessionHandler extends AbstractSessionHandler
     {
         switch ($this->driver) {
             case 'mysql':
+                // MySQL 5.7.5 and later enforces a maximum length on lock names of 64 characters. Previously, no limit was enforced.
+                $lockId = \substr($sessionId, 0, 64);
                 // should we handle the return value? 0 on timeout, null on error
                 // we use a timeout of 50 seconds which is also the default for innodb_lock_wait_timeout
                 $stmt = $this->pdo->prepare('SELECT GET_LOCK(:key, 50)');
-                $stmt->bindValue(':key', $sessionId, \PDO::PARAM_STR);
+                $stmt->bindValue(':key', $lockId, \PDO::PARAM_STR);
                 $stmt->execute();
 
                 $releaseStmt = $this->pdo->prepare('DO RELEASE_LOCK(:key)');
-                $releaseStmt->bindValue(':key', $sessionId, \PDO::PARAM_STR);
+                $releaseStmt->bindValue(':key', $lockId, \PDO::PARAM_STR);
 
                 return $releaseStmt;
             case 'pgsql':
@@ -733,11 +741,11 @@ class PdoSessionHandler extends AbstractSessionHandler
     private function convertStringToInt($string)
     {
         if (4 === \PHP_INT_SIZE) {
-            return (ord($string[3]) << 24) + (ord($string[2]) << 16) + (ord($string[1]) << 8) + ord($string[0]);
+            return (\ord($string[3]) << 24) + (\ord($string[2]) << 16) + (\ord($string[1]) << 8) + \ord($string[0]);
         }
 
-        $int1 = (ord($string[7]) << 24) + (ord($string[6]) << 16) + (ord($string[5]) << 8) + ord($string[4]);
-        $int2 = (ord($string[3]) << 24) + (ord($string[2]) << 16) + (ord($string[1]) << 8) + ord($string[0]);
+        $int1 = (\ord($string[7]) << 24) + (\ord($string[6]) << 16) + (\ord($string[5]) << 8) + \ord($string[4]);
+        $int2 = (\ord($string[3]) << 24) + (\ord($string[2]) << 16) + (\ord($string[1]) << 8) + \ord($string[0]);
 
         return $int2 + ($int1 << 32);
     }

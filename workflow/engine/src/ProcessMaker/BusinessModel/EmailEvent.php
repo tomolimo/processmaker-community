@@ -14,6 +14,7 @@ use ProcessMaker\Util\Common;
 use Propel;
 use ResultSet;
 use UsersPeer;
+use WsBase;
 
 class EmailEvent
 {
@@ -455,11 +456,13 @@ class EmailEvent
      * @param string $prj_uid Unique id of Project
      * @param string $eventUid Unique id of event
      * @param array $arrayApplicationData Case data
+     * @param int $tasId id of task
      *
      * @return void
      * @throws Exception
+     * @see \Derivation::executeEvent()
      */
-    public function sendEmail($appUID, $prj_uid, $eventUid, $arrayApplicationData)
+    public function sendEmail($appUID, $prj_uid, $eventUid, $arrayApplicationData, $tasId = 0)
     {
         if (!$this->existsEvent($prj_uid, $eventUid)) {
             throw new Exception(G::LoadTranslation('ID_EMAIL_EVENT_DEFINITION_DOES_NOT_EXIST'));
@@ -511,7 +514,9 @@ class EmailEvent
                 }
             }
             if (!empty($emailTo)) {
-                PMFSendMessage(
+                $ws = new WsBase();
+                $ws->setTaskId($tasId);
+                $ws->sendMessage(
                     $appUID,
                     G::buildFrom($configEmailData),
                     $emailTo,
@@ -523,7 +528,9 @@ class EmailEvent
                     [],
                     true,
                     0,
-                    $configEmailData
+                    $configEmailData,
+                    0,
+                    WsBase::MESSAGE_TYPE_EMAIL_EVENT
                 );
             } else {
                 Bootstrap::registerMonolog(

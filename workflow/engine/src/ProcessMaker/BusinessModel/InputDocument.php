@@ -1,7 +1,10 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
+use G;
+use Exception;
 use PmDynaform;
+use ProcessMaker\Util\PhpShorthandByte;
 
 class InputDocument
 {
@@ -288,7 +291,10 @@ class InputDocument
      * @param string $processUid Unique id of Process
      * @param array  $arrayData  Data
      *
-     * return array Return data of the new InputDocument created
+     * @return array Return data of the new InputDocument created
+     * 
+     * @see \ProcessMaker\Services\Api\Project\InputDocument->doPostInputDocument()
+     * @link https://wiki.processmaker.com/3.0/Input_Documents#Creating_Input_Documents
      */
     public function create($processUid, $arrayData)
     {
@@ -310,6 +316,8 @@ class InputDocument
             $flagDataDestinationPath = (isset($arrayData["INP_DOC_DESTINATION_PATH"]))? 1 : 0;
             $flagDataTags = (isset($arrayData["INP_DOC_TAGS"]))? 1 : 0;
 
+            $this->throwExceptionIfMaximumFileSizeExceed(intval($arrayData["INP_DOC_MAX_FILESIZE"]), $arrayData["INP_DOC_MAX_FILESIZE_UNIT"]);
+            
             //Create
             $inputDocument = new \InputDocument();
 
@@ -348,8 +356,11 @@ class InputDocument
      *
      * @param string $inputDocumentUid Unique id of InputDocument
      * @param array  $arrayData        Data
-     *
-     * return array Return data of the InputDocument updated
+     * 
+     * @return array Return data of the InputDocument updated
+     * 
+     * @see \ProcessMaker\Services\Api\Project\InputDocument->doPutInputDocument()
+     * @link https://wiki.processmaker.com/3.0/Input_Documents#Creating_Input_Documents
      */
     public function update($inputDocumentUid, $arrayData)
     {
@@ -374,6 +385,8 @@ class InputDocument
             if (isset($arrayData["INP_DOC_TITLE"])) {
                 $this->throwExceptionIfExistsTitle($processUid, $arrayData["INP_DOC_TITLE"], $this->arrayFieldNameForException["inputDocumentTitle"], $inputDocumentUid);
             }
+            
+            $this->throwExceptionIfMaximumFileSizeExceed(intval($arrayData["INP_DOC_MAX_FILESIZE"]), $arrayData["INP_DOC_MAX_FILESIZE_UNIT"]);
 
             //Update
             $arrayData["INP_DOC_UID"] = $inputDocumentUid;
@@ -519,7 +532,7 @@ class InputDocument
      *
      * @param string $inputDocumentUid Unique id of InputDocument
      *
-     * return array Return an array with data of an InputDocument
+     * @return array Return an array with data of an InputDocument
      */
     public function getInputDocument($inputDocumentUid)
     {
@@ -543,6 +556,72 @@ class InputDocument
         } catch (\Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Throw exception if maximum file size exceed to php directives.
+     * 
+     * @param int $value
+     * @param string $unit
+     * @throws Exception
+     * 
+     * @see ProcessMaker\BusinessModel\InputDocument->create()
+     * @see ProcessMaker\BusinessModel\InputDocument->update()
+     * @link https://wiki.processmaker.com/3.2/Input_Documents
+     */
+    public function throwExceptionIfMaximumFileSizeExceed($value, $unit)
+    {
+        //The value of 'INP_DOC_MAX_FILESIZE_UNIT' can only take two values: 'KB'and 'MB'.
+        if ($unit === "MB") {
+            $value = $value * (1024 ** 2);
+        }
+        if ($unit === "KB") {
+            $value = $value * (1024 ** 1);
+        }
+        $object = $this->getMaxFileSize();
+        if ($object->uploadMaxFileSizeBytes < $value) {
+            throw new Exception(G::LoadTranslation("ID_THE_MAXIMUM_VALUE_OF_THIS_FIELD_IS", [$object->uploadMaxFileSize]));
+        }
+    }
+
+    /**
+     * To upload large files, post_max_size value must be larger than upload_max_filesize. 
+     * Generally speaking, memory_limit should be larger than post_max_size. When an integer 
+     * is used, the value is measured in bytes. The shorthand notation may also be used. 
+     * If the size of post data is greater than post_max_size, the $_POST and $_FILES 
+     * superglobals are empty.
+     * 
+     * @return object
+     * 
+     * @see ProcessMaker\BusinessModel\InputDocument->throwExceptionIfMaximumFileSizeExceed()
+     * @link https://wiki.processmaker.com/3.2/Input_Documents
+     * @link http://php.net/manual/en/faq.using.php#faq.using.shorthandbytes
+     */
+    public function getMaxFileSize()
+    {
+        $phpShorthandByte = new PhpShorthandByte();
+        $postMaxSize = ini_get("post_max_size");
+        $postMaxSizeBytes = $phpShorthandByte->valueToBytes($postMaxSize);
+        $uploadMaxFileSize = ini_get("upload_max_filesize");
+        $uploadMaxFileSizeBytes = $phpShorthandByte->valueToBytes($uploadMaxFileSize);
+        
+        if ($postMaxSizeBytes < $uploadMaxFileSizeBytes) {
+            $uploadMaxFileSize = $postMaxSize;
+            $uploadMaxFileSizeBytes = $postMaxSizeBytes;
+        }
+
+        //according to the acceptance criteria the information is always shown in MBytes
+        $uploadMaxFileSizeMBytes = $uploadMaxFileSizeBytes / (1024 ** 2); //conversion constant
+        $uploadMaxFileSizeUnit = "MB"; //short processmaker notation, https://wiki.processmaker.com/3.0/File_control#Size_Unity
+        $uploadMaxFileSizePhpUnit = "M"; //short php notation, http://php.net/manual/en/faq.using.php#faq.using.shorthandbytes
+
+        $result = [
+            "uploadMaxFileSize" => $phpShorthandByte->getFormatBytes($uploadMaxFileSizeMBytes . $uploadMaxFileSizePhpUnit),
+            "uploadMaxFileSizeBytes" => $uploadMaxFileSizeBytes,
+            "uploadMaxFileSizeMBytes" => $uploadMaxFileSizeMBytes,
+            "uploadMaxFileSizeUnit" => $uploadMaxFileSizeUnit
+        ];
+        return (object) $result;
     }
 }
 

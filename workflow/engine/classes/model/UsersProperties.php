@@ -125,70 +125,144 @@ class UsersProperties extends BaseUsersProperties
         return $aUserProperty;
     }
 
-    public function validatePassword($sPassword, $sLastUpdate, $iChangePasswordNextTime, $nowLogin = false)
+    /**
+     * This function will be validate the password policies
+     *
+     * @param string $password
+     * @param string $lastUpdate
+     * @param integer $changePassword
+     * @param boolean $nowLogin
+     *
+     * @return array
+    */
+    public function validatePassword($password, $lastUpdate, $changePassword, $nowLogin = false)
     {
-        if (! defined('PPP_MINIMUM_LENGTH')) {
+        if (!defined('PPP_MINIMUM_LENGTH')) {
             define('PPP_MINIMUM_LENGTH', 5);
         }
-        if (! defined('PPP_MAXIMUM_LENGTH')) {
+        if (!defined('PPP_MAXIMUM_LENGTH')) {
             define('PPP_MAXIMUM_LENGTH', 20);
         }
-        if (! defined('PPP_NUMERICAL_CHARACTER_REQUIRED')) {
+        if (!defined('PPP_NUMERICAL_CHARACTER_REQUIRED')) {
             define('PPP_NUMERICAL_CHARACTER_REQUIRED', 0);
         }
-        if (! defined('PPP_UPPERCASE_CHARACTER_REQUIRED')) {
+        if (!defined('PPP_UPPERCASE_CHARACTER_REQUIRED')) {
             define('PPP_UPPERCASE_CHARACTER_REQUIRED', 0);
         }
-        if (! defined('PPP_SPECIAL_CHARACTER_REQUIRED')) {
+        if (!defined('PPP_SPECIAL_CHARACTER_REQUIRED')) {
             define('PPP_SPECIAL_CHARACTER_REQUIRED', 0);
         }
-        if (! defined('PPP_EXPIRATION_IN')) {
+        if (!defined('PPP_EXPIRATION_IN')) {
             define('PPP_EXPIRATION_IN', 0);
         }
-        if (function_exists('mb_strlen')) {
-            $iLength = mb_strlen($sPassword);
-        } else {
-            $iLength = strlen($sPassword);
+        $lengthPassword = function_exists('mb_strlen') ? mb_strlen($password): strlen($password);
+
+        $listErrors = [];
+        //The password has the minimum length
+        if ($lengthPassword < PPP_MINIMUM_LENGTH || $nowLogin) {
+            $listErrors[] = 'ID_PPP_MINIMUM_LENGTH';
         }
-        $aErrors = array();
-        if ($iLength < PPP_MINIMUM_LENGTH || $nowLogin) {
-            $aErrors[] = 'ID_PPP_MINIMUM_LENGTH';
+        //The password has the maximum length
+        if ($lengthPassword > PPP_MAXIMUM_LENGTH || $nowLogin) {
+            $listErrors[] = 'ID_PPP_MAXIMUM_LENGTH';
         }
-        if ($iLength > PPP_MAXIMUM_LENGTH || $nowLogin) {
-            $aErrors[] = 'ID_PPP_MAXIMUM_LENGTH';
-        }
+        //The password requires a number
         if (PPP_NUMERICAL_CHARACTER_REQUIRED == 1) {
-            if (preg_match_all('/[0-9]/', $sPassword, $aMatch, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
-                $aErrors[] = 'ID_PPP_NUMERICAL_CHARACTER_REQUIRED';
+            if (preg_match_all('/[0-9]/', $password, $aMatch,
+                    PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
+                $listErrors[] = 'ID_PPP_NUMERICAL_CHARACTER_REQUIRED';
             }
         }
+        //The password requires a upper case
         if (PPP_UPPERCASE_CHARACTER_REQUIRED == 1) {
-            if (preg_match_all('/[A-Z]/', $sPassword, $aMatch, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
-                $aErrors[] = 'ID_PPP_UPPERCASE_CHARACTER_REQUIRED';
+            if (preg_match_all('/[A-Z]/', $password, $aMatch,
+                    PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
+                $listErrors[] = 'ID_PPP_UPPERCASE_CHARACTER_REQUIRED';
             }
         }
+        //The password requires a special character
         if (PPP_SPECIAL_CHARACTER_REQUIRED == 1) {
-            if (preg_match_all('/[��\\!|"@�#$~%�&�\/()=\'?��*+\-_.:,;]/', $sPassword, $aMatch, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
-                $aErrors[] = 'ID_PPP_SPECIAL_CHARACTER_REQUIRED';
+            if (preg_match_all('/[��\\!|"@�#$~%�&�\/()=\'?��*+\-_.:,;]/', $password, $aMatch,
+                    PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE) == 0 || $nowLogin) {
+                $listErrors[] = 'ID_PPP_SPECIAL_CHARACTER_REQUIRED';
             }
         }
+        //The configuration PPP_EXPIRATION_IN is saved in hours
         if (PPP_EXPIRATION_IN > 0) {
-            $oCalendar = new Calendar();
-
-            if ($oCalendar->pmCalendarUid == '') {
-                $oCalendar->pmCalendarUid = '00000000000000000000000000000001';
-                $oCalendar->getCalendarData();
-            }
-
-            $fDays = $oCalendar->calculateDuration(date('Y-m-d H:i:s'), $sLastUpdate);
-            if ($fDays > (PPP_EXPIRATION_IN * 24) || $nowLogin) {
-                $aErrors[] = 'ID_PPP_EXPIRATION_IN';
+            $hoursBetweenDates = (strtotime(date('Y-m-d H:i:s')) - strtotime($lastUpdate)) / (60 * 60);
+            if ($hoursBetweenDates > PPP_EXPIRATION_IN || $nowLogin) {
+                $listErrors[] = 'ID_PPP_EXPIRATION_IN';
+                $changePassword = 1;
             }
         }
-        if ($iChangePasswordNextTime == 1) {
-            $aErrors[] = 'ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN';
+
+        if ($changePassword == 1) {
+            $listErrors[] = 'ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN';
         }
-        return $aErrors;
+
+        return $listErrors;
+    }
+
+    /**
+     * This function will be get the message for show what policies does not complied
+     *
+     * @param array $errorsInPassword
+     * @param boolean $afterFillingPass
+     * @param boolean $onlyText
+     *
+     * @return array
+    */
+    public function getMessageValidatePassword($errorsInPassword, $afterFillingPass = true, $onlyText = false){
+        $messPassword = [];
+        $policyErrors = false;
+        if ($afterFillingPass) {
+            $policyMessage = G::LoadTranslation('ID_POLICY_ALERT');
+        } else {
+            $policyMessage = G::LoadTranslation('ID_POLICY_ALERT_INFO');
+        }
+        $policyMessage .= ($onlyText) ? ' ' : '<br/><br/>';
+
+        foreach ($errorsInPassword as $error) {
+            switch ($error) {
+                case 'ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN':
+                    //Does not consider a policy for the final user, the administrator request to change password
+                    $messPassword[substr($error, 3)] = PPP_MINIMUM_LENGTH;
+                    break;
+                case 'ID_PPP_MINIMUM_LENGTH':
+                    $policyErrors = true;
+                    $policyMessage .= '- ' . G::LoadTranslation($error) . ': ' . PPP_MINIMUM_LENGTH;
+                    $policyMessage .= ($onlyText) ? '. ' : '<br/>';
+                    $messPassword[substr($error, 3)] = PPP_MINIMUM_LENGTH;
+                    $messPassword['PPP_MINIMUN_LENGTH'] = PPP_MINIMUM_LENGTH;
+                    break;
+                case 'ID_PPP_MAXIMUM_LENGTH':
+                    $policyErrors = true;
+                    $policyMessage .= '- ' . G::LoadTranslation($error) . ': ' . PPP_MAXIMUM_LENGTH;
+                    $policyMessage .= ($onlyText) ? '. ' : '<br/>';
+                    $messPassword[substr($error, 3)] = PPP_MAXIMUM_LENGTH;
+                    $messPassword['PPP_MAXIMUN_LENGTH'] = PPP_MAXIMUM_LENGTH;
+                    break;
+                case 'ID_PPP_EXPIRATION_IN':
+                    //Does not consider a policy for the final user, this is enhanced login configuration
+                    $messPassword[substr($error, 3)] = PPP_EXPIRATION_IN;
+                    break;
+                default:
+                    //PPP_NUMERICAL_CHARACTER_REQUIRED
+                    //PPP_UPPERCASE_CHARACTER_REQUIRED
+                    //PPP_SPECIAL_CHARACTER_REQUIRED
+                    $policyErrors = true;
+                    $policyMessage .= '- ' . G::LoadTranslation($error);
+                    $policyMessage .= ($onlyText) ? '. ' : '<br/>';
+                    $messPassword[substr($error, 3)] = 1;
+                    break;
+            }
+        }
+        if ($afterFillingPass){
+            $policyMessage .= G::LoadTranslation('ID_PLEASE_CHANGE_PASSWORD_POLICY');
+        }
+        $messPassword['DESCRIPTION'] = ($policyErrors) ? $policyMessage : '';
+
+        return $messPassword;
     }
 
     /**

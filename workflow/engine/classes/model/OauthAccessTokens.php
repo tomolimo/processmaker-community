@@ -173,6 +173,20 @@ class OauthAccessTokens extends BaseOauthAccessTokens
 
         return array("numRecTotal" => $numRecTotal, "data" => $arrayData);
     }
+
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(OauthAccessTokensPeer::USER_ID, $userUid);
+        $resultSet = OauthAccessTokensPeer::doDelete($criteria);
+        return $resultSet;
+    }
 }
 
 // OauthAccessTokens

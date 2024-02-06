@@ -4,28 +4,27 @@ namespace ProcessMaker\BusinessModel;
 
 use AbeConfiguration;
 use AbeConfigurationPeer;
-use AppMessage;
 use AbeRequests;
 use AbeRequestsPeer;
 use AbeResponsesPeer;
-use ApplicationPeer;
+use AppDelegation;
 use AppDelegationPeer;
+use AppMessage;
 use Criteria;
+use DynaformPeer;
 use EmailServerPeer;
 use Exception;
 use G;
-use Publisher;
-use ProcessMaker\BusinessModel\EmailServer;
-use ProcessMaker\Core\System;
-use ProcessMaker\Plugins\PluginRegistry;
 use PmDynaform;
 use PMLicensedFeatures;
-use ProcessPeer;
+use ProcessMaker\Core\System;
+use ProcessMaker\Plugins\PluginRegistry;
+use Publisher;
 use ResultSet;
 use SpoolRun;
 use stdClass;
-use UsersPeer;
-use TaskPeer;
+use Users as ClassUsers;
+use WsBase;
 
 /**
  * Description of ActionsByEmailService
@@ -266,11 +265,21 @@ class ActionsByEmail
         return $response;
     }
 
+    /**
+     * Get the information for the log.
+     * 
+     * @param array $arrayData
+     * @return array
+     * 
+     * @see ProcessMaker\Services\Api\ActionsByEmail->loadActionByEmail()
+     * @see workflow/engine/methods/actionsByEmail/actionsByEmailAjax.php
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
+     */
     public function loadActionByEmail(array $arrayData)
     {
+        //Get the total
         $criteria = new Criteria();
         $criteria->addSelectColumn('COUNT(*)');
-
         $criteria->addJoin(AbeConfigurationPeer::ABE_UID, AbeRequestsPeer::ABE_UID);
         $criteria->addJoin(AppDelegationPeer::APP_UID, AbeRequestsPeer::APP_UID);
         $criteria->addJoin(AppDelegationPeer::DEL_INDEX, AbeRequestsPeer::DEL_INDEX);
@@ -288,7 +297,6 @@ class ActionsByEmail
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_TEMPLATE);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_ACTION_FIELD);
         $criteria->addSelectColumn(AbeConfigurationPeer::DYN_UID);
-
         $criteria->addSelectColumn(AbeRequestsPeer::ABE_REQ_UID);
         $criteria->addSelectColumn(AbeRequestsPeer::APP_UID);
         $criteria->addSelectColumn(AbeRequestsPeer::DEL_INDEX);
@@ -298,14 +306,10 @@ class ActionsByEmail
         $criteria->addSelectColumn(AbeRequestsPeer::ABE_REQ_ANSWERED);
         $criteria->addSelectColumn(AbeRequestsPeer::ABE_REQ_BODY);
         $criteria->addSelectColumn(AbeRequestsPeer::ABE_REQ_DATE);
-
-        $criteria->addSelectColumn(ApplicationPeer::APP_NUMBER);
-
+        $criteria->addSelectColumn(AppDelegationPeer::APP_NUMBER);
         $criteria->addSelectColumn(AppDelegationPeer::DEL_PREVIOUS);
-
+        $criteria->addSelectColumn(AppDelegationPeer::USR_UID);
         $criteria->addJoin(AbeConfigurationPeer::ABE_UID, AbeRequestsPeer::ABE_UID);
-        $criteria->addJoin(ApplicationPeer::APP_UID, AbeRequestsPeer::APP_UID);
-
         $criteria->addJoin(AppDelegationPeer::APP_UID, AbeRequestsPeer::APP_UID);
         $criteria->addJoin(AppDelegationPeer::DEL_INDEX, AbeRequestsPeer::DEL_INDEX);
         $criteria->addDescendingOrderByColumn(AbeRequestsPeer::ABE_REQ_DATE);
@@ -313,66 +317,42 @@ class ActionsByEmail
         $criteria->setOffset($arrayData['start']);
         $result = AbeConfigurationPeer::doSelectRS($criteria);
         $result->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        $data = Array();
-        $arrayPro = Array();
-        $arrayTAS = Array();
+        $data = [];
         $index = 0;
-
         while ($result->next()) {
-            $data[] = $result->getRow();
-            $criteriaRes = new Criteria();
+            $row = $result->getRow();
+            $row['ABE_REQ_STATUS'] = G::LoadTranslation('ID_MAIL_STATUS_' . $row['ABE_REQ_STATUS']);
+            $data[] = $row;
+            //Get the response
+            $abe = new AbeRequests();
+            $dataRes = $abe->load($data[$index]['ABE_REQ_UID']);
+            $data[$index]['ABE_RES_UID'] = !empty($dataRes['ABE_RES_UID']) ? $dataRes['ABE_RES_UID'] : '';
+            $data[$index]['ABE_RES_CLIENT_IP'] = !empty($dataRes['ABE_RES_CLIENT_IP']) ? $dataRes['ABE_RES_CLIENT_IP'] : '';
+            $data[$index]['ABE_RES_DATA'] = !empty($dataRes['ABE_RES_DATA']) ? $dataRes['ABE_RES_DATA'] : '';
+            $data[$index]['ABE_RES_STATUS'] = !empty($dataRes['ABE_RES_STATUS']) ? $dataRes['ABE_RES_STATUS'] : '';
+            $data[$index]['ABE_RES_MESSAGE'] = !empty($dataRes['ABE_RES_UID']) ? $dataRes['ABE_RES_MESSAGE'] : '';
 
-            $criteriaRes->addSelectColumn(AbeResponsesPeer::ABE_RES_UID);
-            $criteriaRes->addSelectColumn(AbeResponsesPeer::ABE_RES_CLIENT_IP);
-            $criteriaRes->addSelectColumn(AbeResponsesPeer::ABE_RES_DATA);
-            $criteriaRes->addSelectColumn(AbeResponsesPeer::ABE_RES_STATUS);
-            $criteriaRes->addSelectColumn(AbeResponsesPeer::ABE_RES_MESSAGE);
-
-            $criteriaRes->add(AbeResponsesPeer::ABE_REQ_UID, $data[$index]['ABE_REQ_UID']);
-
-            $resultRes = AbeResponsesPeer::doSelectRS($criteriaRes);
-            $resultRes->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $resultRes->next();
-            $dataRes = Array();
-
-            if ($dataRes = $resultRes->getRow()) {
-                $data[$index]['ABE_RES_UID'] = $dataRes['ABE_RES_UID'];
-                $data[$index]['ABE_RES_CLIENT_IP'] = $dataRes['ABE_RES_CLIENT_IP'];
-                $data[$index]['ABE_RES_DATA'] = $dataRes['ABE_RES_DATA'];
-                $data[$index]['ABE_RES_STATUS'] = $dataRes['ABE_RES_STATUS'];
-                $data[$index]['ABE_RES_MESSAGE'] = $dataRes['ABE_RES_MESSAGE'];
-            } else {
-                $data[$index]['ABE_RES_UID'] = '';
-                $data[$index]['ABE_RES_CLIENT_IP'] = '';
-                $data[$index]['ABE_RES_DATA'] = '';
-                $data[$index]['ABE_RES_STATUS'] = '';
-                $data[$index]['ABE_RES_MESSAGE'] = '';
-            }
-
-            $criteriaRes = new Criteria();
-
-            $criteriaRes->addSelectColumn(AppDelegationPeer::USR_UID);
-            $criteriaRes->addSelectColumn(UsersPeer::USR_FIRSTNAME);
-            $criteriaRes->addSelectColumn(UsersPeer::USR_LASTNAME);
-
-            $criteria->addJoin(AppDelegationPeer::APP_UID, $data[$index]['APP_UID']);
-            $criteria->addJoin(AppDelegationPeer::DEL_INDEX, $data[$index]['DEL_PREVIOUS']);
-            $criteria->addJoin(AppDelegationPeer::USR_UID, UsersPeer::USR_UID);
-            $resultRes = AppDelegationPeer::doSelectRS($criteriaRes);
-            $resultRes->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $resultRes->next();
-
-            if ($dataRes = $resultRes->getRow()) {
-                $data[$index]['USER'] = $dataRes['USR_FIRSTNAME'] . ' ' . $dataRes['USR_LASTNAME'];
+            //Get the previous user
+            $appDelegation = new AppDelegation();
+            $usrUid = $appDelegation->getUserAssignedInThread($data[$index]['APP_UID'], $data[$index]['DEL_PREVIOUS']);
+            //This value can be empty when the previous task is: 'Script Task', 'Timer Event' or other without user.
+            if (!empty($usrUid)) {
+                $users = new ClassUsers();
+                $dataRes = $users->load($usrUid);
+                if (!empty($dataRes)) {
+                    $data[$index]['USER'] = $dataRes['USR_FIRSTNAME'] . ' ' . $dataRes['USR_LASTNAME'];
+                } else {
+                    $data[$index]['USER'] = '';
+                }
             } else {
                 $data[$index]['USER'] = '';
             }
 
-            $data[$index]['ABE_REQ_ANSWERED'] = ($data[$index]['ABE_REQ_ANSWERED'] == 1) ? 'YES' : 'NO';
+            $data[$index]['ABE_REQ_ANSWERED'] = ($data[$index]['ABE_REQ_ANSWERED'] == 1) ? G::LoadTranslation('ID_YES') : G::LoadTranslation('ID_NO');
             $index++;
         }
 
-        $response = array();
+        $response = [];
         $response['totalCount'] = $totalCount;
         $response['data'] = $data;
 
@@ -387,6 +367,9 @@ class ActionsByEmail
      *
      * @return string $message
      * @throws Exception
+     *
+     * @see workflow/engine/methods/actionsByEmail/actionsByEmailAjax.php
+     * @see \ProcessMaker\Services\Api\ActionsByEmail::forwardMail()
      */
     public function forwardMail(array $arrayData)
     {
@@ -418,7 +401,7 @@ class ActionsByEmail
                     '',
                     $dataRes['APP_UID'],
                     $dataRes['DEL_INDEX'],
-                    'TEST',
+                    WsBase::MESSAGE_TYPE_ACTIONS_BY_EMAIL,
                     $dataRes['ABE_REQ_SUBJECT'],
                     $aSetup['MESS_ACCOUNT'],
                     $dataRes['ABE_REQ_SENT_TO'],
@@ -428,7 +411,7 @@ class ActionsByEmail
                     '',
                     '',
                     'pending',
-                    '',
+                    1,
                     '',
                     false,
                     isset($dataRes['APP_NUMBER']) ? $dataRes['APP_NUMBER'] : 0,
@@ -464,10 +447,14 @@ class ActionsByEmail
     }
 
     /**
-     * Get the decision from Actions By Email and check if is Bpmn Process
+     * Get the decision from Actions By Email and check if is Bpmn Process.
      * @param array $arrayData
      *
      * @return string $message
+     * 
+     * @see workflow/engine/methods/actionsByEmail/actionsByEmailAjax.php
+     * @see ProcessMaker\Services\Api\ActionsByEmail->viewForm()
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email#Actions_by_Email_Log
      */
     public function viewForm(array $arrayData)
     {
@@ -482,6 +469,7 @@ class ActionsByEmail
         $criteria->addSelectColumn(AbeConfigurationPeer::TAS_UID);
         $criteria->addSelectColumn(AbeConfigurationPeer::DYN_UID);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_ACTION_FIELD);
+        $criteria->addSelectColumn(AbeConfigurationPeer::ABE_TYPE);
 
         $criteria->addSelectColumn(AbeRequestsPeer::ABE_REQ_UID);
         $criteria->addSelectColumn(AbeRequestsPeer::APP_UID);
@@ -497,17 +485,21 @@ class ActionsByEmail
         $resultRes->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
         $resultRes->next();
-        $dataRes = Array();
+        $dataRes = [];
         $message = G::LoadTranslation('ID_USER_NOT_RESPONDED_REQUEST');
         if ($dataRes = $resultRes->getRow()) {
             $_SESSION['CURRENT_DYN_UID'] = trim($dataRes['DYN_UID']);
 
             $process = new \Process();
             $isBpmn = $process->isBpmnProcess($dataRes['PRO_UID']);
-            if($isBpmn) {
-                $message = $this->viewFormBpmn($dataRes);
+            if ($isBpmn) {
+                if ($dataRes['ABE_TYPE'] === 'FIELD') {
+                    $message = $this->viewFormBpmn($dataRes);
+                } else {
+                    $message = G::LoadTranslation('ID_CASE_RESPONSE_NOT_AVAILABLE');
+                }
             } else {
-                $message = $this->viewFormClassic($dataRes);
+                $message = $this->viewFormClassic($dataRes); //to do, review this function
             }
         }
 
@@ -567,49 +559,57 @@ class ActionsByEmail
     }
 
     /**
-     * Get the decision from Actions By Email by BPMN dynaform
-     * @param array $arrayData
-     *
-     * @return string $message
+     * Get the decision from Actions By Email by BPMN dynaform.
+     * 
+     * @param array $dataRes
+     * @return string
+     * 
+     * @see ActionsByEmail->viewForm()
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
      */
     public function viewFormBpmn(array $dataRes)
     {
-        $_SESSION['CURRENT_DYN_UID']       = trim($dataRes['DYN_UID']);
-        $configuration['DYN_UID']          = trim($dataRes['DYN_UID']);
+        $_SESSION['CURRENT_DYN_UID'] = trim($dataRes['DYN_UID']);
+        $configuration['DYN_UID'] = trim($dataRes['DYN_UID']);
         $configuration['CURRENT_DYNAFORM'] = trim($dataRes['DYN_UID']);
-        $configuration['PRO_UID']          = trim($dataRes['PRO_UID']);
+        $configuration['PRO_UID'] = trim($dataRes['PRO_UID']);
 
         $criteriaD = new Criteria();
-        $criteriaD->addSelectColumn(\DynaformPeer::DYN_CONTENT);
-        $criteriaD->addSelectColumn(\DynaformPeer::PRO_UID);
-        $criteriaD->add(\DynaformPeer::DYN_UID, trim($dataRes['DYN_UID']));
-        $resultD = \DynaformPeer::doSelectRS($criteriaD);
+        $criteriaD->addSelectColumn(DynaformPeer::DYN_CONTENT);
+        $criteriaD->addSelectColumn(DynaformPeer::PRO_UID);
+        $criteriaD->add(DynaformPeer::DYN_UID, trim($dataRes['DYN_UID']));
+        $resultD = DynaformPeer::doSelectRS($criteriaD);
         $resultD->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         $resultD->next();
         $configuration = $resultD->getRow();
 
-        $field = new \stdClass();
+        $field = new stdClass();
+        $field->type = '';
+        $field->label = '';
+        $field->options = [];
+
         $obj = new PmDynaform($configuration);
 
+        $message = G::LoadTranslation('ID_CASE_RESPONSE_NOT_AVAILABLE');
         if ($dataRes['ABE_RES_DATA'] !== '') {
-            $value       = unserialize($dataRes['ABE_RES_DATA']);
-            $actionField = str_replace(array('@@','@#','@=','@%','@?','@$'), '', $dataRes['ABE_ACTION_FIELD']);
-            $variables   = G::json_decode($configuration['DYN_CONTENT'], true);
+            $value = unserialize($dataRes['ABE_RES_DATA']);
+            $actionField = str_replace(['@@', '@#', '@=', '@%', '@?', '@$'], '', $dataRes['ABE_ACTION_FIELD']);
+            $variables = G::json_decode($configuration['DYN_CONTENT'], true);
             if (is_array($value)) {
-                if(isset($variables['items'][0]['items'])) {
+                if (isset($variables['items'][0]['items'])) {
                     $fields = $variables['items'][0]['items'];
                 }
             } else {
-                if(isset($variables['items'][0]['items'])) {
+                if (isset($variables['items'][0]['items'])) {
                     $fields = $variables['items'][0]['items'];
                     foreach ($fields as $key => $row) {
-                        foreach($row as $var) {
-                            if(isset($var['variable'])) {
+                        foreach ($row as $var) {
+                            if (isset($var['variable'])) {
                                 if ($var['variable'] === $actionField) {
                                     $field->label = isset($var['label']) ? $var['label'] : '';
-                                    $field->type  = isset($var['type']) ? $var['type'] : '';
+                                    $field->type = isset($var['type']) ? $var['type'] : '';
                                     $values = $var['options'];
-                                    foreach ($values as $val){
+                                    foreach ($values as $val) {
                                         $field->options[$val['value']] = $val['value'];
                                     }
                                 }
@@ -617,28 +617,39 @@ class ActionsByEmail
                         }
                     }
                 }
-                $message = '';
+
                 switch ($field->type) {
                     case 'dropdown':
                     case 'radiogroup':
                     case 'radio':
-                        $message .= $field->label . ': ';
-                        $message .= $field->options[$value];
+                        if (!empty($field->options[$value])) {
+                            $message = $field->label . ': ';
+                            $message .= $field->options[$value];
+                        }
                         break;
+                    /**
+                     * 'yesno' is deprecated in version ProcessMaker 3.x.x.
+                     * @deprecated
+                     */
                     case 'yesno':
-                        $message .= $field->label . ': ';
-                        $message .= ($value == 1) ? G::loadTranslation('ID_YES') : G::loadTranslation('ID_NO');
+                        $message = $field->label . ': ';
+                        $message .= $value == 1 ? G::LoadTranslation('ID_YES') : G::LoadTranslation('ID_NO');
                         break;
                     case 'checkgroup':
                     case 'checkbox':
-                        $message .= $field->label . ': ';
-                        $message .= ($value == 'On') ? G::loadTranslation('ID_CHECK') : G::loadTranslation('ID_UNCHECK');
+                        $message = $field->label . ': ';
+                        if (!empty($value)) {
+                            /**
+                             * Value 'On' is deprecated in version ProcessMaker 3.x.x. 
+                             * now return '1'.
+                             * @deprecated
+                             */
+                            $message .= ($value == 'On' || $value == '1') ? G::LoadTranslation('ID_CHECK') : G::LoadTranslation('ID_UNCHECK');
+                        }
                         break;
                 }
             }
         }
-
-        //Return
         return $message;
     }
 

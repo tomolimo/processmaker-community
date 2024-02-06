@@ -29,4 +29,20 @@ class PmoauthUserAccessTokens extends BasePmoauthUserAccessTokens
 
         return (is_array($result) && empty($result)) ? false : $result[0];
     }
+
+    /**
+     * Delete all records related to a user uid
+     *
+     * @param string $userUid User uid
+     *
+     * @return int
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(PmoauthUserAccessTokensPeer::USER_ID, $userUid);
+        $resultSet = PmoauthUserAccessTokensPeer::doDelete($criteria);
+
+        return $resultSet;
+    }
 } // PmoauthUserAccessTokens

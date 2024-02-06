@@ -130,5 +130,43 @@ class LoginLog extends BaseLoginLog
         }
         return $aRows;
     }
+
+    /**
+     * Returns the last session id of a user
+     * @param string $userUid User uid
+     * @return array All session id of php
+     * @throws PropelException
+     * @throws SQLException
+     */
+    public function getSessionsIdByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->addSelectColumn('LOG_SID');
+        $criteria->add(LoginLogPeer::USR_UID, $userUid);
+        $criteria->add(LoginLogPeer::LOG_STATUS, 'ACTIVE');
+        $criteria->setDistinct();
+        $criteria->addDescendingOrderByColumn(LoginLogPeer::LOG_INIT_DATE);
+        $resultSet = LoginLogPeer::doSelectRS($criteria);
+        $resultSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $row = [];
+        while($resultSet->next()) {
+            $row[] = $resultSet->getRow();
+        }
+        return $row;
+    }
+
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(LoginLogPeer::USR_UID, $userUid);
+        $resultSet = LoginLogPeer::doDelete($criteria);
+        return $resultSet;
+    }
 }
 

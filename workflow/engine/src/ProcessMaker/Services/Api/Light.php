@@ -2,28 +2,32 @@
 
 namespace ProcessMaker\Services\Api;
 
+use AppDelegation;
 use Bootstrap;
+use Cases as ClassesCases;
+use Criteria;
+use Exception;
 use G;
+use Luracast\Restler\RestException;
+use PmDynaform;
+use Process as ModelProcess;
+use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
+use ProcessMaker\BusinessModel\DynaForm as BusinessModelDynaForm;
+use ProcessMaker\BusinessModel\Light as BusinessModelLight;
+use ProcessMaker\BusinessModel\Lists;
+use ProcessMaker\BusinessModel\Process;
+use ProcessMaker\BusinessModel\ProcessMap;
+use ProcessMaker\BusinessModel\Task;
+use ProcessMaker\BusinessModel\Validator;
 use ProcessMaker\Project\Adapter;
 use ProcessMaker\Services\Api;
-use Luracast\Restler\RestException;
-use ProcessMaker\BusinessModel\Validator;
+use ProcessMaker\Services\Api\Project\Activity\Step;
 use ProcessMaker\Util\DateTime;
-use PmDynaform;
-use Exception;
-use ProcessMaker\BusinessModel\Light as BusinessModelLight;
+use ProcessMaker\Validation\ExceptionRestApi;
 use RBAC;
-use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
-use Cases as ClassesCases;
-use AppDelegation;
-use ProcessMaker\BusinessModel\Lists;
-use ProcessMaker\BusinessModel\Task;
-use ProcessMaker\BusinessModel\ProcessMap;
-use ProcessMaker\BusinessModel\Process;
-use Criteria;
-use StepPeer;
 use stdclass;
-use ProcessMaker\BusinessModel\DynaForm as BusinessModelDynaForm;
+use StepPeer;
+
 /**
  *
  * Process Api Controller
@@ -867,41 +871,57 @@ class Light extends Api
     }
 
     /**
+     * Get steps related to the task
+     * If the process is classic we does not return any step, this is not supported by Mobile
+     *
      * @url GET /project/:prj_uid/activity/:act_uid/steps
      *
      * @param string $act_uid {@min 32}{@max 32}
      * @param string $prj_uid {@min 32}{@max 32}
+     *
+     * @return array
+     * @throws Exception
      */
     public function doGetActivitySteps($act_uid, $prj_uid)
     {
         try {
-            $task = new Task();
-            $task->setFormatFieldNameInUppercase(false);
-            $task->setArrayParamException(array("taskUid" => "act_uid", "stepUid" => "step_uid"));
+            $response = [];
+            $process = new ModelProcess();
+            $isBpmn = $process->isBpmnProcess($prj_uid);
+            if ($isBpmn) {
+                $task = new Task();
+                $dynaForm = new BusinessModelDynaForm();
+                $mobile = new BusinessModelLight();
+                $step = new Step();
 
-            $activitySteps = $task->getSteps($act_uid);
-            $_SESSION['PROCESS'] = $prj_uid;
-            $dynaForm = new BusinessModelDynaForm();
-            $dynaForm->setFormatFieldNameInUppercase(false);
-            $oMobile = new BusinessModelLight();
-            $step = new \ProcessMaker\Services\Api\Project\Activity\Step();
-            $response = array();
-            for ($i = 0; $i < count($activitySteps); $i++) {
-                if ($activitySteps[$i]['step_type_obj'] == "DYNAFORM") {
-                    $dataForm = $dynaForm->getDynaForm($activitySteps[$i]['step_uid_obj']);
-                    $result = $this->parserDataDynaForm($dataForm);
-                    $result["formUpdateDate"] = DateTime::convertUtcToIso8601($result["formUpdateDate"]);
-                    $result['index'] = $i;
-                    $result['stepId'] = $activitySteps[$i]["step_uid"];
-                    $result['stepUidObj'] = $activitySteps[$i]["step_uid_obj"];
-                    $result['stepMode'] = $activitySteps[$i]['step_mode'];
-                    $result['stepCondition'] = $activitySteps[$i]['step_condition'];
-                    $result['stepPosition'] = $activitySteps[$i]['step_position'];
-                    $trigger = $oMobile->statusTriggers($step->doGetActivityStepTriggers($activitySteps[$i]["step_uid"],
-                        $act_uid, $prj_uid));
-                    $result["triggers"] = $trigger;
-                    unset($result["formContent"]);
-                    $response[] = $result;
+                $task->setFormatFieldNameInUppercase(false);
+                $task->setArrayParamException(["taskUid" => "act_uid", "stepUid" => "step_uid"]);
+                $activitySteps = $task->getSteps($act_uid);
+                $_SESSION['PROCESS'] = $prj_uid;
+                $dynaForm->setFormatFieldNameInUppercase(false);
+
+                for ($i = 0; $i < count($activitySteps); $i++) {
+                    if ($activitySteps[$i]['step_type_obj'] == "DYNAFORM") {
+                        $dataForm = $dynaForm->getDynaForm($activitySteps[$i]['step_uid_obj']);
+                        $result = $this->parserDataDynaForm($dataForm);
+                        $result["formUpdateDate"] = DateTime::convertUtcToIso8601($result["formUpdateDate"]);
+                        $result['index'] = $i;
+                        $result['stepId'] = $activitySteps[$i]["step_uid"];
+                        $result['stepUidObj'] = $activitySteps[$i]["step_uid_obj"];
+                        $result['stepMode'] = $activitySteps[$i]['step_mode'];
+                        $result['stepCondition'] = $activitySteps[$i]['step_condition'];
+                        $result['stepPosition'] = $activitySteps[$i]['step_position'];
+                        $trigger = $mobile->statusTriggers(
+                            $step->doGetActivityStepTriggers(
+                                $activitySteps[$i]["step_uid"],
+                                $act_uid,
+                                $prj_uid
+                            )
+                        );
+                        $result["triggers"] = $trigger;
+                        unset($result["formContent"]);
+                        $response[] = $result;
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -964,6 +984,7 @@ class Light extends Api
             }
 
             $userUid = $this->getUserId();
+            //@todo Find a better way to define session variables
             $_SESSION["APPLICATION"] = $app_uid;
             $_SESSION["PROCESS"] = $pro_uid;
             //$_SESSION["TASK"]         = "";
@@ -1393,10 +1414,11 @@ class Light extends Api
             $userUid = $this->getUserId();
             $oMobile = new BusinessModelLight();
             $filesUids = $oMobile->postUidUploadFiles($userUid, $app_uid, $request_data);
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
-
         return $filesUids;
     }
 
@@ -1427,11 +1449,12 @@ class Light extends Api
         try {
             $userUid = $this->getUserId();
             $oMobile = new BusinessModelLight();
-            $response = $oMobile->documentUploadFiles($userUid, $app_uid, $app_doc_uid, $request_data);
+            $response = $oMobile->documentUploadFiles($userUid, $app_uid, $app_doc_uid);
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
-
         return $response;
     }
 
@@ -1933,6 +1956,7 @@ class Light extends Api
         if ($alreadyRouted) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, G::LoadTranslation('ID_CASE_DELEGATION_ALREADY_CLOSED')));
         }
+        //@todo Find a better way to define session variables
         $_SESSION["APPLICATION"] = $app_uid;
         $_SESSION["PROCESS"] = $pro_uid;
         $_SESSION["INDEX"] = $app_index;

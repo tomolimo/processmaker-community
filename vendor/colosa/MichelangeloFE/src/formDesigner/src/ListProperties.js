@@ -24,7 +24,8 @@
             defaultDate = '',
             dialogMessage = '',
             width = "width:100%;border:1px solid gray;box-sizing:border-box;",
-            id = FormDesigner.generateUniqueId();
+            id = FormDesigner.generateUniqueId(),
+            that = this;
         switch (propertiesGot[property].type) {
             case "label":
                 //improvement changes in value
@@ -117,7 +118,7 @@
                 break;
             case "datepicker":
                 input = $("<input type='text' style='" + width + "' id='" + id + "'/>").val(propertiesGot[property].value);
-                input.on(propertiesGot[property].on ? propertiesGot[property].on : "keyup", function () {
+                input.on(propertiesGot[property].on ? propertiesGot[property].on : "change", function () {
                     properties.set(property, this.value);
                 });
                 input.attr("placeholder", propertiesGot[property].placeholder ? propertiesGot[property].placeholder : "");
@@ -196,56 +197,30 @@
                         return;
                     switch (property) {
                         case "defaultDate":
-                            minDate = $(cellValue.parent().parent()[0].rows["minDate"]).find("input").val();
-                            maxDate = $(cellValue.parent().parent()[0].rows["maxDate"]).find("input").val();
+                            minDate = that.getDateByParam(cellValue, "minDate");
+                            maxDate = that.getDateByParam(cellValue, "maxDate");
                             break;
                         case "minDate":
-                            maxDate = $(cellValue.parent().parent()[0].rows["maxDate"]).find("input").val();
+                            maxDate = that.getDateByParam(cellValue, "maxDate");
                             break;
                         case "maxDate":
-                            minDate = $(cellValue.parent().parent()[0].rows["minDate"]).find("input").val();
+                            minDate = that.getDateByParam(cellValue, "minDate");
                             break;
                     }
-                    var dp = cellValue.find("input[type='text']").datepicker({
-                        showOtherMonths: true,
-                        selectOtherMonths: true,
-                        dateFormat: "yy-mm-dd",
-                        showOn: "button",
-                        changeMonth: true,
-                        changeYear: true,
-                        yearRange: "-100:+100",
+                    
+                    that.datepicker = that.dateComponentFactory(cellValue, {
                         minDate: minDate,
                         maxDate: maxDate,
                         onSelect: function (dateText, inst) {
                             properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
                         },
                         onClose: function (dateText, inst) {
-                            dp.datepicker("destroy");
+                            that.datepicker.datepicker("destroy");
                             $("#ui-datepicker-div").remove();
                         }
                     });
-                    dp.datepicker("show");
                     cellValue.find(".ui-datepicker-trigger").hide();
                 });
-                if (property === "defaultDate") {
-                    minDate = $(cellValue.parent().parent()[0].rows["minDate"]).find("input").val();
-                    maxDate = $(cellValue.parent().parent()[0].rows["maxDate"]).find("input").val();
-                    defaultDate = $(cellValue.parent().parent()[0].rows["defaultDate"]).find("input").val();
-                    if (minDate > defaultDate && minDate !== "") {
-                        dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Default date is out of range.".translate());
-                        dialogMessage.onClose = function () {
-                            properties.set(property, minDate);
-                            properties[property].node.value = minDate;
-                        };
-                    }
-                    if (maxDate < defaultDate && maxDate !== "") {
-                        dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Default date is out of range.".translate());
-                        dialogMessage.onClose = function () {
-                            properties.set(property, maxDate);
-                            properties[property].node.value = maxDate;
-                        };
-                    }
-                }
                 cellValue.append(button);
                 n = n + 16;
                 cellValue[0].style.paddingRight = n + "px";
@@ -295,6 +270,65 @@
     };
     ListProperties.prototype.clear = function () {
         this.tbody.find("tr").remove();
+    };
+    /**
+     * Creates the date picker component.
+     * @param control the form control to set de datepicker.
+     * @param options dynamic params to set the properties.
+     * @returns {*}
+     */
+    ListProperties.prototype.dateComponentFactory = function (control, options) {
+        var defaults = {
+                showOtherMonths: true,
+                selectOtherMonths: true,
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "-100:+100",
+                minDate: '',
+                maxDate: '',
+                onSelect: function() {},
+                onClose: function() {}
+            },
+            datePicker;
+        $.extend(true, defaults, options);
+        // append the date picker to the control component
+            datePicker = control
+                .find("input[type='text']")
+                .datepicker({
+                    showOtherMonths: defaults.showOtherMonths,
+                    selectOtherMonths: defaults.selectOtherMonths,
+                    dateFormat: defaults.dateFormat,
+                    showOn: defaults.showOn,
+                    changeMonth: defaults.changeMonth,
+                    changeYear: defaults.changeYear,
+                    yearRange: defaults.yearRange,
+                    minDate: defaults.minDate,
+                    maxDate: defaults.maxDate,
+                    onSelect: defaults.onSelect,
+                    onClose: defaults.onClose
+          });
+        datePicker.datepicker("show");
+        return datePicker;
+    };
+    /**
+     * Gets the date according to the passed param
+     */
+    ListProperties.prototype.getDateByParam = function(control, param) {
+        var varRegex = /\@(?:([\@\%\#\?\$\=\&Qq\!])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*(?:[\\\\][\w\W])?)*)\))((?:\s*\[['"]?\w+['"]?\])+|\-\>([a-zA-Z\_]\w*))?/,
+            value = '';
+        if (control && param) {
+            value = $(control.parent().parent()[0].rows[param])
+                .find("input")
+                .val();
+            if (!varRegex.test(value)) {
+                return value;
+            } else {
+                return '';
+            }
+        } else {
+            return '';
+        }
     };
     FormDesigner.extendNamespace('FormDesigner.main.ListProperties', ListProperties);
 }());

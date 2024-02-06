@@ -48,6 +48,17 @@ class AbeConfiguration extends BaseAbeConfiguration
         }
     }
 
+    /**
+     * Create or update.
+     * 
+     * @param array $data
+     * @throws Exception
+     * 
+     * @see Processes->createActionsByEmail()
+     * @see ProcessMaker\BusinessModel\ActionsByEmail->saveConfiguration()
+     * @see ProcessMaker\BusinessModel\ActionsByEmail->saveConfiguration2()
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email#Configuration
+     */
     public function createOrUpdate($data)
     {
         foreach ($data as $field => $value) {
@@ -69,6 +80,11 @@ class AbeConfiguration extends BaseAbeConfiguration
                 $abeConfigurationInstance = new AbeConfiguration();
             } else {
                 $abeConfigurationInstance = AbeConfigurationPeer::retrieveByPK($data['ABE_UID']);
+            }
+            //Only the 'FIELD' and 'LINK' types have a DYN_UID,
+            //the DYN_UID field is empty when the type is 'CUSTOM'.
+            if ($data['ABE_TYPE'] === 'CUSTOM') {
+                $data['DYN_UID'] = '';
             }
 
             if (isset($data['ABE_CUSTOM_GRID'])) {

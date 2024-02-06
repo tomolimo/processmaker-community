@@ -1,8 +1,16 @@
 <?php
+
 namespace ProcessMaker\BusinessModel;
+
+use AdditionalTables;
+use AdditionalTablesPeer;
+use Configurations;
+use G;
+use Exception;
 
 class ReportTable
 {
+
     /**
      * Get report table default columns
      *
@@ -101,7 +109,7 @@ class ReportTable
                 if (isset($tableNameMap[$tableName])) {
                     $tableName = $tableNameMap[$tableName];
 
-                    $additionalTable = new \AdditionalTables();
+                    $additionalTable = new AdditionalTables();
 
                     $arrayAdditionalTableData = $additionalTable->loadByName($tableName);
 
@@ -122,13 +130,7 @@ class ReportTable
                             array_multisort($primaryKeyColumn, SORT_ASC, $contentData);
 
                             foreach ($contentData as $row) {
-                                $arrayResult = $this->createRecord(
-                                    [
-                                        'id'   => $arrayAdditionalTableData['ADD_TAB_UID'],
-                                        'rows' => base64_encode(serialize($row)),
-                                    ],
-                                    'base64'
-                                );
+                                $arrayResult = $this->createRecord(['id' => $arrayAdditionalTableData['ADD_TAB_UID'], 'rows' => base64_encode(serialize($row)),], 'base64');
 
                                 if (!$arrayResult['success']) {
                                     $errors .= $arrayResult['message'];
@@ -141,7 +143,7 @@ class ReportTable
 
             //Return
             return $errors;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -157,21 +159,20 @@ class ReportTable
     public function createRecord(array $arrayData, $codification = 'json')
     {
         try {
-            $additionalTable = new \AdditionalTables();
+            $additionalTable = new AdditionalTables();
             $arrayAdditionalTableData = $additionalTable->load($arrayData['id'], true);
 
             $additionalTableClassName = $arrayAdditionalTableData['ADD_TAB_CLASS_NAME'];
             $additionalTableClassPeerName = $additionalTableClassName . 'Peer';
 
-            $row = ($codification == 'base64')?
-                unserialize(base64_decode($arrayData['rows'])) : \G::json_decode($arrayData['rows']);
-            $row = (array)($row);
+            $row = ($codification == 'base64') ? unserialize(base64_decode($arrayData['rows'])) : G::json_decode($arrayData['rows']);
+            $row = (array) ($row);
             $row = array_merge(array_change_key_case($row, CASE_LOWER), array_change_key_case($row, CASE_UPPER));
 
             $flagSave = false;
 
             if (!file_exists(PATH_WORKSPACE . 'classes' . PATH_SEP . $additionalTableClassName . '.php')) {
-                throw new Exception(\G::LoadTranslation('ID_PMTABLE_CLASS_DOESNT_EXIST', [$additionalTableClassName]));
+                throw new Exception(G::LoadTranslation('ID_PMTABLE_CLASS_DOESNT_EXIST', [$additionalTableClassName]));
             }
 
             require_once(PATH_WORKSPACE . 'classes' . PATH_SEP . $additionalTableClassName . '.php');
@@ -188,17 +189,13 @@ class ReportTable
                     $primaryKeysValues = [];
 
                     foreach ($additionalTable->getPrimaryKeys() as $primaryKey) {
-                        $method = 'get' . \AdditionalTables::getPHPName($primaryKey['FLD_NAME']);
+                        $method = 'get' . AdditionalTables::getPHPName($primaryKey['FLD_NAME']);
                         $primaryKeysValues[] = $obj->$method();
                     }
 
-                    $index = \G::encrypt(implode(',', $primaryKeysValues), 'pmtable');
+                    $index = G::encrypt(implode(',', $primaryKeysValues), 'pmtable');
 
-                    \G::auditLog(
-                        'AddDataPmtable',
-                        'Table Name: ' . $arrayAdditionalTableData['ADD_TAB_NAME'] .
-                        ' Table ID: (' . $arrayAdditionalTableData['ADD_TAB_UID'] . ')'
-                    );
+                    G::auditLog('AddDataPmtable', 'Table Name: ' . $arrayAdditionalTableData['ADD_TAB_NAME'] . ' Table ID: (' . $arrayAdditionalTableData['ADD_TAB_UID'] . ')');
 
                     $flagSave = true;
                 } else {
@@ -208,10 +205,7 @@ class ReportTable
                         $msg .= $objValidationFailure->getMessage() . "\n";
                     }
 
-                    throw new Exception(
-                        \G::LoadTranslation('ID_ERROR_TRYING_INSERT') .
-                        '"' . $arrayAdditionalTableData['ADD_TAB_NAME'] . "\"\n" . $msg
-                    );
+                    throw new Exception(G::LoadTranslation('ID_ERROR_TRYING_INSERT') . '"' . $arrayAdditionalTableData['ADD_TAB_NAME'] . "\"\n" . $msg);
                 }
             } else {
                 $flagSave = false;
@@ -220,11 +214,11 @@ class ReportTable
             //Return
             return [
                 'success' => $flagSave,
-                'message' => ($flagSave)? \G::LoadTranslation('ID_RECORD_SAVED_SUCCESFULLY') : '',
-                'rows'    => ($flagSave)? $obj->toArray(\BasePeer::TYPE_FIELDNAME) : [],
-                'index'   => ($flagSave)? $index : '',
+                'message' => ($flagSave) ? G::LoadTranslation('ID_RECORD_SAVED_SUCCESFULLY') : '',
+                'rows' => ($flagSave) ? $obj->toArray(\BasePeer::TYPE_FIELDNAME) : [],
+                'index' => ($flagSave) ? $index : '',
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -240,13 +234,8 @@ class ReportTable
      *
      * @return array
      */
-    public function checkPmtFileThrowErrors(
-        array $arrayTableSchema,
-        $processUid,
-        $flagFromAdmin,
-        $flagOverwrite,
-        $postProUid
-    ) {
+    public function checkPmtFileThrowErrors(array $arrayTableSchema, $processUid, $flagFromAdmin, $flagOverwrite, $postProUid)
+    {
         try {
             $arrayError = [];
 
@@ -254,7 +243,7 @@ class ReportTable
             $processMap = new \ProcessMap();
             $arrayProcessUid = [];
 
-            foreach (\G::json_decode($processMap->getAllProcesses()) as $value) {
+            foreach (G::json_decode($processMap->getAllProcesses()) as $value) {
                 if ($value->value != '') {
                     $arrayProcessUid[] = $value->value;
                 }
@@ -266,19 +255,19 @@ class ReportTable
                 $contentSchema = $value;
 
                 //The table exists?
-                $additionalTable = new \AdditionalTables();
+                $additionalTable = new AdditionalTables();
 
                 $arrayAdditionalTableData = $additionalTable->loadByName($contentSchema['ADD_TAB_NAME']);
 
-                $tableProUid   = (isset($contentSchema['PRO_UID']))? $contentSchema['PRO_UID'] : $postProUid;
-                $flagIsPmTable = ($contentSchema['PRO_UID'] == '')? true : false;
+                $tableProUid = (isset($contentSchema['PRO_UID'])) ? $contentSchema['PRO_UID'] : $postProUid;
+                $flagIsPmTable = ($contentSchema['PRO_UID'] == '') ? true : false;
 
                 if ($flagFromAdmin) {
                     if ($flagIsPmTable) {
                         if ($arrayAdditionalTableData && !$flagOverwrite) {
                             $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                             $arrayError[$i]['ERROR_TYPE'] = 1; //ERROR_PM_TABLES_OVERWRITE
-                            $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_OVERWRITE_PMTABLE', [$contentSchema['ADD_TAB_NAME']]);
+                            $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_OVERWRITE_PMTABLE', [$contentSchema['ADD_TAB_NAME']]);
                             $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                             $arrayError[$i]['PRO_UID'] = $tableProUid;
                         }
@@ -286,14 +275,14 @@ class ReportTable
                         if (!in_array($tableProUid, $arrayProcessUid)) {
                             $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                             $arrayError[$i]['ERROR_TYPE'] = 2; //ERROR_PROCESS_NOT_EXIST
-                            $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_PROCESS_NOT_EXIST', [$contentSchema['ADD_TAB_NAME']]);
+                            $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_PROCESS_NOT_EXIST', [$contentSchema['ADD_TAB_NAME']]);
                             $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                             $arrayError[$i]['PRO_UID'] = $tableProUid;
                         } else {
                             if ($arrayAdditionalTableData && !$flagOverwrite) {
                                 $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                                 $arrayError[$i]['ERROR_TYPE'] = 3; //ERROR_RP_TABLES_OVERWRITE
-                                $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_OVERWRITE_RPTABLE', [$contentSchema['ADD_TAB_NAME']]);
+                                $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_OVERWRITE_RPTABLE', [$contentSchema['ADD_TAB_NAME']]);
                                 $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                                 $arrayError[$i]['PRO_UID'] = $tableProUid;
                             }
@@ -303,21 +292,21 @@ class ReportTable
                     if ($flagIsPmTable) {
                         $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                         $arrayError[$i]['ERROR_TYPE'] = 4; //ERROR_NO_REPORT_TABLE
-                        $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_NO_REPORT_TABLE', [$contentSchema['ADD_TAB_NAME']]);
+                        $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_NO_REPORT_TABLE', [$contentSchema['ADD_TAB_NAME']]);
                         $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                         $arrayError[$i]['PRO_UID'] = $tableProUid;
                     } else {
                         if ($tableProUid !== $processUid) {
                             $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                             $arrayError[$i]['ERROR_TYPE'] = 5; //ERROR_OVERWRITE_RELATED_PROCESS
-                            $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_OVERWRITE_RELATED_PROCESS', [$contentSchema['ADD_TAB_NAME']]);
+                            $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_OVERWRITE_RELATED_PROCESS', [$contentSchema['ADD_TAB_NAME']]);
                             $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                             $arrayError[$i]['PRO_UID'] = $tableProUid;
                         } else {
                             if ($arrayAdditionalTableData && !$flagOverwrite) {
                                 $arrayError[$i]['NAME_TABLE'] = $contentSchema['ADD_TAB_NAME'];
                                 $arrayError[$i]['ERROR_TYPE'] = 3; //ERROR_RP_TABLES_OVERWRITE
-                                $arrayError[$i]['ERROR_MESS'] = \G::LoadTranslation('ID_OVERWRITE_RPTABLE', [$contentSchema['ADD_TAB_NAME']]);
+                                $arrayError[$i]['ERROR_MESS'] = G::LoadTranslation('ID_OVERWRITE_RPTABLE', [$contentSchema['ADD_TAB_NAME']]);
                                 $arrayError[$i]['IS_PMTABLE'] = $flagIsPmTable;
                                 $arrayError[$i]['PRO_UID'] = $tableProUid;
                             }
@@ -330,7 +319,7 @@ class ReportTable
 
             //Return
             return $arrayError;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
@@ -340,6 +329,11 @@ class ReportTable
      *
      * @param array $arrayData
      * @param bool  $flagAlterTable
+     * 
+     * @see pmTablesProxy->save()
+     * @see ProcessMaker\BusinessModel\ReportTable->createStructureOfTables()
+     * @see Table->validateTableBeforeUpdate()
+     * @link https://wiki.processmaker.com/3.1/Report_Tables
      *
      * @return object
      */
@@ -351,9 +345,9 @@ class ReportTable
             $additionalTableUid = $arrayData['REP_TAB_UID'];
             $flagNew = 0;
 
-            $additionalTables = \AdditionalTablesPeer::retrieveByPK($arrayData['REP_TAB_UID']);
+            $additionalTables = AdditionalTablesPeer::retrieveByPK($arrayData['REP_TAB_UID']);
 
-            if (!is_null($additionalTables)){
+            if (!is_null($additionalTables)) {
                 $arrayData['REP_TAB_NAME'] = 'PMT_' . trim($arrayData['REP_TAB_NAME']);
 
                 if ($additionalTables->getAddTabName() != $arrayData['REP_TAB_NAME']) {
@@ -365,7 +359,7 @@ class ReportTable
             ob_start();
 
             $arrayData['PRO_UID'] = trim($arrayData['PRO_UID']);
-            $arrayData['columns'] = \G::json_decode(stripslashes($arrayData['columns'])); //Decofing data columns
+            $arrayData['columns'] = G::json_decode(stripslashes($arrayData['columns'])); //Decofing data columns
 
             if ($flagNew == 1) {
                 $arrayNewColumn = [];
@@ -387,27 +381,27 @@ class ReportTable
                 $arrayData['columns'] = $arrayNewColumn;
             }
 
-            $additionalTable = new \AdditionalTables();
+            $additionalTable = new AdditionalTables();
 
             $repTabClassName = $additionalTable->getPHPName($arrayData['REP_TAB_NAME']);
-            $flagIsReportTable = ($arrayData['PRO_UID'] != '')? true : false;
+            $flagIsReportTable = ($arrayData['PRO_UID'] != '') ? true : false;
             $columns = $arrayData['columns'];
 
             //Reserved Words Table
             $reservedWords = [
-                'ALTER', 'CLOSE', 'COMMIT', 'CREATE','DECLARE','DELETE','DROP','FETCH','FUNCTION','GRANT','INDEX',
-                'INSERT','OPEN','REVOKE','ROLLBACK','SELECT','SYNONYM','TABLE','UPDATE','VIEW','APP_UID','ROW','PMTABLE'
+                'ALTER', 'CLOSE', 'COMMIT', 'CREATE', 'DECLARE', 'DELETE', 'DROP', 'FETCH', 'FUNCTION', 'GRANT', 'INDEX',
+                'INSERT', 'OPEN', 'REVOKE', 'ROLLBACK', 'SELECT', 'SYNONYM', 'TABLE', 'UPDATE', 'VIEW', 'APP_UID', 'ROW', 'PMTABLE'
             ];
 
             //Reserved Words Field
             $reservedWordsPhp = [
-                'case','catch','cfunction','class','clone','const','continue','declare','default','do','else','elseif',
-                'enddeclare','endfor','endforeach','endif','endswitch','endwhile','extends','final','for','foreach',
-                'function','global','goto','if','implements','interface','instanceof','private','namespace','new',
-                'old_function','or','throw','protected','public','static','switch','xor','try','use','var','while'
+                'case', 'catch', 'cfunction', 'class', 'clone', 'const', 'continue', 'declare', 'default', 'do', 'else', 'elseif',
+                'enddeclare', 'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'extends', 'final', 'for', 'foreach',
+                'function', 'global', 'goto', 'if', 'implements', 'interface', 'instanceof', 'private', 'namespace', 'new',
+                'old_function', 'or', 'throw', 'protected', 'public', 'static', 'switch', 'xor', 'try', 'use', 'var', 'while'
             ];
 
-            $reservedWordsSql = \G::reservedWordsSql();
+            $reservedWordsSql = G::reservedWordsSql();
 
             //Verify if exists
             if ($arrayData['REP_TAB_UID'] == '' || (isset($arrayData['forceUid']) && $arrayData['forceUid'])) {
@@ -419,23 +413,25 @@ class ReportTable
                 }
 
                 //Validations
-                if ($additionalTable->loadByName($arrayData['REP_TAB_NAME'])) {
-                    throw new \Exception(\G::LoadTranslation('ID_PMTABLE_ALREADY_EXISTS', [$arrayData['REP_TAB_NAME']]));
+                if (is_array($additionalTable->loadByName($arrayData['REP_TAB_NAME']))) {
+                    throw new Exception(G::LoadTranslation('ID_PMTABLE_ALREADY_EXISTS', [$arrayData['REP_TAB_NAME']]));
                 }
 
                 if (in_array(strtoupper($arrayData['REP_TAB_NAME']), $reservedWords) ||
-                    in_array(strtoupper($arrayData['REP_TAB_NAME']), $reservedWordsSql)
+                        in_array(strtoupper($arrayData['REP_TAB_NAME']), $reservedWordsSql)
                 ) {
-                    throw new \Exception(\G::LoadTranslation('ID_PMTABLE_INVALID_NAME', [$arrayData['REP_TAB_NAME']]));
+                    throw new Exception(G::LoadTranslation('ID_PMTABLE_INVALID_NAME', [$arrayData['REP_TAB_NAME']]));
                 }
             }
+
+            $this->validateFieldName($columns);
 
             //Backward compatility
             foreach ($columns as $i => $column) {
                 if (in_array(strtoupper($columns[$i]->field_name), $reservedWordsSql) ||
-                    in_array(strtolower($columns[$i]->field_name), $reservedWordsPhp)
+                        in_array(strtolower($columns[$i]->field_name), $reservedWordsPhp)
                 ) {
-                    throw new \Exception(\G::LoadTranslation('ID_PMTABLE_INVALID_FIELD_NAME', [$columns[$i]->field_name]));
+                    throw new Exception(G::LoadTranslation('ID_PMTABLE_INVALID_FIELD_NAME', [$columns[$i]->field_name]));
                 }
 
                 switch ($column->field_type) {
@@ -475,19 +471,19 @@ class ReportTable
             }
 
             $pmTable->build();
-            
+
             $buildResult = ob_get_contents();
 
             ob_end_clean();
 
             //Updating additional table struture information
             $addTabData = [
-                'ADD_TAB_UID'  => $arrayData['REP_TAB_UID'],
+                'ADD_TAB_UID' => $arrayData['REP_TAB_UID'],
                 'ADD_TAB_NAME' => $arrayData['REP_TAB_NAME'],
-                'ADD_TAB_CLASS_NAME'  => $repTabClassName,
+                'ADD_TAB_CLASS_NAME' => $repTabClassName,
                 'ADD_TAB_DESCRIPTION' => $arrayData['REP_TAB_DSC'],
                 'ADD_TAB_PLG_UID' => '',
-                'DBS_UID' => ($arrayData['REP_TAB_CONNECTION'])? $arrayData['REP_TAB_CONNECTION'] : 'workflow',
+                'DBS_UID' => ($arrayData['REP_TAB_CONNECTION']) ? $arrayData['REP_TAB_CONNECTION'] : 'workflow',
                 'PRO_UID' => $arrayData['PRO_UID'],
                 'ADD_TAB_TYPE' => $arrayData['REP_TAB_TYPE'],
                 'ADD_TAB_GRID' => $arrayData['REP_TAB_GRID']
@@ -514,37 +510,30 @@ class ReportTable
 
             foreach ($columns as $i => $column) {
                 $field->create([
-                    'FLD_UID'     => $column->uid,
-                    'FLD_INDEX'   => $i,
+                    'FLD_UID' => $column->uid,
+                    'FLD_INDEX' => $i,
                     'ADD_TAB_UID' => $addTabUid,
                     'FLD_NAME' => $column->field_name,
                     'FLD_DESCRIPTION' => $column->field_label,
                     'FLD_TYPE' => $column->field_type,
-                    'FLD_SIZE' => ($column->field_size == '')? null : $column->field_size,
-                    'FLD_NULL' => ($column->field_null)? 1 : 0,
-                    'FLD_AUTO_INCREMENT' => ($column->field_autoincrement)? 1 : 0,
-                    'FLD_KEY' => ($column->field_key)? 1 : 0,
-                    'FLD_TABLE_INDEX' => (isset($column->field_index) && $column->field_index)? 1 : 0,
+                    'FLD_SIZE' => ($column->field_size == '') ? null : $column->field_size,
+                    'FLD_NULL' => ($column->field_null) ? 1 : 0,
+                    'FLD_AUTO_INCREMENT' => ($column->field_autoincrement) ? 1 : 0,
+                    'FLD_KEY' => ($column->field_key) ? 1 : 0,
+                    'FLD_TABLE_INDEX' => (isset($column->field_index) && $column->field_index) ? 1 : 0,
                     'FLD_FOREIGN_KEY' => 0,
                     'FLD_FOREIGN_KEY_TABLE' => '',
                     'FLD_DYN_NAME' => $column->field_dyn,
-                    'FLD_DYN_UID'  => $column->field_uid,
-                    'FLD_FILTER'   => (isset($column->field_filter) && $column->field_filter)? 1 : 0
+                    'FLD_DYN_UID' => $column->field_uid,
+                    'FLD_FILTER' => (isset($column->field_filter) && $column->field_filter) ? 1 : 0
                 ]);
             }
 
             if ($flagIsReportTable && $flagAlterTable) {
                 //The table was create successfully but we're catching problems while populating table
                 try {
-                    $additionalTable->populateReportTable(
-                        $arrayData['REP_TAB_NAME'],
-                        $pmTable->getDataSource(),
-                        $arrayData['REP_TAB_TYPE'],
-                        $arrayData['PRO_UID'],
-                        $arrayData['REP_TAB_GRID'],
-                        $addTabUid
-                    );
-                } catch (\Exception $e) {
+                    $additionalTable->populateReportTable($arrayData['REP_TAB_NAME'], $pmTable->getDataSource(), $arrayData['REP_TAB_TYPE'], $arrayData['PRO_UID'], $arrayData['REP_TAB_GRID'], $addTabUid);
+                } catch (Exception $e) {
                     $result->message = $result->msg = $e->getMessage();
                 }
             }
@@ -561,10 +550,7 @@ class ReportTable
                 }
             }
 
-            \G::auditLog(
-                (isset($arrayData['REP_TAB_UID']) && $arrayData['REP_TAB_UID'] == '')?
-                    'CreatePmtable' : 'UpdatePmtable', 'Fields: ' . $fieldsName
-            );
+            G::auditLog((isset($arrayData['REP_TAB_UID']) && $arrayData['REP_TAB_UID'] == '') ? 'CreatePmtable' : 'UpdatePmtable', 'Fields: ' . $fieldsName);
 
             $result->success = true;
             $result->message = $result->msg = $buildResult;
@@ -575,12 +561,13 @@ class ReportTable
                 $pmTablesProxy = new \pmTablesProxy();
 
                 $obj = new \stdClass();
-                $obj->rows = \G::json_encode([['id' => $additionalTableUid, 'type' => '']]);
+                $obj->rows = G::json_encode([['id' => $additionalTableUid, 'type' => '']]);
 
                 //Delete Report Table
                 $resultDeleteReportTable = $pmTablesProxy->delete($obj);
             }
-        } catch (\Exception $e) {
+            $this->updateConfigurationCaseList($additionalTableUid, $columns);
+        } catch (Exception $e) {
             $buildResult = ob_get_contents();
 
             ob_end_clean();
@@ -593,14 +580,129 @@ class ReportTable
                 $result->type = ucfirst($pmTable->getDbConfig()->adapter);
             } else {
                 $result->message = $result->msg = $e->getMessage();
-                $result->type = \G::LoadTranslation('ID_EXCEPTION');
+                $result->type = G::LoadTranslation('ID_EXCEPTION');
             }
 
             $result->trace = $e->getTraceAsString();
         }
-
         //Return
         return $result;
+    }
+
+    /**
+     * Update the Custom Case List fields configuration.
+     * 
+     * @param array $columns
+     * 
+     * @see ProcessMaker\BusinessModel\ReportTable->saveStructureOfTable()
+     * @link https://wiki.processmaker.com/3.1/Report_Tables
+     * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+     */
+    public function updateConfigurationCaseList($addTabUid, $columns)
+    {
+        $actions = [
+            "todo", "draft", "sent", "unassigned", "paused", "completed", "cancelled"
+        ];
+        $conf = new Configurations();
+        foreach ($actions as $action) {
+            $confCasesList = $conf->loadObject("casesList", $action, "", "", "");
+            $sw = is_array($confCasesList) && !empty($confCasesList) && !empty($confCasesList['PMTable']) && $confCasesList['PMTable'] === $addTabUid;
+            if ($sw) {
+                $this->addFieldsToCustomCaseList($confCasesList['first']['data'], $confCasesList['second']['data'], $columns);
+                $this->removeFieldsFromCustomCaseList($confCasesList['first']['data'], $columns);
+                $this->removeFieldsFromCustomCaseList($confCasesList['second']['data'], $columns);
+                $conf->saveObject($confCasesList, "casesList", $action);
+            }
+        }
+    }
+    
+    /**
+     * Add fields to Custom Case List.
+     * @param array $data1
+     * @param array $data2
+     * @param array $columns
+     * 
+     * @see ProcessMaker\BusinessModel\ReportTable->saveStructureOfTable()
+     * @link https://wiki.processmaker.com/3.1/Report_Tables
+     * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+     */
+    public function addFieldsToCustomCaseList(&$data1, $data2, $columns)
+    {
+        $all = [];
+        $type = 'PM Table';
+        $this->loadFieldTypeValues($data1, $all, $type);
+        $this->loadFieldTypeValues($data2, $all, $type);
+        foreach ($all as $value) {
+            foreach ($columns as $index => $column) {
+                if ($value['name'] === $column->field_name) {
+                    unset($columns[$index]);
+                    break;
+                }
+            }
+        }
+        $defaults = ["APP_UID", "APP_NUMBER", "APP_STATUS"];
+        foreach ($defaults as $value) {
+            foreach ($columns as $index => $column) {
+                if ($value === $column->field_name) {
+                    unset($columns[$index]);
+                    break;
+                }
+            }
+        }
+        foreach ($columns as $value) {
+            $data1[] = [
+                "name" => $column->field_name,
+                "fieldType" => $type
+            ];
+        }
+    }
+
+    /**
+     * Load field type values.
+     * 
+     * @param array $fields
+     * @param array $all
+     * @param string $type
+     */
+    private function loadFieldTypeValues($fields, array &$all, $type)
+    {
+        foreach ($fields as $value) {
+            if ($value['fieldType'] === $type) {
+                $all[] = $value;
+            }
+        }
+    }
+
+    /**
+     * Remove fields from Custom Cases List.
+     * 
+     * @param array $data
+     * @param array $columns
+     * 
+     * @see ProcessMaker\BusinessModel\ReportTable->saveStructureOfTable()
+     * @link https://wiki.processmaker.com/3.1/Report_Tables
+     * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+     */
+    public function removeFieldsFromCustomCaseList(&$data, $columns)
+    {
+        $n = count($data);
+        for ($key = 0; $key < $n; $key++) {
+            if ($data[$key]['fieldType'] === 'PM Table') {
+                $remove = true;
+                foreach ($columns as $column) {
+                    if ($data[$key]['name'] === $column->field_name) {
+                        $remove = false;
+                        break;
+                    }
+                }
+                if ($remove === true) {
+                    unset($data[$key]);
+                    $data = array_values($data);
+                    $key = 0;
+                    $n = count($data);
+                }
+            }
+        }
     }
 
     /**
@@ -616,15 +718,8 @@ class ReportTable
      *
      * @return string
      */
-    public function createStructureOfTables(
-        array $arrayTableSchema,
-        array $arrayTableData,
-        $processUid,
-        $flagFromAdmin,
-        $flagOverwrite = true,
-        array $arrayTablesToExclude = [],
-        array $arrayTablesToCreate = []
-    ) {
+    public function createStructureOfTables(array $arrayTableSchema, array $arrayTableData, $processUid, $flagFromAdmin, $flagOverwrite = true, array $arrayTablesToExclude = [], array $arrayTablesToCreate = [])
+    {
         try {
             $errors = '';
 
@@ -636,7 +731,7 @@ class ReportTable
                 $contentSchema = $value;
 
                 if (!in_array($contentSchema['ADD_TAB_NAME'], $arrayTablesToExclude)) {
-                    $additionalTable = new \AdditionalTables();
+                    $additionalTable = new AdditionalTables();
 
                     $arrayAdditionalTableData = $additionalTable->loadByName($contentSchema['ADD_TAB_NAME']);
 
@@ -644,7 +739,7 @@ class ReportTable
 
                     $tableData = new \stdClass();
 
-                    if (isset( $contentSchema['PRO_UID'] )) {
+                    if (isset($contentSchema['PRO_UID'])) {
                         $tableData->PRO_UID = $contentSchema['PRO_UID'];
                     } else {
                         $tableData->PRO_UID = $_POST['form']['PRO_UID'];
@@ -673,9 +768,9 @@ class ReportTable
                             //renaming...
                             $tNameOld = $contentSchema['ADD_TAB_NAME'];
                             $newTableName = $contentSchema['ADD_TAB_NAME'] . '_' . date('YmdHis');
-                            $contentSchema['ADD_TAB_UID'] = \G::generateUniqueID();
+                            $contentSchema['ADD_TAB_UID'] = G::generateUniqueID();
                             $contentSchema['ADD_TAB_NAME'] = $newTableName;
-                            $contentSchema['ADD_TAB_CLASS_NAME'] = \AdditionalTables::getPHPName($newTableName);
+                            $contentSchema['ADD_TAB_CLASS_NAME'] = AdditionalTables::getPHPName($newTableName);
 
                             //Mapping the table name for posterior uses
                             $tableNameMap[$tNameOld] = $contentSchema['ADD_TAB_NAME'];
@@ -691,17 +786,17 @@ class ReportTable
 
                     foreach ($contentSchema['FIELDS'] as $field) {
                         $columns[] = [
-                            'uid'         => '',
-                            'field_uid'   => '',
-                            'field_name'  => $field['FLD_NAME'],
-                            'field_dyn'   => (isset($field['FLD_DYN_NAME']))? $field['FLD_DYN_NAME'] : '',
-                            'field_label' => (isset($field['FLD_DESCRIPTION']))? $field['FLD_DESCRIPTION'] : '',
-                            'field_type'  => $field['FLD_TYPE'],
-                            'field_size'  => $field['FLD_SIZE'],
-                            'field_key'   => (isset($field['FLD_KEY']))? $field['FLD_KEY'] : 0,
-                            'field_null'  => (isset($field['FLD_NULL']))? $field['FLD_NULL'] : 1,
-                            'field_autoincrement' => (isset($field['FLD_AUTO_INCREMENT']))?
-                                $field['FLD_AUTO_INCREMENT'] : 0
+                            'uid' => '',
+                            'field_uid' => '',
+                            'field_name' => $field['FLD_NAME'],
+                            'field_dyn' => (isset($field['FLD_DYN_NAME'])) ? $field['FLD_DYN_NAME'] : '',
+                            'field_label' => (isset($field['FLD_DESCRIPTION'])) ? $field['FLD_DESCRIPTION'] : '',
+                            'field_type' => $field['FLD_TYPE'],
+                            'field_size' => $field['FLD_SIZE'],
+                            'field_key' => (isset($field['FLD_KEY'])) ? $field['FLD_KEY'] : 0,
+                            'field_null' => (isset($field['FLD_NULL'])) ? $field['FLD_NULL'] : 1,
+                            'field_autoincrement' => (isset($field['FLD_AUTO_INCREMENT'])) ?
+                            $field['FLD_AUTO_INCREMENT'] : 0
                         ];
                     }
 
@@ -709,23 +804,21 @@ class ReportTable
                     $tableData->REP_TAB_NAME = $contentSchema['ADD_TAB_NAME'];
                     $tableData->REP_TAB_DSC = $contentSchema['ADD_TAB_DESCRIPTION'];
                     $tableData->REP_TAB_CONNECTION = $contentSchema['DBS_UID'];
-                    $tableData->REP_TAB_TYPE = (isset($contentSchema['ADD_TAB_TYPE']))? $contentSchema['ADD_TAB_TYPE'] : '';
-                    $tableData->REP_TAB_GRID = (isset($contentSchema['ADD_TAB_GRID']))? $contentSchema['ADD_TAB_GRID'] : '';
-                    $tableData->columns = \G::json_encode($columns);
+                    $tableData->REP_TAB_TYPE = (isset($contentSchema['ADD_TAB_TYPE'])) ? $contentSchema['ADD_TAB_TYPE'] : '';
+                    $tableData->REP_TAB_GRID = (isset($contentSchema['ADD_TAB_GRID'])) ? $contentSchema['ADD_TAB_GRID'] : '';
+                    $tableData->columns = G::json_encode($columns);
                     $tableData->forceUid = true;
 
                     //Save the table
                     $alterTable = false;
-                    $result = $this->saveStructureOfTable((array)($tableData), $alterTable);
+                    $result = $this->saveStructureOfTable((array) ($tableData), $alterTable);
 
                     if ($result->success) {
-                        \G::auditLog(
-                            'ImportTable', $contentSchema['ADD_TAB_NAME'] . ' (' . $contentSchema['ADD_TAB_UID'] . ')'
-                        );
+                        G::auditLog('ImportTable', $contentSchema['ADD_TAB_NAME'] . ' (' . $contentSchema['ADD_TAB_UID'] . ')');
 
                         $processQueueTables[$contentSchema['DBS_UID']][] = $contentSchema['ADD_TAB_NAME'];
                     } else {
-                        $errors .= \G::LoadTranslation('ID_ERROR_CREATE_TABLE') . $tableData->REP_TAB_NAME . '-> ' . $result->message . '\n\n';
+                        $errors .= G::LoadTranslation('ID_ERROR_CREATE_TABLE') . $tableData->REP_TAB_NAME . '-> ' . $result->message . '\n\n';
                     }
                 }
             }
@@ -747,9 +840,38 @@ class ReportTable
 
             //Return
             return $errors;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }
-}
 
+    /**
+     * Throw an exception if the column is not valid for the creation of the field 
+     * in the classes managed by propel.
+     * 
+     * @param array $columns
+     * @throws Exception
+     */
+    private function validateFieldName($columns)
+    {
+        $validFields = [];
+        $invalidFields = [];
+        foreach ($columns as $column) {
+            try {
+                $fieldName = $column->field_name;
+                Validator::isValidVariableName($fieldName);
+                $fieldName = strtolower(AdditionalTables::getPHPName($fieldName));
+                if (in_array($fieldName, $validFields)) {
+                    $invalidFields[] = $fieldName;
+                } else {
+                    $validFields[] = $fieldName;
+                }
+            } catch (Exception $e) {
+                $invalidFields[] = $fieldName;
+            }
+        }
+        if (!empty($invalidFields)) {
+            throw new Exception(G::LoadTranslation('ID_PMTABLE_INVALID_FIELD_NAME_VARIABLE', $invalidFields));
+        }
+    }
+}

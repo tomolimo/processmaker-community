@@ -30,6 +30,8 @@ use ProcessMaker\Core\RoutingScreen;
 use ProcessMaker\Core\System;
 use ProcessMaker\Services\Api\Project\Activity\Step as ActivityStep;
 use ProcessMaker\Util\DateTime;
+use ProcessMaker\Validation\ExceptionRestApi;
+use ProcessMaker\Validation\Validator;
 use ProcessPeer;
 use Propel;
 use RBAC;
@@ -411,6 +413,7 @@ class Light
 
         $oCase = new Cases();
         $Fields = $oCase->loadCase($cas_uid);
+        //@todo Find a better way to define session variables
         $_SESSION["APPLICATION"] = $cas_uid;
         $_SESSION["PROCESS"] = $prj_uid;
         $_SESSION["TASK"] = $act_uid;
@@ -449,6 +452,7 @@ class Light
         try {
             $oCase = new Cases();
             $Fields = $oCase->loadCase($app_uid);
+            //@todo Find a better way to define session variables
             $_SESSION["APPLICATION"] = $app_uid;
             $_SESSION["PROCESS"] = $Fields['PRO_UID'];
             $_SESSION["TASK"] = $tas_uid;
@@ -978,16 +982,6 @@ class Light
             $confEnvSetting = $config->getFormats();
             $user = new Users();
             foreach ($requestData as $k => $file) {
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                if (Bootstrap::getDisablePhpUploadExecution() === 1 && $ext === 'php') {
-                    $message = G::LoadTranslation('THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED');
-                    Bootstrap::registerMonologPhpUploadExecution('phpUpload', 550, $message, $file['name']);
-                    $response[$k]['error'] = array(
-                        "code" => "400",
-                        "message" => $message
-                    );
-                    continue;
-                }
                 $cases = new Cases();
                 $delIndex = $cases->getCurrentDelegation($appUid, $userUid);
                 $docUid = !empty($file['docUid']) ? $file['docUid'] : -1;
@@ -1054,7 +1048,7 @@ class Light
      *
      * @throws Exception
      */
-    public function documentUploadFiles($userUid, $app_uid, $app_doc_uid, $request_data)
+    public function documentUploadFiles($userUid, $app_uid, $app_doc_uid)
     {
         $response = array("status" => "fail");
         if (isset($_FILES["form"]["name"]) && count($_FILES["form"]["name"]) > 0) {
@@ -1090,6 +1084,58 @@ class Light
                 }
             }
             if (count($arrayField) > 0) {
+                //rule validation
+                $appDocument = new AppDocument();
+                $appDocument->load($app_doc_uid);
+                $inputDocument = new InputDocument();
+                $ifInputExist = $inputDocument->InputExists($appDocument->getDocUid());
+                if ($ifInputExist) {
+                    $inputProperties = $inputDocument->load($appDocument->getDocUid());
+                    $inpDocTypeFile = $inputProperties['INP_DOC_TYPE_FILE'];
+                    $inpDocMaxFilesize = (int) $inputProperties["INP_DOC_MAX_FILESIZE"];
+                    $inpDocMaxFilesizeUnit = $inputProperties["INP_DOC_MAX_FILESIZE_UNIT"];
+                }
+
+                for ($i = 0; $ifInputExist && $i < count($arrayField); $i++) {
+                    $file = [
+                        'filename' => $arrayFileName[$i],
+                        'path' => $arrayFileTmpName[$i]
+                    ];
+                    $validator = new Validator();
+                    //rule: extension
+                    $validator->addRule()
+                            ->validate($file, function($file) use($inpDocTypeFile) {
+                                $result = G::verifyInputDocExtension($inpDocTypeFile, $file->filename, $file->path);
+                                return $result->status === false;
+                            })
+                            ->status(415)
+                            ->message(G::LoadTranslation('ID_UPLOAD_INVALID_DOC_TYPE_FILE', [$inpDocTypeFile]))
+                            ->log(function($rule) {
+                                Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(), $rule->getData()->filename);
+                            });
+
+                    //rule: maximum file size
+                    $validator->addRule()
+                            ->validate($file, function($file) use($inpDocMaxFilesize, $inpDocMaxFilesizeUnit) {
+                                if ($inpDocMaxFilesize > 0) {
+                                    $totalMaxFileSize = $inpDocMaxFilesize * ($inpDocMaxFilesizeUnit == "MB" ? 1024 * 1024 : 1024);
+                                    $fileSize = filesize($file->path);
+                                    if ($fileSize > $totalMaxFileSize) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            })
+                            ->status(413)
+                            ->message(G::LoadTranslation("ID_UPLOAD_INVALID_DOC_MAX_FILESIZE", [$inpDocMaxFilesize . $inpDocMaxFilesizeUnit]))
+                            ->log(function($rule) {
+                                Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(), $rule->getData()->filename);
+                            });
+                    $validator->validate();
+                    if ($validator->fails()) {
+                        throw new ExceptionRestApi($validator->getMessage(), $validator->getStatus());
+                    }
+                }
                 for ($i = 0; $i <= count($arrayField) - 1; $i++) {
                     if ($arrayFileError[$i] == 0) {
                         $indocUid = null;
@@ -1421,6 +1467,7 @@ class Light
         }
         $response['listLanguage'] = $languagesList;
         if (isset($params['fileLimit']) && $params['fileLimit']) {
+            //to do: ProcessMaker\BusinessModel\InputDocument->getMaxFileSize()
             $postMaxSize = $this->return_bytes(ini_get('post_max_size'));
             $uploadMaxFileSize = $this->return_bytes(ini_get('upload_max_filesize'));
             if ($postMaxSize < $uploadMaxFileSize) {

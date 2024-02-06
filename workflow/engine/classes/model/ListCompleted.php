@@ -13,8 +13,8 @@ require_once 'classes/model/om/BaseListCompleted.php';
  * long as it does not already exist in the output directory.
  *
  * @package    classes.model
+ * @deprecated Method deprecated in Release 3.3.9
  */
-// @codingStandardsIgnoreStart
 class ListCompleted extends BaseListCompleted implements ListInterface
 {
     use ListBaseTrait;

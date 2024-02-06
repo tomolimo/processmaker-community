@@ -2,11 +2,12 @@
 
 namespace ProcessMaker\BusinessModel;
 
-use G;
-use Exception;
 use AdditionalTables;
+use Cases as ClassesCases;
+use Exception;
+use G;
 use PmDynaform;
-use ProcessMaker\BusinessModel\Cases;
+
 
 class Variable
 {
@@ -405,6 +406,7 @@ class Variable
             if (isset($aData["VAR_NAME"])) {
                 Validator::isString($aData['VAR_NAME'], '$var_name');
                 Validator::isNotEmpty($aData['VAR_NAME'], '$var_name');
+                Validator::isValidVariableName($aData['VAR_NAME']);
             }
             if (isset($aData["VAR_FIELD_TYPE"])) {
                 Validator::isString($aData['VAR_FIELD_TYPE'], '$var_field_type');
@@ -462,7 +464,7 @@ class Variable
                 if ($variableName === $row["VAR_NAME"]) {
                     throw new Exception(G::LoadTranslation("DYNAFIELD_ALREADY_EXIST"));
                 }
-                if (AdditionalTables::getPHPName($variableName) === AdditionalTables::getPHPName($row["VAR_NAME"])) {
+                if (strtolower(AdditionalTables::getPHPName($variableName)) === strtolower(AdditionalTables::getPHPName($row["VAR_NAME"]))) {
                     throw new Exception(G::LoadTranslation("DYNAFIELD_PHPNAME_ALREADY_EXIST", array($row["VAR_NAME"])));
                 }
             }
@@ -741,13 +743,14 @@ class Variable
      * control.
      * If app_uid is not sent you can not get the appData in an environment where
      * only endPoint is used, it is always advisable to send the app_uid and _index.
-     * Note: You do not get triguer execution values where only endPoint is used.
-     * @param type $proUid
+     * Note: You do not get trigger execution values where only endPoint is used.
+     * @param string $proUid
      * @param array $params
+     *
      * @return array
      * @throws Exception
      */
-    public function executeSqlControl($proUid, array $params = array())
+    public function executeSqlControl($proUid, array $params = [])
     {
         try {
             //Get and clear vector data that does not correspond to variables
@@ -768,21 +771,24 @@ class Variable
             unset($params["limit"]);
 
             //Get appData and system variables
-            $paramsWithoutAppData = $params;
+            $paramsAndGlobal = $params;
             $globalVariables = [];
             if ($appUid !== null) {
-                $case = new \Cases();
+                $case = new ClassesCases();
                 $fields = $case->loadCase($appUid, $delIndex);
                 $appData = $fields["APP_DATA"];
                 $globalVariables = Cases::getGlobalVariables($appData);
-                $appData = array_merge($appData, $globalVariables);
-                $params = array_merge($appData, $params);
+                $appDataAndGlobal = array_merge($appData, $globalVariables);
+                //Set the global variables and app data when this is not a grid
+                $params = array_merge($appDataAndGlobal, $params);
+                //Set the global variables for the grid
+                $paramsAndGlobal = array_merge($globalVariables, $paramsAndGlobal);
             }
 
             //This value is required to be able to query the database.
             $_SESSION["PROCESS"] = $proUid;
             //The pmdynaform class is instantiated
-            $pmDynaform = new PmDynaform(array("APP_DATA" => $params));
+            $pmDynaform = new PmDynaform(["APP_DATA" => $params]);
 
             //Get control from dynaform.
             //The parameters: queryFilter, queryStart, queryLimit, are only necessary
@@ -799,12 +805,12 @@ class Variable
             //if the control is in the grid.
             if (isset($field->columnWidth)) {
                 $pmDynaform->fields["APP_DATA"] = $globalVariables;
-                $field->queryInputData = $paramsWithoutAppData;
+                $field->queryInputData = $paramsAndGlobal;
             }
 
             //Populate control data
             $pmDynaform->jsonr($field);
-            $result = array();
+            $result = [];
             if (isset($field->queryOutputData) && is_array($field->queryOutputData)) {
                 foreach ($field->queryOutputData as $item) {
                     $result[] = ["value" => $item->value, "text" => $item->label];

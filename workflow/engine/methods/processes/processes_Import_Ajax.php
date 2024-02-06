@@ -23,6 +23,16 @@
  */
 
 use \ProcessMaker\Importer\XmlImporter;
+use ProcessMaker\Validation\ValidationUploadedFiles;
+
+ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+    echo G::json_encode([
+        'status' => 'ERROR',
+        'success' => true,
+        'catchMessage' => $validator->getMessage()
+    ]);
+    exit();
+});
 
 ini_set("max_execution_time", 0);
 $affectedGroups = array();

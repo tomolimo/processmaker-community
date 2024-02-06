@@ -38,7 +38,10 @@
                 cboOutputDocument,
                 cboPermission,
                 cboParticipationRequired,
-                processPermissionsDataIni = {};
+                processPermissionsDataIni = {},
+                notification,
+                notificationText = "Fields marked with an asterisk (%%ASTERISK%%) are required.".translate()
+                    .replace(/%%ASTERISK%%/g, '<span style="color: #e84c3d">*</span>');
 
             loadDataFromServerToFields = function () {
                 var restClient = new PMRestClient({
@@ -494,9 +497,10 @@
             };
 
             processPermissionsSetForm = function (option, data) {
-                processPermissionsData = data
+                cboGroupOrUser.hideMessageRequired();
+                processPermissionsData = data;
                 PROCESS_PERMISSIONS_OPTION = option;
-                PROCESS_PERMISSIONS_UID = (typeof(processPermissionsData.op_uid) != "undefined") ? processPermissionsData.op_uid : "";
+                PROCESS_PERMISSIONS_UID = (typeof(processPermissionsData.op_uid) !== "undefined") ? processPermissionsData.op_uid : "";
 
                 disableAllItems();
                 winGrdpnlProcessPermissions.showFooter();
@@ -623,6 +627,7 @@
             cboGroupOrUser = new SuggestField({
                 label: "Group or User".translate(),
                 id: "cboGroupOrUser",
+                name: "cboGroupOrUser",
                 placeholder: "suggest users and groups",
                 width: 500,
                 required: true,
@@ -679,6 +684,13 @@
                     }
                 ]
             });
+            notification = new PMUI.field.TextAnnotationField({
+                id: "requiredMessage",
+                name: "Message",
+                textType: PMUI.field.TextAnnotationField.TEXT_TYPES.HTML,
+                text: notificationText,
+                text_Align: "center"
+            });
             optionsType = [
                 {
                     value: "ANY",
@@ -717,7 +729,7 @@
             if (enterprise == "1") {
                 optionsType.push({value: "SUMMARY_FORM", label: "Summary Form".translate()});
             }
-            // sorting the optionsType 
+            // sorting the optionsType
             optionsType.sort(function(a, b) {
                 return (a.label > b.label) ? 1 : ((b.label > a.label) ? -1 : 0);
             });
@@ -1047,6 +1059,7 @@
                                 }
                             } else {
                                 cboGroupOrUser.showMessageRequired();
+                                frmProcessPermissions.addItem(notification)
                             }
 
                             cboGroupOrUser.html.find("input").val("");

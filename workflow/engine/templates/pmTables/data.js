@@ -818,18 +818,27 @@ UpdatePageConfig = function(pageSize){
   });
 };
 
-genDataReport = function()
+/**
+ * Regenerate data report
+ * 
+ * @returns void
+ */
+genDataReport = function ()
 {
-  Ext.Ajax.request({
-    url: '../pmTablesProxy/genDataReport',
-    params: {id: tableDef.ADD_TAB_UID},
-    success: function(resp){
-      response = Ext.util.JSON.decode(resp.responseText);
-      PMExt.notify(_('ID_UPDATE'), response.message)
-      Ext.getCmp('infoGrid').store.reload();
-    },
-    failure: function(obj, resp){
-      PMExt.error( _('ID_ERROR'), resp.result.message);
-    }
-  });
+    genDataReportButton.setDisabled(true);
+    Ext.Ajax.request({
+        url: '../pmTablesProxy/genDataReport',
+        params: {id: tableDef.ADD_TAB_UID},
+        success: function (resp) {
+            genDataReportButton.setDisabled(false);
+            response = Ext.util.JSON.decode(resp.responseText);
+            PMExt.notify(_('ID_UPDATE'), response.message)
+            Ext.getCmp('infoGrid').store.reload();
+
+        },
+        failure: function (obj, resp) {
+            genDataReportButton.setDisabled(false);
+            PMExt.error(_('ID_ERROR'), resp.result.message);
+        }
+    });
 }

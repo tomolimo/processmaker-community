@@ -1,7 +1,14 @@
 <?php
+
 /**
- * Method defined and copied from processmaker/workflow/engine/classes/class.configuration.php
+ * Get default configuration for Cases List.
  *
+ * @param string $action
+ * @param int $translation
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
  */
 function casesListDefaultFieldsAndConfig($action, $translation = 1)
 {
@@ -322,6 +329,16 @@ function casesListDefaultFieldsAndConfig($action, $translation = 1)
     return array("caseColumns" => $caseColumns, "caseReaderFields" => $caseReaderFields, "rowsperpage" => 20, "dateformat" => "M d, Y");
 }
 
+/**
+ * Get default configuration and verify if casesListDefaultFieldsAndConfig method exist.
+ * 
+ * @param string $action
+ * @param int $translation
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function getDefaultConfig($action, $translation)
 {
     $config = new Configurations();
@@ -335,6 +352,16 @@ function getDefaultConfig($action, $translation)
     return $arrayConfig;
 }
 
+/**
+ * Get default fields configuration.
+ * 
+ * @param string $action
+ * @param int $translation
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function getDefaultFields($action, $translation)
 {
     $config = new Configurations();
@@ -405,6 +432,16 @@ function getDefaultFields($action, $translation)
     return $arrayField;
 }
 
+/**
+ * Set available fields.
+ * 
+ * @param array $arrayAvailableField
+ * @param array $arrayField
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function setAvailableFields($arrayAvailableField, $arrayField)
 {
     $i = 0;
@@ -427,6 +464,16 @@ function setAvailableFields($arrayAvailableField, $arrayField)
     return $arrayFieldResult;
 }
 
+/**
+ * Set Cases List fields.
+ * 
+ * @param array $arrayCasesListField
+ * @param array $arrayField
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function setCasesListFields($arrayCasesListField, $arrayField)
 {
     $i = 0;
@@ -462,32 +509,56 @@ function setCasesListFields($arrayCasesListField, $arrayField)
     return $arrayFieldResult;
 }
 
+/**
+ * Get the Custom Case List configuration data.
+ * 
+ * @global string $action
+ * @global array $confCasesList
+ * @global string $tabUid
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function fieldSet()
 {
-    global $conf;
-    global $confCasesList;
     global $action;
+    global $confCasesList;
+    global $tabUid;
 
-    if (is_array($confCasesList)) {
-        $validConfig = isset($confCasesList["first"]) && isset($confCasesList["second"]);
-    } else {
-        $validConfig = false;
+    $arrayField = getDefaultFields($action, 0);
+    $arrayConfig = getDefaultConfig($action, 0);
+    $result = genericJsonResponse($tabUid, [], $arrayField, $arrayConfig["rowsperpage"], $arrayConfig["dateformat"]);
+    $result['first']['data'] = getFieldsByTabUid($tabUid);
+
+    $confCasesList = (array) $confCasesList;
+
+    if (!empty($confCasesList)) {
+        if (!empty($tabUid) && empty($confCasesList['PMTable'])) {
+            $confCasesList['PMTable'] = $tabUid;
+            $confCasesList['first']['data'] = getFieldsByTabUid($tabUid);
+        }
+        if (!empty($confCasesList['PMTable']) && empty($tabUid)) {
+            $result = $confCasesList;
+        }
     }
 
-    if (!$validConfig) {
-        $arrayField  = getDefaultFields($action, 0);
-        $arrayConfig = getDefaultConfig($action, 0);
-
-        $result = genericJsonResponse("", array(), $arrayField, $arrayConfig["rowsperpage"], $arrayConfig["dateformat"]);
-
-        $conf->saveObject($result, "casesList", $action, "", "", "");
-
-        echo G::json_encode($result);
-    } else {
-        echo G::json_encode($confCasesList);
+    if (is_array($result) && isset($result['second']['data'])) {
+        foreach ($result['second']['data'] as $key => $value) {
+            $result['second']['data'][$key]['align_label'] = $result['second']['data'][$key]['align'];
+        }
     }
+    echo G::json_encode($result);
 }
 
+/**
+ * Reset fields configuration.
+ * 
+ * @global string $action
+ * @param int $translation
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function fieldReset($translation)
 {
     global $action;
@@ -500,6 +571,15 @@ function fieldReset($translation)
     echo G::json_encode($result);
 }
 
+/**
+ * Complete a field.
+ * 
+ * @global string $action
+ * @param int $translation
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function fieldComplete($translation)
 {
 
@@ -565,6 +645,15 @@ function fieldComplete($translation)
     echo G::json_encode($result);
 }
 
+/**
+ * Reset field label.
+ * 
+ * @global string $action
+ * @param int $translation
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function fieldLabelReset($translation)
 {
 
@@ -604,6 +693,15 @@ function fieldLabelReset($translation)
     echo G::json_encode($result);
 }
 
+/**
+ * Save a field.
+ * 
+ * @global object $conf
+ * @global string $action
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function fieldSave()
 {
 
@@ -690,11 +788,6 @@ try {
 
     switch ($xaction) {
         case "FIELD_SET":
-            if (is_array($confCasesList) && isset($confCasesList['second']['data'])) {
-                foreach ($confCasesList['second']['data'] as $key => $value) {
-                    $confCasesList['second']['data'][$key]['align_label'] = $confCasesList['second']['data'][$key]['align'];
-                }
-            }
             fieldSet();
             break;
         case "FIELD_RESET":
@@ -722,14 +815,20 @@ try {
     G::outRes( G::json_encode( G::LoadTranslation("ID_EXCEPTION_LOG_INTERFAZ", array($token)) ) );
 }
 
- /**
-  * set the generic Json Response, using two array for the grid stores and a string for the pmtable name
-  * @param string $pmtable
-  * @param array $first
-  * @param array $second
-  * @return $response a json string
-  */
-function genericJsonResponse($pmtable, $first, $second, $rowsperpage, $dateFormat)
+/**
+ * Set the generic Json Response, using two array for the grid stores and a string for the pmtable name.
+ * 
+ * @param string $pmtable
+ * @param array $first
+ * @param array $second
+ * @param array $rowsPerPage
+ * @param string $dateFormat
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
+function genericJsonResponse($pmtable, $first, $second, $rowsPerPage, $dateFormat)
 {
     $firstGrid['totalCount']  = count($first);
     $firstGrid['data']        = $first;
@@ -739,54 +838,72 @@ function genericJsonResponse($pmtable, $first, $second, $rowsperpage, $dateForma
     $result['first']   = $firstGrid;
     $result['second']  = $secondGrid;
     $result['PMTable'] = isset($pmtable) ? $pmtable : '';
-    $result['rowsperpage'] = isset($rowsperpage) ? $rowsperpage : 20;
+    $result['rowsperpage'] = isset($rowsPerPage) ? $rowsPerPage : 20;
     $result['dateformat']  = isset($dateFormat) && $dateFormat != '' ? $dateFormat : 'M d, Y';
     return $result;
 }
 
+/**
+ * Get row from PM Table.
+ * 
+ * @param string $tabUid
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function xgetFieldsFromPMTable($tabUid)
 {
-    $rows = array();
-    $result = array();
-    //    $rows[] = array ( 'name' => 'val 1', 'gridIndex' => '21', 'fieldType' => 'PM Table' );
-    //    $rows[] = array ( 'name' => 'val 2', 'gridIndex' => '22', 'fieldType' => 'PM Table' );
-    //    $rows[] = array ( 'name' => 'val 3', 'gridIndex' => '23', 'fieldType' => 'PM Table' );
-    //$result['success']    = true;
-    //$result['totalCount']  =  count($rows);
-    $oCriteria = new Criteria('workflow');
-    $oCriteria->clearSelectColumns ( );
-    $oCriteria->setDistinct();
-    $oCriteria->addSelectColumn ( FieldsPeer::FLD_NAME );
-    $oCriteria->addSelectColumn ( FieldsPeer::FLD_UID );
-    $oCriteria->addSelectColumn ( FieldsPeer::FLD_INDEX );
-    $oCriteria->add (FieldsPeer::ADD_TAB_UID, $tabUid , CRITERIA::EQUAL );
-    $oCriteria->add (FieldsPeer::FLD_NAME, 'APP_UID' , CRITERIA::NOT_EQUAL );
-    $oCriteria->addAnd (FieldsPeer::FLD_NAME, 'APP_NUMBER' , CRITERIA::NOT_EQUAL );
-    $oCriteria->addDescendingOrderByColumn('FLD_INDEX');
-    $oDataset = FieldsPeer::doSelectRS($oCriteria);
-    $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-    $oDataset->next();
-    $index =  count($rows);
-
-    while ($aRow = $oDataset->getRow()) {
-        $aRow['index'] = ++$index;
-        $aTempRow['name'] = $aRow['FLD_NAME'];
-        $aTempRow['gridIndex'] = $aRow['index'];
-        $aTempRow['fieldType'] = 'PM Table';
-        $rows[] = $aTempRow;
-        $oDataset->next();
-    }
-
-    $result['data']    = $rows;
-    print G::json_encode( $result ) ;
+    $result = [];
+    $result['data'] = getFieldsByTabUid($tabUid);
+    print G::json_encode($result);
 }
 
- /**
-  *
-  * @param Array $fields
-  * @return Array
-  *
-  */
+/**
+ * Get rows from Fields table.
+ * 
+ * @param string $tabUid
+ * @return array
+ * 
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
+function getFieldsByTabUid($tabUid)
+{
+    $rows = [];
+    $criteria = new Criteria('workflow');
+    $criteria->clearSelectColumns();
+    $criteria->setDistinct();
+    $criteria->addSelectColumn(FieldsPeer::FLD_NAME);
+    $criteria->addSelectColumn(FieldsPeer::FLD_UID);
+    $criteria->addSelectColumn(FieldsPeer::FLD_INDEX);
+    $criteria->add(FieldsPeer::ADD_TAB_UID, $tabUid, CRITERIA::EQUAL);
+    $criteria->add(FieldsPeer::FLD_NAME, 'APP_UID', CRITERIA::NOT_EQUAL);
+    $criteria->addAnd(FieldsPeer::FLD_NAME, 'APP_NUMBER', CRITERIA::NOT_EQUAL);
+    $criteria->addDescendingOrderByColumn('FLD_INDEX');
+    $dataSet = FieldsPeer::doSelectRS($criteria);
+    $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+    $dataSet->next();
+    $index = 0;
+    while ($row = $dataSet->getRow()) {
+        $row['index'] = ++$index;
+        $tempRow['name'] = $row['FLD_NAME'];
+        $tempRow['gridIndex'] = $row['index'];
+        $tempRow['fieldType'] = 'PM Table';
+        $rows[] = $tempRow;
+        $dataSet->next();
+    }
+    return $rows;
+}
+
+/**
+ * Calculate Grid index.
+ *
+ * @param array $fields
+ * @return array
+ *
+ * @see workflow/engine/methods/cases/proxyPMTablesFieldList.php
+ * @link https://wiki.processmaker.com/3.2/Cases_List_Builder#Installation_and_Configuration
+ */
 function calculateGridIndex($fields)
 {
     for ($i=0; $i<count( $fields ); $i++) {

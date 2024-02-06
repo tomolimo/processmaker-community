@@ -466,47 +466,47 @@ function ws_taskCase($caseId) {
 }
 
 function ws_sendFile(
-    $FILENAME,
-    $USR_UID,
-    $APP_UID,
-    $DEL_INDEX = 1,
-    $DOC_UID = null,
-    $APP_DOC_FIELDNAME = null,
+    $fileName,
+    $usrUid,
+    $appUid,
+    $delIndex = 1,
+    $docUid = null,
+    $appDocFieldName = null,
     $title = null,
     $comment = null,
-    $APP_DOC_FILENAME = null
+    $appDocFilename = null
 )
 {
-  $DOC_UID = ($DOC_UID != null) ? $DOC_UID : -1;
-  $APP_DOC_TYPE = ($DOC_UID == -1) ? "ATTACHED" : "INPUT";
-  $title = ($title != null) ? $title : $FILENAME;
-  $comment = ($comment != null) ? $comment : null;
+    $docUid = ($docUid != null) ? $docUid : -1;
+    $appDocType = ($docUid == -1) ? "ATTACHED" : "INPUT";
+    $title = ($title != null) ? $title : $fileName;
+    $comment = ($comment != null) ? $comment : null;
+    $fileName = curl_file_create($fileName);
 
-  $params = array(
-      "ATTACH_FILE" => "@$FILENAME",
-      "APPLICATION" => $APP_UID,
-      "INDEX" => $DEL_INDEX,
-      "DOC_UID" => $DOC_UID,
-      "USR_UID" => $USR_UID,
-      "APP_DOC_TYPE" => $APP_DOC_TYPE,
-      "APP_DOC_FIELDNAME" => $APP_DOC_FIELDNAME,
-      "TITLE" => $title,
-      "COMMENT" => $comment,
-      "APP_DOC_FILENAME" => $APP_DOC_FILENAME
-  );
+    $params = [
+        "ATTACH_FILE" => $fileName,
+        "APPLICATION" => $appUid,
+        "INDEX" => $delIndex,
+        "DOC_UID" => $docUid,
+        "USR_UID" => $usrUid,
+        "APP_DOC_TYPE" => $appDocType,
+        "APP_DOC_FIELDNAME" => $appDocFieldName,
+        "TITLE" => $title,
+        "COMMENT" => $comment,
+        "APP_DOC_FILENAME" => $appDocFilename
+    ];
 
-  $ch = curl_init();
-  curl_setopt($ch, CURLOPT_URL, WS_UPLOAD_URL);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  curl_setopt($ch, CURLOPT_SAFE_UPLOAD, false);
-  curl_setopt($ch, CURLOPT_POST, 1);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-  $response = curl_exec($ch);
-  curl_close($ch);
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, WS_UPLOAD_URL);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    $response = curl_exec($ch);
+    curl_close($ch);
 
-  return $response;
+    return $response;
 }
 
 function ws_updateFile($APP_DOC_UID, $FILENAME, $DOC_VERSION, $APP_DOC_TYPE=NULL, $USR_UID=NULL, $APP_UID=NULL, $DEL_INDEX=NULL, $DOC_UID=NULL, $title=NULL, $comment=NULL) {

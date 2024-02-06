@@ -309,6 +309,7 @@ function pauseCase(date){
                     buttons: [{
                         text: _('ID_OK'),
                         handler: function(){
+                            this.setDisabled(true);
                             if (Ext.getCmp('noteReason').getValue() != '') {
                                 var noteReasonTxt = _('ID_CASE_PAUSE_LABEL_NOTE') + ' ' + Ext.getCmp('noteReason').getValue();
                             } else {

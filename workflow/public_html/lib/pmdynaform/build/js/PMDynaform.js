@@ -2115,6 +2115,7 @@ xCase.extendNamespace = function (path, newClass) {
         this.googleMaps = {
             key: ""
         };
+        this.loadDataField = true;
         Project.prototype.init.call(this, options);
     };
 
@@ -2470,7 +2471,7 @@ xCase.extendNamespace = function (path, newClass) {
     };
     /**
      * Sets the google maps keys and other settings
-     * @param {*} settings 
+     * @param {*} settings
      */
     Project.prototype.setGoogleMapsSettings = function (settings) {
         if (settings) {
@@ -3318,8 +3319,9 @@ xCase.extendNamespace = function (path, newClass) {
             querySuggest: "project/{processUID}/process-variable/{var_name}/execute-query-suggest",
             imageInfo: "light/case/{caseUID}/download64",
             nextStep: "light/get-next-step/{caseUID}",
-            upload: "light/case/{caseUID}/upload",
-            uploadMultipart: "light/case/{caseUID}/upload/{docUID}",
+            uploadMultipart: "case/{caseUID}/upload/{var_name}",
+            uploadMultipartInputDoc: "case/{caseUID}/upload/{var_name}/{docUID}",
+            uploadMultipartVersion: "case/{caseUID}/upload/{var_name}/{docUID}/{appDocUid}",
             fileStreaming: "en/neoclassic/cases/casesStreamingFile?actionAjax=streaming&a={caseUID}&d={fileId}",
             fileVersionsList: "cases/{caseUID}/input-document/{docUID}/versions",
             downloadFile: "cases/{caseUID}/input-document/{docUID}/file?v={version}"
@@ -3415,6 +3417,7 @@ xCase.extendNamespace = function (path, newClass) {
             url: url,
             type: method,
             async: false,
+            cache: false,
             contentType: "application/json",
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
@@ -3917,49 +3920,39 @@ xCase.extendNamespace = function (path, newClass) {
         return this;
     };
 
-    WebServiceManager.prototype.upload = function (data, callback) {
+    /**
+     * Upload multipart of a file.
+     * @param data
+     * @param callback
+     * @param callbackupdate
+     * @return {*}
+     */
+    WebServiceManager.prototype.uploadMultipart = function (data, callback, callbackupdate) {
         var that = this,
-            method = "POST", url, resp = [];
-
-        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.upload);
+            method = "POST",
+            url,
+            index = 0,
+            formData = data[index].formData,
+            resp;
+        this.setKey('var_name', data[index].fieldName);
+        if (data[index].docUid !== "") {
+            this.setKey('docUID', data[index].docUid);
+            if (data[index].appDocUid) {
+                this.setKey('appDocUid', data[index].appDocUid);
+                url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.uploadMultipartVersion);
+                this.deleteKey('appDocUid');
+            } else {
+                url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.uploadMultipartInputDoc);
+            }
+            this.deleteKey('docUID');
+        } else {
+            url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.uploadMultipart);
+        }
+        this.deleteKey('var_name');
         return $.ajax({
             url: url,
             type: method,
-            data: JSON.stringify(data),
-            async: true,
-            contentType: "application/json",
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
-                if (that.options.language != null) {
-                    xhr.setRequestHeader("Accept-Language", that.options.language);
-                }
-            },
-            success: function (data, textStatus) {
-                resp = {
-                    status: "success",
-                    data: data
-                };
-                callback(null, resp);
-            },
-            error: function (xhr, textStatus, errorThrown) {
-                resp = {
-                    "status": "error"
-                };
-                callback(resp, null);
-            }
-        });
-    };
-
-    WebServiceManager.prototype.uploadMultipart = function (docUID, data, callback, callbackupdate) {
-        var that = this,
-            method = "POST", url, resp = [];
-        this.setKey('docUID', docUID);
-        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.uploadMultipart);
-        this.deleteKey('docUID');
-        resp = $.ajax({
-            url: url,
-            type: 'POST',
-            data: data,
+            data: formData,
             async: true,
             processData: false,
             contentType: false,
@@ -3972,16 +3965,27 @@ xCase.extendNamespace = function (path, newClass) {
             },
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                if (that.options.language != null) {
+                    xhr.setRequestHeader("Accept-Language", that.options.language);
+                }
             },
             success: function (data) {
+                resp = {
+                    status: "success",
+                    data: data
+                };
                 callback(null, data);
             },
             error: function (xhr, textStatus, errorThrown) {
-                callback(textStatus);
+                var message;
+                if (xhr.responseJSON) {
+                    message = xhr.responseJSON.error.message;
+                    callback({code: xhr.status, message: message});
+                }
             }
         });
-        return resp;
     };
+
     /**
      * Make teh URL to download the file
      * @param uid
@@ -5735,10 +5739,8 @@ xCase.extendNamespace = function (path, newClass) {
                 forms = this.views,
                 i,
                 form,
-                formMode = "edit",
+                formMode = forms[0].model.get("mode"),
                 project = this.project;
-
-            formMode = forms && forms.length ? forms[0].model.get("mode") : formMode;
 
             if ((project && project.isPreview) || formMode === "disabled") {
                 window.print();
@@ -6703,23 +6705,36 @@ xCase.extendNamespace = function (path, newClass) {
             var i,
                 formValid = true,
                 itemField,
-                itemsField = this.items.asArray();
+                itemsField = this.items.asArray(),
+                filesNoUploaded = [],
+                filesMultipleFile = [],
+                field,
+                filesGrid = [];
 
             if (itemsField.length > 0) {
                 for (i = 0; i < itemsField.length; i += 1) {
-                    if (itemsField[i].validate) {
-                        if (itemsField[i].firstLoad) {
-                            itemsField[i].firstLoad = false;
+                    field = itemsField[i];
+                    if (field.validate) {
+                        if (field.firstLoad) {
+                            field.firstLoad = false;
                         }
-                        itemsField[i].validate(event);
-                        if (!itemsField[i].model.get("valid")) {
+                        field.validate(event);
+                        if (!field.model.get("valid")) {
                             if (itemField === undefined) {
-                                itemField = itemsField[i];
+                                itemField = field;
                             }
-                            formValid = itemsField[i].model.get("valid");
+                            formValid = field.model.get("valid");
                         }
                     }
+                    // Verify if there is getFilesNotUploaded method 
+                    if (field.getFilesNotUploaded && typeof field.getFilesNotUploaded === "function") {
+                      filesNoUploaded = filesNoUploaded.concat(field.getFilesNotUploaded());
+                    }
                 }
+            }
+            if (filesNoUploaded.length > 0) {
+                formValid = false;
+                this.showFilesNoUploaded(filesNoUploaded);
             }
             if (formValid) {
                 for (i = 0; i < itemsField.length; i += 1) {
@@ -6870,6 +6885,34 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return this;
+        },
+        /**
+         * Show flash message with files no uploaded yet.
+         * @param files
+         */
+        showFilesNoUploaded: function (files) {
+            var flashModel,
+                i,
+                nameFiles = [],
+                message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) still uploading".translate();
+            for (i = 0; i < files.length; i += 1) {
+                if (files[i].type) {
+                    message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) didn't upload correctly," +
+                        " remove the files from the form or upload the files again".translate();
+                }
+                nameFiles.push(files[i].name);
+            }
+            if (files.length > 0) {
+                message = message.replace("{%%%FILES%%%}", nameFiles);
+                flashModel = {
+                    message: message,
+                    startAnimation: 1000,
+                    type: "danger",
+                    duration: 4000,
+                    absoluteTop: true
+                };
+                this.project.flashMessage(flashModel);
+            }
         }
     });
     PMDynaform.extendNamespace("PMDynaform.view.FormPanel", FormPanel);
@@ -8057,15 +8100,33 @@ xCase.extendNamespace = function (path, newClass) {
             this.validateGrid();
             return this;
         },
+        /**
+         * Update Properties Model Cell.
+         * @param cell
+         * @param i
+         * @param j
+         */
+        updateModelCell: function (cell, i, j) {
+            var index = i + 1,
+                name = "[" + this.model.get('name') + "][" + index + "][" + cell.model.get('columnName') + "]";
+
+            cell.model.set('name', name);
+            cell.model.set('id', name);
+            cell.model.set('nameToPostControl', this.createPostVariables(index, cell.model.get('columnName')));
+            cell.model.set('nameToPostLabelControl', this.createPostVariables(index, cell.model.get('columnName'), '_label'));
+            if (cell.model.get('view').removeHiddens) {
+                cell.model.get('view').removeHiddens();
+            }
+        },
         updatePropertiesCell: function (index) {
             var i,
                 j,
+                k,
                 cell,
                 cells,
                 row,
                 rows,
                 element,
-                name,
                 control,
                 container,
                 idContainer,
@@ -8073,7 +8134,8 @@ xCase.extendNamespace = function (path, newClass) {
                 type,
                 nameHiddeControl = "",
                 nameControl = "",
-                idcontrol;
+                idcontrol,
+                formulaExist = false;
             rows = this.gridtable;
             for (i = index; i < rows.length; i += 1) {
                 row = $(this.dom[i]);
@@ -8108,6 +8170,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     name: nameHiddeControl,
                                     id: idcontrol
                                 });
+                                this.updateModelCell(cell, i, j);
                                 break;
                             case "suggest":
                                 control = $(cell.$el.find(".form-control"));
@@ -8129,6 +8192,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     name: nameHiddeControl,
                                     id: idcontrol
                                 });
+                                this.updateModelCell(cell, i, j);
                                 break;
                             case "label":
                                 hiddenControls = element.find("input[type='hidden']");
@@ -8148,6 +8212,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     name: nameHiddeControl,
                                     id: idcontrol
                                 });
+                                this.updateModelCell(cell, i, j);
                                 break;
                             case "file":
                                 this.updateFileCell(cell, i, j);
@@ -8155,6 +8220,35 @@ xCase.extendNamespace = function (path, newClass) {
                                 break;
                             case "multipleFile":
                                 this.updateMultipleFileCell(cell, i, j);
+                                break;
+                            case "text":
+                                // TODO need refactor Formula.js or update formulator with the index correct after update the model. PMC-762
+                                control = $(cell.$el.find(".form-control"));
+                                hiddenControls = element.find("input[type='hidden']");
+                                if (this.model.get("variable") !== "") {
+                                    nameControl = "form" + this.changeIdField(this.model.get("name"), i + 1, cell.model.get("columnName"));
+                                    nameHiddeControl = nameControl.substring(0, nameControl.length - 1).concat("_label]");
+                                } else {
+                                    nameControl = "";
+                                    nameHiddeControl = "";
+                                }
+                                idcontrol = "form" + this.changeIdField(this.model.get("id"), i + 1, this.columnsModel[j].id);
+                                control.attr({
+                                    name: nameControl,
+                                    id: idcontrol
+                                });
+                                hiddenControls.attr({
+                                    name: nameHiddeControl,
+                                    id: idcontrol
+                                });
+                                for (k = 0; k < cells.length; k += 1) {
+                                    if (cells[k].model.get("formula")) {
+                                        formulaExist = true;
+                                    }
+                                }
+                                if (!formulaExist) {
+                                    this.updateModelCell(cell, i, j);
+                                }
                                 break;
                             default :
                                 control = $(cell.$el.find(".form-control"));
@@ -8175,6 +8269,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     name: nameHiddeControl,
                                     id: idcontrol
                                 });
+                                this.updateModelCell(cell, i, j);
                                 break;
                         }
                     }
@@ -8190,16 +8285,9 @@ xCase.extendNamespace = function (path, newClass) {
          */
         updateMultipleFileCell: function (cell, i, j) {
             var files,
-                k,
-                index = i + 1,
-                name = "[" + this.model.get('name') + "][" + index + "][" + cell.model.get('columnName') + "]";
+                k;
 
-            cell.model.set('name', name);
-            cell.model.set('id', name);
-            cell.model.set('nameToPostControl', this.createPostVariables(index, cell.model.get('columnName')));
-            cell.model.set('nameToPostLabelControl', this.createPostVariables(index, cell.model.get('columnName'), '_label'));
-            cell.model.get('view').removeHiddens();
-
+            this.updateModelCell(cell, i, j);
             files = cell.model.get("fileCollection");
             cell.model.get('view').removeHiddens();
             if (_.isArray(files.models)) {
@@ -8245,6 +8333,7 @@ xCase.extendNamespace = function (path, newClass) {
                 name: nameControl,
                 id: idcontrol
             });
+            this.updateModelCell(cell, i, j);
         },
 
         onClickPage: function (event) {
@@ -9132,22 +9221,23 @@ xCase.extendNamespace = function (path, newClass) {
                 };
                 cell.model.set('addRowValue', fixedData.value || null);
                 switch (cell.model.get('type')) {
+                    case 'checkbox':
                     case 'link':
                         cell.setValue(fixedData.value);
-                        break;
-                    case 'suggest':
-                        cell.setData(fixedData);
                         break;
                     case 'file':
                         fixedData.value = fixedData.value === 'string'? [] : fixedData.value;
                         cell.setData(fixedData);
                         break;
                     default:
-                        if (fixedData.value !== '') {
+                        // Only from addRow arrive a empty label,
+                        // here the dependent event need to be fired
+                        if (!data.label) {
                             cell.setData(fixedData);
                         } else {
-                            cell.model.set({'data': fixedData}, {silent: true});
-                            cell.model.set({'value': fixedData.value}, {silent: true});
+                            cell.model.set({"data": fixedData}, {silent: true});
+                            cell.model.set({"value": fixedData.value}, {silent: true});
+                            cell.model.set("toDraw", true);
                         }
                         break;
                 }
@@ -9956,6 +10046,26 @@ xCase.extendNamespace = function (path, newClass) {
                     totalItems -= 1;
                 }
             }
+        },
+        /**
+         * Gets all fields that was not already uploaded.
+         * @returns {array}
+         */
+        getFilesNotUploaded: function () {
+            var i,
+                j,
+                filesError = [],
+                row,
+                rows = this.model.get("gridtable");
+            for (i = 0; i < rows.length; i += 1) {
+                row = rows[i];
+                for (j = 0; j < row.length; j += 1) {
+                    if (row[j].model.get("type") === "multipleFile") {
+                        filesError = filesError.concat(row[j].getFilesNotUploaded());
+                    }
+                }
+            }
+            return filesError;
         }
     });
     PMDynaform.extendNamespace("PMDynaform.view.GridPanel", GridView);
@@ -10214,7 +10324,7 @@ xCase.extendNamespace = function (path, newClass) {
                         model: this.model.get("validator"),
                         domain: false
                     });
-                    this.$el.find("select").parent().append(this.validator.el);
+                    this.$el.find("select").parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -10501,7 +10611,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.$el.find(".pmdynaform-control-radio-list").parent().append(this.validator.el);
+                    this.$el.find(".pmdynaform-control-radio-list").parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -10841,7 +10951,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.tagControl.parent().append(this.validator.el);
+                    this.tagControl.parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -11117,7 +11227,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.tagControl.parent().append(this.validator.el);
+                    this.tagControl.parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -11363,7 +11473,7 @@ xCase.extendNamespace = function (path, newClass) {
                 nameDefault = this.model.get("name"),
                 name,
                 fileButton,
-                title = 'Allowed file extensions: ' + this.model.get('extensions'),
+                title = 'Allowed file extensions: '.translate() + this.model.get('extensions'),
                 link,
                 i,
                 data = this.model.get("data"),
@@ -11445,7 +11555,7 @@ xCase.extendNamespace = function (path, newClass) {
                 validatorModel = this.model.get('validator'),
                 tagFile = this.$el.find("input[type='file']")[0],
                 fileButton = that.$el.find("button[type='button']"),
-                title = 'Allowed file extensions: ' + extensions,
+                title = 'Allowed file extensions: '.translate() + extensions,
                 maxSizeInt = parseInt(this.model.get("size"), 10),
                 sizeUnity = this.model.get("sizeUnity");
 
@@ -11480,7 +11590,7 @@ xCase.extendNamespace = function (path, newClass) {
                 } else {
                     errorType = {
                         type: 'size',
-                        message: "The file size exceeds the limit. Max allowed limit is: " + maxSizeInt + sizeUnity
+                        message: "The file size exceeds the limit. Max allowed limit is: ".translate() + maxSizeInt + sizeUnity
                     };
                     validatorModel.set('fileOnly', errorType);
                     fileButton.text(title);
@@ -11683,10 +11793,12 @@ xCase.extendNamespace = function (path, newClass) {
          * Clear DOM File Control
          */
         clearDomFile: function () {
+            var extension = this.model.get('extensions'),
+                text = 'Allowed file extensions: '.translate() + extension;
             this.$el.find("input[type=file]").val("");
             this.$el.find("input[type=hidden]").val("[]");
-            this.$el.find("button").text("Allowed file extensions: .*");
-            this.$el.find("button").prop("title", "Allowed file extensions: .*");
+            this.$el.find("button").text(text);
+            this.$el.find("button").prop("title", text);
         },
         /**
          * Append Hidden Fields
@@ -11858,7 +11970,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.$el.find(".pmdynaform-control-checkbox-list").parent().append(this.validator.el);
+                    this.$el.find(".pmdynaform-control-checkbox-list").parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -12935,7 +13047,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.$el.find("input[type='suggest']").parent().append(this.validator.el);
+                    this.$el.find("input[type='suggest']").parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -14119,6 +14231,25 @@ xCase.extendNamespace = function (path, newClass) {
             this.model.set("valid", formValid);
             return formValid;
         },
+
+        /**
+         * Gets all files that was not uploaded completely
+         * @returns {array}
+         */
+        getFilesNotUploaded: function () {
+            var i,
+              field,
+              formItems = this.formView.getFields(),
+              filesNoUploaded = [];
+            for (i = 0; i < formItems.length; i += 1) {
+                field = formItems[i];
+                if (field.getFilesNotUploaded) {
+                    filesNoUploaded = filesNoUploaded.concat(field.getFilesNotUploaded());
+                }
+            }
+            return filesNoUploaded;
+        },
+        
         setData: function (data) {
             //using the same method of PMDynaform.view.FormPanel
             this.formView.setData(data);
@@ -14530,7 +14661,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.$el.find(".datetime-container").append(this.validator.el);
+                    this.$el.find(".control-group").parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -15582,6 +15713,7 @@ xCase.extendNamespace = function (path, newClass) {
                 data,
                 linkService = "showDocument";
             if (_.isArray(items)) {
+                this.model.set({"data": {"value": items}});
                 container.empty();
                 ieVersion = PMDynaform.core.Utils.checkValidIEVersion();
                 if (type === "imageMobile") {
@@ -16764,6 +16896,7 @@ xCase.extendNamespace = function (path, newClass) {
             var fileContainer,
                 fileControl,
                 signature,
+                files = [],
                 itemElement;
             if (PMDynaform.core.ProjectMobile) {
                 this.$el.html(this.template(this.model.toJSON()));
@@ -16778,6 +16911,8 @@ xCase.extendNamespace = function (path, newClass) {
                     if (signature && signature[this.model.get("name")] && signature[this.model.get("name")].length > 0) {
                         signature = signature[this.model.get("name")];
                         signature = this.model.remoteProxyData(signature[0]);
+                        files.push(signature);
+                        this.model.set("files", files);
                         itemElement = $("<img src=\"data:image/png;base64," + signature.base64 + "\"class='img-thumbnail' alt='Thumbnail Image'>");
                         fileContainer.append(itemElement);
                     }
@@ -16800,7 +16935,7 @@ xCase.extendNamespace = function (path, newClass) {
                 response,
                 files = [];
             for (i = 0; i < arraySignature.length; i++) {
-                if (typeof arraySignature[i] == "string") {
+                if (typeof arraySignature[i] === "string") {
                     response = this.model.remoteProxyData(arraySignature[i]);
                     this.createBox(response);
                     files.push(response);
@@ -19324,18 +19459,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        onChange: function (attrs, item) {
-            var data;
-            item = (item === null || item === undefined) ? '' : item;
-            data = {
-                value: item,
-                label: item
-            };
-            this.attributes.text = item;
-            this.attributes.value = item;
-            this.set("data", data);
-            return this;
-        },
         setValue: function (value) {
             this.set({"text": value}, {silent: true});
             this.set({"value": value}, {silent: true});
@@ -21800,7 +21923,8 @@ xCase.extendNamespace = function (path, newClass) {
                 'top': offsetTarget.top - 50
             }).fadeTo(1, 0).animate({
                 top: offsetTarget.top,
-                opacity: 1
+                opacity: 1,
+                zIndex: '1060'
             }, this.model.get('startAnimation'), 'swing');
 
             if (duration) {
@@ -22509,8 +22633,8 @@ xCase.extendNamespace = function (path, newClass) {
             height: "100%",
             hint: "",
             id: PMDynaform.core.Utils.generateID(),
-            label: "Untitled label",
-            labelButton: "Choose Files",
+            label: "Untitled label".translate(),
+            labelButton: "Choose Files".translate(),
             mode: "edit",
             name: PMDynaform.core.Utils.generateName("file"),
             required: false,
@@ -22863,6 +22987,7 @@ xCase.extendNamespace = function (path, newClass) {
                 form: this.get("form")
             }));
             fileModel.set("index", files.indexOf(fileModel));
+            fileModel.set("completed", true);
             return fileModel;
         },
         /**
@@ -22919,7 +23044,7 @@ xCase.extendNamespace = function (path, newClass) {
                         textDetail += (i > 0 ? ', ' : '') + gridDetail[i];
                     }
                 } else {
-                    textDetail = 'Choose File';
+                    textDetail = 'Choose File'.translate();
                 }
                 this.set('gridDetail', textDetail);
             }
@@ -23279,7 +23404,7 @@ xCase.extendNamespace = function (path, newClass) {
                     fileModel.set('fromWizard', true);
                     fileView.render();
                     box.append(fileView.$el);
-                    fileModel.fileUpload();
+                    fileModel.fileUploadMultipart();
                     fileModel.set('fromWizard', false);
                 }
             }
@@ -23453,6 +23578,41 @@ xCase.extendNamespace = function (path, newClass) {
             for (i = 0, max = itemsMultipleFile.length; i < max; i += 1) {
                 containerPrint.append("<li>" + itemsMultipleFile[i] + "</li>");
             }
+        },
+        /**
+         * Gets all files that was not uploaded completely
+         * @returns {array}
+         */
+        getFilesNotUploaded: function () {
+            return this.model.get("fileCollection").getFilesNotUploaded();
+        },
+        /**
+         * Show flash message with files no uploaded yet.
+         * @param files
+         */
+        showFilesNoUploaded: function (files) {
+            var flashModel,
+                i,
+                nameFiles = [],
+                message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) still uploading".translate();
+            for (i = 0; i < files.length; i += 1) {
+                if (files[i].type) {
+                    message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) didn't upload correctly," +
+                        " remove the files from the form or upload the files again".translate();
+                }
+                nameFiles.push(files[i].name);
+            }
+            if (files.length > 0) {
+                message = message.replace("{%%%FILES%%%}", nameFiles);
+                flashModel = {
+                    message: message,
+                    startAnimation: 1000,
+                    type: "danger",
+                    duration: 4000,
+                    absoluteTop: true
+                };
+                this.project.flashMessage(flashModel);
+            }
         }
     });
 
@@ -23475,7 +23635,9 @@ xCase.extendNamespace = function (path, newClass) {
             urlBase: "{server}/sys{ws}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v=1",
             linkService: "showDocument",
             errorSize: false,
-            errorType: false
+            errorType: false,
+            error: null,
+            completed: false
         },
         initialize: function (options) {
             return this;
@@ -23508,74 +23670,59 @@ xCase.extendNamespace = function (path, newClass) {
             return this.get("file").name;
         },
         /**
-         * Prepare the data form multipart to save in Rest Endpoint
+         * Prepare the data for consume the endPoint and the data form multipart to save it.
          * @param file
-         * @returns {FormData|*}
+         * @return {Array}
          */
         prepareDataToUploadMultipart: function (file) {
-            var formData;
-            formData = new FormData();
-            formData.append('form[]', file);
-            return formData;
-        },
-        /**
-         * Prepare the data for consume the Endpoint Upload
-         * @param file
-         * @returns {Array}
-         */
-        prepareDataToUpload: function (file) {
             var arrayResp = [],
                 parent = this.get("parent"),
-                type = parent && parent.get("inp_doc_uid") ? "INPUT" : null;
-
+                type = parent && parent.get("inp_doc_uid") ? "INPUT" : null,
+                formData,
+                fieldName;
+            fieldName = this.get("parent").get("group") === "form" ? this.get("parent").get("var_name") :this.get("parent").get("id");
+            formData = new FormData();
+            formData.append('form[]', file);
             arrayResp.push({
                 "name": file.name,
-                "fieldName": this.get("parent").get("id"),
+                "fieldName": fieldName,
                 "docUid": parent.get("inp_doc_uid"),
-                "appDocType": type
+                "appDocType": type,
+                "formData": formData
             });
             return arrayResp;
         },
         /**
-         * Execute the upload Endpoint
-         * @returns {FileModel}
-         */
-        fileUpload: function () {
-            var project = this.get("project"),
-                index = 0,
-                that = this;
-
-            if (project.webServiceManager && this.get("isValid")) {
-                project.webServiceManager.upload(this.prepareDataToUpload(this.get("file")), function (err, data) {
-                    if (!err) {
-                        var appDoc;
-                        appDoc = data.data[index].appDocUid;
-                        that.set("appDocUid", appDoc);
-                        that.fileUploadMultipart();
-                    }
-                });
-            } else {
-                this.set("updateIndex", true);
-                this.get('parent').set('multiFileCount', this.get('parent').get('multiFileCount') + 1);
-            }
-            return this;
-        },
-        /**
-         * Execute the uploadMultipart Endpoint
-         * @returns {FileModel}
+         * Execute the new upload endPoint.
+         * @return {FileModel}
          */
         fileUploadMultipart: function () {
             var project = this.get("project"),
+                index = 0,
                 xhr,
                 formData,
+                appDoc,
                 that = this;
-
-            formData = this.prepareDataToUploadMultipart(this.get("file"));
-            if (_.isFunction(project.webServiceManager.uploadMultipart)) {
-                xhr = project.webServiceManager.uploadMultipart(this.get("appDocUid"), formData, function (err, data) {
-                    that.trigger("upload_complete");
-                }, this.progressValue());
-                this.set("xhr", xhr);
+            if (project.webServiceManager && this.get("isValid")) {
+                formData = this.prepareDataToUploadMultipart(this.get("file"));
+                if (_.isFunction(project.webServiceManager.uploadMultipart)) {
+                    xhr = project.webServiceManager.uploadMultipart(formData, function (err, data) {
+                        if (err && err.code) {
+                            that.set("error", err);
+                            that.trigger("upload_error");
+                        } else {
+                            //mark as completed the file upload procedure.
+                            appDoc = data[index].appDocUid;
+                            that.set("appDocUid", appDoc);
+                            that.set("completed", true);
+                            that.trigger("upload_complete");
+                        }
+                    }, this.progressValue());
+                    this.set("xhr", xhr);
+                }
+            } else {
+                this.set("updateIndex", true);
+                this.get('parent').set('multiFileCount', this.get('parent').get('multiFileCount') + 1);
             }
             return this;
         },
@@ -23767,7 +23914,7 @@ xCase.extendNamespace = function (path, newClass) {
             "click .pmdynaform-mfile > .pmdynaform-mfile-actions li[data-action=list] a": "_listVersions",
             "click .pmdynaform-mfile > .pmdynaform-mfile-actions li[data-action=unlist] a": "_unlistVersions",
             "click .pmdynaform-mfile-versions li[data-action=download] a": "_downloadVersion",
-            "change .pmdynaform-mfile > .pmdynaform-mfile-input": "_startUpload"
+            "change .pmdynaform-mfile > .pmdynaform-mfile-input": "_uploadFile"
         },
         iconsMap: {
             "bmp": "file-image-o",
@@ -23954,6 +24101,7 @@ xCase.extendNamespace = function (path, newClass) {
 
             if (this._initLoading) {
                 this.listenTo(this.model, 'upload_complete', this._onComplete);
+                this.listenTo(this.model, 'upload_error', this.onError);
             }
 
             this._dom = {};
@@ -24074,6 +24222,24 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
+         * Shows the server's error
+         */
+        _showServerError: function (message) {
+            var parent = this.model.get("parent");
+            if (message) {
+                $(this._dom.progressBar).removeClass('progress-bar-success')
+                .addClass('progress-bar-danger')
+                .text(message);
+                this._hideButtonsFromActionList('delete');
+                this._dom.$fileActions.show();
+                if (parent.get("parentIsGrid")) {
+                    parent.removeFromGridDetail(this.model);
+                }
+            }
+
+            return this;
+        },
+        /**
          * Displays a Flash Message in error mode.
          * @param message
          * @returns {FileView}
@@ -24089,11 +24255,23 @@ xCase.extendNamespace = function (path, newClass) {
 
             return this;
         },
+        /**
+         * Displays a server error
+         */
+        onError: function () {
+            var response = this.model.get("error");
+            if (response) {
+                this._showServerError(response.message ? response.message : response.error.message);
+            }
+        },
+        /**
+         * Destroys model.
+         */
         destroy: function () {
             this.model.destroy();
         },
         /**
-         * Construct the message error
+         * Builds the message error.
          * @param value
          * @returns {string}
          */
@@ -24302,71 +24480,19 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Uploads the the supplied file.
-         * @param {Object} data The details of the file to be uploaded.
-         * @param {File} file The file to be uploaded.
-         * @private
-         */
-        _uploadFile: function (data, file) {
-            var formData = new FormData(),
-                that = this;
-
-            formData.append("form[]", file);
-
-            this._xhr = this._project.webServiceManager.uploadMultipart(data.appDocUid, formData, function (err) {
-                var newVersion;
-
-                if (err) {
-                    that._showFlashErrorMessage(err.status);
-                    return that._onComplete();
-                }
-
-                newVersion = {
-                    app_doc_uid: data.appDocUid,
-                    app_doc_filename: data.appDocFilename,
-                    doc_uid: data.appDocUid,
-                    app_doc_version: data.docVersion,
-                    app_doc_create_date: data.appDocCreateDate,
-                    app_doc_create_user: data.appDocCreateUser,
-                    app_doc_type: data.appDocType,
-                    app_doc_index: data.appDocIndex
-                },
-                oldAppDocUid = that.model.get("appDocUid");
-
-                that._xhr = null;
-                that._versions.unshift(newVersion);
-
-                that.model.set({
-                    file: {
-                        name: newVersion.app_doc_filename
-                    },
-                    version: newVersion.app_doc_version
-                }).set("appDocUid", newVersion.app_doc_uid);
-                //The appDocUid update is not being performed in the first call due it is necessary to ensure
-                // it is called after the name and version update, in order to updsate the hidden fields.
-
-                if (oldAppDocUid === newVersion.app_doc_uid) {
-                    that.createHiddenForProperty();
-                }
-
-                that._onComplete();
-            }, function (e) {
-                if (e.lengthComputable) {
-                    that._updatePercentage(null, (e.loaded * 100) / e.total);
-                }
-            });
-        },
-        /**
          * Start the upload process.
          * @param {Event} e
          * @private
          */
-        _startUpload: function (e) {
+        _uploadFile: function (e) {
             var files = e.target.files,
+                index = 0,
                 that = this,
                 errorMessage,
                 file,
-                data;
+                data,
+                fieldName,
+                formData = new FormData();
 
             e.preventDefault();
 
@@ -24382,24 +24508,60 @@ xCase.extendNamespace = function (path, newClass) {
                 if (errorMessage) {
                     return this._showFlashErrorMessage(errorMessage);
                 }
-
+                formData.append("form[]", file);
+                fieldName = this.model.get('parent').get('group') === "form" ? this.model.get('parent').get('var_name') : this.model.get('parent').get('id');
                 data = {
                     name: file.name,
-                    fieldName: this.model.get("parent").get("var_name"),
+                    fieldName: fieldName,
                     docUid: this.model.get("parent").get("inp_doc_uid"),
                     appDocType: "INPUT",
-                    appDocUid: this.model.get("appDocUid")
+                    appDocUid: this.model.get("appDocUid"),
+                    formData: formData
                 };
-
                 this._dom.$fileName.text(data.name);
                 this._showProgressBar();
 
-                this._xhr = this._project.webServiceManager.upload([data], function (err, data) {
+                this._xhr = this._project.webServiceManager.uploadMultipart([data], function (err, data) {
+                    var newVersion,
+                        oldAppDocUid;
+
                     if (err) {
-                        that._showFlashErrorMessage(err.status);
+                        that._showFlashErrorMessage(err.message);
                         return that._onComplete();
                     }
-                    that._uploadFile(data.data[0], file);
+
+                    newVersion = {
+                        app_doc_uid: data[index].appDocUid,
+                        app_doc_filename: data[index].appDocFilename,
+                        doc_uid: data[index].appDocUid,
+                        app_doc_version: data[index].docVersion,
+                        app_doc_create_date: data[index].appDocCreateDate,
+                        app_doc_create_user: data[index].appDocCreateUser,
+                        app_doc_type: data[index].appDocType,
+                        app_doc_index: data[index].appDocIndex
+                    };
+                    oldAppDocUid = that.model.get("appDocUid");
+
+                    that._xhr = null;
+                    that._versions.unshift(newVersion);
+
+                    that.model.set({
+                        file: {
+                            name: newVersion.app_doc_filename
+                        },
+                        version: newVersion.app_doc_version
+                    }).set("appDocUid", newVersion.app_doc_uid);
+                    //The appDocUid update is not being performed in the first call due it is necessary to ensure
+                    // it is called after the name and version update, in order to update the hidden fields.
+
+                    if (oldAppDocUid === newVersion.app_doc_uid) {
+                        that.createHiddenForProperty();
+                    }
+                    that._onComplete();
+                }, function (e) {
+                    if (e.lengthComputable) {
+                        that._updatePercentage(null, (e.loaded * 100) / e.total);
+                    }
                 });
             } else if (files.length > 1) {
                 this._showFlashErrorMessage("Only one version per file can be uploaded.");
@@ -24559,6 +24721,20 @@ xCase.extendNamespace = function (path, newClass) {
                 this.models[index].destroy();
             }
             return this;
+        },
+        /**
+         * Gets all files the the completed attribute is "false"
+         */
+        getFilesNotUploaded: function() {
+            var index,
+                resp = false,
+                unCompletedFiles= [];
+            for (index = 0; index < this.models.length; index += 1) {
+                if (!this.models[index].get("completed") && !this.models[index].get("error")) {
+                    unCompletedFiles.push({ "name": this.models[index].attributes.file.name});
+                }
+            }
+            return unCompletedFiles;
         }
     });
 
@@ -24732,8 +24908,8 @@ xCase.extendNamespace = function (path, newClass) {
         template: _.template($("#tpl-upload-modal").html()),
         modal: null,
         $hiddenFile: null,
-        labelButton: "Choose Files",
-        labelClose: "Close",
+        labelButton: "Choose Files".translate(),
+        labelClose: "Close".translate(),
         $hiddens: [],
         initialize: function () {
             //TODO: no need params.
@@ -24775,12 +24951,14 @@ xCase.extendNamespace = function (path, newClass) {
             if (collection instanceof Backbone.Collection) {
                 for (i = 0; i < collection.length; i += 1) {
                     model = collection.at(i);
-                    view = new PMDynaform.file.FileView({
-                        model: model,
-                        versionable: this.model.get("parent").get("enableVersioning")
-                    });
-                    view.render();
-                    box.append(view.$el);
+                    if (!model.get("error")) {
+                        view = new PMDynaform.file.FileView({
+                            model: model,
+                            versionable: this.model.get("parent").get("enableVersioning")
+                        });
+                        view.render();
+                        box.append(view.$el);
+                    }
                 }
             }
             this.removeModal();
@@ -24867,7 +25045,7 @@ xCase.extendNamespace = function (path, newClass) {
                     fileModel.set('fromWizard', true);
                     fileView.render();
                     box.append(fileView.$el);
-                    fileModel.fileUpload();
+                    fileModel.fileUploadMultipart();
 
                     fileModel.set('fromWizard', false);
                     this.model.get('parent').updateGridDetail(fileModel);

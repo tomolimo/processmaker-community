@@ -1,16 +1,7 @@
 <?php
 
-/**
- * Skeleton subclass for representing a row from the 'OUTPUT_DOCUMENT' table.
- *
- *
- *
- * You should add additional methods to this class to meet the
- * application requirements.  This class will only be generated as
- * long as it does not already exist in the output directory.
- *
- * @package    workflow.engine.classes.model
- */
+use ProcessMaker\Core\System;
+
 class OutputDocument extends BaseOutputDocument
 {
     public function __construct()
@@ -1160,7 +1151,7 @@ class OutputDocument extends BaseOutputDocument
 
         copy($sPath . $sFilename . '.html', PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
         try {
-            $status = $pipeline->process((G::is_https() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/files/' . $_SESSION['APPLICATION'] . '/outdocs/' . $sFilename . '.html', $g_media);
+            $status = $pipeline->process(System::getServerProtocolHost() . '/files/' . $_SESSION['APPLICATION'] . '/outdocs/' . $sFilename . '.html', $g_media);
             copy(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf', $sPath . $sFilename . '.pdf');
             unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf');
             unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');

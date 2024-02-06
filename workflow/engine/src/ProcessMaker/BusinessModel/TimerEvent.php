@@ -1200,11 +1200,14 @@ class TimerEvent
 
     /**
      * Start/Continue case by Timer-Event
-     *
+     * 
      * @param string $datetime Datetime (yyyy-mm-dd hh:ii:ss)
-     * @param bool   $frontEnd Flag to represent the terminal front-end
-     *
-     * return void
+     * @param bool $frontEnd Flag to represent the terminal front-end
+     * @throws \Exception
+     * 
+     * @see workflow/engine/bin/cron_single.php
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
+     * @link https://wiki.processmaker.com/3.2/Executing_cron.php
      */
     public function startContinueCaseByTimerEvent($datetime, $frontEnd = false)
     {
@@ -1622,6 +1625,8 @@ class TimerEvent
                     $delIndex          = $row["DEL_INDEX"];
                     $delDelegateDate   = $row["DEL_DELEGATE_DATE"];
                     $bpmnEventName     = $row["EVN_NAME"];
+                    $taskUid = !empty($arrayApplicationData['APP_DATA']) && !empty($arrayApplicationData['APP_DATA']['TASK']) ?
+                            $arrayApplicationData['APP_DATA']['TASK'] : '';
 
                     //Continue the case
                     $continueCaseDate = $delDelegateDate;

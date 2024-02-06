@@ -1,5 +1,6 @@
 <?php
 
+use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
 /**
@@ -2939,7 +2940,7 @@ class XmlFormFieldFile extends XmlFormField
 
                 if ($row["DOC_UID"] == $this->input) {
                     $permission = true;
-                    $url = ((G::is_https()) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . dirname($_SERVER["REQUEST_URI"]) . "/cases_ShowDocument?a=" . $row["APP_DOC_UID"] . "&v=" . $row["DOC_VERSION"];
+                    $url = System::getServerProtocolHost() . dirname($_SERVER["REQUEST_URI"]) . "/cases_ShowDocument?a=" . $row["APP_DOC_UID"] . "&v=" . $row["DOC_VERSION"];
                     $sw = 1;
                 }
             }

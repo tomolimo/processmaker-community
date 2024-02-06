@@ -746,11 +746,11 @@ class headPublisher
      * 
      * @return array $views
      */
-    public function getExtJsViewState()
+    public function getExtJsViewState($userUid = '')
     {
         $json = new stdClass();
         $views = array();
-        $keyState = "extJsViewState";
+        $keyState = "extJsViewState" . $userUid;
         $prefixExtJs = "ys-";
         $oServerConf = ServerConf::getSingleton();
         $deleteCache = true;

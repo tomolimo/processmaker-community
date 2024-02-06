@@ -1,8 +1,11 @@
 <?php
 namespace ProcessMaker\Services\Api\Project;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Exception;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\FilesManager as FilesManagerBusinessModel;
+use ProcessMaker\Services\Api;
+use ProcessMaker\Validation\ExceptionRestApi;
 
 /**
  * Project\ProjectUsers Api Controller
@@ -57,11 +60,13 @@ class FilesManager extends Api
             $userUid = $this->getUserId();
             $request_data = (array)($request_data);
             $request_data = array_merge(array('prf_content' => $prf_content ), $request_data);
-            $filesManager = new \ProcessMaker\BusinessModel\FilesManager();
+            $filesManager = new FilesManagerBusinessModel();
             $arrayData = $filesManager->addProcessFilesManager($prj_uid, $userUid, $request_data);
             //Response
             $response = $arrayData;
-        } catch (\Exception $e) {
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
+        } catch (Exception $e) {
             //response
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
@@ -85,11 +90,13 @@ class FilesManager extends Api
     public function doPostProcessFilesManagerUpload($prj_uid, $prf_uid)
     {
         try {
-            $filesManager = new \ProcessMaker\BusinessModel\FilesManager();
+            $filesManager = new FilesManagerBusinessModel();
             $sData = $filesManager->uploadProcessFilesManager($prj_uid, $prf_uid);
             //Response
             $response = $sData;
-        } catch (\Exception $e) {
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
+        } catch (Exception $e) {
             //response
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }

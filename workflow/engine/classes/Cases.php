@@ -5,7 +5,7 @@ use ProcessMaker\BusinessModel\WebEntryEvent;
 /*----------------------------------********---------------------------------*/
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
-
+use ProcessMaker\Util\DateTime;
 
 /**
  * A Cases object where you can do start, load, update, refresh about cases
@@ -18,6 +18,7 @@ class Cases
     public $dir = 'ASC';
     public $sort = 'APP_MSG_DATE';
     public $arrayTriggerExecutionTime = [];
+    private $triggerMessageExecution = '';
 
     public function __construct()
     {
@@ -25,6 +26,28 @@ class Cases
         if (($solrConf = System::solrEnv()) !== false) {
             $this->appSolr = new AppSolr($solrConf['solr_enabled'], $solrConf['solr_host'], $solrConf['solr_instance']);
         }
+    }
+
+    /**
+     * Get the triggerMessageExecution
+     *
+     * @return string
+     */
+    public function getTriggerMessageExecution()
+    {
+        return $this->triggerMessageExecution;
+    }
+
+    /**
+     * Add messages related to the trigger execution
+     *
+     * @param string $v
+     *
+     * @return void
+     */
+    public function addTriggerMessageExecution($v)
+    {
+        $this->triggerMessageExecution .= $v;
     }
 
     /**
@@ -443,44 +466,44 @@ class Cases
     {
         try {
             $oApp = new Application;
-            $aFields = $oApp->Load($sAppUid);
+            $fields = $oApp->Load($sAppUid);
 
-            $appData = self::unserializeData($aFields['APP_DATA']);
+            $appData = self::unserializeData($fields['APP_DATA']);
 
-            $aFields['APP_DATA'] = G::array_merges(G::getSystemConstants(), $appData);
+            $fields['APP_DATA'] = G::array_merges(G::getSystemConstants(), $appData);
 
             switch ($oApp->getAppStatus()) {
                 case 'COMPLETED':
-                    $aFields['STATUS'] = G::LoadTranslation('ID_COMPLETED');
+                    $fields['STATUS'] = G::LoadTranslation('ID_COMPLETED');
                     break;
                 case 'CANCELLED':
-                    $aFields['STATUS'] = G::LoadTranslation('ID_CANCELLED');
+                    $fields['STATUS'] = G::LoadTranslation('ID_CANCELLED');
                     break;
                 case 'PAUSED':
-                    $aFields['STATUS'] = G::LoadTranslation('ID_PAUSED');
+                    $fields['STATUS'] = G::LoadTranslation('ID_PAUSED');
                     break;
                 case 'DRAFT':
-                    $aFields['STATUS'] = G::LoadTranslation('ID_DRAFT');
+                    $fields['STATUS'] = G::LoadTranslation('ID_DRAFT');
                     break;
                 case 'TO_DO':
-                    $aFields['STATUS'] = G::LoadTranslation('ID_TO_DO');
+                    $fields['STATUS'] = G::LoadTranslation('ID_TO_DO');
                     break;
             }
             $oUser = new Users();
             try {
                 $oUser->load($oApp->getAppInitUser());
                 $uFields = $oUser->toArray(BasePeer::TYPE_FIELDNAME);
-                $aFields['TITLE'] = $aFields['APP_TITLE'];
-                $aFields['DESCRIPTION'] = $aFields['APP_DESCRIPTION'];
-                $aFields['CREATOR'] = $oUser->getUsrFirstname() . ' ' . $oUser->getUsrLastname();
-                $aFields['CREATE_DATE'] = $oApp->getAppCreateDate();
-                $aFields['UPDATE_DATE'] = $oApp->getAppUpdateDate();
+                $fields['TITLE'] = $fields['APP_TITLE'];
+                $fields['DESCRIPTION'] = $fields['APP_DESCRIPTION'];
+                $fields['CREATOR'] = $oUser->getUsrFirstname() . ' ' . $oUser->getUsrLastname();
+                $fields['CREATE_DATE'] = $oApp->getAppCreateDate();
+                $fields['UPDATE_DATE'] = $oApp->getAppUpdateDate();
             } catch (Exception $oError) {
-                $aFields['TITLE'] = $oApp->getAppTitle();
-                $aFields['DESCRIPTION'] = '';
-                $aFields['CREATOR'] = '(USER_DELETED)';
-                $aFields['CREATE_DATE'] = $oApp->getAppCreateDate();
-                $aFields['UPDATE_DATE'] = $oApp->getAppUpdateDate();
+                $fields['TITLE'] = $oApp->getAppTitle();
+                $fields['DESCRIPTION'] = '';
+                $fields['CREATOR'] = '(USER_DELETED)';
+                $fields['CREATE_DATE'] = $oApp->getAppCreateDate();
+                $fields['UPDATE_DATE'] = $oApp->getAppUpdateDate();
             }
 
             if ($iDelIndex > 0) {
@@ -488,50 +511,52 @@ class Cases
                 $oAppDel = new AppDelegation();
                 $oAppDel->Load($sAppUid, $iDelIndex);
                 $aAppDel = $oAppDel->toArray(BasePeer::TYPE_FIELDNAME);
-                $aFields['TAS_UID'] = $aAppDel['TAS_UID'];
-                $aFields['DEL_INDEX'] = $aAppDel['DEL_INDEX'];
-                $aFields['DEL_PREVIOUS'] = $aAppDel['DEL_PREVIOUS'];
-                $aFields['DEL_TYPE'] = $aAppDel['DEL_TYPE'];
-                $aFields['DEL_PRIORITY'] = $aAppDel['DEL_PRIORITY'];
-                $aFields['DEL_THREAD_STATUS'] = $aAppDel['DEL_THREAD_STATUS'];
-                $aFields['DEL_THREAD'] = $aAppDel['DEL_THREAD'];
-                $aFields['DEL_DELEGATE_DATE'] = $aAppDel['DEL_DELEGATE_DATE'];
-                $aFields['DEL_INIT_DATE'] = $aAppDel['DEL_INIT_DATE'];
-                $aFields['DEL_TASK_DUE_DATE'] = $aAppDel['DEL_TASK_DUE_DATE'];
-                $aFields['DEL_FINISH_DATE'] = $aAppDel['DEL_FINISH_DATE'];
-                $aFields['CURRENT_USER_UID'] = $aAppDel['USR_UID'];
+                $fields['TAS_UID'] = $aAppDel['TAS_UID'];
+                $fields['DEL_INDEX'] = $aAppDel['DEL_INDEX'];
+                $fields['DEL_PREVIOUS'] = $aAppDel['DEL_PREVIOUS'];
+                $fields['DEL_TYPE'] = $aAppDel['DEL_TYPE'];
+                $fields['DEL_PRIORITY'] = $aAppDel['DEL_PRIORITY'];
+                $fields['DEL_THREAD_STATUS'] = $aAppDel['DEL_THREAD_STATUS'];
+                $fields['DEL_THREAD'] = $aAppDel['DEL_THREAD'];
+                $fields['DEL_DELEGATE_DATE'] = $aAppDel['DEL_DELEGATE_DATE'];
+                $fields['DEL_INIT_DATE'] = $aAppDel['DEL_INIT_DATE'];
+                $fields['DEL_TASK_DUE_DATE'] = $aAppDel['DEL_TASK_DUE_DATE'];
+                $fields['DEL_FINISH_DATE'] = $aAppDel['DEL_FINISH_DATE'];
+                $fields['CURRENT_USER_UID'] = $aAppDel['USR_UID'];
 
                 //Update the global variables
-                $aFields['TASK'] = $aAppDel['TAS_UID'];
-                $aFields['INDEX'] = $aAppDel['DEL_INDEX'];
-                $aFields['TAS_ID'] = $aAppDel['TAS_ID'];
-                $aFields['PRO_ID'] = $aAppDel['PRO_ID'];
+                $fields['TASK'] = $aAppDel['TAS_UID'];
+                $fields['INDEX'] = $aAppDel['DEL_INDEX'];
+                $fields['TAS_ID'] = $aAppDel['TAS_ID'];
+                $fields['PRO_ID'] = $aAppDel['PRO_ID'];
                 try {
                     $oCurUser = new Users();
                     if ($jump != '') {
-                        $aCases = $oAppDel->LoadParallel($sAppUid);
-                        $aFields['TAS_UID'] = '';
-                        $aFields['CURRENT_USER'] = array();
-                        foreach ($aCases as $key => $value) {
-                            $oCurUser->load($value['USR_UID']);
-                            $aFields['CURRENT_USER'][] = $oCurUser->getUsrFirstname() . ' ' . $oCurUser->getUsrLastname();
-                            $aFields['TAS_UID'] .= (($aFields['TAS_UID'] != '') ? '|' : '') . $value['TAS_UID'];
+                        $cases = $oAppDel->LoadParallel($sAppUid);
+                        if (!empty($cases)) {
+                            $fields['TAS_UID'] = '';
                         }
-                        $aFields['CURRENT_USER'] = implode(" - ", array_values($aFields['CURRENT_USER']));
-                        $tasksArray = array_filter(explode('|', $aFields['TAS_UID']));
+                        $fields['CURRENT_USER'] = array();
+                        foreach ($cases as $key => $value) {
+                            $oCurUser->load($value['USR_UID']);
+                            $fields['CURRENT_USER'][] = $oCurUser->getUsrFirstname() . ' ' . $oCurUser->getUsrLastname();
+                            $fields['TAS_UID'] .= (($fields['TAS_UID'] != '') ? '|' : '') . $value['TAS_UID'];
+                        }
+                        $fields['CURRENT_USER'] = implode(" - ", array_values($fields['CURRENT_USER']));
+                        $tasksArray = array_filter(explode('|', $fields['TAS_UID']));
 
                         if (count($tasksArray) == 1) {
-                            $aFields['TAS_UID'] = $tasksArray[0];
+                            $fields['TAS_UID'] = $tasksArray[0];
                         }
                     } else {
                         $oCurUser->load($aAppDel['USR_UID']);
-                        $aFields['CURRENT_USER'] = $oCurUser->getUsrFirstname() . ' ' . $oCurUser->getUsrLastname();
+                        $fields['CURRENT_USER'] = $oCurUser->getUsrFirstname() . ' ' . $oCurUser->getUsrLastname();
                     }
                 } catch (Exception $oError) {
-                    $aFields['CURRENT_USER'] = '';
+                    $fields['CURRENT_USER'] = '';
                 }
             }
-            return $aFields;
+            return $fields;
         } catch (exception $e) {
             throw ($e);
         }
@@ -609,87 +634,32 @@ class Cases
     }
 
     /**
-     * This function loads the title and description label in a case
-     * PROCESO:
-     *    If there is a label then it is loaded
-     *    To get APP_DELEGATIONS that they are opened in the case
-     *    To look for APP_DELEGATIONS wich TASK in it, It has a label defined(CASE_TITLE)
-     *    We need to read the last APP_DELEGATION->TASK
-     * @param string $sAppUid
-     * @param array $aAppData
-     * @return $res
-     */
-    public function refreshCaseTitleAndDescription($sAppUid, $aAppData)
-    {
-        $res['APP_TITLE'] = null;
-        $res['APP_DESCRIPTION'] = null;
-        //$res['APP_PROC_CODE']   = null;
-
-        $oApplication = new Application;
-        try {
-            $fields = $oApplication->load($sAppUid);
-        } catch (Exception $e) {
-            return $res;
-        }
-
-        $res['APP_TITLE'] = $fields['APP_TITLE']; // $oApplication->$getAppLabel();
-        $res['APP_DESCRIPTION'] = $fields['APP_DESCRIPTION'];
-
-        $lang = defined('SYS_LANG') ? SYS_LANG : 'en';
-        $bUpdatedDefTitle = false;
-        $bUpdatedDefDescription = false;
-        $cri = new Criteria;
-        $cri->add(AppDelegationPeer::APP_UID, $sAppUid);
-        $cri->add(AppDelegationPeer::DEL_THREAD_STATUS, "OPEN");
-        $currentDelegations = AppDelegationPeer::doSelect($cri);
-        //load only the tas_def fields, because these three or two values are needed
-        for ($r = count($currentDelegations) - 1; $r >= 0; $r--) {
-            $c = new Criteria();
-            $c->clearSelectColumns();
-            $c->addSelectColumn(TaskPeer::TAS_DEF_TITLE);
-            $c->addSelectColumn(TaskPeer::TAS_DEF_DESCRIPTION);
-            $c->add(TaskPeer::TAS_UID, $currentDelegations[$r]->getTasUid());
-            $rs = TaskPeer::doSelectRS($c);
-            $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            while ($rs->next()) {
-                $row = $rs->getRow();
-                $tasDefTitle = $row['TAS_DEF_TITLE'];
-                if ($tasDefTitle != '' && !$bUpdatedDefTitle) {
-                    $res['APP_TITLE'] = G::replaceDataField($tasDefTitle, $aAppData);
-                    $bUpdatedDefTitle = true;
-                }
-                $tasDefDescription = $row['TAS_DEF_DESCRIPTION'];
-                if ($tasDefDescription != '' && !$bUpdatedDefDescription) {
-                    $res['APP_DESCRIPTION'] = G::replaceDataField($tasDefDescription, $aAppData);
-                    $bUpdatedDefDescription = true;
-                }
-            }
-        }
-        return $res;
-    }
-
-    /**
-     * optimized for speed. This function loads the title and description label in a case
+     * Optimized for speed. This function loads the title and description label in a case
      *    If there is a label then it is loaded
      *    Get Open APP_DELEGATIONS in the case
-     *    To look for APP_DELEGATIONS wich TASK in it, It has a label defined(CASE_TITLE)
+     *    To look for APP_DELEGATIONS which TASK in it, It has a label defined(CASE_TITLE)
      *    We need to read the last APP_DELEGATION->TASK
-     * @param string $sAppUid
-     * @param array $aAppData
-     * @return $res
+     *
+     * @param string $appUid
+     * @param array $fields
+     * @param array $lastFieldsCase
+     *
+     * @return array
+     *
+     * @see classes/Cases->startCase()
+     * @see classes/Cases->updateCase()
      */
-    public function newRefreshCaseTitleAndDescription($sAppUid, $fields, $aAppData)
+    public function newRefreshCaseTitleAndDescription($appUid, $fields, $lastFieldsCase = [])
     {
-        $res = array();
+        $res = [];
 
-        $lang = defined('SYS_LANG') ? SYS_LANG : 'en';
-        $bUpdatedDefTitle = false;
-        $bUpdatedDefDescription = false;
+        $flagTitle = false;
+        $flagDescription = false;
 
         $cri = new Criteria;
         $cri->clearSelectColumns();
         $cri->addSelectColumn(AppDelegationPeer::TAS_UID);
-        $cri->add(AppDelegationPeer::APP_UID, $sAppUid);
+        $cri->add(AppDelegationPeer::APP_UID, $appUid);
         $cri->add(AppDelegationPeer::DEL_THREAD_STATUS, "OPEN");
         if (isset($fields['DEL_INDEX'])) {
             $cri->add(AppDelegationPeer::DEL_INDEX, $fields['DEL_INDEX']);
@@ -710,36 +680,38 @@ class Cases
             $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
             while ($rs->next()) {
                 $row = $rs->getRow();
+                $newValues = [];
+                //Get the case title
                 $tasDefTitle = trim($row['TAS_DEF_TITLE']);
-                if ($tasDefTitle != '' && !$bUpdatedDefTitle) {
-                    $newAppTitle = G::replaceDataField($tasDefTitle, $aAppData);
-                    $res['APP_TITLE'] = $newAppTitle;
-                    if (!(isset($fields['APP_TITLE']) && $fields['APP_TITLE'] == $newAppTitle)) {
-                        $bUpdatedDefTitle = true;
-                        $appData = array();
-                        $appData['APP_UID'] = $sAppUid;
-                        $appData['APP_TITLE'] = $newAppTitle;
-                        $oApplication = new Application();
-                        $oApplication->update($appData);
+                if (!empty($tasDefTitle) && !$flagTitle) {
+                    $newAppProperty = G::replaceDataField($tasDefTitle, $lastFieldsCase);
+                    $res['APP_TITLE'] = $newAppProperty;
+                    if (!(isset($currentValue) && ($currentValue == $tasDefTitle))) {
+                        $newValues['APP_TITLE'] = $newAppProperty;
+                        $flagTitle = true;
                     }
                 }
+                //Get the case description
                 $tasDefDescription = trim($row['TAS_DEF_DESCRIPTION']);
-                if ($tasDefDescription != '' && !$bUpdatedDefDescription) {
-                    $newAppDescription = G::replaceDataField($tasDefDescription, $aAppData);
-                    $res['APP_DESCRIPTION'] = $newAppDescription;
-                    if (!(isset($fields['APP_DESCRIPTION']) && $fields['APP_DESCRIPTION'] == $newAppDescription)) {
-                        $bUpdatedDefDescription = true;
-                        $appData = array();
-                        $appData['APP_UID'] = $sAppUid;
-                        $appData['APP_DESCRIPTION'] = $newAppDescription;
-                        $oApplication = new Application();
-                        $oApplication->update($appData);
+                if (!empty($tasDefDescription) && !$flagDescription) {
+                    $newAppProperty = G::replaceDataField($tasDefDescription, $lastFieldsCase);
+                    $res['APP_DESCRIPTION'] = $newAppProperty;
+                    if (!(isset($currentValue) && ($currentValue == $tasDefDescription))) {
+                        $newValues['APP_DESCRIPTION'] = $newAppProperty;
+                        $flagDescription = true;
                     }
+                }
+
+                if (!empty($newValues)) {
+                    $application = new Application();
+                    $newValues['APP_UID'] = $appUid;
+                    $application->update($newValues);
                 }
             }
             $rsCri->next();
             $rowCri = $rsCri->getRow();
         }
+
         return $res;
     }
 
@@ -843,27 +815,74 @@ class Cases
      * Update an existing case, this info is used in CaseResume
      *
      * @name updateCase
-     * @param string  $sAppUid
-     * @param integer $iDelIndex > 0 //get the Delegation fields
+     *
+     * @param string $appUid
+     * @param array $Fields
+     *
      * @return Fields
+     * @throws Exception
+     *
+     * @see Cases->cancelCase()
+     * @see Cases->executeTriggerFromList()
+     * @see Cases->executeTriggersAfterExternal()
+     * @see Cases->getExecuteTriggerProcess()
+     * @see Cases->unCancelCase()
+     * @see Cases->cancelCase()
+     * @see executeCaseSelfService()/cron_single.php
+     * @see handleErrors()/class.pmFunctions.php
+     * @see handleFatalErrors()/class.pmFunctions.php
+     * @see PMFRedirectToStep()/class.pmFunctions.php
+     * @see setCaseTrackerCode()/class.pmFunctions.php
+     * @see Derivation::derivate()
+     * @see Derivation::verifyIsCaseChild()
+     * @see WsBase::executeTrigger()
+     * @see WsBase::executeTriggerFromDerivate()
+     * @see WsBase::newCase()
+     * @see WsBase::newCaseImpersonate()
+     * @see WsBase::sendVariables()
+     * @see AdditionalTables->saveDataInTable()
+     * @see AppEvent->executeEvents()
+     * @see cases_Derivate.php
+     * @see cases_SaveData.php
+     * @see cases_SaveDataSupervisor.php
+     * @see cases_SaveDocument.php
+     * @see cases_Step.php
+     * @see cases_SupervisorSaveDocument.php
+     * @see saveForm.php
+     * @see ActionByEmail.php
+     * @see ActionByEmailDataFormPost.php
+     * @see cases_StartExternal.php
+     * @see upload.php
+     * @see \ProcessMaker\BusinessModel\Cases::deleteMultipleFile()
+     * @see \ProcessMaker\BusinessModel\Cases::putExecuteTriggers()
+     * @see \ProcessMaker\BusinessModel\Cases::setCaseVariables()
+     * @see \ProcessMaker\BusinessModel\Consolidated::consolidatedUpdate()
+     * @see \ProcessMaker\BusinessModel\Consolidated::postDerivate()
+     * @see \ProcessMaker\BusinessModel\Light::doExecuteTriggerCase()
+     * @see \ProcessMaker\BusinessModel\Light::getPrepareInformation()
+     * @see \ProcessMaker\BusinessModel\Light::startCase()
+     * @see \ProcessMaker\BusinessModel\MessageApplication::catchMessageEvent()
+     * @see \ProcessMaker\BusinessModel\ScriptTask::execScriptByActivityUid()
+     * @see \ProcessMaker\BusinessModel\Cases\InputDocument::addCasesInputDocument()
+     * @see \ProcessMaker\BusinessModel\Cases\InputDocument::uploadFileCase()
+     * @see \ProcessMaker\BusinessModel\Cases\Variable::create()
+     * @see \ProcessMaker\BusinessModel\Cases\Variable::delete()
+     * @see \ProcessMaker\BusinessModel\Cases\Variable::update()
      */
-    public function updateCase($sAppUid, $Fields = array())
+    public function updateCase($appUid, $Fields = [])
     {
         try {
-            $oApplication = new Application;
-            if (!$oApplication->exists($sAppUid)) {
+            $application = new Application;
+            if (!$application->exists($appUid)) {
                 return false;
             }
-            $aApplicationFields = $Fields['APP_DATA'];
-            $Fields['APP_UID'] = $sAppUid;
+            $appData = $Fields['APP_DATA'];
+            $Fields['APP_UID'] = $appUid;
             $Fields['APP_UPDATE_DATE'] = 'now';
             $Fields['APP_DATA'] = serialize($Fields['APP_DATA']);
-            /*
-              $oApp = new Application;
-              $appFields = $oApp->load($sAppUid);
-             */
-            $oApp = ApplicationPeer::retrieveByPk($sAppUid);
-            $appFields = $oApp->toArray(BasePeer::TYPE_FIELDNAME);
+
+            $app = ApplicationPeer::retrieveByPk($appUid);
+            $appFields = $app->toArray(BasePeer::TYPE_FIELDNAME);
             if (isset($Fields['APP_TITLE'])) {
                 $appFields['APP_TITLE'] = $Fields['APP_TITLE'];
             }
@@ -874,16 +893,21 @@ class Cases
                 $appFields['DEL_INDEX'] = $Fields['DEL_INDEX'];
             }
 
-            $arrayNewCaseTitleAndDescription = $this->newRefreshCaseTitleAndDescription($sAppUid, $appFields, $aApplicationFields);
+            //Get the appTitle and appDescription
+            $newTitleOrDescription = $this->newRefreshCaseTitleAndDescription(
+                $appUid,
+                $appFields,
+                $appData
+            );
 
             //Start: Save History --By JHL
             if (isset($Fields['CURRENT_DYNAFORM'])) {
                 //only when that variable is set.. from Save
-                $FieldsBefore = $this->loadCase($sAppUid);
-                $FieldsDifference = $this->arrayRecursiveDiff($FieldsBefore['APP_DATA'], $aApplicationFields);
-                $fieldsOnBoth = $this->array_key_intersect($FieldsBefore['APP_DATA'], $aApplicationFields);
+                $FieldsBefore = $this->loadCase($appUid);
+                $FieldsDifference = $this->arrayRecursiveDiff($FieldsBefore['APP_DATA'], $appData);
+                $fieldsOnBoth = $this->array_key_intersect($FieldsBefore['APP_DATA'], $appData);
                 //Add fields that weren't in previous version
-                foreach ($aApplicationFields as $key => $value) {
+                foreach ($appData as $key => $value) {
                     if (is_array($value) && isset($fieldsOnBoth[$key]) && is_array($fieldsOnBoth[$key])) {
                         $afieldDifference = $this->arrayRecursiveDiff($value, $fieldsOnBoth[$key]);
                         $dfieldDifference = $this->arrayRecursiveDiff($fieldsOnBoth[$key], $value);
@@ -897,9 +921,9 @@ class Cases
                     }
                 }
                 if ((is_array($FieldsDifference)) && (count($FieldsDifference) > 0)) {
-                    $oCurrentDynaform = new Dynaform();
+                    $dynaformInstance = new Dynaform();
                     try {
-                        $currentDynaform = $oCurrentDynaform->Load($Fields['CURRENT_DYNAFORM']);
+                        $currentDynaform = $dynaformInstance->Load($Fields['CURRENT_DYNAFORM']);
                     } catch (Exception $e) {
                         $currentDynaform["DYN_CONTENT"] = "";
                     }
@@ -910,13 +934,13 @@ class Cases
                     $appDataWithoutDynContentHistory = serialize($FieldsDifference);
                     $aFieldsHistory['APP_DATA'] = serialize($FieldsDifference);
                     $appHistory->insertHistory($aFieldsHistory);
-                    
+
                     /*----------------------------------********---------------------------------*/
                 }
             }
             //End Save History
-            //we are removing the app_title and app_description from this array,
-            //because they already be updated in  newRefreshCaseTitleAndDescription function
+
+            //We are removing the app_title and app_description because they already be updated in newRefreshCaseTitleAndDescription function
             if (isset($Fields['APP_TITLE'])) {
                 unset($Fields['APP_TITLE']);
             }
@@ -927,16 +951,18 @@ class Cases
                 if (isset($Fields['CURRENT_USER_UID'])) {
                     $Fields['USR_UID'] = $Fields['CURRENT_USER_UID'];
                 }
-                /*----------------------------------********---------------------------------*/
+                //Will be update the status in the list Participated
+                $listParticipatedLast = new ListParticipatedLast();
+                $listParticipatedLast->refreshStatus($Fields['APP_UID'], 'COMPLETED');
             }
-            $oApp->update($Fields);
 
-            $DEL_INDEX = isset($Fields['DEL_INDEX']) ? $Fields['DEL_INDEX'] : '';
-            $TAS_UID = isset($Fields['TAS_UID']) ? $Fields['TAS_UID'] : '';
+            /** Update case*/
+            $app->update($Fields);
 
+            //Update the reportTables and tables related to the case
             require_once 'classes/model/AdditionalTables.php';
-            $oReportTables = new ReportTables();
-            $addtionalTables = new additionalTables();
+            $reportTables = new ReportTables();
+            $additionalTables = new additionalTables();
 
             if (!isset($Fields['APP_NUMBER'])) {
                 $Fields['APP_NUMBER'] = $appFields['APP_NUMBER'];
@@ -945,56 +971,33 @@ class Cases
                 $Fields['APP_STATUS'] = $appFields['APP_STATUS'];
             }
 
-            $oReportTables->updateTables($appFields['PRO_UID'], $sAppUid, $Fields['APP_NUMBER'], $aApplicationFields);
-            $addtionalTables->updateReportTables(
-                    $appFields['PRO_UID'], $sAppUid, $Fields['APP_NUMBER'], $aApplicationFields, $Fields['APP_STATUS']
+            $reportTables->updateTables($appFields['PRO_UID'], $appUid, $Fields['APP_NUMBER'], $appData);
+            $additionalTables->updateReportTables(
+                    $appFields['PRO_UID'], $appUid, $Fields['APP_NUMBER'], $appData, $Fields['APP_STATUS']
             );
 
-            //now update the priority in appdelegation table, using the defined variable in task
-            if (trim($DEL_INDEX) != '' && trim($TAS_UID) != '') {
-                //optimized code to avoid load task content row.
-                $c = new Criteria();
-                $c->clearSelectColumns();
-                $c->addSelectColumn(TaskPeer::TAS_PRIORITY_VARIABLE);
-                $c->add(TaskPeer::TAS_UID, $TAS_UID);
-                $rs = TaskPeer::doSelectRS($c);
-                $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                $rs->next();
-                $row = $rs->getRow();
-                $VAR_PRI = substr($row['TAS_PRIORITY_VARIABLE'], 2);
-                //end optimized code.
+            //Update the priority related to the task
+            $delIndex = isset($Fields['DEL_INDEX']) ? trim($Fields['DEL_INDEX']) : '';
+            $tasUid = isset($Fields['TAS_UID']) ? trim($Fields['TAS_UID']) : '';
+            $appDel = new AppDelegation;
+            $appDel->updatePriority($delIndex, $tasUid, $appUid, $appData);
 
-                $x = unserialize($Fields['APP_DATA']);
-                if (isset($x[$VAR_PRI])) {
-                    if (trim($x[$VAR_PRI]) != '') {
-                        $oDel = new AppDelegation;
-                        $array = array();
-                        $array['APP_UID'] = $sAppUid;
-                        $array['DEL_INDEX'] = $DEL_INDEX;
-                        $array['TAS_UID'] = $TAS_UID;
-                        $array['DEL_PRIORITY'] = (isset($x[$VAR_PRI]) ?
-                                ($x[$VAR_PRI] >= 1 && $x[$VAR_PRI] <= 5 ? $x[$VAR_PRI] : '3') : '3');
-                        $oDel->update($array);
-                    }
-                }
-            }
             //Update Solr Index
             if ($this->appSolr != null) {
-                $this->appSolr->updateApplicationSearchIndex($sAppUid);
+                $this->appSolr->updateApplicationSearchIndex($appUid);
             }
 
             if ($Fields["APP_STATUS"] == "COMPLETED") {
                 //Delete records of the table APP_ASSIGN_SELF_SERVICE_VALUE
                 $appAssignSelfServiceValue = new AppAssignSelfServiceValue();
-
-                $appAssignSelfServiceValue->remove($sAppUid);
+                $appAssignSelfServiceValue->remove($appUid);
             }
 
             /*----------------------------------********---------------------------------*/
 
             //Return
             return $Fields;
-        } catch (exception $e) {
+        } catch (Exception $e) {
             throw ($e);
         }
     }
@@ -1105,12 +1108,13 @@ class Cases
                     $nameFiles .= $node['file'] . ":" . $node['function'] . "(" . $node['line'] . ")\n";
                 }
             }
-            $dataLog = \Bootstrap::getDefaultContextLog();
-            $dataLog['usrUid'] = isset($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : G::LoadTranslation('UID_UNDEFINED_USER');
-            $dataLog['appUid'] = $sAppUid;
-            $dataLog['request'] = $nameFiles;
-            $dataLog['action'] = 'DeleteCases';
-            Bootstrap::registerMonolog('DeleteCases', 200, 'Delete Case', $dataLog, $dataLog['workspace'], 'processmaker.log');
+
+            /** ProcessMaker log*/
+            $context = Bootstrap::getDefaultContextLog();
+            $context['appUid'] = $sAppUid;
+            $context['request'] = $nameFiles;
+            Bootstrap::registerMonolog('DeleteCases', 200, 'Delete Case', $context);
+
             return $result;
         } catch (exception $e) {
             throw ($e);
@@ -2243,6 +2247,7 @@ class Cases
                     if ($oStep) {
                         if (trim($oStep->getStepCondition()) !== '') {
                             $oPMScript->setScript($oStep->getStepCondition());
+                            $oPMScript->setExecutedOn(PMScript::CONDITION);
                             $bAccessStep = $oPMScript->evaluate();
                         } else {
                             $bAccessStep = true;
@@ -2373,6 +2378,7 @@ class Cases
                     if ($oStep) {
                         if (trim($oStep->getStepCondition()) !== '') {
                             $oPMScript->setScript($oStep->getStepCondition());
+                            $oPMScript->setExecutedOn(PMScript::CONDITION);
                             $bAccessStep = $oPMScript->evaluate();
                         } else {
                             $bAccessStep = true;
@@ -3325,53 +3331,185 @@ class Cases
     /**
      * Execute trigger in task
      * @name executeTriggers
-     * @param string $sTasUid
-     * @param string $sStepType
-     * @param array $sStepUidObj
-     * @param string $sTriggerType
-     * @param array $aFields
+     * @param string $tasUid
+     * @param string $stepType
+     * @param array $stepUidObj
+     * @param string $triggerType
+     * @param array $fieldsCase
+     *
      * @return integer
      */
-    public function executeTriggers($sTasUid, $sStepType, $sStepUidObj, $sTriggerType, $aFields = array())
+    public function executeTriggers($tasUid, $stepType, $stepUidObj, $triggerType, $fieldsCase = [])
     {
+        //Load the triggers assigned in the step
+        $triggersList = $this->loadTriggers($tasUid, $stepType, $stepUidObj, $triggerType);
+
+        //Execute the trigger defined in the step
+        $lastFields = $this->executeTriggerFromList($triggersList, $fieldsCase, $stepType, $stepUidObj, $triggerType);
+
         /*----------------------------------********---------------------------------*/
 
-        $aTriggers = $this->loadTriggers($sTasUid, $sStepType, $sStepUidObj, $sTriggerType);
+        return $lastFields;
+    }
 
-        if (count($aTriggers) > 0) {
-            global $oPMScript;
+    /**
+     * This method executes the triggers send in an array
+     *
+     * @param array $triggersList
+     * @param array $fieldsCase
+     * @param string $stepType
+     * @param string $stepUidObj
+     * @param string $triggerType
+     * @param string $labelAssignment
+     * @param bool $useGlobal, needs to have the value true if the same case in execution is affected with this trigger
+     *
+     * @return array
+     *
+     * @see Cases::executeTriggers()
+     * @see Cases::getExecuteTriggerProcess()
+     * @see WsBase::executeTriggerFromDerivate()
+     * @see ScriptTask::execScriptByActivityUid()
+     *
+     * @link https://wiki.processmaker.com/3.2/Triggers#Custom_Trigger
+     * @link https://wiki.processmaker.com/3.2/Triggers#When_action_cases
+     * @link https://wiki.processmaker.com/3.1/Triggers
+     * @link https://wiki.processmaker.com/3.1/Tasks#ScriptTask
+    */
+    public function executeTriggerFromList(
+        array $triggersList,
+        array $fieldsCase,
+        $stepType,
+        $stepUidObj,
+        $triggerType,
+        $labelAssignment = '',
+        $useGlobal = true
+    )
+    {
+        if (count($triggersList) > 0) {
+            if ($useGlobal) {
+                /**
+                 * The global $oPMScript is necessary when the trigger can be update the appData related to the case
+                 * in execution
+                 */
+                global $oPMScript;
+            }
 
-            $oPMScript = new PMScript();
-            $oPMScript->setFields($aFields);
+            $this->addTriggerMessageExecution("<br /><b>" . $labelAssignment . "</b><br />");
+            if (!isset($oPMScript)) {
+                $oPMScript = new PMScript();
+            }
 
             /*----------------------------------********---------------------------------*/
 
-            foreach ($aTriggers as $aTrigger) {
+            $varInAfterRouting = false;
+            $fieldsTrigger = [];
+            foreach ($triggersList as $trigger) {
                 /*----------------------------------********---------------------------------*/
 
-                //Execute
-                $bExecute = true;
-
-                if ($aTrigger['ST_CONDITION'] !== '') {
-                    $oPMScript->setDataTrigger($aTrigger);
-                    $oPMScript->setScript($aTrigger['ST_CONDITION']);
-                    $bExecute = $oPMScript->evaluate();
+                $oPMScript->setFields($fieldsCase);
+                $execute = true;
+                //Check if the trigger has conditions for the execution
+                if (!empty($trigger['ST_CONDITION'])) {
+                    $oPMScript->setDataTrigger($trigger);
+                    $oPMScript->setScript($trigger['ST_CONDITION']);
+                    $oPMScript->setExecutedOn(PMScript::CONDITION);
+                    $execute = $oPMScript->evaluate();
                 }
 
-                if ($bExecute) {
-                    $oPMScript->setDataTrigger($aTrigger);
-                    $oPMScript->setScript($aTrigger['TRI_WEBBOT']);
+                //Execute the trigger
+                if ($execute) {
+                    $oPMScript->setDataTrigger($trigger);
+                    $oPMScript->setScript($trigger['TRI_WEBBOT']);
+                    $executedOn = $oPMScript->getExecutionOriginForAStep($stepType, $stepUidObj, $triggerType);
+                    $oPMScript->setExecutedOn($executedOn);
                     $oPMScript->execute();
+                    //Return all the appData + variables changed in the execution
+                    $appDataAfterTrigger = $oPMScript->aFields;
 
-                    $this->arrayTriggerExecutionTime[$aTrigger['TRI_UID']] = $oPMScript->scriptExecutionTime;
+                    /**
+                     * This section of code its related to the route the case with parallel task in the same time
+                     * @link https://processmaker.atlassian.net/browse/PMC-2
+                     *
+                     * @todo: The solution for ticket HOR-4602 should be restated in another ticket, for now this change was reverted
+                    */
+                    if ($oPMScript->executedOn() === $oPMScript::AFTER_ROUTING) {
+                        //Get the variables changed with the trigger
+                        $fieldsTrigger = getDiffBetweenModifiedVariables($appDataAfterTrigger, $fieldsCase);
+                        $collection = collect($fieldsCase);
+                        $merged = $collection->merge($fieldsTrigger);
+                        //Merge the appData with variables changed
+                        $fieldsCase = $merged->all();
+
+                        //We will be load the last appData because:
+                        //Other thread execution can be changed the variables
+                        $appUid = !empty($fieldsCase['APPLICATION']) ? $fieldsCase['APPLICATION'] : '';
+                        //Save the fields changed in the trigger
+                        if (!$varInAfterRouting && !empty($fieldsTrigger)) {
+                            $varInAfterRouting = true;
+                        }
+                    } else {
+                        $fieldsCase = $appDataAfterTrigger;
+                    }
+
+                    //Register the time execution
+                    $this->arrayTriggerExecutionTime[$trigger['TRI_UID']] = $oPMScript->scriptExecutionTime;
+                    //Register the message of execution
+                    $varTriggers = "&nbsp;- " . nl2br(htmlentities($trigger["TRI_TITLE"], ENT_QUOTES)) . "<br/>";
+                    $this->addTriggerMessageExecution($varTriggers);
                 }
             }
-            /*----------------------------------********---------------------------------*/
 
-            return $oPMScript->aFields;
-        } else {
-            return $aFields;
+            /**
+             * Get the caseTitle from the nextTask and update the caseTitle
+            */
+            if ($varInAfterRouting) {
+                $this->newRefreshCaseTitleAndDescription(
+                    $appUid,
+                    ['DEL_INDEX' => 0],
+                    $fieldsCase
+                );
+            }
+
+            /*----------------------------------********---------------------------------*/
         }
+
+        return $fieldsCase;
+    }
+
+    /**
+     * Find keys and values into the appData
+     *
+     * @param array $appData
+     * @param array $keyToSearch
+     *
+     * @return array
+    */
+    private function findKeysAndValues(array $appData, array $keyToSearch)
+    {
+        $keysAndValues = [];
+        foreach ($keyToSearch as $key) {
+            $keysAndValues[$key] = $appData[$key];
+        }
+
+        return $keysAndValues;
+    }
+
+    /**
+     * Review the code in the trigger if the feature is enable
+     *
+     * @param CodeScanner $cs
+     * @param string $code
+     * @param string $triTitle
+     *
+     * @return string
+     *
+    */
+    private function codeScannerReview(CodeScanner $cs, $code, $triTitle)
+    {
+        $foundDisabledCode = "";
+        /*----------------------------------********---------------------------------*/
+
+        return $foundDisabledCode;
     }
 
     /**
@@ -4066,14 +4204,15 @@ class Cases
      * @param string $appUid
      * @param integer $delIndex
      * @param string $usrUid
+     * @param bool $executeSameCase
      *
-     * @return boolean|string
+     * @see Ajax::cancelCase()
+     * @see cases_Ajax
+     * @see WsBase::cancelCase()
+     *
     */
-    public function cancelCase($appUid, $delIndex = null, $usrUid = null)
+    public function cancelCase($appUid, $delIndex = null, $usrUid = null, $executeSameCase = true)
     {
-        /** Execute a trigger when a case is cancelled */
-        $this->getExecuteTriggerProcess($appUid, 'CANCELED');
-
         $caseFields = $this->loadCase($appUid);
         $appStatusCurrent = $caseFields['APP_STATUS'];
 
@@ -4101,6 +4240,9 @@ class Cases
                 is_null($usrUid) ? '' : $usrUid
             );
             $delay->create($rowDelay);
+
+            /** Execute a trigger when a case is cancelled */
+            $this->getExecuteTriggerProcess($appUid, 'CANCELED', $executeSameCase);
 
             /*----------------------------------********---------------------------------*/
         }
@@ -4385,13 +4527,15 @@ class Cases
         $appDelay = new AppDelay();
         $appDelay->create($newData);
 
-        //update searchindex
+        //Update searchindex
         if ($this->appSolr != null) {
             $this->appSolr->updateApplicationSearchIndex($appUid);
         }
 
-        /*----------------------------------********---------------------------------*/
+        //Execute trigger
         $this->getExecuteTriggerProcess($appUid, 'REASSIGNED');
+
+        /*----------------------------------********---------------------------------*/
 
         //Delete record of the table LIST_UNASSIGNED
         $unassigned = new ListUnassigned();
@@ -5288,9 +5432,14 @@ class Cases
     }
 
     /**
+     * This function send an email for each task in $arrayTask if $to is definded
+     *
      * @param $dataLastEmail
      * @param $arrayData
      * @param $arrayTask
+     * @return void
+     *
+     * @see \Cases->sendNotifications()
      */
     public function sendMessage($dataLastEmail, $arrayData, $arrayTask)
     {
@@ -5374,7 +5523,7 @@ class Cases
                     '',
                     $dataLastEmail['applicationUid'],
                     $dataLastEmail['delIndex'],
-                    'DERIVATION',
+                    WsBase::MESSAGE_TYPE_TASK_NOTIFICATION,
                     $dataLastEmail['subject'],
                     $dataLastEmail['from'],
                     $to,
@@ -5384,7 +5533,7 @@ class Cases
                     '',
                     '',
                     'pending',
-                    '',
+                    1,
                     $dataLastEmail['msgError'],
                     true,
                     isset($arrayData['APP_NUMBER']) ? $arrayData['APP_NUMBER'] : 0,
@@ -6877,6 +7026,7 @@ class Cases
      * @param string $type
      * @param string $userUid
      * @return array|stdclass|string
+     *
      */
     public function getCaseNotes($applicationID, $type = 'array', $userUid = '')
     {
@@ -6889,13 +7039,16 @@ class Cases
         if (is_array($appNotes)) {
             switch ($type) {
                 case 'array':
-                    $response = array();
+                    $response = [];
                     foreach ($appNotes['array']['notes'] as $key => $value) {
                         $list = array();
                         $list['FULL_NAME'] = $value['USR_FIRSTNAME'] . " " . $value['USR_LASTNAME'];
                         foreach ($value as $keys => $value) {
                             if ($keys != 'USR_FIRSTNAME' && $keys != 'USR_LASTNAME' && $keys != 'USR_EMAIL') {
                                 $list[$keys] = $value;
+                            }
+                            if ($keys == 'NOTE_DATE') {
+                                $list[$keys] = DateTime::convertUtcToTimeZone($value);
                             }
                         }
                         $response[$key + 1] = $list;
@@ -6909,6 +7062,9 @@ class Cases
                             if ($keys != 'USR_FIRSTNAME' && $keys != 'USR_LASTNAME' && $keys != 'USR_EMAIL') {
                                 $response->$key->$keys = $value;
                             }
+                            if ($keys == 'NOTE_DATE') {
+                                $response->$key->$keys = DateTime::convertUtcToTimeZone($value);
+                            }
                         }
                     }
                     break;
@@ -6918,7 +7074,7 @@ class Cases
                         $response .= $value['USR_FIRSTNAME'] . " " .
                             $value['USR_LASTNAME'] . " " .
                             "(" . $value['USR_USERNAME'] . ")" .
-                            " " . $value['NOTE_CONTENT'] . " " . " (" . $value['NOTE_DATE'] . " ) " .
+                            " " . $value['NOTE_CONTENT'] . " " . " (" . DateTime::convertUtcToTimeZone($value['NOTE_DATE']) . " ) " .
                             " \n";
                     }
                     break;
@@ -6927,92 +7083,90 @@ class Cases
         return $response;
     }
 
-    public function getExecuteTriggerProcess($appUid, $action)
+    /**
+     * Execute triggers when committing an action in cases
+     *
+     * @param string $appUid
+     * @param string $action, can be [OPEN, CANCELED, PAUSED, REASSIGNED, DELETED, CREATE, UNPAUSE]
+     * @param bool $executeSameCase
+     *
+     * @return bool
+     *
+     * @see cases_Open.php
+     * @see cancelCase/Cases.php pauseCase/Cases.php reassignCase/Cases.php removeCase/Cases.php unpauseCase/Cases.php on
+     * @link https://wiki.processmaker.com/3.2/Triggers#When_action_cases
+     */
+    public function getExecuteTriggerProcess($appUid, $action, $executeSameCase = true)
     {
-        if ((!isset($appUid) && $appUid == '') || (!isset($action) && $action == '')) {
+        if (empty($appUid) || empty($action)) {
             return false;
         }
 
-        $aFields = $this->loadCase($appUid);
-        $proUid = $aFields['PRO_UID'];
-
         require_once("classes/model/Process.php");
+        $fieldsCase = $this->loadCase($appUid);
+        $proUid = $fieldsCase['PRO_UID'];
+
+        //Set some global system variables
+        $fieldsCase['APP_DATA']['APPLICATION'] = $appUid;
+        $fieldsCase['APP_DATA']['PROCESS'] = $proUid;
+
+        //Get the trigger configured in the process action
         $appProcess = new Process();
-        $arrayWebBotTrigger = $appProcess->getTriggerWebBotProcess($proUid, $action);
+        $triggersList = $appProcess->getTriggerWebBotProcess($proUid, $action);
 
-        if ($arrayWebBotTrigger['TRI_WEBBOT'] != false && $arrayWebBotTrigger['TRI_WEBBOT'] != '') {
-            global $oPMScript;
-            $aFields['APP_DATA']['APPLICATION'] = $appUid;
-            $aFields['APP_DATA']['PROCESS'] = $proUid;
-            $oPMScript = new PMScript();
-            $oPMScript->setDataTrigger($arrayWebBotTrigger);
-            $oPMScript->setFields($aFields['APP_DATA']);
-            $oPMScript->setScript($arrayWebBotTrigger['TRI_WEBBOT']);
-            $oPMScript->execute();
+        if (!empty($triggersList)){
+            //Execute the trigger defined in the process action
+            $fieldsCase['APP_DATA'] = $this->executeTriggerFromList(
+                $triggersList,
+                $fieldsCase['APP_DATA'],
+                'PROCESS_ACTION',
+                '',
+                '',
+                '',
+                $executeSameCase
+            );
 
-            $aFields['APP_DATA'] = array_merge($aFields['APP_DATA'], $oPMScript->aFields);
-            unset($aFields['APP_STATUS']);
-            unset($aFields['APP_PROC_STATUS']);
-            unset($aFields['APP_PROC_CODE']);
-            unset($aFields['APP_PIN']);
-            $this->updateCase($aFields['APP_UID'], $aFields);
+            //Update the case
+            $this->updateCase($appUid, $fieldsCase);
 
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
+    /**
+     * When the case is deleted will be removed the case from the report tables related
+     *
+     * @param string $applicationUid
+     *
+     * @return void
+     * @throws Exception
+    */
     public function reportTableDeleteRecord($applicationUid)
     {
-        $criteria1 = new Criteria("workflow");
-
-        //SELECT
-        $criteria1->addSelectColumn(ApplicationPeer::PRO_UID);
-
-        //FROM
-        //WHERE
-        $criteria1->add(ApplicationPeer::APP_UID, $applicationUid);
-
-        //QUERY
-        $rsCriteria1 = ApplicationPeer::doSelectRS($criteria1);
-        $rsCriteria1->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-        $rsCriteria1->next();
-        $row1 = $rsCriteria1->getRow();
-
-        $processUid = $row1["PRO_UID"];
-
-        $criteria2 = new Criteria("workflow");
-
-        //SELECT
-        $criteria2->addSelectColumn(AdditionalTablesPeer::ADD_TAB_NAME);
-
-        //FROM
-        //WHERE
-
-        $criteria2->add(AdditionalTablesPeer::PRO_UID, $processUid);
-
-        //QUERY
-        $rsCriteria2 = AdditionalTablesPeer::doSelectRS($criteria2);
-        $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-        $pmTable = new PmTable();
-
-        while ($rsCriteria2->next()) {
-            try {
-                $row2 = $rsCriteria2->getRow();
-                $tableName = $row2["ADD_TAB_NAME"];
-                $pmTableName = $pmTable->toCamelCase($tableName);
-
-                //DELETE
-                require_once(PATH_WORKSPACE . "classes" . PATH_SEP . "$pmTableName.php");
-
-                $criteria3 = new Criteria("workflow");
-
-                eval("\$criteria3->add(" . $pmTableName . "Peer::APP_UID, \$applicationUid);");
-                eval($pmTableName . "Peer::doDelete(\$criteria3);");
-            } catch (Exception $e) {
-                throw $e;
+        $app = new Application();
+        $applicationFields = $app->Load($applicationUid);
+        if (!empty($applicationFields["PRO_UID"])) {
+            $additionalTables = new AdditionalTables();
+            $listTables = $additionalTables->getReportTables($applicationFields["PRO_UID"]);
+            $pmTable = new PmTable();
+            foreach ($listTables as $row) {
+                try {
+                    $tableName = $row["ADD_TAB_NAME"];
+                    $pmTableName = $pmTable->toCamelCase($tableName);
+                    require_once(PATH_WORKSPACE . 'classes' . PATH_SEP . $pmTableName . '.php');
+                    $criteria = new Criteria("workflow");
+                    $pmTablePeer = $pmTableName . 'Peer';
+                    $criteria->add($pmTablePeer::APP_UID, $applicationUid);
+                    $pmTablePeer::doDelete($criteria);
+                } catch (Exception $e) {
+                    $context = Bootstrap::getDefaultContextLog();
+                    $context['appUid'] = $applicationUid;
+                    $context['proUid'] = $applicationFields["PRO_UID"];
+                    $context['reportTable'] = $tableName;
+                    Bootstrap::registerMonolog('DeleteCases', 400, $e->getMessage(), $context);
+                }
             }
         }
     }
@@ -7161,6 +7315,184 @@ class Cases
         $listInbox = new ListInbox();
         $caseDataRow["USR_UID"] = $targetUserId;
         $listInbox->create($caseDataRow);
+    }
+
+    /**
+     * Obtains the task information and the user delegated to the task for an specific case
+     *
+     * @param string $applicationUid
+     * @param string $processUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     * @throws Exception
+     *
+     */
+    public function getTasksInfoForACase($applicationUid, $processUid)
+    {
+        $conn = Propel::getConnection('workflow');
+
+        $sql = 'SELECT TASK.TAS_UID, TASK.TAS_TITLE, TASK.TAS_DESCRIPTION, TASK.TAS_START, 
+                TASK.TAS_TYPE, TASK.TAS_DERIVATION, TASK.TAS_ASSIGN_TYPE, APP.USR_UID, USERS.USR_USERNAME, 
+                USERS.USR_FIRSTNAME, USERS.USR_LASTNAME 
+                FROM TASK LEFT JOIN (SELECT * FROM APP_DELEGATION WHERE APP_DELEGATION.APP_UID = ?) AS APP 
+                ON TASK.TAS_UID = APP.TAS_UID LEFT JOIN USERS 
+                ON (SELECT USR_UID FROM APP_DELEGATION WHERE APP_UID = ? AND TAS_UID = TASK.TAS_UID ORDER BY DEL_INDEX DESC LIMIT 1) = USERS.USR_UID 
+                WHERE TASK.PRO_UID = ?';
+
+        $stmt = $conn->prepareStatement($sql);
+
+        $stmt->set(1, $applicationUid);
+        $stmt->set(2, $applicationUid);
+        $stmt->set(3, $processUid);
+
+        if (!$stmt->executeQuery()) {
+            throw Exception(G::LoadTranslation('ID_MSG_AJAX_FAILURE'));
+        }
+
+        return $stmt->getResultSet();
+    }
+
+    /**
+     * Get the task information when the task is a sub-process
+     *
+     * @param string $processUid
+     * @param string $tasUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     */
+    public function getTaskInfoForSubProcess($processUid, $tasUid)
+    {
+        $criteria = new Criteria("workflow");
+
+        $criteria->addSelectColumn(SubProcessPeer::PRO_UID);
+        $criteria->addSelectColumn(TaskPeer::TAS_TITLE);
+        $criteria->addSelectColumn(TaskPeer::TAS_DESCRIPTION);
+        $criteria->addJoin(SubProcessPeer::TAS_PARENT, TaskPeer::TAS_UID, Criteria::LEFT_JOIN);
+        $criteria->add(SubProcessPeer::PRO_PARENT, $processUid);
+        $criteria->add(SubProcessPeer::TAS_PARENT, $tasUid);
+
+        $rsCriteria = SubProcessPeer::doSelectRS($criteria);
+        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        return $rsCriteria;
+    }
+
+    /**
+     * Get the routes of a task
+     *
+     * @param string $processUid
+     * @param string $tasUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     */
+    public function getTaskRoutes($processUid, $tasUid)
+    {
+        $criteria = new Criteria("workflow");
+
+        $criteria->addAsColumn("ROU_NUMBER", RoutePeer::ROU_CASE);
+        $criteria->addSelectColumn(RoutePeer::ROU_TYPE);
+        $criteria->addSelectColumn(RoutePeer::ROU_CONDITION);
+        $criteria->addAsColumn("TAS_UID", RoutePeer::ROU_NEXT_TASK);
+        $criteria->add(RoutePeer::PRO_UID, $processUid, Criteria::EQUAL);
+        $criteria->add(RoutePeer::TAS_UID, $tasUid, Criteria::EQUAL);
+        $criteria->addAscendingOrderByColumn("ROU_NUMBER");
+
+        $rsCriteria = RoutePeer::doSelectRS($criteria);
+        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        return $rsCriteria;
+    }
+
+    /**
+     * Get the delegations of an specific case
+     *
+     * @param string $applicationUid
+     * @param string $tasUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     */
+    public function getCaseDelegations($applicationUid, $tasUid)
+    {
+        $criteria = new Criteria("workflow");
+
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_INDEX);
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_DELEGATE_DATE);
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_INIT_DATE);
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_TASK_DUE_DATE);
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_FINISH_DATE);
+        $criteria->addSelectColumn(UsersPeer::USR_UID);
+        $criteria->addSelectColumn(UsersPeer::USR_USERNAME);
+        $criteria->addSelectColumn(UsersPeer::USR_FIRSTNAME);
+        $criteria->addSelectColumn(UsersPeer::USR_LASTNAME);
+
+        $criteria->addJoin(AppDelegationPeer::USR_UID, UsersPeer::USR_UID, Criteria::LEFT_JOIN);
+
+        $criteria->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
+        $criteria->add(AppDelegationPeer::TAS_UID, $tasUid, Criteria::EQUAL);
+        $criteria->addAscendingOrderByColumn(AppDelegationPeer::DEL_INDEX);
+
+        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
+        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        return $rsCriteria;
+    }
+
+    /**
+     * Get the total amount and the minimun date of the Delegation table for an specific case
+     *
+     * @param string $applicationUid
+     * @param string $tasUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     */
+    public function getTotalAndMinDateForACase($applicationUid, $tasUid)
+    {
+        $criteria = new Criteria("workflow");
+
+        $criteria->addAsColumn("CANT", "COUNT(" . AppDelegationPeer::APP_UID . ")");
+        $criteria->addAsColumn("FINISH", "MIN(" . AppDelegationPeer::DEL_FINISH_DATE . ")");
+        $criteria->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
+        $criteria->add(AppDelegationPeer::TAS_UID, $tasUid, Criteria::EQUAL);
+
+        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
+        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        return $rsCriteria;
+    }
+
+    /**
+     * Get the DEL_FINISH_DATE of the Delegation table of an specific task in a case
+     *
+     * @param string $applicationUid
+     * @param string $tasUid
+     *
+     * @see /workflow/engine/src/ProcessMaker/BusinessModel/Cases::getTasks($applicationUid)
+     *
+     * @return ResultSet
+     */
+    public function getDelegationFinishDate($applicationUid, $tasUid)
+    {
+        $criteria = new Criteria("workflow");
+
+        $criteria->addSelectColumn(AppDelegationPeer::DEL_FINISH_DATE);
+        $criteria->add(AppDelegationPeer::APP_UID, $applicationUid, Criteria::EQUAL);
+        $criteria->add(AppDelegationPeer::TAS_UID, $tasUid, Criteria::EQUAL);
+        $criteria->add(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
+
+        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
+        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+
+        return $rsCriteria;
     }
 }
 

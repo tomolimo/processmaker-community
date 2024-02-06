@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Util\DateTime;
 
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
@@ -85,6 +86,7 @@ switch ($actionAjax) {
                 if ($respMess == 'BLOCK' || $respMess == '') {
                     $appMessageArray[$index]['APP_MSG_BODY'] = '';
                 }
+                $appMessageArray[$index]['APP_MSG_DATE'] = DateTime::convertUtcToTimeZone($appMessageArray[$index]['APP_MSG_DATE']);
                 $messageList[] = array_merge($appMessageArray[$index], ['MSGS_HISTORY' => $respMess]);
             }
         }

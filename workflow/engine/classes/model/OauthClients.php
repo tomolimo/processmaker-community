@@ -209,6 +209,19 @@ class OauthClients extends BaseOauthClients
         return array("numRecTotal" => $numRecTotal, "data" => $arrayData);
     }
 
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(OauthClientsPeer::USR_UID, $userUid);
+        $resultSet = OauthClientsPeer::doDelete($criteria);
+        return $resultSet;
+    }
 }
 
 // OauthClients

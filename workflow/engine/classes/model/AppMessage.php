@@ -160,7 +160,7 @@ class AppMessage extends BaseAppMessage
      * @param string $appMsgTemplate,
      * @param string $appMsgAttach,
      * @param string $appMsgStatus,
-     * @param string $appMsgShowMsg,
+     * @param integer $appMsgShowMsg,
      * @param string $appMsgError,
      * @param boolean $contentTypeIsHtml
      * @param integer $appNumber,
@@ -183,7 +183,7 @@ class AppMessage extends BaseAppMessage
         $appMsgTemplate = '',
         $appMsgAttach = '',
         $appMsgStatus = 'pending',
-        $appMsgShowMsg = '',
+        $appMsgShowMsg = 1,
         $appMsgError = '',
         $contentTypeIsHtml = true,
         $appNumber = 0,

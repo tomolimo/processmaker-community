@@ -182,8 +182,21 @@ PMDesigner.hideAllTinyEditorControls = function () {
 
 
 jQuery(document).ready(function ($) {
-    var setSaveButtonDisabled, s, sidebarCanvas, project, d, downloadLink, handlerExportNormal, handlerExportGranular,
-        handler, validatosr, help, option, menu, elem;
+    var setSaveButtonDisabled,
+        s,
+        sidebarCanvas,
+        project,
+        d,
+        downloadLink,
+        handlerExportNormal,
+        handlerExportGranular,
+        handler,
+        validatosr,
+        help,
+        option,
+        menu,
+        elem,
+        validatorLabel = "Validator".translate();
     /***************************************************
      * Defines the Process
      ***************************************************/
@@ -432,7 +445,7 @@ jQuery(document).ready(function ($) {
      * Add data tables
      */
     $('body').append('<div class="bpmn_validator"><div class="validator_header"></div><div class="validator_body"></div></div>')
-    $('.validator_header').append('<h2> Validator</h2>');
+    $('.validator_header').append('<h2> ' + validatorLabel + ' </h2>');
     $('.validator_header').append('<a class="validator-close" href="#"><span class="mafe-validator-close" title=""></span></a>');
     $('.validator_body').html('<table cellpadding="0" cellspacing="0" border="0" class="display" id="validator-table" width="100%"></table>');
     PMDesigner.validTable = $('#validator-table').DataTable({
@@ -1191,6 +1204,27 @@ PMDesigner.reloadDataTable = function () {
     $('.bpmn_validator').css('visibility', 'visible');
 };
 
+/**
+ * Escape XML characters method.
+ * There are only five:
+ * "   &quot;
+ * '   &apos;
+ * <   &lt;
+ * >   &gt;
+ * &   &amp;
+ * 
+ * @param {string} label
+ * @returns {string}
+ */
+PMDesigner.escapeXMLCharacters = function (label) {
+    return label
+            .replace(/&/g, "&amp;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+};
+
 DataDictionary = function () {
 };
 DataDictionary.prototype.getColor = function (value) {
@@ -1354,16 +1388,16 @@ ViewTaskInformation.prototype.clearRows = function () {
 ViewTaskInformation.prototype.showInformation = function () {
     var that = this;
     that.clearRows();
-    that.addRow('Title', that.shapeData.tas_title);
-    that.addRow('Description', that.shapeData.tas_description);
-    that.addRow('Status', that.dataDictionary.getStatus(that.shapeData.status));
-    that.addRow('Type', that.dataDictionary.getTasType(that.shapeData.tas_type));
-    that.addRow('Assign type', that.dataDictionary.getTasAssignType(that.shapeData.tas_assign_type));
-    that.addRow('Derivation', that.dataDictionary.getTasDerivation(that.shapeData.tas_derivation));
-    that.addRow('Start', that.shapeData.tas_start);
+    that.addRow('Title'.translate(), that.shapeData.tas_title);
+    that.addRow('Description'.translate(), that.shapeData.tas_description);
+    that.addRow('Status'.translate(), that.dataDictionary.getStatus(that.shapeData.status));
+    that.addRow('Type'.translate(), that.dataDictionary.getTasType(that.shapeData.tas_type));
+    that.addRow('Assign type'.translate(), that.dataDictionary.getTasAssignType(that.shapeData.tas_assign_type));
+    that.addRow('Routing'.translate(), that.dataDictionary.getTasDerivation(that.shapeData.tas_derivation));
+    that.addRow('Start'.translate(), that.shapeData.tas_start);
     that.addRowNewLine();
-    that.addRow('User Name', that.shapeData.usr_username);
-    that.addRow('User', that.shapeData.usr_firstname + ' ' + that.shapeData.usr_lastname);
+    that.addRow('Last User Name'.translate(), that.shapeData.usr_username);
+    that.addRow('Last User'.translate(), that.shapeData.usr_firstname + ' ' + that.shapeData.usr_lastname);
 
     that.windowAbstract.setTitle('Information'.translate() + ' ' + that.shapeData.tas_title);
     that.windowAbstract.open();

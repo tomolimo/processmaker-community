@@ -49,6 +49,7 @@ foreach ($rs as $key => $aRow) {
     $bAccessStep = false;
     if (trim($aRow->getStepCondition()) != '') {
         $oPMScript->setScript($aRow->getStepCondition());
+        $oPMScript->setExecutedOn(PMScript::CONDITION);
         $bAccessStep = $oPMScript->evaluate();
     } else {
         $bAccessStep = true;

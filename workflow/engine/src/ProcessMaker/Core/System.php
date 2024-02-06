@@ -66,7 +66,10 @@ class System
         'logging_level' => 'INFO',
         'smtp_timeout' => 20,
         'google_map_api_key' => '',
-        'google_map_signature' => ''
+        'google_map_signature' => '',
+        'logging_level' => 'INFO', 
+        'upload_attempts_limit_per_user' => '60,1',
+        'files_white_list' => ''
     );
 
     /**
@@ -1321,7 +1324,7 @@ class System
             $serverProtocol = ($serverProtocol != '') ? $serverProtocol : ((G::is_https()) ? 'https' : 'http');
 
             $serverHostname = $arraySystemConfiguration['server_hostname_requests_frontend'];
-            $serverHostname = ($serverHostname != '') ? $serverHostname : $_SERVER['HTTP_HOST'];
+            $serverHostname = ($serverHostname != '') ? $serverHostname : System::getServerHost();
 
             //Return
             return $serverProtocol . '://' . $serverHostname;
@@ -1522,6 +1525,109 @@ class System
         config(['connections.report.database' => $dbReportName]);
         config(['connections.report.username' => $dbReportUser]);
         config(['connections.report.password' => $dbReportPass]);
+    }
+
+    /**
+     * Get current server protocol.
+     * 
+     * @return string
+     */
+    public static function getServerProtocol()
+    {
+        $envProtocol = defined("REQUEST_SCHEME") && REQUEST_SCHEME === "https";
+        return G::is_https() || $envProtocol ? "https://" : "http://";
+    }
+
+    /**
+     * Get current server host
+     * 
+     * @return string
+     */
+    public static function getServerHostname()
+    {
+        $host = "";
+        if (!empty($_SERVER['SERVER_NAME'])) {
+            $host = $_SERVER['SERVER_NAME'];
+        } else if (defined('SERVER_NAME')) {
+            $host = SERVER_NAME;
+        }
+        return $host;
+    }
+
+    /**
+     * Get current server port.
+     * 
+     * @return string
+     */
+    public static function getServerPort()
+    {
+        $port = "";
+        if (isset($_SERVER['SERVER_PORT'])) {
+            $port = $_SERVER['SERVER_PORT'];
+        } else if (defined('SERVER_PORT')) {
+            $port = SERVER_PORT;
+        }
+        return $port;
+    }
+
+    /**
+     * Get current host (hostname + port).
+     * 
+     * @return string
+     */
+    public static function getServerHost()
+    {
+        $port = self::getServerPort();
+        if (!empty($port) && $port != '80' && $port != '443') {
+            return self::getServerHostname() . ':' . $port;
+        }
+        return self::getServerHostname();
+    }
+
+    /**
+     * Get current server protocol and host.
+     * 
+     * @return string
+     */
+    public static function getServerProtocolHost()
+    {
+        return self::getServerProtocol() . self::getServerHost();
+    }
+
+    /**
+     * Get server main path (protocol + host + port + workspace + lang + skin).
+     * 
+     * @return string
+     * @see ProcessMaker\BusinessModel\ProjectUser->projectWsUserCanStartTask()
+     * @see ProcessMaker\BusinessModel\ProjectUser->userLogin()
+     * @see ProcessMaker\BusinessModel\WebEntry->getWebEntryDataFromRecord()
+     * @see ProcessMaker\BusinessModel\WebEntryEvent->getGeneratedLink()
+     * @see ProcessMaker\Core\System\ActionsByEmailCoreClass->sendActionsByEmail()
+     * @see ProcessMaker\Core\System\webEntryProxy->checkCredentials()
+     * @see ProcessMaker\Core\System\webEntryProxy->save()
+     * @see workflow/engine/classes/ProcessMap.php ProcessMap->listNewWebEntry()
+     * @see workflow/engine/classes/ProcessMap.php ProcessMap->webEntry()
+     * @see workflow/engine/controllers/caseSchedulerProxy.php caseSchedulerProxy->checkCredentials()
+     * @see workflow/engine/methods/cases/cases_SchedulerValidateUser.php 
+     * @see workflow/engine/methods/processes/processes_webEntryGenerate.php 
+     * @see workflow/engine/methods/processes/processes_webEntryValidate.php
+     * @see workflow/engine/methods/processes/webEntry_Val_Assig.php
+     */
+    public static function getServerMainPath()
+    {
+        $config = self::getSystemConfiguration();
+        $skin = defined("SYS_SKIN") ? SYS_SKIN : $config['default_skin'];
+        return self::getServerProtocolHost() . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . $skin;
+    }
+
+    /**
+     * Get default domain mail.
+     * 
+     * @return string
+     */
+    public static function getDefaultMailDomain()
+    {
+        return !empty(self::getServerHostname()) ? self::getServerHostname() : 'processmaker.com';
     }
 }
 // end System class

@@ -64,6 +64,12 @@ class AppAssignSelfServiceValue extends BaseAppAssignSelfServiceValue
      *
      * @return void
      * @throws Exception
+     *
+     * @see \Cases->removeCase()
+     * @see \Cases->setCatchUser()
+     * @see \Cases->updateCase()
+     *
+     * @link https://wiki.processmaker.com/3.2/Tasks#Self_Service_Value_Based_Assignment
      */
     public function remove($applicationUid, $delIndex = 0)
     {
@@ -76,18 +82,7 @@ class AppAssignSelfServiceValue extends BaseAppAssignSelfServiceValue
                 $criteria->add(AppAssignSelfServiceValuePeer::DEL_INDEX, $delIndex, Criteria::EQUAL);
             }
 
-            $result = AppAssignSelfServiceValuePeer::doDelete($criteria);
-
-            // Delete related rows and missing relations, criteria don't execute delete with joins
-            $cnn = Propel::getConnection(AppAssignSelfServiceValueGroupPeer::DATABASE_NAME);
-            $cnn->begin();
-            $stmt = $cnn->createStatement();
-            $rs = $stmt->executeQuery("DELETE " . AppAssignSelfServiceValueGroupPeer::TABLE_NAME . "
-                                       FROM " . AppAssignSelfServiceValueGroupPeer::TABLE_NAME . "
-                                       LEFT JOIN " . AppAssignSelfServiceValuePeer::TABLE_NAME . "
-                                       ON (" . AppAssignSelfServiceValueGroupPeer::ID . " = " . AppAssignSelfServiceValuePeer::ID . ")
-                                       WHERE " . AppAssignSelfServiceValuePeer::ID . " IS NULL");
-            $cnn->commit();
+            AppAssignSelfServiceValuePeer::doDelete($criteria);
         } catch (Exception $e) {
             throw $e;
         }

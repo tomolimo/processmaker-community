@@ -8,6 +8,7 @@ use G;
 use ProcessMaker\Core\System;
 use SpoolRun;
 use TemplatePower;
+use WsBase;
 
 class EmailServer
 {
@@ -156,6 +157,7 @@ class EmailServer
      *
      * @return array, return array with result of send test mail
      * @throws Exception
+     * @see EmailServer->testConnectionByStep()
      */
     public function sendTestMail(array $arrayData)
     {
@@ -203,7 +205,7 @@ class EmailServer
                 '',
                 '',
                 0,
-                'TEST',
+                WsBase::MESSAGE_TYPE_TEST_EMAIL,
                 G::LoadTranslation("ID_MESS_TEST_SUBJECT"),
                 G::buildFrom($configuration),
                 $arrayData["TO"],

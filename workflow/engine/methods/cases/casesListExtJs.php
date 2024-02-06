@@ -137,7 +137,8 @@ $oHeadPublisher->addExtJsScript('app/main', true);
 $oHeadPublisher->addExtJsScript('cases/casesList', false); //adding a javascript file .js
 $oHeadPublisher->addContent('cases/casesListExtJs'); //adding a html file  .html.
 $oHeadPublisher->assign('FORMATS', $c->getFormats());
-$oHeadPublisher->assign('extJsViewState', $oHeadPublisher->getExtJsViewState());
+$oHeadPublisher->assign('userUid', $userUid);
+$oHeadPublisher->assign('extJsViewState', $oHeadPublisher->getExtJsViewState($userUid));
 $oHeadPublisher->assign('isIE', Bootstrap::isIE());
 $oHeadPublisher->assign('__OPEN_APPLICATION_UID__', $openApplicationUid);
 

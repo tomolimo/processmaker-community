@@ -17,7 +17,7 @@ is loaded and the alias is established, so that third party packages can use old
 
 ## Configuration in composer.json
 
-You can define multiple class alias map files in the extra section of the `omposer.json` like this:
+You can define multiple class alias map files in the extra section of the `composer.json` like this:
 
 ```
     "extra": {
@@ -36,6 +36,21 @@ Such a mapping file can look like this:
 <?php
 return array(
     'Tx_About_Controller_AboutController' => \TYPO3\CMS\About\Controller\AboutController::class,
+    'Tx_About_Domain_Model_Extension' => \TYPO3\CMS\About\Domain\Model\Extension::class,
+    'Tx_About_Domain_Repository_ExtensionRepository' => \TYPO3\CMS\About\Domain\Repository\ExtensionRepository::class,
+    'Tx_Aboutmodules_Controller_ModulesController' => \TYPO3\CMS\Aboutmodules\Controller\ModulesController::class,
+);
+```
+
+The '::class' constant is not available before PHP 5.5. Under a PHP before 5.5 the mapping file can look like this:
+
+```
+<?php
+return array(
+    'Tx_About_Controller_AboutController' => 'TYPO3\\CMS\\About\\Controller\\AboutController',
+    'Tx_About_Domain_Model_Extension' => 'TYPO3\\CMS\\About\\Domain\\Model\\Extension',
+    'Tx_About_Domain_Repository_ExtensionRepository' => 'TYPO3\\CMS\\About\\Domain\\Repository\\ExtensionRepository',
+    'Tx_Aboutmodules_Controller_ModulesController' => 'TYPO3\\CMS\\Aboutmodules\\Controller\\ModulesController',
 );
 ```
 

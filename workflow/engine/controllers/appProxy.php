@@ -1,4 +1,6 @@
 <?php
+use ProcessMaker\Util\DateTime;
+
 if (!isset($_SESSION['USER_LOGGED'])) {
     $response = new stdclass();
     $response->message = G::LoadTranslation('ID_LOGIN_AGAIN');
@@ -23,15 +25,22 @@ class AppProxy extends HttpProxyController
      * @param int $httpData->start
      * @param int $httpData->limit
      * @param string $httpData->appUid (optionalif it is not passed try use $_SESSION['APPLICATION'])
-     * @return array containg the case notes
+     * @return array containing the case notes
+     *
+     * @see workflow/engine/methods/cases/open.php
+     * @see workflow/engine/methods/cases/casesListExtJs.php
+     * @see workflow/engine/methods/cases/casesConsolidatedListExtJs.php
+     *
+     * @link https://wiki.processmaker.com/3.2/Case_Notes
+     * @link https://wiki.processmaker.com/3.2/Cases/Case_Notes
      */
-    function getNotesList ($httpData)
+    function getNotesList($httpData)
     {
         if (!isset($_SESSION['USER_LOGGED'])) {
             $response = new stdclass();
             $response->message = G::LoadTranslation('ID_LOGIN_AGAIN');
             $response->lostSession = true;
-            print G::json_encode( $response );
+            print G::json_encode($response);
             die();
         }
 
@@ -66,8 +75,7 @@ class AppProxy extends HttpProxyController
             $httpData->pro = $caseLoad['PRO_UID'];
         }
 
-        if(!isset($httpData->pro) || empty($httpData->pro) )
-        {
+        if (!isset($httpData->pro) || empty($httpData->pro)) {
             $proUid = $_SESSION['PROCESS'];
         } else {
             $proUid = $httpData->pro;
@@ -80,18 +88,27 @@ class AppProxy extends HttpProxyController
         }
         $usrUid = $_SESSION['USER_LOGGED'];
 
-        $respView  = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, "VIEW",  $delIndex);
+        $respView = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, "VIEW", $delIndex);
         $respBlock = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, "BLOCK", $delIndex);
 
         if ($respView['CASES_NOTES'] == 0 && $respBlock['CASES_NOTES'] == 0) {
-            return array ('totalCount' => 0,'notes' => array (),'noPerms' => 1
-            );
+            return [
+                'totalCount' => 0,
+                'notes' => [],
+                'noPerms' => 1
+            ];
         }
 
         $usrUid = isset($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : "";
         $appNotes = new AppNotes();
         $response = $appNotes->getNotesList($appUid, '', $httpData->start, $httpData->limit);
         $response = AppNotes::applyHtmlentitiesInNotes($response);
+
+        $iterator = 0;
+        foreach ($response['array']['notes'] as $value) {
+            $response ['array']['notes'][$iterator]['NOTE_DATE'] = DateTime::convertUtcToTimeZone($value['NOTE_DATE']);
+            $iterator++;
+        }
 
         require_once("classes/model/Application.php");
         $oApplication = new Application();

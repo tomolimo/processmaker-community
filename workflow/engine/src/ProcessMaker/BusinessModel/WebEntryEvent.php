@@ -2,30 +2,30 @@
 
 namespace ProcessMaker\BusinessModel;
 
-use WebEntryEventPeer;
-use ProcessPeer;
+use BasePeer;
+use BpmnFlowPeer;
+use Content;
 use Criteria;
-use WebEntryPeer;
 use Exception;
 use G;
-use BpmnFlowPeer;
 use ProcessMaker\BusinessModel\Process as BusinessModelProcess;
 use ProcessMaker\BusinessModel\Validator as BusinessModelValidator;
+use ProcessMaker\Core\System;
 use ProcessMaker\Project\Workflow;
-use WebEntryEvent as ModelWebEntryEvent;
 use ProcessMaker\Util\Common;
-use Task as ModelTask;
+use ProcessPeer;
 use Propel;
-use BasePeer;
-use Content;
-use Tasks;
-use Step;
-use TaskPeer;
-use StepPeer;
 use ResultSet;
+use Step;
+use StepPeer;
+use Task as ModelTask;
+use TaskPeer;
+use Tasks;
 use TaskUser;
 use TaskUserPeer;
-
+use WebEntryEvent as ModelWebEntryEvent;
+use WebEntryEventPeer;
+use WebEntryPeer;
 
 class WebEntryEvent
 {
@@ -1394,8 +1394,7 @@ class WebEntryEvent
 
             return $url . "/" . $weData;
         } else {
-            $url = $http . $_SERVER["HTTP_HOST"] . "/sys" . config("system.workspace") . "/" . SYS_LANG . "/" . SYS_SKIN . "/" . $prj_uid;
-
+            $url = System::getServerMainPath() . "/" . $prj_uid;
             return $url . "/" . $weData;
         }
     }

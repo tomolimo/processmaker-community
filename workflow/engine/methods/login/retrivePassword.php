@@ -68,7 +68,7 @@ if ($userExists === true && $userData['USR_EMAIL'] != '' && $userData['USR_EMAIL
         '',
         '',
         0,
-        'TEST',
+        WsBase::MESSAGE_TYPE_RETRIEVE_PASSWORD,
         $subject,
         $from,
         $data['USR_EMAIL'],

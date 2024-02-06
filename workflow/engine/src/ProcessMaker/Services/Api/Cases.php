@@ -2,19 +2,18 @@
 namespace ProcessMaker\Services\Api;
 
 
-use AppDocument;
 use AppDelegation;
 use AppDelegationPeer;
+use AppDocument;
 use Criteria;
 use Exception;
 use ListUnassigned;
 use Luracast\Restler\RestException;
 use ProcessMaker\BusinessModel\Cases as BmCases;
 use ProcessMaker\BusinessModel\User as BmUser;
-use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
-use ProcessMaker\Util\DateTime;
-use ProcessMaker\BusinessModel\Validator;
 use ProcessMaker\Services\Api;
+use ProcessMaker\Util\DateTime;
+use RBAC;
 
 
 /**
@@ -40,6 +39,28 @@ class Cases extends Api
         "note_date"
     ];
 
+    /**
+     * Constructor of the class
+     * We will to define the $RBAC definition
+     */
+    public function __construct()
+    {
+        global $RBAC;
+        if (!isset($RBAC)) {
+            $RBAC = RBAC::getSingleton(PATH_DATA, session_id());
+            $RBAC->sSystem = 'PROCESSMAKER';
+            $RBAC->initRBAC();
+            $RBAC->loadUserRolePermission($RBAC->sSystem, $this->getUserId());
+        }
+    }
+
+    /**
+     * This function adds customized validations for allow the access to functions
+     * If does not have access will be return 401
+     *
+     * @return boolean
+     * @throws Exception
+    */
     public function __isAllowed()
     {
         try {
@@ -657,10 +678,11 @@ class Cases extends Api
         $search = ''
     ) {
         try {
-            $dataList['userId'] = $this->getUserId();
+            global $RBAC;
+            //If the user does not have PM_ALLCASES we will be able to search for cases in which the user has participated
+            $dataList['userId'] = ($RBAC->userCanAccess('PM_ALLCASES') == 1)? '' : $this->getUserId();
             $dataList['action'] = 'search';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -713,10 +735,11 @@ class Cases extends Api
         $search = ''
     ) {
         try {
-            $dataList['userId'] = $this->getUserId();
+            global $RBAC;
+            //If the user does not have PM_ALLCASES we will be able to search for cases in which the user has participated
+            $dataList['userId'] = ($RBAC->userCanAccess('PM_ALLCASES') == 1)? '' : $this->getUserId();
             $dataList['action'] = 'search';
             $dataList['paged']  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -1370,4 +1393,65 @@ class Cases extends Api
         }
     }
 
+    /**
+     * Upload attachment related to the case, it does not need docUid
+     * Upload document related to the case, it does need docUid
+     *
+     * @url POST /:app_uid/upload/:var_name
+     * @url POST /:app_uid/upload/:var_name/:doc_uid
+     * @url POST /:app_uid/upload/:var_name/:doc_uid/:app_doc_uid
+     *
+     * @param string $app_uid
+     * @param string $var_name
+     * @param string $doc_uid
+     * @param string $app_doc_uid
+     *
+     * @return array
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function uploadDocumentToCase($app_uid, $var_name, $doc_uid = '-1', $app_doc_uid = null)
+    {
+        try {
+            $userUid = $this->getUserId();
+            $case = new BmCases();
+            $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid);
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
+        } catch (Exception $e) {
+            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Return information for sub process cases
+     *
+     * @url GET /:app_uid/sub-process-cases
+     *
+     * @param string $app_uid {@min 32}{@max 32}
+     *
+     * @return array
+     * @throws Exception
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function doGetCaseSubProcess($app_uid)
+    {
+        try {
+            $case = new BmCases();
+            $case->setFormatFieldNameInUppercase(false);
+
+            $caseInfo = $case->getCaseInfoSubProcess($app_uid, $this->getUserId());
+            $caseInfo = DateTime::convertUtcToIso8601($caseInfo, $this->arrayFieldIso8601);
+
+            return $caseInfo;
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
 }

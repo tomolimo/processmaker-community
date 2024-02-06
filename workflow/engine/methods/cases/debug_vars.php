@@ -81,8 +81,8 @@ switch ($request) {
 
         $systemConstants = G::getSystemConstants();
         //Add missing items
-        $systemConstants['PIN'] = $aVars['PIN'];
-        $systemConstants['APP_NUMBER'] = $aVars['APP_NUMBER'];
+        $systemConstants['PIN'] = isset($aVars['PIN']) ? $aVars['PIN'] : '';
+        $systemConstants['APP_NUMBER'] = isset($aVars['APP_NUMBER']) ? $aVars['APP_NUMBER'] : '';
         //when a case with dynaform is started there are no changed variables, this event is validated
         if (isset($aVars['__VAR_CHANGED__'])) {
             $systemConstants['__VAR_CHANGED__'] = $aVars['__VAR_CHANGED__'];

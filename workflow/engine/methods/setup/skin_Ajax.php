@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 if (! isset( $_REQUEST['action'] )) {
     $res['success'] = false;
@@ -199,6 +200,9 @@ function newSkin ($baseSkin = 'classic')
 function importSkin ()
 {
     try {
+        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+            throw new Exception($validator->getMessage());
+        });
         if (! isset( $_FILES['uploadedFile'] )) {
             throw (new Exception( G::LoadTranslation( 'ID_SKIN_FILE_REQUIRED' ) ));
         }

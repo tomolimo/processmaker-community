@@ -26,11 +26,15 @@
 
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 global $RBAC;
 $RBAC->requirePermissions('PM_SETUP_ADVANCE');
 
 try {
+    ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        throw new Exception($validator->getMessage());
+    });
     //load the variables
     if (!isset($_FILES['form']['error']['PLUGIN_FILENAME']) || $_FILES['form']['error']['PLUGIN_FILENAME'] == 1) {
         throw (new Exception(G::loadTranslation('ID_ERROR_UPLOADING_PLUGIN_FILENAME')));

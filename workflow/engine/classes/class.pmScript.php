@@ -35,11 +35,51 @@ if (file_exists($dir)) {
 /**
  * PMScript - PMScript class
  *
- * @copyright 2007 COLOSA
  * @package workflow.engine.ProcessMaker
  */
 class PMScript
 {
+    /**
+     * Constants to identify the execution origin
+     */
+    const UNDEFINED_ORIGIN = 'executed.undefined.origin';
+
+    const BEFORE_DYNAFORM = 'executed.before.dynaform';
+
+    const AFTER_DYNAFORM = 'executed.after.dynaform';
+
+    const BEFORE_INPUT_DOCUMENT = 'executed.before.input';
+
+    const AFTER_INPUT_DOCUMENT = 'executed.after.input';
+
+    const BEFORE_OUTPUT_DOCUMENT = 'executed.before.output';
+
+    const AFTER_OUTPUT_DOCUMENT = 'executed.after.output';
+
+    const BEFORE_EXTERNAL_STEP = 'executed.before.external';
+
+    const AFTER_EXTERNAL_STEP = 'executed.after.external';
+
+    const BEFORE_ASSIGNMENT = 'executed.before.assignment';
+
+    const BEFORE_ROUTING = 'executed.before.routing';
+
+    const AFTER_ROUTING = 'executed.after.routing';
+
+    const CONDITION = 'executed.condition';
+
+    const SCRIPT_TASK = 'executed.script.task';
+
+    const CLASSIC_PROCESS_EVENTS = 'executed.classic.process.events';
+
+    const SELF_SERVICE_TIMEOUT = 'executed.selfservice.timeout';
+
+    const ISOLATED_TRIGGER = 'executed.isolated.trigger';
+
+    const PROCESS_ACTION = 'executed.process.action';
+
+    const EVALUATE_FUNCTION = 'executed.evaluate.function';
+
     /**
      * @var array $dataTrigger
      */
@@ -73,13 +113,45 @@ class PMScript
     public $sRegexp = '/\@(?:([\@\%\#\?\$\=\&])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*(?:[\\\\][\w\W])?)*)\))((?:\s*\[[\'"]?\w+[\'"]?\])+|\-\>([a-zA-Z\_]\w*))?/';
 
     /**
+     * Execution origin, by default is undefined
+     */
+    protected $executedOn = self::UNDEFINED_ORIGIN;
+
+    /**
+     * Variables changed in the trigger execution
+    */
+    private $varsChanged = [];
+
+    /**
      * Constructor of the class PMScript
      *
      * @return void
      */
-    public function PMScript()
+    public function __construct()
     {
         $this->aFields['__ERROR__'] = 'none';
+    }
+
+    /**
+     * Set the fields changed in the trigger execution
+     *
+     * @param array $v
+     *
+     * @return void
+     */
+    public function setVarsChanged(array $v)
+    {
+        $this->varsChanged = $v;
+    }
+
+    /**
+     * Get the fields changed in the trigger execution
+     *
+     * @return array
+     */
+    public function getVarsChanged()
+    {
+        return $this->varsChanged;
     }
 
     /**
@@ -162,13 +234,84 @@ class PMScript
     }
 
     /**
+     * Set the execution origin
+     *
+     * @param string $executedOn
+     */
+    public function setExecutedOn($executedOn)
+    {
+        $this->executedOn = $executedOn;
+    }
+
+    /**
+     * Get the execution origin
+     *
+     * @return string
+     */
+    public function executedOn() {
+        return $this->executedOn;
+    }
+
+    /**
+     * Helper to get the execution origin from an step
+     *
+     * @param string $stepType
+     * @param mixed $stepUidObj
+     * @param string $triggerType
+     *
+     * @return string
+     */
+    public function getExecutionOriginForAStep($stepType, $stepUidObj, $triggerType)
+    {
+        switch ($stepType) {
+            case 'DYNAFORM':
+                $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_DYNAFORM : $triggerType === 'AFTER' ?
+                    self::AFTER_DYNAFORM : self::UNDEFINED_ORIGIN;
+                break;
+            case 'INPUT_DOCUMENT':
+                $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_INPUT_DOCUMENT : $triggerType === 'AFTER' ?
+                    self::AFTER_INPUT_DOCUMENT : self::UNDEFINED_ORIGIN;
+                break;
+            case 'OUTPUT_DOCUMENT':
+                $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_OUTPUT_DOCUMENT : $triggerType === 'AFTER' ?
+                    self::AFTER_OUTPUT_DOCUMENT : self::UNDEFINED_ORIGIN;
+                break;
+            case 'EXTERNAL':
+                $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_EXTERNAL_STEP : $triggerType === 'AFTER' ?
+                    self::AFTER_EXTERNAL_STEP : self::UNDEFINED_ORIGIN;
+                break;
+            case 'ASSIGN_TASK':
+                $stepUidObj = (int)$stepUidObj;
+                if ($stepUidObj === -1) {
+                    $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_ASSIGNMENT : self::UNDEFINED_ORIGIN;
+                } elseif ($stepUidObj === -2) {
+                    $executedOn = $triggerType === 'BEFORE' ? self::BEFORE_ROUTING : ($triggerType === 'AFTER' ?
+                        self::AFTER_ROUTING : self::UNDEFINED_ORIGIN);
+                } else {
+                    $executedOn = self::UNDEFINED_ORIGIN;
+                }
+                break;
+            case 'PROCESS_ACTION':
+                $executedOn = self::PROCESS_ACTION;
+                break;
+            case 'SCRIPT_TASK':
+                $executedOn = self::SCRIPT_TASK;
+                break;
+            default:
+                $executedOn = self::UNDEFINED_ORIGIN;
+                break;
+        }
+        return $executedOn;
+    }
+
+    /**
      * @param $sScript
      * @param $sCode
      */
     public function executeAndCatchErrors($sScript, $sCode)
     {
         ob_start('handleFatalErrors');
-        set_error_handler('handleErrors');
+        set_error_handler('handleErrors', ini_get('error_reporting'));
         $_SESSION['_CODE_'] = $sCode;
         $_SESSION['_DATA_TRIGGER_'] = $this->dataTrigger;
         $_SESSION['_DATA_TRIGGER_']['_EXECUTION_TIME_'] = microtime(true);
@@ -328,7 +471,9 @@ class PMScript
         $sScript = "try {\n" . $sScript . "\n} catch (Exception \$oException) {\n " . " \$this->aFields['__ERROR__'] = utf8_encode(\$oException->getMessage());\n}";
 
         $this->executeAndCatchErrors($sScript, $this->sScript);
-
+        //We get the affected_fields only if has the prefix
+        //@see https://wiki.processmaker.com/3.2/Triggers#Typing_rules_for_Case_Variables
+        $this->setVarsChanged($this->affected_fields);
         $this->aFields["__VAR_CHANGED__"] = implode(",", $this->affected_fields);
         for ($i = 0; $i < count($this->affected_fields); $i ++) {
             $_SESSION['TRIGGER_DEBUG']['DATA'][] = Array('key' => $this->affected_fields[$i], 'value' => isset($this->aFields[$this->affected_fields[$i]]) ? $this->aFields[$this->affected_fields[$i]] : ''

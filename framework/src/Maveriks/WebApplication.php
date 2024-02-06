@@ -3,14 +3,17 @@
 namespace Maveriks;
 
 use Bootstrap;
+use Exception;
+use G;
+use Illuminate\Foundation\Http\Kernel;
+use Luracast\Restler\Format\UploadFormat;
+use Luracast\Restler\RestException;
 use Maveriks\Util;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services;
 use ProcessMaker\Services\Api;
-use Luracast\Restler\RestException;
-use Illuminate\Foundation\Http\Kernel;
-use G;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 /**
  * Web application bootstrap
@@ -252,8 +255,6 @@ class WebApplication
      */
     protected function initRest($uri, $version, $multipart = false)
     {
-        require_once $this->rootDir . "/framework/src/Maveriks/Extension/Restler/UploadFormat.php";
-
         // $servicesDir contains directory where Services Classes are allocated
         $servicesDir = $this->workflowDir . 'engine' . DS . 'src' . DS . 'ProcessMaker' . DS . 'Services' . DS;
         // $apiDir - contains directory to scan classes and add them to Restler
@@ -330,6 +331,17 @@ class WebApplication
         Services\OAuth2\Server::setPmClientId($pmOauthClientId);
 
         $this->rest->setOverridingFormats('JsonFormat', 'UploadFormat');
+
+        UploadFormat::$customValidationFunction = function($target) {
+            $validator = ValidationUploadedFiles::getValidationUploadedFiles()->runRules([
+                'filename' => $target['name'],
+                'path' => $target['tmp_name']
+            ]);
+            if ($validator->fails()) {
+                throw new RestException($validator->getStatus(), $validator->getMessage());
+            }
+            return true;
+        };
 
         // scan all api directory to find api classes
         $classesList = Util\Common::rglob($apiDir . "/*");
@@ -415,6 +427,16 @@ class WebApplication
         );
     }
 
+    /**
+     * Define constants, setup configuration and initialize Laravel
+     *
+     * @param string $workspace
+     * @return bool
+     * @throws Exception
+     *
+     * @see run()
+     * @see workflow/engine/bin/cli.php
+     */
     public function loadEnvironment($workspace = "")
     {
         define("PATH_SEP", DIRECTORY_SEPARATOR);
@@ -456,24 +478,11 @@ class WebApplication
         define("PATH_CONTROLLERS", PATH_CORE . "controllers" . PATH_SEP);
         define("PATH_SERVICES_REST", PATH_CORE . "services" . PATH_SEP . "rest" . PATH_SEP);
 
-        G::defineConstants();
-        $arraySystemConfiguration = System::getSystemConfiguration();
-
-        ini_set('date.timezone', $arraySystemConfiguration['time_zone']); //Set Time Zone
-        // set include path
-        set_include_path(
-                PATH_CORE . PATH_SEPARATOR .
-                PATH_THIRDPARTY . PATH_SEPARATOR .
-                PATH_THIRDPARTY . "pear" . PATH_SEPARATOR .
-                PATH_RBAC_CORE . PATH_SEPARATOR .
-                get_include_path()
-        );
-
         /*
          * Setting Up Workspace
          */
         if (!file_exists(FILE_PATHS_INSTALLED)) {
-            throw new \Exception("Can't locate system file: " . FILE_PATHS_INSTALLED);
+            throw new Exception("Can't locate system file: " . FILE_PATHS_INSTALLED);
         }
 
         // include the server installed configuration
@@ -485,17 +494,58 @@ class WebApplication
         define("PATH_TEMPORAL", PATH_C . "dynEditor/");
         define("PATH_DB", PATH_DATA . "sites" . PATH_SEP);
 
+        // set include path
+        set_include_path(
+            PATH_CORE . PATH_SEPARATOR .
+            PATH_THIRDPARTY . PATH_SEPARATOR .
+            PATH_THIRDPARTY . "pear" . PATH_SEPARATOR .
+            PATH_RBAC_CORE . PATH_SEPARATOR .
+            get_include_path()
+        );
+
+        G::defineConstants();
+
+        $arraySystemConfiguration = System::getSystemConfiguration('', '', $workspace);
+
+        //In community version the default value is 0
+        $_SESSION['__SYSTEM_UTC_TIME_ZONE__'] = (int)($arraySystemConfiguration['system_utc_time_zone']) == 1;
+
+        define('DEBUG_SQL_LOG', $arraySystemConfiguration['debug_sql']);
+        define('DEBUG_TIME_LOG', $arraySystemConfiguration['debug_time']);
+        define('DEBUG_CALENDAR_LOG', $arraySystemConfiguration['debug_calendar']);
+        define('MEMCACHED_ENABLED', $arraySystemConfiguration['memcached']);
+        define('MEMCACHED_SERVER', $arraySystemConfiguration['memcached_server']);
+        define('SYS_SKIN', $arraySystemConfiguration['default_skin']);
+        define('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION', $arraySystemConfiguration['disable_download_documents_session_validation']);
+        define('TIME_ZONE',
+            (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $arraySystemConfiguration['time_zone']);
+
         // Change storage path
         app()->useStoragePath(realpath(PATH_DATA));
         app()->make(Kernel::class)->bootstrap();
         restore_error_handler();
         error_reporting(error_reporting() & ~E_STRICT & ~E_DEPRECATED);
 
+        //Overwrite with the Processmaker env.ini configuration used in production environments
+        //@todo: move env.ini configuration to .env
+        ini_set('display_errors', $arraySystemConfiguration['display_errors']);
+        ini_set('error_reporting', $arraySystemConfiguration['error_reporting']);
+        ini_set('short_open_tag', 'On'); //??
+        ini_set('default_charset', 'UTF-8'); //??
+        ini_set('memory_limit', $arraySystemConfiguration['memory_limit']);
+        ini_set('soap.wsdl_cache_enabled', $arraySystemConfiguration['wsdl_cache']);
+        ini_set('date.timezone', TIME_ZONE); //Set Time Zone
+
+        date_default_timezone_set(TIME_ZONE);
+
+        config(['app.timezone' => TIME_ZONE]);
+
         Bootstrap::setLanguage();
 
         Bootstrap::LoadTranslationObject((defined("SYS_LANG")) ? SYS_LANG : "en");
 
         if (empty($workspace)) {
+            // If the workspace is empty the function should be return the control to the previous file
             return true;
         }
 
@@ -508,24 +558,6 @@ class WebApplication
 
             exit(0);
         }
-
-        $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
-
-        //Do not change any of these settings directly, use env.ini instead
-        ini_set('display_errors', $arraySystemConfiguration['display_errors']);
-        ini_set('error_reporting', $arraySystemConfiguration['error_reporting']);
-        ini_set('short_open_tag', 'On'); //??
-        ini_set('default_charset', 'UTF-8'); //??
-        ini_set('memory_limit', $arraySystemConfiguration['memory_limit']);
-        ini_set('soap.wsdl_cache_enabled', $arraySystemConfiguration['wsdl_cache']);
-
-        define('DEBUG_SQL_LOG', $arraySystemConfiguration['debug_sql']);
-        define('DEBUG_TIME_LOG', $arraySystemConfiguration['debug_time']);
-        define('DEBUG_CALENDAR_LOG', $arraySystemConfiguration['debug_calendar']);
-        define('MEMCACHED_ENABLED', $arraySystemConfiguration['memcached']);
-        define('MEMCACHED_SERVER', $arraySystemConfiguration['memcached_server']);
-        define('SYS_SKIN', $arraySystemConfiguration['default_skin']);
-        define('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION', $arraySystemConfiguration['disable_download_documents_session_validation']);
 
         require_once(PATH_DB . config("system.workspace") . "/db.php");
 
@@ -580,13 +612,6 @@ class WebApplication
 
         \Propel::init(PATH_CONFIG . "databases.php");
 
-        //Set Time Zone
-        /*----------------------------------********---------------------------------*/
-
-        ini_set('date.timezone', (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $arraySystemConfiguration['time_zone']); //Set Time Zone
-
-        define('TIME_ZONE', ini_get('date.timezone'));
-
         $oPluginRegistry = PluginRegistry::loadSingleton();
         $attributes = $oPluginRegistry->getAttributes();
         Bootstrap::LoadTranslationPlugins(defined('SYS_LANG') ? SYS_LANG : "en", $attributes);
@@ -611,7 +636,7 @@ class WebApplication
             }
 
             return (isset($arrayConfig["api"]["version"]))? $arrayConfig["api"]["version"] : "1.0";
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }

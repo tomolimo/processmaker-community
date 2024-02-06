@@ -373,56 +373,32 @@ switch ($_POST['action']) {
         break;
     case 'testPassword':
         require_once 'classes/model/UsersProperties.php';
-        $oUserProperty = new UsersProperties();
+        $userProperty = new UsersProperties();
 
-        $aFields = array();
+        $fields = [];
         $color = '';
         $img = '';
         $dateNow = date('Y-m-d H:i:s');
-        $aErrors = $oUserProperty->validatePassword($_POST['PASSWORD_TEXT'], $dateNow, $dateNow);
+        $errorInPassword = $userProperty->validatePassword($_POST['PASSWORD_TEXT'], $dateNow, 0);
 
-        if (!empty($aErrors)) {
+        if (!empty($errorInPassword)) {
             $img = '/images/delete.png';
             $color = 'red';
             if (!defined('NO_DISPLAY_USERNAME')) {
                 define('NO_DISPLAY_USERNAME', 1);
             }
-            $aFields = array();
-            $aFields['DESCRIPTION'] = G::LoadTranslation('ID_POLICY_ALERT') . ':<br />';
-
-            foreach ($aErrors as $sError) {
-                switch ($sError) {
-                    case 'ID_PPP_MINIMUM_LENGTH':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ': ' . PPP_MINIMUM_LENGTH . '<br />';
-                        $aFields[substr($sError, 3)] = PPP_MINIMUM_LENGTH;
-                        break;
-                    case 'ID_PPP_MAXIMUM_LENGTH':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ': ' . PPP_MAXIMUM_LENGTH . '<br />';
-                        $aFields[substr($sError, 3)] = PPP_MAXIMUM_LENGTH;
-                        break;
-                    case 'ID_PPP_EXPIRATION_IN':
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . ' ' . PPP_EXPIRATION_IN . ' ' . G::LoadTranslation('ID_DAYS') . '<br />';
-                        $aFields[substr($sError, 3)] = PPP_EXPIRATION_IN;
-                        break;
-                    default:
-                        $aFields['DESCRIPTION'] .= ' - ' . G::LoadTranslation($sError) . '<br />';
-                        $aFields[substr($sError, 3)] = 1;
-                        break;
-                }
-            }
-
-            $aFields['DESCRIPTION'] .= G::LoadTranslation('ID_PLEASE_CHANGE_PASSWORD_POLICY') . '</span>';
-            $aFields['STATUS'] = false;
+            $fields = $userProperty->getMessageValidatePassword($errorInPassword);
+            $fields['STATUS'] = false;
         } else {
             $color = 'green';
             $img = '/images/dialog-ok-apply.png';
-            $aFields['DESCRIPTION'] = G::LoadTranslation('ID_PASSWORD_COMPLIES_POLICIES') . '</span>';
-            $aFields['STATUS'] = true;
+            $fields['DESCRIPTION'] = G::LoadTranslation('ID_PASSWORD_COMPLIES_POLICIES') . '</span>';
+            $fields['STATUS'] = true;
         }
         $span = '<span style="color: ' . $color . '; font: 9px tahoma,arial,helvetica,sans-serif;">';
         $gif = '<img width="13" height="13" border="0" src="' . $img . '">';
-        $aFields['DESCRIPTION'] = $span . $gif . $aFields['DESCRIPTION'];
-        print(G::json_encode($aFields));
+        $fields['DESCRIPTION'] = $span . $gif . $fields['DESCRIPTION'];
+        print(G::json_encode($fields));
         break;
     case 'testUsername':
         require_once 'classes/model/Users.php';

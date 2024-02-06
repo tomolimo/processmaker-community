@@ -1,8 +1,8 @@
-INSERT INTO USERS (USR_UID,USR_USERNAME,USR_PASSWORD,USR_FIRSTNAME,USR_LASTNAME,USR_EMAIL,USR_DUE_DATE,USR_CREATE_DATE,USR_UPDATE_DATE,USR_STATUS,USR_COUNTRY,USR_CITY,USR_LOCATION,USR_ADDRESS,USR_PHONE,USR_FAX,USR_CELLULAR,USR_ZIP_CODE,DEP_UID,USR_POSITION,USR_RESUME,USR_BIRTHDAY,USR_ROLE,USR_REPORTS_TO,USR_REPLACED_BY ) VALUES
+INSERT INTO USERS (USR_UID,USR_USERNAME,USR_PASSWORD,USR_FIRSTNAME,USR_LASTNAME,USR_EMAIL,USR_DUE_DATE,USR_CREATE_DATE,USR_UPDATE_DATE,USR_STATUS,USR_COUNTRY,USR_CITY,USR_LOCATION,USR_ADDRESS,USR_PHONE,USR_FAX,USR_CELLULAR,USR_ZIP_CODE,DEP_UID,USR_POSITION,USR_RESUME,USR_BIRTHDAY,USR_ROLE,USR_REPORTS_TO,USR_REPLACED_BY ) VALUES 
 ('00000000000000000000000000000001','admin','21232f297a57a5a743894a0e4a801fc3','Administrator',' ',  'admin@processmaker.com','2020-01-01','1999-11-30 00:00:00','2008-05-23 18:36:19','ACTIVE',  'US','FL','MMK','','',  '1-305-402-0282','1-305-675-1400','','','Administrator',  '','1999-02-25','PROCESSMAKER_ADMIN','',''),
 ('00000000000000000000000000000002','guest','674ba9750749d735ec9787d606170d78','Guest',' ',  'guest@processmaker.com','2030-01-01','2009-02-01 12:24:36','2009-02-01 12:24:36','INACTIVE',  'US','FL','MMK','','',  '1-305-402-0282','1-305-675-1400','','','Guest',  '','2009-02-01','PROCESSMAKER_GUEST','','');
 
-INSERT INTO CONTENT (CON_CATEGORY,CON_PARENT,CON_ID,CON_LANG,CON_VALUE) VALUES 
+INSERT INTO CONTENT (CON_CATEGORY,CON_PARENT,CON_ID,CON_LANG,CON_VALUE) VALUES
 ('PER_NAME','','00000000000000000000000000000001','en','Login'),
 ('PER_NAME','','00000000000000000000000000000002','en','Setup'),
 ('ROL_NAME','','00000000000000000000000000000002','en','System Administrator'),
@@ -57451,6 +57451,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
 
 ( 'LABEL','ID_CASE_REACTIVATED_SUCCESSFULLY','en','The case {APP_NUMBER} was reactivated successfully!','2014-01-15') ,
+( 'LABEL','ID_CASE_RESPONSE_NOT_AVAILABLE','en','No response available, please review the case information','2018-03-02') ,
 ( 'LABEL','ID_CASE_ROUTED_TO','en','Case routed to','2017-06-02') ,
 ( 'LABEL','ID_CASE_SCHEDULER','en','Case Scheduler','2014-01-15') ,
 ( 'LABEL','ID_CASE_SCHEDULER_CLASSIC','en','Case Scheduler (classic processes)','2017-10-13') ,
@@ -58256,11 +58257,6 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_FULL_NAME','en','Full Name','2014-01-15') ,
 ( 'LABEL','ID_FULL_TEXT_SEARCH','en','Full Text Search','2014-01-15') ,
 ( 'LABEL','ID_FUNCTION','en','@function() It evaluates the value, then executes a PHP function','2014-01-15') ,
-( 'LABEL','ID_G_SUITE_CONFIGURATION_SAVED','en','G Suite Configuration Saved','2018-09-21') ,
-( 'LABEL','ID_G_SUITE_CONNECT','en','Request G Suite connection','2018-09-21') ,
-( 'LABEL','ID_G_SUITE_DISCONNECT','en','Disconnect G Suite','2018-09-21') ,
-( 'LABEL','ID_G_SUITE_LOAD_GROUPS','en','Update G Suite groups','2018-09-21') ,
-( 'LABEL','ID_G_SUITE_SYNC_USERS','en','Syncing Users','2018-09-21') ,
 ( 'LABEL','ID_GENERAL','en','General','2014-01-15') ,
 ( 'LABEL','ID_GENERAL_PROCESS_NUMBERS','en','General Process Numbers','2014-01-15') ,
 ( 'LABEL','ID_GENERATE','en','Generate','2014-01-15') ,
@@ -58323,6 +58319,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_GRID_PAGE_NO_ROWS_MESSAGE','en','No rows to display','2014-01-15') ,
 ( 'LABEL','ID_GRID_PAGE_NO_SKIN_MESSAGE','en','No skins to display','2014-01-15') ,
 ( 'LABEL','ID_GRID_PAGE_NO_USERS_MESSAGE','en','No users to display','2014-01-15') ,
+( 'LABEL','ID_GRID_VARIABLE_NAME_ERROR','en','A valid variable starts with a letter or underscore, followed by any number of letters, numbers, or underscores. Variables with wrong names: {0}','2017-11-16') ,
 ( 'LABEL','ID_GRID_WIZARD','en','ProcessMaker Grid Wizard','2014-01-15') ,
 ( 'LABEL','ID_GROUP','en','Group','2014-01-15') ,
 ( 'LABEL','ID_GROUPS','en','Groups','2014-01-15') ,
@@ -58344,19 +58341,24 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_GROUP_USERS','en','Group or Users','2014-01-15') ,
 ( 'LABEL','ID_GROUP_USER_IS_ALREADY_ASSIGNED','en','The user with {0}: {1} is already assigned to the group.','2014-05-20') ,
 ( 'LABEL','ID_GROUP_USER_IS_NOT_ASSIGNED','en','The user with {0}: {1} is not assigned to the group.','2014-05-20') ,
+( 'LABEL','ID_G_SUITE_CONFIGURATION_SAVED','en','G Suite Configuration Saved','2018-09-21') ,
+( 'LABEL','ID_G_SUITE_CONNECT','en','Request G Suite connection','2018-09-21') ,
+( 'LABEL','ID_G_SUITE_DISCONNECT','en','Disconnect G Suite','2018-09-21') ,
+( 'LABEL','ID_G_SUITE_LOAD_GROUPS','en','Update G Suite groups','2018-09-21') ,
+( 'LABEL','ID_G_SUITE_SYNC_USERS','en','Syncing Users','2018-09-21') ,
 ( 'LABEL','ID_HAS_BEEN_DELETED','en','Has been deleted','2014-01-15') ,
 ( 'LABEL','ID_HEADER_ALIGN','en','Align','2014-01-15') ,
 ( 'LABEL','ID_HEADER_FIELD_NAME','en','Field Name','2014-01-15') ,
 ( 'LABEL','ID_HEADER_FIELD_TYPE','en','Field Type','2014-01-15') ,
-( 'LABEL','ID_HEADER_LABEL','en','Label','2014-01-15') ,
+( 'LABEL','ID_HEADER_LABEL','en','Label','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_HEADER_NUMBER','en','#','2014-01-15') ,
 ( 'LABEL','ID_HEADER_WIDTH','en','Width','2014-01-15') ,
 ( 'LABEL','ID_HEARTBEAT_CONFIG','en','Heart Beat','2014-01-15') ,
 ( 'LABEL','ID_HEARTBEAT_DISPLAY','en','Heart Beat','2014-01-15') ,
 ( 'LABEL','ID_HEART_BEAT_DETAILS_1','en','The usage statistics will help the development team to better understand user requirements and prioritize improvements in future releases.','2014-01-15') ,
-( 'LABEL','ID_HEART_BEAT_DETAILS_2','en','We cannot and will not reverse-engineer that collected data to find specific details concerning your projects.','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_HEART_BEAT_DETAILS_2','en','We cannot and will not reverse-engineer that collected data to find specific details concerning your projects.','2014-01-15') ,
 ( 'LABEL','ID_HEART_BEAT_DISABLED','en','Heart beat has been disabled','2014-01-15') ,
 ( 'LABEL','ID_HEART_BEAT_ENABLED','en','Heart beat has been enabled','2014-01-15') ,
 ( 'LABEL','ID_HELP','en','Help','2015-04-06') ,
@@ -58430,15 +58432,15 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_INDEX_NOT_WRITEABLE','en','The index file is not writable. <br/>Please give write permission to file:','2014-01-15') ,
 ( 'LABEL','ID_INDICATOR','en','Indicator','2015-03-09') ,
 ( 'LABEL','ID_INDICATOR_GOAL','en','Goal','2015-03-09') ,
-( 'LABEL','ID_INDICATOR_PROCESS_REQUIRED','en','The field Process of indicator "{0}" is required.','2015-03-18') ,
+( 'LABEL','ID_INDICATOR_PROCESS_REQUIRED','en','The field Process of indicator "{0}" is required.','2015-03-18') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_INDICATOR_TITLE','en','Indicator Title','2015-03-09') ,
 ( 'LABEL','ID_INDICATOR_TITLE_REQUIRED','en','The field Title of indicator "{0}" is required.','2015-03-18') ,
 ( 'LABEL','ID_INDICATOR_TYPE','en','Indicator Type','2015-03-09') ,
 ( 'LABEL','ID_INDICATOR_TYPE_REQUIRED','en','The field Type of indicator "{0}" is required.','2015-03-18') ,
 ( 'LABEL','ID_INEFFICIENCY_COST','en','Costs or Savings','2015-05-06') ,
-( 'LABEL','ID_INFO','en','Info','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_INFO','en','Info','2014-01-15') ,
 ( 'LABEL','ID_INFORMATION','en','Information','2014-01-15') ,
 ( 'LABEL','ID_INFORMATION_EMPTY','en','The information sent is empty!','2014-10-21') ,
 ( 'LABEL','ID_INFORMATION_WAS_STORED_SUCCESSFULLY','en','information was stored successfully','2014-01-15') ,
@@ -58495,10 +58497,10 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_INTERMEDIATE_CATCH_TIMER_EVENT','en','Untitled - Intermediate Timer Event','2018-05-23') ,
 ( 'LABEL','ID_INTERMEDIATE_MESSAGE_EVENT','en','Intermediate Message Events (Task Notifications)','2014-01-15') ,
 ( 'LABEL','ID_INTERMEDIATE_MESSAGE_EVENTS','en','Intermediate Message Events (Task Notifications)','2014-01-15') ,
-( 'LABEL','ID_INTERMEDIATE_TIMER_EVENT','en','Intermediate Timer Event (Multiple Event)','2014-01-15') ,
-( 'LABEL','ID_INTERMEDIATE_TIMER_EVENTS','en','Intermediate Timer Event (Multiple Event)','2014-01-15') ,
 ( 'LABEL','ID_INTERMEDIATE_THROW_EMAIL_EVENT','en','Untitled - Intermediate Email Event','2018-05-23') ,
 ( 'LABEL','ID_INTERMEDIATE_THROW_MESSAGE_EVENT','en','Untitled - Intermediate Receive Message Event','2018-05-23') ,
+( 'LABEL','ID_INTERMEDIATE_TIMER_EVENT','en','Intermediate Timer Event (Multiple Event)','2014-01-15') ,
+( 'LABEL','ID_INTERMEDIATE_TIMER_EVENTS','en','Intermediate Timer Event (Multiple Event)','2014-01-15') ,
 ( 'LABEL','ID_INTERNATIONAL','en','International','2014-01-15') ,
 ( 'LABEL','ID_INVALID_APPLICATION_ID_MSG','en','An invalid application ID was stored for the session. <br/> This could have happened if you opened another case in a new tab or window. <br/> Please {0} the case.','2014-10-21') ,
 ( 'LABEL','ID_INVALID_APPLICATION_NUMBER','en','You have set a invalid Application Number','2014-01-15') ,
@@ -58512,7 +58514,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_INVALID_NAME','en','Invalid name!','2014-01-15') ,
 ( 'LABEL','ID_INVALID_ORIGIN_USER','en','Invalid origin user','2014-01-15') ,
 ( 'LABEL','ID_INVALID_PRF_PATH','en','Invalid value specified for prf_path. Expecting templates/ or public/','2014-05-21') ,
-( 'LABEL','ID_INVALID_PROCESS','en','Invalid process','2014-01-15') ,
+( 'LABEL','ID_INVALID_PROCESS','en','Invalid process','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_INVALID_PROCESS_NAME','en','Invalid process name, please just use alphanumeric characters.','2014-01-15') ,
 ( 'LABEL','ID_INVALID_PROCESS_NAME2','en','Invalid process name, please just use alphanumeric characters.','2014-01-15') ,
 ( 'LABEL','ID_INVALID_QUERY','en','Invalid query.','2015-10-23') ,
@@ -58522,9 +58526,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_INVALID_SCH_START_DATE','en','Invalid value specified for sch_start_date. Expecting date in YYYY-MM-DD format, such as 2014-01-01','2014-05-21') ,
 ( 'LABEL','ID_INVALID_SCH_START_DAY_1','en','Invalid value specified for sch_start_day_opt_1. Must be between 1 and 31','2014-05-21') ,
 ( 'LABEL','ID_INVALID_SCH_START_TIME','en','Invalid value specified for sch_start_time. Expecting time in HH:MM format (The time can not be greater than 23:59)','2014-10-21') ,
-( 'LABEL','ID_INVALID_START','en','Invalid value specified for start','2014-05-22') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_INVALID_START','en','Invalid value specified for start','2014-05-22') ,
 ( 'LABEL','ID_INVALID_START_HOURS','en','The following start hours rows are invalid:','2014-01-15') ,
 ( 'LABEL','ID_INVALID_TRIGGER','en','Invalid trigger ''{TRIGGER_INDEX}''','2014-01-15') ,
 ( 'LABEL','ID_INVALID_VALUE','en','Invalid value for "{0}".','2014-05-20') ,
@@ -58594,7 +58596,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_LICENSE_SERVER','en','License server','2014-09-18') ,
 ( 'LABEL','ID_LIFETIME_VALIDATE','en','Max Lifetime value has to be a positive integer','2017-04-05') ,
 ( 'LABEL','ID_LINE','en','Line','2014-01-15') ,
-( 'LABEL','ID_LINES','en','Lines','2015-03-09') ,
+( 'LABEL','ID_LINES','en','Lines','2015-03-09') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_LOADING','en','Loading, please wait...','2014-01-15') ,
 ( 'LABEL','ID_LOADING_GRID','en','Loading...','2014-01-15') ,
 ( 'LABEL','ID_LOAD_FAILED','en','Load Failed','2014-01-15') ,
@@ -58604,9 +58608,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_LOCATION','en','Location','2014-01-15') ,
 ( 'LABEL','ID_LOGGED','en','Logged on','2014-01-15') ,
 ( 'LABEL','ID_LOGIN','en','Login','2014-01-15') ,
-( 'LABEL','ID_LOGIN_AGAIN','en','You have lost your session and you have to login again.','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_LOGIN_AGAIN','en','You have lost your session and you have to login again.','2014-01-15') ,
 ( 'LABEL','ID_LOGIN_LIBRARY','en','Login into ProcessMaker Library','2014-01-15') ,
 ( 'LABEL','ID_LOGIN_SETTINGS','en','Login Settings','2014-01-15') ,
 ( 'LABEL','ID_LOGIN_TITLE','en','Please enter your credentials below','2015-12-07') ,
@@ -58619,11 +58621,13 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_LOG_INFO','en','Log Information','2014-01-15') ,
 ( 'LABEL','ID_MAFE_0015b7e51c1ca4293041c429985ca323','en','The specified subform could not be found in the process.', NOW()) ,
 ( 'LABEL','ID_MAFE_0025301679e9722c3abd5914cfbc7dd7','en','Database connection edited successfully', NOW()) ,
+( 'LABEL','ID_MAFE_004d33be4d12eb8c0ae00703e7c70f61','en','Pick Second', NOW()) ,
 ( 'LABEL','ID_MAFE_004fa281c757ed0c2ed3ca2b19dc26f4','en','Please select a file to upload', NOW()) ,
 ( 'LABEL','ID_MAFE_0095a9fa74d1713e43e370a7d7846224','en','Export', NOW()) ,
 ( 'LABEL','ID_MAFE_00d23a76e43b46dae9ec7aa9dcbebb32','en','Enabled', NOW()) ,
 ( 'LABEL','ID_MAFE_011306a5e88efff7332299ca7d8e4515','en','Invalid flow between elements. Please delete the flow and reconnect the elements.', NOW()) ,
 ( 'LABEL','ID_MAFE_014bd6f385cb5aec29ec9714b8106ccb','en','Search ...', NOW()) ,
+( 'LABEL','ID_MAFE_018987001347cd85be2f30fcaac4ec7f','en','Reassign my cases', NOW()) ,
 ( 'LABEL','ID_MAFE_01bc6f8efa4202821e95f4fdf6298b30','en','clear', NOW()) ,
 ( 'LABEL','ID_MAFE_01d9ea29b533da28fc3a3dc45826530b','en','Fields marked with an asterisk (%%ASTERISK%%) are required.', NOW()) ,
 ( 'LABEL','ID_MAFE_01e314c524834917a79de8eb706d379a','en','Available users list', NOW()) ,
@@ -58631,10 +58635,12 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_0266e5e196c710628bce171dc00a8d4e','en','Available Objects', NOW()) ,
 ( 'LABEL','ID_MAFE_02c99274ed000da347819e732fe05bfa','en','Regular Expression', NOW()) ,
 ( 'LABEL','ID_MAFE_02f5a8943b70bb7ee70ec52a58090caa','en','The key and label must be supplied.', NOW()) ,
+( 'LABEL','ID_MAFE_033db172e7506126611760711854d755','en','Next Month', NOW()) ,
 ( 'LABEL','ID_MAFE_03727ac48595a24daed975559c944a44','en','Day', NOW()) ,
 ( 'LABEL','ID_MAFE_03937134cedab9078be39a77ee3a48a0','en','Group', NOW()) ,
 ( 'LABEL','ID_MAFE_03b62516184fb6ef591f45bd4974b753','en','refresh', NOW()) ,
 ( 'LABEL','ID_MAFE_03b94d355b5045f081bd898e4d664900','en','display mode', NOW()) ,
+( 'LABEL','ID_MAFE_03c2e7e41ffc181a4e84080b4710e81e','en','New', NOW()) ,
 ( 'LABEL','ID_MAFE_03de5d2d75b7dd914fbc5c775bf21b63','en','Input Document<span style=''color:red;''>*</span>:', NOW()) ,
 ( 'LABEL','ID_MAFE_03df896fc71cd516fdcf44aa699c4933','en','Variables', NOW()) ,
 ( 'LABEL','ID_MAFE_0422899c4397e3d67ffc16045df065bd','en','Please configure cron to create cases in base to a signal.', NOW()) ,
@@ -58654,6 +58660,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_06d4cd63bde972fc66a0aed41d2f5c51','en','comment', NOW()) ,
 ( 'LABEL','ID_MAFE_07052d86b58157929b39588cd04bf868','en','Receive Message', NOW()) ,
 ( 'LABEL','ID_MAFE_070acc9c521d0db8d0620a1435a36207','en','Wait for', NOW()) ,
+( 'LABEL','ID_MAFE_07463a98d573b3749d9230c9c02c38d0','en','Accepted Values is an empty string', NOW()) ,
 ( 'LABEL','ID_MAFE_07501edbc1f9fd2f7d0f0d71712b11cf','en','Case Tracker updated successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_075ae3d2fc31640504f814f60e5ef713','en','disabled', NOW()) ,
 ( 'LABEL','ID_MAFE_07603125709811efbdbcd69161b42527','en','Save process', NOW()) ,
@@ -58671,7 +58678,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_0a10134c1999989ce854ac519eb97249','en','Web Entry Anonymous Authentication', NOW()) ,
 ( 'LABEL','ID_MAFE_0a33cdf242201623275b9897d8b4d8c4','en','Html Template', NOW()) ,
 ( 'LABEL','ID_MAFE_0a52da7a03a6de3beefe54f8c03ad80d','en','Original', NOW()) ,
-( 'LABEL','ID_MAFE_0a7d55be9d12a369a6a8da0fb517fba4','en','minute', NOW()) ,
+( 'LABEL','ID_MAFE_0a7d55be9d12a369a6a8da0fb517fba4','en','minute', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_0af63899fb5342f6d1882ea16af864c1','en','Allows date selection after this date<br>(in YYYY-MM-DD HH:MM:SS format)', NOW()) ,
 ( 'LABEL','ID_MAFE_0b27918290ff5323bea1e3b78a9cf04e','en','File', NOW()) ,
 ( 'LABEL','ID_MAFE_0b3d5609ee81e50809b7351e848e4698','en','A6', NOW()) ,
@@ -58686,9 +58695,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_0d82790b0612935992bd564a17ce37d6','en','Quit', NOW()) ,
 ( 'LABEL','ID_MAFE_0dbeaf3f5e4f954c5d7c20cf222df405','en','widget parent', NOW()) ,
 ( 'LABEL','ID_MAFE_0dc345e011be6119663ae656cd0fc190','en','Process Category', NOW()) ,
-( 'LABEL','ID_MAFE_0dd4741bcb3a94e7ec755907753669ff','en','Do you want to delete this Input Document?', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_0dd4741bcb3a94e7ec755907753669ff','en','Do you want to delete this Input Document?', NOW()) ,
 ( 'LABEL','ID_MAFE_0df44e2363fd51047d55635ae4130592','en','Insert the title of the new trigger', NOW()) ,
 ( 'LABEL','ID_MAFE_0df8347776dbb1c637387ec287c7966f','en','<tr><td><b>Week Year</b></td><td>gg</td><td>70 71 ... 29 30</td></tr><tr><td></td><td>gggg</td><td>1970 1971 ... 2029 2030</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_0e0d7b681145ccfa803cd39c1b2e648f','en','There are problems deleting the dynaform, please try again.', NOW()) ,
@@ -58727,6 +58734,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_166a1105094f6efbcb4b3fabd27cfa40','en','The task doesn''t have assigned users', NOW()) ,
 ( 'LABEL','ID_MAFE_16888e57558b35486dfc46f2a39fdac9','en','Task properties saved successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_168909c0b6f1dfbd48f679d47059c1d6','en','Third', NOW()) ,
+( 'LABEL','ID_MAFE_16e4992123f5046ce89c07829efc9ac2','en','Decrement Hour', NOW()) ,
 ( 'LABEL','ID_MAFE_16f49c0f891dce505db0ffe478aff96f','en','Next &#8594;', NOW()) ,
 ( 'LABEL','ID_MAFE_171c9ea8629e74f980018c522d83bada','en','Variables Out', NOW()) ,
 ( 'LABEL','ID_MAFE_172ac8a8053b32e15c602be955a2f098','en','Execute a trigger when a case is cancelled', NOW()) ,
@@ -58752,7 +58760,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_1a79a39f343f2224748ec987ccf8431f','en','Lane', NOW()) ,
 ( 'LABEL','ID_MAFE_1ad9db0953957569c62d12728f2b0874','en','Get value from', NOW()) ,
 ( 'LABEL','ID_MAFE_1b539f6f34e8503c97f6d3421346b63c','en','July', NOW()) ,
-( 'LABEL','ID_MAFE_1ba532aebcefcfd5cc7a5c1dd99dbd8b','en','Work Days', NOW()) ,
+( 'LABEL','ID_MAFE_1ba532aebcefcfd5cc7a5c1dd99dbd8b','en','Work Days', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_1bda80f2be4d3658e0baa43fbe7ae8c1','en','view', NOW()) ,
 ( 'LABEL','ID_MAFE_1c0b8f236cc7ad13254af9a32ea15be8','en','Resend', NOW()) ,
 ( 'LABEL','ID_MAFE_1c7444be9626d149ab598fb79b639f96','en','Portrait', NOW()) ,
@@ -58762,15 +58772,14 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_1d1ded75bd737a314cd8e39f4a715ab9','en','Note: To remove days, months or years from the date picker, use a format which does not have those elements. For example a format of "MM/YYY" will not allow the user to select days.', NOW()) ,
 ( 'LABEL','ID_MAFE_1d54bc57e09e7e7b52f85f0045a01474','en','Do you want to delete this lang?', NOW()) ,
 ( 'LABEL','ID_MAFE_1d623b89683f9ce4e074de1676d12416','en','sum', NOW()) ,
+( 'LABEL','ID_MAFE_1d6785e8bc575506eb7ee226614a6d18','en','Allowed file extensions:', NOW()) ,
 ( 'LABEL','ID_MAFE_1dccefa9aa4b700675ca17101bccd7d3','en','Edit Source Code', NOW()) ,
 ( 'LABEL','ID_MAFE_1ddcb92ade31c8fbd370001f9b29a7d9','en','format', NOW()) ,
 ( 'LABEL','ID_MAFE_1de162d73f017a9243ce0c939064a014','en','Enable gallery', NOW()) ,
 ( 'LABEL','ID_MAFE_1e469db43d54e3019fcb2328e1ec4e27','en','Require user login', NOW()) ,
 ( 'LABEL','ID_MAFE_1ea7e575defdf6bc3f26a3f127e98170','en','datasource', NOW()) ,
 ( 'LABEL','ID_MAFE_1f5a44e6621dc51b6daca35844ba8311','en','Timing Control', NOW()) ,
-( 'LABEL','ID_MAFE_1f9d9a4ccb5e099c457588964a61b8db','en','page size', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_1f9d9a4ccb5e099c457588964a61b8db','en','page size', NOW()) ,
 ( 'LABEL','ID_MAFE_2032a8d80edc990f99b7113724f4adc6','en','The source shape can not have more than one outgoing connection', NOW()) ,
 ( 'LABEL','ID_MAFE_203d82526c3bf7c32f75cb083c61c4ff','en','Summary Form', NOW()) ,
 ( 'LABEL','ID_MAFE_20633a8e3019e3b5f7d394f488d237da','en','Callback Action...', NOW()) ,
@@ -58802,6 +58811,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_24fa2fbfb2224c63fee87993306c0c95','en','Variable Type', NOW()) ,
 ( 'LABEL','ID_MAFE_257cb9ff74e0f915a115f902c91bc372','en','TEMPLATES', NOW()) ,
 ( 'LABEL','ID_MAFE_25c7551bb238df62b5c5de847e0e4a0a','en','Required field error message', NOW()) ,
+( 'LABEL','ID_MAFE_25d7912714632dcc5283517e20ead1f1','en','Next Decade', NOW()) ,
 ( 'LABEL','ID_MAFE_25d902c24283ab8cfbac54dfa101ad31','en','src', NOW()) ,
 ( 'LABEL','ID_MAFE_2689a6d6b3d3e54ccf8c9af27cf95d35','en','Actions by Email', NOW()) ,
 ( 'LABEL','ID_MAFE_26c8b24dce7a00ff4d00781dc2ee5d66','en','Execute a trigger when a case is reassigned', NOW()) ,
@@ -58832,7 +58842,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_2b30b478acce5ed435bdf80f39de9b1f','en','Please take note of the changes to update your process logic.', NOW()) ,
 ( 'LABEL','ID_MAFE_2b30f7950c6f143b5722c4e001bddd26','en','Suggest users', NOW()) ,
 ( 'LABEL','ID_MAFE_2b9153e1f3c6ebd7bf7ac1ee168aa7ca','en','__PARAMETERS__', NOW()) ,
-( 'LABEL','ID_MAFE_2bc2de57b27c665244bf4cb8d17f842f','en','Do you want to clear this variable? The following properties are reset: Variable, Data Type, DB Connection, SQL and Options.', NOW()) ,
+( 'LABEL','ID_MAFE_2bc2de57b27c665244bf4cb8d17f842f','en','Do you want to clear this variable? The following properties are reset: Variable, Data Type, DB Connection, SQL and Options.', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_2c4429deb064b2431fb36a8b4f552713','en','It leaving this field in blank, the next user''s email will be used.', NOW()) ,
 ( 'LABEL','ID_MAFE_2d33b0db41ea7a05caec256b28887de2','en','Text Annotation', NOW()) ,
 ( 'LABEL','ID_MAFE_2d69cae8f3f13b440c51edced7338699','en','days of week disabled', NOW()) ,
@@ -58850,9 +58862,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_308a5146b0818a721c5081d2b1932398','en','is duplicated.', NOW()) ,
 ( 'LABEL','ID_MAFE_30a2dae0a135701b862050465b3e4e97','en','Triggers after and before a step are not supported when working offline', NOW()) ,
 ( 'LABEL','ID_MAFE_30c40215e6d00c574ca23451003db9b9','en','checkgroup', NOW()) ,
-( 'LABEL','ID_MAFE_3120001274fa32a921770c1b41e6dc0a','en','DETAILS', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_3120001274fa32a921770c1b41e6dc0a','en','DETAILS', NOW()) ,
 ( 'LABEL','ID_MAFE_313a6a3d25aa041ee3dc3cbd65d4f22b','en','Formula', NOW()) ,
 ( 'LABEL','ID_MAFE_313af772d92d01300d5e89512cd93bd0','en','default value', NOW()) ,
 ( 'LABEL','ID_MAFE_31d1eacb86fc41c8ba34934923e8b53e','en','Email Account Settings', NOW()) ,
@@ -58894,6 +58904,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_3b313f1e720672161bfa924e023cf015','en','Title Case', NOW()) ,
 ( 'LABEL','ID_MAFE_3b44e8c1da430ff11f9ff3b38a67ac34','en','Enable Grid Lines', NOW()) ,
 ( 'LABEL','ID_MAFE_3b563524fdb17b4a86590470d40bef74','en','Media', NOW()) ,
+( 'LABEL','ID_MAFE_3bb055cd21140e7c1b17eeeace227bdb','en','Select Year', NOW()) ,
 ( 'LABEL','ID_MAFE_3c8a58a423ed96c806664b1d4e803e2c','en','Data Type', NOW()) ,
 ( 'LABEL','ID_MAFE_3cab03c00dbd11bc3569afa0748013f0','en','Inactive', NOW()) ,
 ( 'LABEL','ID_MAFE_3cc152ca5e049720eb10e6bf1fa1fa02','en','Error, There are problems removing the element', NOW()) ,
@@ -58910,9 +58921,12 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_3e661ccd1bd840f47829d2e6dbb5e651','en','required field error message', NOW()) ,
 ( 'LABEL','ID_MAFE_3e80ebd582f73299f249afba8ebe7e6b','en','responsive', NOW()) ,
 ( 'LABEL','ID_MAFE_3e8f92eb64623f0ecd16d2efcd0acd7e','en','Report Tables', NOW()) ,
+( 'LABEL','ID_MAFE_3edcc5150c225068c9ae501ffe62ceb9','en','Increment Second', NOW()) ,
 ( 'LABEL','ID_MAFE_3edf8ca26a1ec14dd6e91dd277ae1de6','en','Origin', NOW()) ,
 ( 'LABEL','ID_MAFE_3f60b096843929b02e1a070f57e27584','en','Variable Name', NOW()) ,
-( 'LABEL','ID_MAFE_3f66ca8856f98cde86f7a78e287cd4ba','en','<tr><td><b>Minute</b></td><td>m</td><td>0 1 ... 58 59</td></tr><tr><td></td><td>mm</td><td>00 01 ... 58 59</td></tr>', NOW()) ,
+( 'LABEL','ID_MAFE_3f66ca8856f98cde86f7a78e287cd4ba','en','<tr><td><b>Minute</b></td><td>m</td><td>0 1 ... 58 59</td></tr><tr><td></td><td>mm</td><td>00 01 ... 58 59</td></tr>', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_3fcf026bbfffb63fb24b8de9d0446949','en','April', NOW()) ,
 ( 'LABEL','ID_MAFE_40070e1f0867f97db0fa33039fae2063','en','File uploaded successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_40227eb4ec6a9d663f53962308a2c706','en','Case Status', NOW()) ,
@@ -58932,9 +58946,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_41fffd09332a35491d3bed5a34f91410','en','http://eonasdan.github.io/bootstrap-datetimepicker/</a>', NOW()) ,
 ( 'LABEL','ID_MAFE_42184184a95464c63c790acc3a69e564','en','Routing History', NOW()) ,
 ( 'LABEL','ID_MAFE_421b47ffd946ca083b65cd668c6b17e6','en','video', NOW()) ,
-( 'LABEL','ID_MAFE_4252b72e6ebcd4d4b4c2e46a786f03d2','en','Zoom', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_4252b72e6ebcd4d4b4c2e46a786f03d2','en','Zoom', NOW()) ,
 ( 'LABEL','ID_MAFE_42728192eb543e8b035df3d040068d3d','en','Description of the new trigger', NOW()) ,
 ( 'LABEL','ID_MAFE_42b5e40c0f14c557113865a3aa78b673','en','Insert a SQL query like: SELECT [Key field], [Label field] FROM [Table name]', NOW()) ,
 ( 'LABEL','ID_MAFE_431fc30c29fdcdc1980d898a2f65e4e7','en','The user/group was successfully removed', NOW()) ,
@@ -58944,12 +58956,14 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_44314d568caee793c8d7753a816d6e02','en','An error occurred while retrieving the access token', NOW()) ,
 ( 'LABEL','ID_MAFE_4466476a945cb091a8f4252b96f140d7','en','suggest', NOW()) ,
 ( 'LABEL','ID_MAFE_44749712dbec183e983dcd78a7736c41','en','Date', NOW()) ,
+( 'LABEL','ID_MAFE_4498e6305304230bc7f2600f5d1b1d84','en','Mail (PHP)', NOW()) ,
+( 'LABEL','ID_MAFE_449c6d9f5ba15789700b2c8ea380e3fa','en','Untitled label', NOW()) ,
 ( 'LABEL','ID_MAFE_44fdec47036f482b68b748f9d786801b','en','days', NOW()) ,
 ( 'LABEL','ID_MAFE_451f887bdbe0c83be42cbfffecedb2f0','en','Select the date and time for case(s) to be initiated.', NOW()) ,
 ( 'LABEL','ID_MAFE_4621590946adadc2f24119e194bd70a6','en','Parallel Marker Type', NOW()) ,
 ( 'LABEL','ID_MAFE_463ab1bc075f498d1aa03b9bc062efa3','en','Element Type', NOW()) ,
 ( 'LABEL','ID_MAFE_473293d536577cd3fa417dab23b7543c','en','Assign Users and Groups as Supervisors', NOW()) ,
-( 'LABEL','ID_MAFE_473f81670bcdd9d92624698f43d6a517','en','Empty.', NOW()) ,
+( 'LABEL','ID_MAFE_47a23c652a2e04c0963f15326ebef11a','en','Go to today', NOW()) ,
 ( 'LABEL','ID_MAFE_47b5269b1f60dcd4d18f0cc5f17a7c21','en','Email variable', NOW()) ,
 ( 'LABEL','ID_MAFE_47c14840d8e15331fa420b9b2f757cd9','en','Variable', NOW()) ,
 ( 'LABEL','ID_MAFE_47cf1efb576e40705e0a45ab011f053d','en','Import Error:', NOW()) ,
@@ -58972,6 +58986,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_4b0786e5eb9e8b54529708004fd31b21','en','<tr><td></td><td>DDDD</td><td>001 002 ... 364 365</td></tr><tr><td><b>Day of Week</b></td><td>d</td><td>0 1 ... 5 6</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_4b1f36581927bba38500601a5bf3ede8','en','Script Task', NOW()) ,
 ( 'LABEL','ID_MAFE_4b420957db489cc5aff8bee58d07b8b1','en','The row can not be removed, because is being edited.', NOW()) ,
+( 'LABEL','ID_MAFE_4b441851f94a139dc89c37f6c03be611','en','Pick Minute', NOW()) ,
 ( 'LABEL','ID_MAFE_4b7c4e2a902673b967b1d63f9a4bed74','en','Condition *', NOW()) ,
 ( 'LABEL','ID_MAFE_4ba21d7a3d8a97aa04e405f9caf3ab3b','en','Capitalize phrase', NOW()) ,
 ( 'LABEL','ID_MAFE_4bb78cf31aa7936d4031f8de1481d308','en','The label is empty', NOW()) ,
@@ -58982,6 +58997,8 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_4c2a8fe7eaf24721cc7a9f0175115bd4','en','Message', NOW()) ,
 ( 'LABEL','ID_MAFE_4c3880bb027f159e801041b1021e88e8','en','Method', NOW()) ,
 ( 'LABEL','ID_MAFE_4c524bf462d270df1443cd80bf70e5de','en','Input Document', NOW()) ,
+( 'LABEL','ID_MAFE_4d0c42523f93e7ce5f25230010a3aa00','en','The parameter maxlength is not a number', NOW()) ,
+( 'LABEL','ID_MAFE_4d287ea3f5618dc027b8de8bba546ef0','en','Close the picker', NOW()) ,
 ( 'LABEL','ID_MAFE_4d34f1097f6c8b9cee28bca8b78bbee9','en','Start date', NOW()) ,
 ( 'LABEL','ID_MAFE_4d3d769b812b6faa6b76e1a8abaece2d','en','Active', NOW()) ,
 ( 'LABEL','ID_MAFE_4e357e7345689cff230335282b201a11','en','Enable camera', NOW()) ,
@@ -58989,10 +59006,13 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_4ed131033015697f970660a0cb48ff1e','en','Create variable', NOW()) ,
 ( 'LABEL','ID_MAFE_4f67fe16b274bf31a67539fbedb8f8d3','en','Document Type', NOW()) ,
 ( 'LABEL','ID_MAFE_4f92f36c19f0ad317fb71d493a18caac','en','<li>Parent: Inherit the mode from parent.</li>', NOW()) ,
-( 'LABEL','ID_MAFE_50913568f681474c32d3f1b4a9fafdf1','en','Case Tracker', NOW()) ,
+( 'LABEL','ID_MAFE_50913568f681474c32d3f1b4a9fafdf1','en','Case Tracker', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_50a9ec1685a51015e4509529cb939081','en','Generate Link', NOW()) ,
 ( 'LABEL','ID_MAFE_50b5d3dcade1bb32254e0f8d54c493de','en','Please insert variable before adding to the list.', NOW()) ,
 ( 'LABEL','ID_MAFE_5174307b9097d47b1a506bc8171c2bb3','en','textbox', NOW()) ,
+( 'LABEL','ID_MAFE_5174d1309f275ba6f275db3af9eb3e18','en','Grid', NOW()) ,
 ( 'LABEL','ID_MAFE_5199decbb00b9a606e30f3ddfc951f3f','en','Database Connections', NOW()) ,
 ( 'LABEL','ID_MAFE_520d0db389f362bf79ef56ca0af3dcab','en','Format', NOW()) ,
 ( 'LABEL','ID_MAFE_521019040a0f4f7773357aa6bc22180b','en','DRAFT', NOW()) ,
@@ -59014,9 +59034,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_55f6611cb342565cf0f5002400f53a95','en','Annotation', NOW()) ,
 ( 'LABEL','ID_MAFE_5651b7822a684ac4ae3b1b1690e147c0','en','A0Oversize', NOW()) ,
 ( 'LABEL','ID_MAFE_56a1bf7a363021c1d31dd8338428cc03','en','Custom Trigger', NOW()) ,
-( 'LABEL','ID_MAFE_56b77519470d41f8b2da598f1021508e','en','max date', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_56b77519470d41f8b2da598f1021508e','en','max date', NOW()) ,
 ( 'LABEL','ID_MAFE_56dbee09e1c297e9269b967d3f1e8af8','en','There are problems updating the Web Entry, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_570b43e00e6db926c60b0eeee0a275b4','en','Database connection saved successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_572d795e2d044f895cc511e5c05030e5','en','INCLUSIVE', NOW()) ,
@@ -59070,7 +59088,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_60cf550c40960532dfd002fcfbc6725a','en','There are problems getting the Triggers list, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_611ebad77c16b1edc01a8e4962094900','en','All Tasks', NOW()) ,
 ( 'LABEL','ID_MAFE_6126329d245973d0025f07d8d4f3c3ba','en','Allows date selection before this date<br>(in YYYY-MM-DD HH:MM:SS format)', NOW()) ,
-( 'LABEL','ID_MAFE_61e80a8ed0aff262daa5800330e133f3','en','Service Task', NOW()) ,
+( 'LABEL','ID_MAFE_61e80a8ed0aff262daa5800330e133f3','en','Service Task', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_6238fa95a408af9c5598d0f45d923b18','en','Please configure cron to wait for time condition.', NOW()) ,
 ( 'LABEL','ID_MAFE_628b7db04235f228d40adc671413a8c8','en','day', NOW()) ,
 ( 'LABEL','ID_MAFE_62902641c38f3a4a8eb3212454360e24','en','Minute', NOW()) ,
@@ -59078,6 +59098,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_630f6dc397fe74e52d5189e2c80f282b','en','Back to list', NOW()) ,
 ( 'LABEL','ID_MAFE_631aea77fcb10698585c8ae77aac3800','en','External Step', NOW()) ,
 ( 'LABEL','ID_MAFE_63401535ae5b2457b9c4471637ba8308','en','In the design area you can drop the process elements and order or arrange them to design your process.', NOW()) ,
+( 'LABEL','ID_MAFE_635f2145a06da2d4ce2c355bf94da6ed','en','Previous Year', NOW()) ,
 ( 'LABEL','ID_MAFE_6384750fb02541d64a749b1a9296a43f','en','Condition Trigger', NOW()) ,
 ( 'LABEL','ID_MAFE_6394d816bfb4220289a6f4b29cfb1834','en','textarea', NOW()) ,
 ( 'LABEL','ID_MAFE_63a3168661b8fec46d2e90c9e0569cad','en','Default: false', NOW()) ,
@@ -59087,6 +59108,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_6421c440fabe27193fad6710c33cf7c7','en','There are no items.', NOW()) ,
 ( 'LABEL','ID_MAFE_6450242531912981c3683cae88a32a66','en','Forms', NOW()) ,
 ( 'LABEL','ID_MAFE_64684d8a069264ece1465e64cbe2a189','en','Enter a Protocol and Hostname valid value.', NOW()) ,
+( 'LABEL','ID_MAFE_64959029acf7b169f8d972637b75b49e','en','No records', NOW()) ,
 ( 'LABEL','ID_MAFE_650be61892bf690026089544abbd9d26','en','Mode', NOW()) ,
 ( 'LABEL','ID_MAFE_6547600c780b3b6483c2d5d758666c3f','en','Start Timer updated successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_656bd5e7964412e1954a5cb83cf0e31e','en','Single HTML', NOW()) ,
@@ -59096,9 +59118,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_65c3b5956adaf7365a8857abb7ddd26b','en','Execute a trigger when a case is deleted', NOW()) ,
 ( 'LABEL','ID_MAFE_6606bf86257a99bf75f2d6360e92e0df','en','Please press the \"Generate Link\" button.', NOW()) ,
 ( 'LABEL','ID_MAFE_66285b36f894a5439af5a98e3e1a36d2','en','Process Objects', NOW()) ,
-( 'LABEL','ID_MAFE_662f707d5491e9bce8238a6c0be92190','en','hidden', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_662f707d5491e9bce8238a6c0be92190','en','hidden', NOW()) ,
 ( 'LABEL','ID_MAFE_66b4af3ab39216f5ecddcb0613abfe04','en','Select Dynaform use in case.', NOW()) ,
 ( 'LABEL','ID_MAFE_671aa2e8cc2c2435cf509fa4a3baf26c','en','Executive', NOW()) ,
 ( 'LABEL','ID_MAFE_67dab01827a619fdbcb137f18a83feb5','en','End of process', NOW()) ,
@@ -59127,9 +59147,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_6be8bfc7078373aa92b3a862b5253e7e','en','Mobile controls', NOW()) ,
 ( 'LABEL','ID_MAFE_6c24f6923944d3f9d84bcf924661abff','en','New variables created', NOW()) ,
 ( 'LABEL','ID_MAFE_6c25e6a6da95b3d583c6ec4c3f82ed4d','en','Weekly', NOW()) ,
+( 'LABEL','ID_MAFE_6cae1a8108be3aec1aa792644c69c190','en','Information Required', NOW()) ,
 ( 'LABEL','ID_MAFE_6cb85fb9933f1990eaa1dc7619c84233','en','Data Store', NOW()) ,
 ( 'LABEL','ID_MAFE_6d7215c4b3bc4716d026ac46c6d9ae64','en','Apr', NOW()) ,
-( 'LABEL','ID_MAFE_6e139990d75202b4688849d505e9f659','en','Current form.', NOW()) ,
 ( 'LABEL','ID_MAFE_6e51ca3efb50c3fa4e7eb7fb75cba556','en','Message content', NOW()) ,
 ( 'LABEL','ID_MAFE_6e554a6c35c9b142ea806751d85818fa','en','Message Type', NOW()) ,
 ( 'LABEL','ID_MAFE_6e599f7a2a9186d391be4537f105be98','en','Fourth', NOW()) ,
@@ -59145,11 +59165,14 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_7106cb2df5011f1eddfd5c67b3c84f0f','en','Variable saved successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_713aecbe2f5f5523ebccad6740dc1fc7','en','DynaForm', NOW()) ,
 ( 'LABEL','ID_MAFE_714a04bc58e64a19344df22801f2f5b2','en','View groups', NOW()) ,
+( 'LABEL','ID_MAFE_714b68ca17408b57ef4b48b30f390dcd','en','Pick Hour', NOW()) ,
 ( 'LABEL','ID_MAFE_716de874a0d74f25c0aa8c444c3a7539','en','Prefix', NOW()) ,
 ( 'LABEL','ID_MAFE_716f6b30598ba30945d84485e61c1027','en','close', NOW()) ,
 ( 'LABEL','ID_MAFE_71707d31908dc87d64747c61247db5f3','en','An unexpected error while deleting the DB Connection, please try again later.', NOW()) ,
 ( 'LABEL','ID_MAFE_718bf2c47ea34a12a3c4cb559ba0fbd3','en','Input Document edited correctly.', NOW()) ,
-( 'LABEL','ID_MAFE_719430f5290466e7920b07175af870de','en','The process definition that you are trying to import contains BPMN elements that are not supported in ProcessMaker. Please try with other process.', NOW()) ,
+( 'LABEL','ID_MAFE_719430f5290466e7920b07175af870de','en','The process definition that you are trying to import contains BPMN elements that are not supported in ProcessMaker. Please try with other process.', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_7208f9c293aca2d9a81fb9dc71229ee7','en','Properties saved successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_72116971e25c9b2e7926c62a5bacb915','en','Error Update File', NOW()) ,
 ( 'LABEL','ID_MAFE_7215ee9c7d9dc229d2921a40e899ec5f','en','', NOW()) ,
@@ -59158,6 +59181,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_72d6d7a1885885bb55a565fd1070581a','en','Import', NOW()) ,
 ( 'LABEL','ID_MAFE_7308cd3156257f5139f5a76d3cace070','en','An unexpected error while assigning the trigger, please try again later.', NOW()) ,
 ( 'LABEL','ID_MAFE_7351dffefed9ebab76b3bd34aa6f755e','en','Output Document', NOW()) ,
+( 'LABEL','ID_MAFE_736fda6b62eaca111776a53611ef2c92','en','Increment Minute', NOW()) ,
 ( 'LABEL','ID_MAFE_73c146408e22128ca6a56f748ad0da66','en','<tr><td><b>Unix Timestamp</b></td><td>X</td><td>1360013296</td></tr><tr><td><b>Unix Millisecond Timestamp</b></td><td>x</td><td>1360013296123</td></tr></tbody></table>', NOW()) ,
 ( 'LABEL','ID_MAFE_73cacd9554a835ad196092bf378f66c3','en','array of [date, moment, string]', NOW()) ,
 ( 'LABEL','ID_MAFE_73e27bc50aef21f6770190b3a2702123','en','Error value: Day: 0 - 31', NOW()) ,
@@ -59178,9 +59202,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_788287625aa640447c5d9fff50644915','en','Insert a table name', NOW()) ,
 ( 'LABEL','ID_MAFE_78972d78128699c39ce214e712bd9b03','en','Related Input Document', NOW()) ,
 ( 'LABEL','ID_MAFE_78ae6f0cd191d25147e252dc54768238','en','Thursday', NOW()) ,
-( 'LABEL','ID_MAFE_7916b6aa41d5ad862bfd15786f608ef9','en','Add Routing Rule', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_7916b6aa41d5ad862bfd15786f608ef9','en','Add Routing Rule', NOW()) ,
 ( 'LABEL','ID_MAFE_7917f0a4bc9e0d07acf8cad570e5f68f','en','Dynaform Information', NOW()) ,
 ( 'LABEL','ID_MAFE_7964c7a971166b4525713e1885ca4cc3','en','<br/>Dynaforms: Create dynamic forms.', NOW()) ,
 ( 'LABEL','ID_MAFE_796932652e81946789e875a9998ac1fb','en','Case Tracker Properties', NOW()) ,
@@ -59203,6 +59225,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_7ce6b2286a5396e614b8484105d277e0','en','Mar', NOW()) ,
 ( 'LABEL','ID_MAFE_7cfa673ab5fa815bb71b9950b8085e7e','en','Sub-Process name', NOW()) ,
 ( 'LABEL','ID_MAFE_7d693ac1022a2b1da7faa568a9273367','en','Create Database Connection', NOW()) ,
+( 'LABEL','ID_MAFE_7d73db163473796198dec30144f711e3','en','Next Century', NOW()) ,
 ( 'LABEL','ID_MAFE_7dce122004969d56ae2e0245cb754d35','en','Edit', NOW()) ,
 ( 'LABEL','ID_MAFE_7df96b18c230f90ada0a9e2307226338','en','Templates', NOW()) ,
 ( 'LABEL','ID_MAFE_7e696c3a9460470397eba473a2072210','en','external libs', NOW()) ,
@@ -59219,6 +59242,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_80582834244e4d1f06860c1a18062667','en','<tr><td><b>Day of Year</b></td><td>DDD</td><td>1 2 ... 364 365</td></tr><tr><td></td><td>DDDo</td><td>1st 2nd ... 364th 365th</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_8061e4236e0f5d816ccfb3684a1e279c','en','There are problems updating the Case Tracker, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_80896219739fe46ae6982d3ac855a5ad','en','Please configure cron to wait for time event.', NOW()) ,
+( 'LABEL','ID_MAFE_80ffff123555bd5173345bc8f144edeb','en','Clear selection', NOW()) ,
 ( 'LABEL','ID_MAFE_812a48ba719daeda82e4da8e812d426c','en','Custom URL', NOW()) ,
 ( 'LABEL','ID_MAFE_813f078c7fbc03a222410f48f74a68c4','en','Intermediate Email Event', NOW()) ,
 ( 'LABEL','ID_MAFE_815b565aff7fbfe8db5eb2573677e9a4','en','SubProcess must have an incoming sequence flow', NOW()) ,
@@ -59228,9 +59252,12 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_81a7427163958378a4181ae66e8e2b0c','en','Save as', NOW()) ,
 ( 'LABEL','ID_MAFE_8203af436c88713cf6853998fb45e8df','en','calendar weeks', NOW()) ,
 ( 'LABEL','ID_MAFE_82331503174acbae012b2004f6431fa5','en','December', NOW()) ,
-( 'LABEL','ID_MAFE_823a38edcd60271ed5106469ce7de36a','en','End date:', NOW()) ,
+( 'LABEL','ID_MAFE_823a38edcd60271ed5106469ce7de36a','en','End date:', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_823e3d309f271d17abda0806debebd13','en','Enable versioning', NOW()) ,
 ( 'LABEL','ID_MAFE_825689fed4e8cd85dbc5beedf98feec0','en','Database Name', NOW()) ,
+( 'LABEL','ID_MAFE_8265a4157a2febe0b6faa43345c61652','en','Next Year', NOW()) ,
 ( 'LABEL','ID_MAFE_8292553558a75e672bc62e5a84244c82','en','Folio', NOW()) ,
 ( 'LABEL','ID_MAFE_83482d97257d0242d1f259eb5d34a9f9','en','Cyclical Assignment', NOW()) ,
 ( 'LABEL','ID_MAFE_84ae11ae520a036da288ca8a0acc89b1','en','New Trigger', NOW()) ,
@@ -59240,11 +59267,13 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_8512ae7d57b1396273f76fe6ed341a23','en','language', NOW()) ,
 ( 'LABEL','ID_MAFE_853ca16bda4f3d303e70e48db81c17c6','en','Smartphone', NOW()) ,
 ( 'LABEL','ID_MAFE_854f4a84f44dfa5ea4ad4b0bb953bc49','en','Validate Now', NOW()) ,
+( 'LABEL','ID_MAFE_85a2bbe801286ff44a6c4b1a4a4e9bc9','en','Select Decade', NOW()) ,
 ( 'LABEL','ID_MAFE_85cc96b9ef52490be95df14539d47a39','en','SubProcess must have an outgoing sequence flow', NOW()) ,
 ( 'LABEL','ID_MAFE_86266ee937d97f812a8e57d22b62ee29','en','reset', NOW()) ,
 ( 'LABEL','ID_MAFE_8650e375ee80b2277a84fc9b85375e36','en','A9', NOW()) ,
 ( 'LABEL','ID_MAFE_868e45e7bc9c1b6c723724f85f00defc','en','Select Origin Process', NOW()) ,
 ( 'LABEL','ID_MAFE_8691b6a6780d4bb3dd62a8376a54be64','en','There are problems updating the Email Event, please try again.', NOW()) ,
+( 'LABEL','ID_MAFE_86a32f8032467f8a54055fc4d429f2e8','en','Increment Hour', NOW()) ,
 ( 'LABEL','ID_MAFE_86f5978d9b80124f509bdb71786e929e','en','January', NOW()) ,
 ( 'LABEL','ID_MAFE_86fd9a7abc9f357e7fa206b2d42ec5ba','en','Destination Path', NOW()) ,
 ( 'LABEL','ID_MAFE_87557f11575c0ad78e4e28abedc13b6e','en','End', NOW()) ,
@@ -59260,9 +59289,8 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_898f54db33f64c0a7ecc7507b9cc5744','en','There are problems, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_8991f7d434ea8104741fe2c008c09f5a','en','Database connection deleted successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_899607da7ac548d9a143b9a649d9da96','en','Copy Trigger', NOW()) ,
-( 'LABEL','ID_MAFE_89d626523f83c2d1f8a5549a845dd6aa','en','Start Event must have an outgoing sequence flow', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_89d0fdd0f8b1b6f918815729a338cd50','en','Select Month', NOW()) ,
+( 'LABEL','ID_MAFE_89d626523f83c2d1f8a5549a845dd6aa','en','Start Event must have an outgoing sequence flow', NOW()) ,
 ( 'LABEL','ID_MAFE_89d7b10cb4238977d2b523dfd9ea7745','en','Loop', NOW()) ,
 ( 'LABEL','ID_MAFE_89f7ce5690523e6fdb35f6117d9dc902','en','Enable consolidate for this task.', NOW()) ,
 ( 'LABEL','ID_MAFE_8a32f139d42c17d5ed5fe2c8ca02958f','en','Data Object', NOW()) ,
@@ -59292,7 +59320,6 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_8f45539f90c1409482f8222018541bb7','en','Parallel Join', NOW()) ,
 ( 'LABEL','ID_MAFE_8f45a2644508b5282f57fe129f62d19a','en','modify', NOW()) ,
 ( 'LABEL','ID_MAFE_8f497c1a3d15af9e0c215019f26b887d','en','Delay', NOW()) ,
-( 'LABEL','ID_MAFE_8f72759a8a4c1e446eed395d1adc3d1c','en','- Select an email account -', NOW()) ,
 ( 'LABEL','ID_MAFE_8f7afecbc8fbc4cd0f50a57d1172482e','en','COMPLETED', NOW()) ,
 ( 'LABEL','ID_MAFE_8f9204c55a59d787851fc3af81abc23c','en','Link to fill a form', NOW()) ,
 ( 'LABEL','ID_MAFE_8f9bfe9d1345237cb3b2b205864da075','en','User', NOW()) ,
@@ -59307,7 +59334,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_912f459b875e7f5f2a16c29700adc28e','en','Available Users List', NOW()) ,
 ( 'LABEL','ID_MAFE_91325d2839558dade6b5d7443822a536','en','Available Elements', NOW()) ,
 ( 'LABEL','ID_MAFE_9137b642b56c7affcc215d1f027b11d0','en','Dynaform to show a case summary', NOW()) ,
-( 'LABEL','ID_MAFE_91412465ea9169dfd901dd5e7c96dd99','en','Upload', NOW()) ,
+( 'LABEL','ID_MAFE_91412465ea9169dfd901dd5e7c96dd99','en','Upload', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_916a154243f0a90150198e6fba099305','en','edit...', NOW()) ,
 ( 'LABEL','ID_MAFE_91c7645ad0ba98666ab1648102f986e7','en','min date', NOW()) ,
 ( 'LABEL','ID_MAFE_920337d67a019f218e8ccc1cc90a7e04','en','Exclusive Gateway', NOW()) ,
@@ -59340,11 +59369,10 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_960b44c579bc2f6818d2daaf9e4c16f0','en','Normal', NOW()) ,
 ( 'LABEL','ID_MAFE_962b90039a542a29cedd51d87a9f28a1','en','Html Editor', NOW()) ,
 ( 'LABEL','ID_MAFE_9639e32cab248434a17ab32237cb3b71','en','Apply', NOW()) ,
+( 'LABEL','ID_MAFE_96baacdc276036c2b8fb65264750a3b4','en','Choose Files', NOW()) ,
 ( 'LABEL','ID_MAFE_9766aede44e9d1b176b4fbb0367b9853','en','@@ string, @# float, @% integer, @= original type, @& object.', NOW()) ,
 ( 'LABEL','ID_MAFE_9778840a0100cb30c982876741b0b5a2','en','SQL', NOW()) ,
-( 'LABEL','ID_MAFE_97d8f56bf41502f60ca6fdd5d5da8edc','en','Definitions', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_97d8f56bf41502f60ca6fdd5d5da8edc','en','Definitions', NOW()) ,
 ( 'LABEL','ID_MAFE_97e7c9a7d06eac006a28bf05467fcc8b','en','Link', NOW()) ,
 ( 'LABEL','ID_MAFE_97f09283ddeadda4e80f20d9608cd8dd','en','An unexpected error while editing the step, please try again later.', NOW()) ,
 ( 'LABEL','ID_MAFE_98369609669478919c74c916440e9978','en','Margin', NOW()) ,
@@ -59355,6 +59383,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_9925fd3c9d09e862da22c5d6912420d9','en','End event must have an incoming sequence flow', NOW()) ,
 ( 'LABEL','ID_MAFE_992d1d47106d77216cd6c3a15415dbea','en','Screenshot640', NOW()) ,
 ( 'LABEL','ID_MAFE_99493c187e709deb387b6ee3ec6c8179','en','The input document is required, please select the value.', NOW()) ,
+( 'LABEL','ID_MAFE_99567b953da8beace4e3e7296bf1fc23','en','Assign type', NOW()) ,
 ( 'LABEL','ID_MAFE_99b2439e63f73ad515f7ab2447a80673','en','PAUSED', NOW()) ,
 ( 'LABEL','ID_MAFE_99c293babcada00063dd86b4f53bccd7','en','Variable sent in email', NOW()) ,
 ( 'LABEL','ID_MAFE_9a0364b9e99bb480dd25e1f0284c8555','en','content', NOW()) ,
@@ -59380,6 +59409,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_9e13b69d1d2da927102acaaaf7154a37','en','Javascript', NOW()) ,
 ( 'LABEL','ID_MAFE_9e2941b3c81256fac10392aaca4ccfde','en','Condition', NOW()) ,
 ( 'LABEL','ID_MAFE_9e794f2c08707053dd2bb22a3b4d8888','en','Output Document deleted successfully', NOW()) ,
+( 'LABEL','ID_MAFE_9ed8ac8a23206c93a3602884788be7fa','en','Previous Month', NOW()) ,
 ( 'LABEL','ID_MAFE_9f1658da12738ea1b34318bd8258181b','en','<ul style=''margin:2px 2px 2px -25px;''>', NOW()) ,
 ( 'LABEL','ID_MAFE_9f22a77c63bef412675c4fc45e3ea11b','en','<tr><td><b>Quarter</b></td><td>Q</td><td>1 2 3 4</td></tr><tr><td><b>Day of Month</b></td><td>D</td><td>1 2 ... 30 31</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_9fc2d28c05ed9eb1d75ba4465abf15a9','en','Properties', NOW()) ,
@@ -59387,12 +59417,15 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_a05ac4341235111bd2cba5c3c105ba81','en','Rich Text', NOW()) ,
 ( 'LABEL','ID_MAFE_a0bfb8e59e6c13fc8d990781f77694fe','en','Continue', NOW()) ,
 ( 'LABEL','ID_MAFE_a0faef0851b4294c06f2b94bb1cb2044','en','Integer', NOW()) ,
-( 'LABEL','ID_MAFE_a10a9bcd450087de1ce1f80b35f44883','en','Legal', NOW()) ,
+( 'LABEL','ID_MAFE_a10a9bcd450087de1ce1f80b35f44883','en','Legal', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_a11e743927967a854e7f54cd9f621e9c','en','<tr><td></td><td>Z</td><td>-07:00 -06:00 ... +06:00 +07:00</td></tr><tr><td></td><td>ZZ</td><td>-0700 -0600 ... +0600 +0700</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_a1af5f0718bfae275ce162362d0e43c5','en','Datetime', NOW()) ,
 ( 'LABEL','ID_MAFE_a1d5cbaf61c018e7d8456c66df0332c3','en','An integer or decimal number', NOW()) ,
 ( 'LABEL','ID_MAFE_a1fa27779242b4902f7ae3bdd5c6d508','en','Type', NOW()) ,
 ( 'LABEL','ID_MAFE_a22ab4f79904355ae25dfa5afff1dc3b','en','Select the mode of the control:<br>', NOW()) ,
+( 'LABEL','ID_MAFE_a22b8023226bc5caac2e1dd0d5a15c5b','en','The maximum length are', NOW()) ,
 ( 'LABEL','ID_MAFE_a2609d846e9af22fcc3412a8c99510a5','en','show clear button', NOW()) ,
 ( 'LABEL','ID_MAFE_a274f4d4670213a9045ce258c6c56b80','en','Notifications', NOW()) ,
 ( 'LABEL','ID_MAFE_a2866cd6efaa65c92278d4771a9eaec7','en','Jul', NOW()) ,
@@ -59412,11 +59445,14 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_a5a299eb1993f98a6b58401ee62b66a0','en','Do you want to delete this permission?', NOW()) ,
 ( 'LABEL','ID_MAFE_a5b72d5e03d21409fcd79bf3f8715f6d','en','setOrientation(): parameter is not valid', NOW()) ,
 ( 'LABEL','ID_MAFE_a5ca0b5894324f8bb54bb9fffad29d1e','en','audio', NOW()) ,
+( 'LABEL','ID_MAFE_a5d4e481e66121a71151435c2c0e68f6','en','Decrement Second', NOW()) ,
 ( 'LABEL','ID_MAFE_a603905470e2a5b8c13e96b579ef0dba','en','Debug', NOW()) ,
 ( 'LABEL','ID_MAFE_a60852f204ed8028c1c58808b746d115','en','Ok', NOW()) ,
 ( 'LABEL','ID_MAFE_a60cf2ece5b3e294aa794916477ac6a8','en','Notify the assigned user to this task', NOW()) ,
+( 'LABEL','ID_MAFE_a6122a65eaa676f700ae68d393054a37','en','Start', NOW()) ,
 ( 'LABEL','ID_MAFE_a6527af0da63377b07a3effae750a485','en','<br/>Triggers: Create scripts.', NOW()) ,
 ( 'LABEL','ID_MAFE_a6c0580005d36b8ad4194b3b31cdb9ee','en','Input Document deleted successfully', NOW()) ,
+( 'LABEL','ID_MAFE_a6ca4597da3795aed1b1fa92f0e8d9a6','en','Previous Decade', NOW()) ,
 ( 'LABEL','ID_MAFE_a6ce2340cef46384d71cb790606e9c67','en','text transform to', NOW()) ,
 ( 'LABEL','ID_MAFE_a6f7bd5f5255325b9cf287402c6782dd','en','<tr><td></td><td>Do</td><td>1st 2nd ... 30th 31st</td></tr><tr><td></td><td>DD</td><td>01 02 ... 30 31</td></tr>', NOW()) ,
 ( 'LABEL','ID_MAFE_a76d4ef5f3f6a672bbfab2865563e530','en','Time', NOW()) ,
@@ -59424,9 +59460,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_a7dd12b1dab17d25467b0b0a4c8d4a92','en','show', NOW()) ,
 ( 'LABEL','ID_MAFE_a7e82daa7280af25afbaa076ac16eb1e','en','Sequential', NOW()) ,
 ( 'LABEL','ID_MAFE_a7f138aa0ee8e9b7d82f49ada1bd22bf','en','datepicker', NOW()) ,
-( 'LABEL','ID_MAFE_a81259cef8e959c624df1d456e5d3297','en','static', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_a81259cef8e959c624df1d456e5d3297','en','static', NOW()) ,
 ( 'LABEL','ID_MAFE_a82be0f551b8708bc08eb33cd9ded0cf','en','Information', NOW()) ,
 ( 'LABEL','ID_MAFE_a83ffccdc8a5c8ee14e4a51f403ccbe3','en','Redirect to ProcessMaker predefined response page', NOW()) ,
 ( 'LABEL','ID_MAFE_a85b67e3a588039d4954c17730b41ed4','en','<tr><td><b>Fractional Second</b></td><td>S</td><td>0 1 ... 8 9</td></tr><tr><td></td><td>SS</td><td>0 1 ... 98 99</td></tr>', NOW()) ,
@@ -59448,7 +59482,6 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_ac5c74b64b4b8352ef2f181affb5ac2a','en','sql', NOW()) ,
 ( 'LABEL','ID_MAFE_ac67ede5a84eb5a1add7ff4440e9a485','en','required', NOW()) ,
 ( 'LABEL','ID_MAFE_ac68b62abfd6a9fe26e8ac4236c8ce0c','en','forms', NOW()) ,
-( 'LABEL','ID_MAFE_acd6337dfeb8a29685e3856bfa76756c','en','History of use', NOW()) ,
 ( 'LABEL','ID_MAFE_ad7bdeed2bf3d72e17abe1a8d0508958','en','Drag & Drop a User or a Group here', NOW()) ,
 ( 'LABEL','ID_MAFE_ad9673dd7e15e17e0c045d02a48433c2','en','The value introduced doesn''t have the correct format with a vallid prefix (@@, @#, @=, @&)', NOW()) ,
 ( 'LABEL','ID_MAFE_ad973c252653a47144b79403cfb0668b','en','dropdown', NOW()) ,
@@ -59467,7 +59500,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_b1dfe4beb06060e1b96cdf51e446f762','en','add row', NOW()) ,
 ( 'LABEL','ID_MAFE_b1f802924e8ba557524f0298a65dc345','en','Permission saved successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_b1fcd78a4983c63c73972229b16cb7a6','en','print dynaform', NOW()) ,
-( 'LABEL','ID_MAFE_b206a1b4ea1097761f78e8876f6da779','en','External', NOW()) ,
+( 'LABEL','ID_MAFE_b206a1b4ea1097761f78e8876f6da779','en','External', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_b243a6cb94ba1c81a0caa579227ab48c','en','Messages History', NOW()) ,
 ( 'LABEL','ID_MAFE_b292e070d38cedac7309b0635d1edbfe','en','There are problems Edited the Email Event, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_b32493effa41a17220f8a0a7affaa8d9','en','Day of the month (example: 1)', NOW()) ,
@@ -59475,6 +59510,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_b33f61ccf2251cae904b8effbd7f57f0','en','https://example.com:8080', NOW()) ,
 ( 'LABEL','ID_MAFE_b39dad036539dc7a45743536e3f8d8af','en','initial selection date', NOW()) ,
 ( 'LABEL','ID_MAFE_b4263bcd21beffde1fc98b3dd88f86bd','en','Trigger is assigned.', NOW()) ,
+( 'LABEL','ID_MAFE_b4c7ae206140c5179619b952c3b672ef','en','Invalid value for the integer field', NOW()) ,
 ( 'LABEL','ID_MAFE_b4e7d2116bb1534c687d16bdc104ddfe','en','Register a Case Note when the recipient submits the Response', NOW()) ,
 ( 'LABEL','ID_MAFE_b4fab4396dba8d97b190eb5f4c5dc76f','en','Do you want to remove the step ''{0}''?', NOW()) ,
 ( 'LABEL','ID_MAFE_b52eb32fc15ea406ee6bb271983b5939','en','Vertical Text', NOW()) ,
@@ -59495,20 +59531,18 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_b71c644de3981875ca5fc9fdfffd55bc','en','Is not possible create the element in that area', NOW()) ,
 ( 'LABEL','ID_MAFE_b728212c8bd0b2dbfd34b9d18e62504f','en','Do you want to close? All your changes will be lost if you close it.', NOW()) ,
 ( 'LABEL','ID_MAFE_b74a43dbb36287ea86eb5b0c7b86e8e8','en','Evaluation', NOW()) ,
-( 'LABEL','ID_MAFE_b754d64a4ddb13e5eb9803baabb938b6','en','This content is empty.', NOW()) ,
 ( 'LABEL','ID_MAFE_b776b96aded5145322e09111013ef8c5','en','Invalid connection type', NOW()) ,
 ( 'LABEL','ID_MAFE_b77bbd177ec1e4d71a0fe96d3d4e8b39','en','Data Input', NOW()) ,
 ( 'LABEL','ID_MAFE_b78a3223503896721cca1303f776159b','en','Title', NOW()) ,
 ( 'LABEL','ID_MAFE_b79a5b8ee43aa9dc939723becd94a8c0','en','Please enter a numeric value', NOW()) ,
+( 'LABEL','ID_MAFE_b7c2aaa55124be654f3f09361d6e0f62','en','Decrement Minute', NOW()) ,
 ( 'LABEL','ID_MAFE_b7de7e4247d4ab279ef031b7a44c201d','en','End date', NOW()) ,
 ( 'LABEL','ID_MAFE_b7f6fdbd84a1e6b7e2b8ef9400c93ff3','en','There are problems updating the Start Timer, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_b80bb7740288fda1f201890375a60c8f','en','id', NOW()) ,
 ( 'LABEL','ID_MAFE_b84b068f1f3f6b66583314870e2818c4','en','There are problems getting the output documents, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_b86f4a68d98e2e1b9ed38ec3d850b02a','en','Save your changes and exit ?', NOW()) ,
 ( 'LABEL','ID_MAFE_b875db6ce4bf99e5abfb6d5488b1d80e','en','Webbot', NOW()) ,
-( 'LABEL','ID_MAFE_b8afa4e8d5bb1dca8379fcfcee2d6480','en','<li>View: Allow user to only view the control''s value.</li>', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_b8afa4e8d5bb1dca8379fcfcee2d6480','en','<li>View: Allow user to only view the control''s value.</li>', NOW()) ,
 ( 'LABEL','ID_MAFE_b9925a331df6b1464182bdd6cbb2807c','en','<tr><td></td><td>SSS</td><td>0 1 ... 998 999</td></tr><tr><td><b>Timezone</b></td><td>z or zz</td><td>EST CST ... MST PST<br><b>Note:</b> as of <b>1.6.0</b>, the z/zz format tokens have been deprecated.', NOW()) ,
 ( 'LABEL','ID_MAFE_b9cf99bfe1ed82c4a117449ed85680db','en','There are problems saved the OutputDocument, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_b9f5c797ebbf55adccdd8539a65a0241','en','Disabled', NOW()) ,
@@ -59543,17 +59577,21 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_c336025d9ce830a12c4c3668febc2983','en','Trigger updated correctly', NOW()) ,
 ( 'LABEL','ID_MAFE_c33b138a163847cdb6caeeb7c9a126b4','en','Friday', NOW()) ,
 ( 'LABEL','ID_MAFE_c360a6b5c3b1b36a8a5a13737cfda21c','en','Message Field Name', NOW()) ,
+( 'LABEL','ID_MAFE_c3ff20c4d95f758bb6e0e5dcfda8ad4f','en','Invalid value for the float field', NOW()) ,
 ( 'LABEL','ID_MAFE_c40b29699c408c2934c6b87e776965db','en','There is already a connection between these elements', NOW()) ,
 ( 'LABEL','ID_MAFE_c41a31890959544c6523af684561abe5','en','Target', NOW()) ,
 ( 'LABEL','ID_MAFE_c4379b8aabc3e9403dd1076f8a3864b0','en','<p>Please select the control you want to use with your variable.</p>', NOW()) ,
 ( 'LABEL','ID_MAFE_c44e15eb538fed543cc4b76599859b09','en','Every time scheduled by cron', NOW()) ,
-( 'LABEL','ID_MAFE_c499a5f4b3762b6b464ede4a8055e121','en','Supported Controls: file.', NOW()) ,
+( 'LABEL','ID_MAFE_c499a5f4b3762b6b464ede4a8055e121','en','Supported Controls: file.', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_c4cdd5e672b274b476f4760a304445ba','en','The column sizes are defined with integer numbers separated by spaces. Any combination of column sizes can be defined but all the columns sizes should add 12. <br>', NOW()) ,
 ( 'LABEL','ID_MAFE_c50c7d354b9bcf097722ffbce38990a4','en','stepping', NOW()) ,
 ( 'LABEL','ID_MAFE_c512b685438f41daa7386329a3b8f8d3','en','Daily', NOW()) ,
 ( 'LABEL','ID_MAFE_c53385d51221bcb27c5f37de31043c24','en','No Category', NOW()) ,
 ( 'LABEL','ID_MAFE_c5bcf625cbb751aba886be634ef4ef47','en','Invalid Connection between elements', NOW()) ,
 ( 'LABEL','ID_MAFE_c5d84b6c19cb058b7b5471b30e926823','en','Invalid operation: Delete message flow before converting it to', NOW()) ,
+( 'LABEL','ID_MAFE_c5e54f7804fa817826dfa5ecc13cd92f','en','Last User Name', NOW()) ,
 ( 'LABEL','ID_MAFE_c5f93fd19468533ea5c9114801c2958d','en','Input Document updated successfully', NOW()) ,
 ( 'LABEL','ID_MAFE_c61404957758dfda283709e89376ab3e','en','layout', NOW()) ,
 ( 'LABEL','ID_MAFE_c61dee25881b22ead46aca2bc70f0f9d','en','Assigned supervisors list', NOW()) ,
@@ -59566,6 +59604,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_c72d6772f171179fe635af3b5e544434','en','Legal Copy', NOW()) ,
 ( 'LABEL','ID_MAFE_c72d7ee8a23bae4c80e8cc4521f89f7a','en','Steps for task', NOW()) ,
 ( 'LABEL','ID_MAFE_c753162c88467b5e75884bb765d7a682','en','Multiple Steps', NOW()) ,
+( 'LABEL','ID_MAFE_c75f7811d70d17dbcd88e9d03752cbed','en','Authentication', NOW()) ,
 ( 'LABEL','ID_MAFE_c7892ebbb139886662c6f2fc8c450710','en','Subject', NOW()) ,
 ( 'LABEL','ID_MAFE_c78a4a6f9ede9c76f26b0cebed36189b','en','OutPut Document (s)', NOW()) ,
 ( 'LABEL','ID_MAFE_c793116b0fc9df6d8761028f4adbe90e','en','Execute a trigger when a case is opened', NOW()) ,
@@ -59588,9 +59627,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_cae0206c31eaa305dd0e847330c5e837','en','wildcard', NOW()) ,
 ( 'LABEL','ID_MAFE_cae09bbf47d1edd91f595be3d58c3fbb','en','Processmap', NOW()) ,
 ( 'LABEL','ID_MAFE_cba3917d344178657c24e17192d622be','en','The following variables have been created:<br>', NOW()) ,
-( 'LABEL','ID_MAFE_cbcee680697ae9b5cd066ec611895829','en','Boundary Event Type', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_cbcee680697ae9b5cd066ec611895829','en','Boundary Event Type', NOW()) ,
 ( 'LABEL','ID_MAFE_cbf3543f93135ddeb0fbe1b2f822799d','en','Colspan is used to define the size and number of columns of a selected row. Twelve columns can be defined as maximum.', NOW()) ,
 ( 'LABEL','ID_MAFE_cbfc6ad7fc06283ba1556ed2e4d30ff4','en','Correlation Value', NOW()) ,
 ( 'LABEL','ID_MAFE_cc392b567536af3977d356f3c4f201c6','en','Please upload a file with a valid extension (.json)', NOW()) ,
@@ -59614,6 +59651,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_d0aac4ce1ac97df2b4c6e456bbe3a061','en','Expand all', NOW()) ,
 ( 'LABEL','ID_MAFE_d0cf959c7706a5c88e7b434c857f9ca8','en','Pending Task / Not Executed', NOW()) ,
 ( 'LABEL','ID_MAFE_d0e45878043844ffc41aac437e86b602','en','parent', NOW()) ,
+( 'LABEL','ID_MAFE_d1376c0b3248b39302f2ac2fa87de4b8','en','Default date is out of range.', NOW()) ,
 ( 'LABEL','ID_MAFE_d14f18dc87737c53160abb29b9da643c','en','Saving Process', NOW()) ,
 ( 'LABEL','ID_MAFE_d1948d0992fcf56030d9f5b250736dad','en','Enable Versioning', NOW()) ,
 ( 'LABEL','ID_MAFE_d207b4e0bce42a8f1555ce3a05e287f6','en','Dec', NOW()) ,
@@ -59627,7 +59665,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_d329fd777726c300d7a044e482b967e7','en','clone', NOW()) ,
 ( 'LABEL','ID_MAFE_d3548dd5f5b6667fdbd433a77288973c','en','Error, There are problems updating the element', NOW()) ,
 ( 'LABEL','ID_MAFE_d3d2e617335f08df83599665eef8a418','en','Close', NOW()) ,
-( 'LABEL','ID_MAFE_d3eb32a3c80167aaa9aa114db53a22dd','en','Sql:', NOW()) ,
+( 'LABEL','ID_MAFE_d3eb32a3c80167aaa9aa114db53a22dd','en','Sql:', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_d3f29913d052896a7de99dbc03691d93','en','PDF security', NOW()) ,
 ( 'LABEL','ID_MAFE_d40a0246031d05173d2fe23ef8b4f7a9','en','Routing rule removed correctly', NOW()) ,
 ( 'LABEL','ID_MAFE_d40a430b5994378821419101cda69c58','en','Parallel by Evaluation', NOW()) ,
@@ -59670,9 +59710,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_dd1f775e443ff3b9a89270713580a51b','en','Previous', NOW()) ,
 ( 'LABEL','ID_MAFE_dd7b1201c11de68c122a739622d5f377','en','Supported Controls: datetime, hidden.', NOW()) ,
 ( 'LABEL','ID_MAFE_de04bbb13657e1df223071e8b2cfae41','en','<tr><th></th><th>Token</th><th>Output</th></tr><tr><td><b>Month</b></td><td>M</td><td>1 2 ... 11 12</td></tr>', NOW()) ,
-( 'LABEL','ID_MAFE_de340309f61afe838ad6b7666c38de22','en','Export process', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_de340309f61afe838ad6b7666c38de22','en','Export process', NOW()) ,
 ( 'LABEL','ID_MAFE_de95b43bceeb4b998aed4aed5cef1ae7','en','edit', NOW()) ,
 ( 'LABEL','ID_MAFE_de9b9ed78d7e2e1dceeffee780e2f919','en','javascript', NOW()) ,
 ( 'LABEL','ID_MAFE_def36b726efed529b13ba240dd331a12','en','Pool', NOW()) ,
@@ -59698,6 +59736,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_e2627d9094274c7bcdc01ce1dadbaaab','en','Select Target Process', NOW()) ,
 ( 'LABEL','ID_MAFE_e29d57981d438d31f08b968bb12ed568','en','Select a Control', NOW()) ,
 ( 'LABEL','ID_MAFE_e2a990c9958b0fd2ecb860335737c258','en','Please configure script to wait for a signal.', NOW()) ,
+( 'LABEL','ID_MAFE_e2ac1703ae8a4bb8b146f7337a7e4cab','en','Last User', NOW()) ,
 ( 'LABEL','ID_MAFE_e2b9d6eb9f3ec7d4e6089274a4481fab','en','There are problems getting the list of DynaForms, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_e30f555e5a24f076a5d5be70a4625270','en','TNS', NOW()) ,
 ( 'LABEL','ID_MAFE_e3ce9b91bd7b1be415b5e687006ad179','en','false: No default selection <br>true: current date<br>year: the first day of the current year<br>month: the first day of the month<br>day: the current day<br>hour: the current hour without minutes<br>minute: the current minute', NOW()) ,
@@ -59708,7 +59747,10 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_e54e3cf1f4745ffacdc539446402f9e4','en','Output Document to Generate', NOW()) ,
 ( 'LABEL','ID_MAFE_e5771a362d88a71a657bfcd21ca54b3f','en','Units', NOW()) ,
 ( 'LABEL','ID_MAFE_e5f8dbb32f8dead7935095ec1e38cc67','en','Start Event', NOW()) ,
-( 'LABEL','ID_MAFE_e659b52eba1f0299b2d8ca3483919e72','en','Type:', NOW()) ,
+( 'LABEL','ID_MAFE_e635032a5f71d809146d3872389f5b0c','en','Choose File', NOW()) ,
+( 'LABEL','ID_MAFE_e659b52eba1f0299b2d8ca3483919e72','en','Type:', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_e68564f23e0e939acea76dc3d2bc01bf','en','Jan', NOW()) ,
 ( 'LABEL','ID_MAFE_e693021f9ae34a3833f0036c52837cfd','en','<br/>Variables: Define the process data.', NOW()) ,
 ( 'LABEL','ID_MAFE_e6fa96066374220d571ce0ed5f818ca2','en','One Time Only', NOW()) ,
@@ -59752,9 +59794,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_ece7c5dcf104d858b2ea7b80d3c09dce','en','Select dates by days, months or years by default when the date picker is initially shown.<br>', NOW()) ,
 ( 'LABEL','ID_MAFE_ed32b37d44409cdcca89b579bff51348','en','Do you want to delete this routing rule?', NOW()) ,
 ( 'LABEL','ID_MAFE_ed484439470b8e84346a8117d0adf0c2','en','Public Files', NOW()) ,
-( 'LABEL','ID_MAFE_ed5dea09095f671b801bee34ea28a319','en','Permission', NOW()) ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAFE_ed5dea09095f671b801bee34ea28a319','en','Permission', NOW()) ,
 ( 'LABEL','ID_MAFE_ee11cbb19052e40b07aac0ca060c23ee','en','user', NOW()) ,
 ( 'LABEL','ID_MAFE_ee2faeed038501c1deab01c7b54f2fa9','en','hint', NOW()) ,
 ( 'LABEL','ID_MAFE_ee458e0db2f22a6528caf5111e594df0','en','Export Diagram', NOW()) ,
@@ -59779,6 +59819,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_f3a29486bed19a90f2da6d007818b427','en','Steps', NOW()) ,
 ( 'LABEL','ID_MAFE_f3b92fc0f97f128818cfb44321376bca','en','Assignment', NOW()) ,
 ( 'LABEL','ID_MAFE_f45c3a0bb3687ed8e221253b3fd4a2ce','en','EXCLUSIVE', NOW()) ,
+( 'LABEL','ID_MAFE_f45fabda0c6a595f709b3996398132f5','en','Diverging gateways expect to receive only one incoming flow.', NOW()) ,
 ( 'LABEL','ID_MAFE_f4636507ca93332f92f92fb219a43b02','en','Database Connection', NOW()) ,
 ( 'LABEL','ID_MAFE_f49b52022300199128ed01380edda751','en','There are problems updating the Timer Event, please try again.', NOW()) ,
 ( 'LABEL','ID_MAFE_f4ae7ce97eda9edfe1541b3fdea115b6','en','Group or User', NOW()) ,
@@ -59790,11 +59831,16 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_f6039d44b29456b20f8f373155ae4973','en','Username', NOW()) ,
 ( 'LABEL','ID_MAFE_f670ea66cfb0e90bd6090472ad692694','en','Minutes', NOW()) ,
 ( 'LABEL','ID_MAFE_f698f67f5666aff10729d8a1cb1c14d2','en','Trigger', NOW()) ,
-( 'LABEL','ID_MAFE_f6e23536e8d5c5f27f6f6d774eb81652','en','The configuring of multiple instances will be lost', NOW()) ,
+( 'LABEL','ID_MAFE_f6e23536e8d5c5f27f6f6d774eb81652','en','The configuring of multiple instances will be lost', NOW()) ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MAFE_f6eb4ee83cd8508379e695479564fddd','en','The imported dynaform include new variables and existing variables that require changes.', NOW()) ,
 ( 'LABEL','ID_MAFE_f70649197cbdd9cde4fa62f00355a144','en','The process was saved successfully.', NOW()) ,
 ( 'LABEL','ID_MAFE_f724849ad2f7797436db0dbb5fc79a70','en','Do you want to delete all routing rules?', NOW()) ,
+( 'LABEL','ID_MAFE_f727eb287649c090519308749775c175','en','Previous Century', NOW()) ,
 ( 'LABEL','ID_MAFE_f7531e2d0ea27233ce00b5f01c5bf335','en','print', NOW()) ,
+( 'LABEL','ID_MAFE_f75963d32a20c9b16e02169b667aa569','en','Callback Action', NOW()) ,
+( 'LABEL','ID_MAFE_f77415a724d143456212940f13767f42','en','The file size exceeds the limit. Max allowed limit is:', NOW()) ,
 ( 'LABEL','ID_MAFE_f775fa07e143b2e671946a48af8f42ca','en','versioning', NOW()) ,
 ( 'LABEL','ID_MAFE_f7a524eeeba4c19644a8492b922547ef','en','Main Folders', NOW()) ,
 ( 'LABEL','ID_MAFE_f7d0c779f08738b7af7e7da3777548c2','en','Unsupported element.', NOW()) ,
@@ -59831,14 +59877,13 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MAFE_ff4a008470319a22d9cf3d14af485977','en','grid', NOW()) ,
 ( 'LABEL','ID_MAFE_ffc1dca70df11105d22d9f427a9e260b','en','Edit Label', NOW()) ,
 ( 'LABEL','ID_MAFE_ffcf70e892b8ac3facbac0f88602396b','en','Every', NOW()) ,
-( 'LABEL','ID_MAFE_TRANSLATION_DIRECTORY','en','Mafe Translation Directory','2018-07-09') ,
-( 'LABEL','ID_MAFE_TRANSLATION_NOT_WRITEABLE','en','The mafe translation file is not writable. <br/>Please give write permission to file:','2018-07-09') ,
 ( 'LABEL','ID_MAIL_SENT_SUCCESSFULLY','en','Your message has been sent successfully','2014-01-15') ,
+( 'LABEL','ID_MAIL_STATUS_ERROR','en','Error','2018-10-02') ,
+( 'LABEL','ID_MAIL_STATUS_PENDING','en','Pending','2018-10-02') ,
+( 'LABEL','ID_MAIL_STATUS_SENT','en','Sent','2018-10-02') ,
 ( 'LABEL','ID_MAIL_TEST_SUCCESS','en','Test message sent successfully','2014-01-15') ,
 ( 'LABEL','ID_MAIL_TO_NOT_VALID_ADDRESS','en','"Mail to" does not contain a valid email address format','2014-01-15') ,
-( 'LABEL','ID_MAINTENANCE','en','Maintenance','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MAINTENANCE','en','Maintenance','2014-01-15') ,
 ( 'LABEL','ID_MANAGER','en','Manager','2014-01-15') ,
 ( 'LABEL','ID_MANAGERS_DASHBOARDS','en','Managers dashboard','2015-03-30') ,
 ( 'LABEL','ID_MANUAL_ASSIGNMENT','en','Manual Assignment','2014-01-15') ,
@@ -59868,7 +59913,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MESSAGE_EVENT_DEFINITION_DOES_NOT_EXIST','en','The Message-Event-Definition with {0}: {1} does not exist.','2015-02-20') ,
 ( 'LABEL','ID_MESSAGE_EVENT_DEFINITION_DOES_NOT_IS_REGISTERED','en','The Message-Event-Definition with {0}: {1} does not is registered.','2015-02-20') ,
 ( 'LABEL','ID_MESSAGE_EVENT_DEFINITION_VARIABLES_DO_NOT_MEET_DEFINITION','en','The variables do not meet with the definition of Message-Type-Variable','2015-02-20') ,
-( 'LABEL','ID_MESSAGE_EVENT_RELATION_ALREADY_REGISTERED','en','The Message-Event-Relation already registered.','2015-02-20') ,
+( 'LABEL','ID_MESSAGE_EVENT_RELATION_ALREADY_REGISTERED','en','The Message-Event-Relation already registered.','2015-02-20') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MESSAGE_EVENT_RELATION_DOES_NOT_EXIST','en','The Message-Event-Relation with {0}: {1} does not exist.','2015-02-20') ,
 ( 'LABEL','ID_MESSAGE_EVENT_RELATION_DOES_NOT_EXIST_MESSAGE_FLOW','en','Does not exist a "Message Flow" between {0}: {1} and {2}: {3}','2015-02-20') ,
 ( 'LABEL','ID_MESSAGE_EVENT_TASK_RELATION_DOES_NOT_EXIST','en','The Message-Event-Task-Relation with {0}: {1} does not exist.','2015-02-20') ,
@@ -59918,9 +59965,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MONTH_9','en','September','2014-01-15') ,
 ( 'LABEL','ID_MONTH_ABB_1','en','Jan','2014-01-15') ,
 ( 'LABEL','ID_MONTH_ABB_10','en','Oct','2014-01-15') ,
-( 'LABEL','ID_MONTH_ABB_11','en','Nov','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MONTH_ABB_11','en','Nov','2014-01-15') ,
 ( 'LABEL','ID_MONTH_ABB_12','en','Dec','2014-01-15') ,
 ( 'LABEL','ID_MONTH_ABB_2','en','Feb','2014-01-15') ,
 ( 'LABEL','ID_MONTH_ABB_3','en','Mar','2014-01-15') ,
@@ -59950,7 +59995,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MSG_CONFIRM_ASSIGN_ALL_USERS','en','Do you want to assign all available users to this role?','2014-01-15') ,
 ( 'LABEL','ID_MSG_CONFIRM_CANCEL_CASE','en','Are you sure you want to cancel this case?','2014-01-15') ,
 ( 'LABEL','ID_MSG_CONFIRM_CANCEL_CASES','en','Are you sure you want to cancel all selected cases?','2014-01-15') ,
-( 'LABEL','ID_MSG_CONFIRM_DEASIGN_USER_GROUP_MESSAGE','en','Are you sure you want to remove this user or group?','2014-01-15') ,
+( 'LABEL','ID_MSG_CONFIRM_DEASIGN_USER_GROUP_MESSAGE','en','Are you sure you want to remove this user or group?','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_MSG_CONFIRM_DEASIGN_USER_MESSAGE','en','Are you sure you want to remove this user?','2014-01-15') ,
 ( 'LABEL','ID_MSG_CONFIRM_DELETE_AUTH_SOURCE','en','Do you want to delete this authentication source?','2014-01-15') ,
 ( 'LABEL','ID_MSG_CONFIRM_DELETE_CASE','en','Are you sure you want to delete this case?','2014-01-15') ,
@@ -60000,9 +60047,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_MYSQL_SUCCESS_CONNECT','en','Successfully connected to MySQL Server','2015-04-08') ,
 ( 'LABEL','ID_MY_ACCOUNT','en','My account','2014-01-15') ,
 ( 'LABEL','ID_MY_DRAFTS','en','My Drafts','2014-01-15') ,
-( 'LABEL','ID_MY_INBOX','en','My inbox','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_MY_INBOX','en','My inbox','2014-01-15') ,
 ( 'LABEL','ID_NAME','en','Name','2014-01-15') ,
 ( 'LABEL','ID_NAME_EXISTS','en','The name exists','2014-10-15') ,
 ( 'LABEL','ID_NAME_REQUIRED','en','Table Name is required.','2014-10-22') ,
@@ -60032,7 +60077,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_NEW_PMTABLE','en','New PM Table','2014-01-15') ,
 ( 'LABEL','ID_NEW_PROJECT','en','New Project','2015-08-18') ,
 ( 'LABEL','ID_NEW_REPORT_TABLE','en','New Report Table','2014-01-15') ,
-( 'LABEL','ID_NEW_REPORT_TABLE_OLD','en','New Report Table (Old Version)','2014-01-15') ,
+( 'LABEL','ID_NEW_REPORT_TABLE_OLD','en','New Report Table (Old Version)','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_NEW_SITE_TESTING','en','New site testing...','2014-01-15') ,
 ( 'LABEL','ID_NEW_SKIN','en','New Skin','2014-01-15') ,
 ( 'LABEL','ID_NEW_STEP','en','New Step','2014-01-15') ,
@@ -60083,9 +60130,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_NOT_SENT','en','Not sent','2014-01-15') ,
 ( 'LABEL','ID_NOT_VALID_RELATION','en','This id for pu_uid: {0} does not correspond to a valid relation','2014-05-21') ,
 ( 'LABEL','ID_NOT_WORKSPACE','en','You have specified an unavailable workspace.','2014-01-15') ,
-( 'LABEL','ID_NOT_WORKSPACE_SPECIFIED','en','No workspace specified!','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_NOT_WORKSPACE_SPECIFIED','en','No workspace specified!','2014-01-15') ,
 ( 'LABEL','ID_NO_DB_CONNECTION','en','No DB Connection to display','2014-01-15') ,
 ( 'LABEL','ID_NO_DERIVATION_BPMN_RULE','en','Process definition error: All conditions in evaluation routing rule evaluated to false, so workflow has stopped. Please change the definition of the evaluation routing rule.','2015-02-20') ,
 ( 'LABEL','ID_NO_DERIVATION_RULE','en','Process definition error: All conditions in parallel evaluation routing rule evaluated to false, so workflow has stopped. Please change the definition of the parallel evaluation routing rule.','2014-01-15') ,
@@ -60114,7 +60159,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_NO_RESUME','en','The user doesn''t have a resume.','2014-01-15') ,
 ( 'LABEL','ID_NO_SELECTED_FIELDS','en','No selected fields','2014-01-15') ,
 ( 'LABEL','ID_NO_SELECTION_WARNING','en','One item should be selected in order to execute the action.','2014-01-15') ,
-( 'LABEL','ID_NO_SET_MANAGER_SUCCES','en','Manager unassigned correctly','2015-03-18') ,
+( 'LABEL','ID_NO_SET_MANAGER_SUCCES','en','Manager unassigned correctly','2015-03-18') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_NO_STARTING_TASK','en','No starting task defined','2014-01-15') ,
 ( 'LABEL','ID_NO_USERS','en','The task doesn''t have any users.','2014-01-15') ,
 ( 'LABEL','ID_NO_VALUE','en','No','2014-01-15') ,
@@ -60165,9 +60212,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_OUTPUT_DOCUMENT_DOES_NOT_EXIST','en','The Output Document with {0}: {1} does not exist.','2014-05-20') ,
 ( 'LABEL','ID_OUTPUT_DOCUMENT_INVALID_EXTENSION','en','Invalid extension','2016-07-21') ,
 ( 'LABEL','ID_OUTPUT_DOCUMENT_ITS_ASSIGNED','en','The Output Document with {0}: {1} it''s assigned in "{2}".','2014-07-01') ,
-( 'LABEL','ID_OUTPUT_DOCUMENT_TEMPLATE','en','Output Document Template','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_OUTPUT_DOCUMENT_TEMPLATE','en','Output Document Template','2014-01-15') ,
 ( 'LABEL','ID_OUTPUT_GENERATE','en','Output Document to Generate','2014-01-15') ,
 ( 'LABEL','ID_OUTPUT_INFO','en','Output Document Information','2014-01-15') ,
 ( 'LABEL','ID_OUTPUT_NOT_EXIST','en','The output with {0}: ''{1}'' does not exist.','2014-05-29') ,
@@ -60196,7 +60241,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PASSWD_REQUIRED','en','Password is required','2014-01-15') ,
 ( 'LABEL','ID_PASSWORD','en','Password','2014-01-15') ,
 ( 'LABEL','ID_PASSWORDS_DONT_MATCH','en','The password fields don''t match.','2014-01-15') ,
-( 'LABEL','ID_PASSWORD_ADMIN','en','Password (admin)(Max. length 20)','2014-01-15') ,
+( 'LABEL','ID_PASSWORD_ADMIN','en','Password (admin)(Max. length 20)','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_PASSWORD_ADMIN_RETYPE','en','Re-type Password','2014-01-15') ,
 ( 'LABEL','ID_PASSWORD_CHANGED_SUCCESSFULLY','en','Your password has been successfully changed to','2014-01-15') ,
 ( 'LABEL','ID_PASSWORD_COMPLIES_POLICIES','en','The password complies with the security policies.','2014-01-15') ,
@@ -60247,9 +60294,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PLEASE_ENTER_CREDENTIALS','en','Please enter your credentials below','2015-04-09') ,
 ( 'LABEL','ID_PLEASE_ENTER_DESCRIPTION','en','Please, enter a description.','2014-10-23') ,
 ( 'LABEL','ID_PLEASE_ENTER_REQUIRED_FIELDS','en','Please enter the required fields','2014-01-15') ,
-( 'LABEL','ID_PLEASE_SELECT_FILE','en','Please select the file to attach!','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_PLEASE_SELECT_FILE','en','Please select the file to attach!','2014-01-15') ,
 ( 'LABEL','ID_PLEASE_SELECT_FILES_TO_UPLOAD','en','Please select the files to upload','2014-01-15') ,
 ( 'LABEL','ID_PLEASE_SELECT_LOGO','en','Please Select Logo','2014-01-15') ,
 ( 'LABEL','ID_PLEASE_SELECT_MAX_X_FIELDS','en','Please select 80 fields at most','2014-01-15') ,
@@ -60278,7 +60323,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PMG_SELECT_FILE','en','Please select a json file to upload','2016-01-05') ,
 ( 'LABEL','ID_PMG_TYPE_ACCEPT','en','Only accepts files in format json','2016-01-04') ,
 ( 'LABEL','ID_PMPLUGIN_IMPORT_PLUGIN_IS_ENTERPRISE','en','The plugin "{0}" is a Enterprise Edition Plugin, please install the Enterprise Plugins Manager to use this plugin','2016-07-14') ,
-( 'LABEL','ID_PMTABLE','en','PM Table','2014-01-15') ,
+( 'LABEL','ID_PMTABLE','en','PM Table','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_PMTABLES','en','PM Tables','2014-01-15') ,
 ( 'LABEL','ID_PMTABLES_ALERT1','en','You can''t repeat a column name, please rename:','2014-01-15') ,
 ( 'LABEL','ID_PMTABLES_ALERT2','en','Field Name for all columns is required.','2014-01-15') ,
@@ -60300,6 +60347,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PMTABLE_IMPORT_SUCCESS','en','File "{0}" imported successfully.','2014-01-15') ,
 ( 'LABEL','ID_PMTABLE_IMPORT_WITH_ERRORS','en','File "{0}" imported but with errors:','2016-02-18') ,
 ( 'LABEL','ID_PMTABLE_INVALID_FIELD_NAME','en','The following fields cannot be created because they contain the reserved words "{0}"','2014-10-21') ,
+( 'LABEL','ID_PMTABLE_INVALID_FIELD_NAME_VARIABLE','en','There is a conflict with some field names: "{0}", please rename them avoiding the use of numbers and considering that underscores are ignored when validating unique field names.','2018-04-03') ,
 ( 'LABEL','ID_PMTABLE_INVALID_FILE','en','Invalid PM table(s) file, import aborted!','2014-01-15') ,
 ( 'LABEL','ID_PMTABLE_INVALID_NAME','en','Could not create the table with the name "{0}" because it is a reserved word.','2014-01-15') ,
 ( 'LABEL','ID_PMTABLE_NOT_FOUND','en','The PM Table associated with this DynaForm could not be found.','2014-11-12') ,
@@ -60322,16 +60370,15 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PM_GRID','en','pmGrid','2014-01-15') ,
 ( 'LABEL','ID_PM_HEARTBEAT_SETTINGS_TITLE','en','Heart Beat Configuration','2014-01-15') ,
 ( 'LABEL','ID_PM_TABLE','en','PM Table','2014-01-15') ,
-( 'LABEL','ID_POLICY_ALERT','en','Your password does not meet the following password policies','2014-01-15') ,
+( 'LABEL','ID_POLICY_ALERT','en','Your password does not meet the following password policies:','2018-10-29') ,
+( 'LABEL','ID_POLICY_ALERT_INFO','en','Your password must meet the following policies:','2018-10-29') ,
 ( 'LABEL','ID_PORT','en','Port','2014-01-15') ,
 ( 'LABEL','ID_PORT_UNREACHABLE','en','Destination Port Unreachable','2015-09-18') ,
 ( 'LABEL','ID_POSITION','en','Position','2014-01-15') ,
 ( 'LABEL','ID_POSTED_AT','en','Posted at','2014-01-15') ,
 ( 'LABEL','ID_POSTED_DATA_EMPTY','en','The posted data is empty!','2015-01-16') ,
-( 'LABEL','ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN','en','User must change his/her password after next login','2014-10-21') ,
-( 'LABEL','ID_PPP_EXPIRATION_IN','en','Password Expiration in','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN','en','Your previous password has expired, please enter a new password','2018-10-26') ,
+( 'LABEL','ID_PPP_EXPIRATION_IN','en','Password Expiration in','2014-01-15') ,
 ( 'LABEL','ID_PPP_MAXIMUM_LENGTH','en','Maximum length','2014-01-15') ,
 ( 'LABEL','ID_PPP_MAXIMUN_LENGTH','en','Maximum length','2014-01-15') ,
 ( 'LABEL','ID_PPP_MINIMUM_LENGTH','en','Minimum length','2014-01-15') ,
@@ -60359,7 +60406,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PRIORITY_VH','en','VERY HIGH','2014-01-15') ,
 ( 'LABEL','ID_PRIORITY_VL','en','VERY LOW','2014-01-15') ,
 ( 'LABEL','ID_PRIVACY','en','Privacy','2014-01-15') ,
-( 'LABEL','ID_PRIVATE','en','Private','2014-09-22') ,
+( 'LABEL','ID_PRIVATE','en','Private','2014-09-22') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_PROCESING','en','Processing: {0}','2015-01-16') ,
 ( 'LABEL','ID_PROCESS','en','Process','2014-01-15') ,
 ( 'LABEL','ID_PROCESSED','en','Processed','2014-01-15') ,
@@ -60411,9 +60460,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PROCESSMAP_PARALLEL_JOIN','en','Parallel (join)','2014-01-15') ,
 ( 'LABEL','ID_PROCESSMAP_SELECTION','en','Selection','2014-01-15') ,
 ( 'LABEL','ID_PROCESSMAP_SEQUENTIAL','en','Sequential','2014-01-15') ,
-( 'LABEL','ID_PROCESSMAP_TITLE','en','BPMN Designer','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_PROCESSMAP_TITLE','en','BPMN Designer','2014-01-15') ,
 ( 'LABEL','ID_PROCESSNAME_ALREADY_EXISTS','en','The Process Name already exists!','2014-01-15') ,
 ( 'LABEL','ID_PROCESSTITLE_ALREADY_EXISTS','en','The Process Title "{PRO_TITLE}" already exists!','2014-01-15') ,
 ( 'LABEL','ID_PROCESS_ALREADY_IN_SYSTEM','en','The process is already in the System and the value for importOption is not specified.','2014-01-15') ,
@@ -60441,7 +60488,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_PROCESS_NOT_EXIST','en','The report table ''{0}'' is related to a process not present in the workspace, import the related process first. To relate the report table to other process, open the process in the designer and import from there. The report table can''t be imported.','2016-03-08') ,
 ( 'LABEL','ID_PROCESS_NO_CATEGORY','en','No Category','2014-01-15') ,
 ( 'LABEL','ID_PROCESS_NO_EXIST','en','Process doesn''t exist!','2014-01-15') ,
-( 'LABEL','ID_PROCESS_PERMISSIONS','en','Process Permissions','2014-01-15') ,
+( 'LABEL','ID_PROCESS_PERMISSIONS','en','Process Permissions','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_PROCESS_PERMISSIONS_CREATE','en','Process Permission created successfully','2014-01-15') ,
 ( 'LABEL','ID_PROCESS_PERMISSIONS_EDIT','en','Process Permission edited successfully','2014-01-15') ,
 ( 'LABEL','ID_PROCESS_PERMISSION_NOT_EXIST','en','The process permission with {0}: ''{1}'' does not exist.','2014-05-29') ,
@@ -60493,9 +60542,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_RADIO_NOT_IMPORTED_RPT','en','Do not import the report table','2016-03-07') ,
 ( 'LABEL','ID_RADIO_OVERWRITE','en','Overwrite the existing Table','2016-03-07') ,
 ( 'LABEL','ID_RADIO_RELATED_PROCESS','en','Import and relate it to the current process','2016-03-07') ,
-( 'LABEL','ID_RATING','en','Rating','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_RATING','en','Rating','2014-01-15') ,
 ( 'LABEL','ID_RBAC_DATABASE','en','Rbac Database','2014-01-15') ,
 ( 'LABEL','ID_RBAC_DATABASE_NAME','en','Please enter the Rbac Database Name.','2014-01-15') ,
 ( 'LABEL','ID_RB_DATABASE_NAME','en','Rbac Database Name','2014-01-15') ,
@@ -60523,7 +60570,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_REBUILD_SUCCESS','en','REBUILD SUCCESS','2014-01-15') ,
 ( 'LABEL','ID_RECEIVED_EMPTY_RESPONSE','en','Received an empty response','2014-01-15') ,
 ( 'LABEL','ID_RECENT_VERSION_PLUGIN','en','Task does not have a routing rule. Please, check the process definition.','2015-01-16') ,
-( 'LABEL','ID_RECORDS','en','Records','2014-01-15') ,
+( 'LABEL','ID_RECORDS','en','Records','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_RECORD_CANNOT_BE_CREATED','en','The record couldn’t be created!','2014-10-21') ,
 ( 'LABEL','ID_RECORD_DOES_NOT_EXIST','en','Record does not exist','2014-01-15') ,
 ( 'LABEL','ID_RECORD_DOES_NOT_EXIST_IN_TABLE','en','The record "{0}", does not exist in table {1}.','2014-05-20') ,
@@ -60577,9 +60626,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_REPORT1','en','Case duration by process and task','2014-01-15') ,
 ( 'LABEL','ID_REPORT2','en','Number of cases per process','2014-01-15') ,
 ( 'LABEL','ID_REPORT3','en','Number of cases per month','2014-01-15') ,
-( 'LABEL','ID_REPORT4','en','Number of cases per starting user','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_REPORT4','en','Number of cases per starting user','2014-01-15') ,
 ( 'LABEL','ID_REPORT5','en','Number of cases per executing user','2014-01-15') ,
 ( 'LABEL','ID_REPORTS','en','Reports','2014-01-15') ,
 ( 'LABEL','ID_REPORTS_TO','en','Reports to','2014-01-15') ,
@@ -60605,7 +60652,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_RESERVED_WORD','en','because it is a reserved word','2014-01-15') ,
 ( 'LABEL','ID_RESET','en','Reset','2014-01-15') ,
 ( 'LABEL','ID_RESET_DATES','en','Reset Dates','2014-01-15') ,
-( 'LABEL','ID_RESET_FILTERS','en','Reset Filters','2014-10-07') ,
+( 'LABEL','ID_RESET_FILTERS','en','Reset Filters','2014-10-07') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_RESET_PASSWORD','en','Reset password','2014-01-15') ,
 ( 'LABEL','ID_RESOLVE_APPLICATION_ID','en','Can not resolve the Apllication ID for this request.','2014-01-15') ,
 ( 'LABEL','ID_RESPONSABILITIES_ASSIGNMENT','en','Assignment of responsibilities','2014-01-15') ,
@@ -60659,9 +60708,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_RT_RENAME_NAME_TABLE','en','All references to the previous table name are going to be invalid. Do you really want to change the table name?','2016-06-29') ,
 ( 'LABEL','ID_RULES_AND_USER_GROUPS','en','Rules and user groups','2014-01-15') ,
 ( 'LABEL','ID_SALES_DEPARTMENT_REQUEST','en','It sends a request to Sales Department, do you want to continue?','2014-10-21') ,
-( 'LABEL','ID_SAMPLES','en','Samples','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_SAMPLES','en','Samples','2014-01-15') ,
 ( 'LABEL','ID_SAT','en','Sat','2014-01-15') ,
 ( 'LABEL','ID_SAVE','en','Save','2014-01-15') ,
 ( 'LABEL','ID_SAVED','en','Saved','2014-01-15') ,
@@ -60687,7 +60734,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SCHEDULER_SUCCESS_DELETE','en','Case Scheduler has been deleted correctly.','2014-01-15') ,
 ( 'LABEL','ID_SCHEDULER_SUCCESS_NEW','en','Case Scheduler has been created correctly.','2014-01-15') ,
 ( 'LABEL','ID_SCHEDULER_SUCCESS_UPDATE','en','Case Scheduler has been updated correctly.','2014-01-15') ,
-( 'LABEL','ID_SCHEDULER_TASK','en','Scheduled Task ID','2014-01-15') ,
+( 'LABEL','ID_SCHEDULER_TASK','en','Scheduled Task ID','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_SCHEMA','en','Schema','2014-01-15') ,
 ( 'LABEL','ID_SCRIPT_TASK','en','Script Task','2015-10-19') ,
 ( 'LABEL','ID_SCRIPT_TASK_ACTIVITY_ALREADY_REGISTERED','en','The Script-Task with {0}: "{1}" already registered','2016-08-01') ,
@@ -60741,9 +60790,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SELECT_WORKSPACE','en','Select a workspace','2014-01-15') ,
 ( 'LABEL','ID_SELFSERVICE','en','Self Service','2014-01-15') ,
 ( 'LABEL','ID_SELF_SERVICE','en','Self Service','2014-01-15') ,
-( 'LABEL','ID_SEL_AFTER_DATE','en','Please select after date','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_SEL_AFTER_DATE','en','Please select after date','2014-01-15') ,
 ( 'LABEL','ID_SEL_BEFORE_DATE','en','Please select before date','2014-01-15') ,
 ( 'LABEL','ID_SEL_END_DATE','en','Please select end date','2014-01-15') ,
 ( 'LABEL','ID_SEL_START_DATE','en','Please select start date','2014-01-15') ,
@@ -60769,7 +60816,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SERVICE','en','Service','2014-01-15') ,
 ( 'LABEL','ID_SESSION','en','Session','2014-01-15') ,
 ( 'LABEL','ID_SESSION_ACTIVE','en','Session active','2014-01-15') ,
-( 'LABEL','ID_SESSION_DIRECTORY','en','Session directory','2015-11-05') ,
+( 'LABEL','ID_SESSION_DIRECTORY','en','Session directory','2015-11-05') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_SESSION_EXPIRED','en','The session has expired.','2014-01-15') ,
 ( 'LABEL','ID_SETTINGS','en','Settings','2014-01-15') ,
 ( 'LABEL','ID_SETTINGS_HEARTBEAT_TITLE','en','Display Setting','2014-01-15') ,
@@ -60823,9 +60872,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SKIN_TEAM','en','ProcessMaker Team','2014-01-15') ,
 ( 'LABEL','ID_SLOW','en','slow','2014-01-15') ,
 ( 'LABEL','ID_SMTP_ALREADY_CONNECTED','en','Already connected to a server','2014-02-12') ,
-( 'LABEL','ID_SMTP_ERROR_AUTH_NOT_ACCEPTED','en','Authentication not accepted in server','2014-10-21') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_SMTP_ERROR_AUTH_NOT_ACCEPTED','en','Authentication not accepted in server','2014-10-21') ,
 ( 'LABEL','ID_SMTP_ERROR_CALLED_DATA_WITHOUT','en','Called Data() without being connected','2014-02-12') ,
 ( 'LABEL','ID_SMTP_ERROR_CALLED_HELLO_WITHOUT','en','Called Hello() without being connected','2014-02-12') ,
 ( 'LABEL','ID_SMTP_ERROR_CALLED_MAIL_WITHOUT','en','Called Mail() without being connected','2014-02-12') ,
@@ -60851,7 +60898,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SMTP_ERROR_USERNAME_NOT_ACCEPTED','en','Username not accepted by the server','2014-10-21') ,
 ( 'LABEL','ID_SMTP_FAILED_CONNECT_SERVER','en','Failed to connect to server','2014-02-12') ,
 ( 'LABEL','ID_SNAP_GEOMETRY','en','Snap Geometry','2014-01-15') ,
-( 'LABEL','ID_SOMETHING_WRONG','en','Something was wrong','2014-01-15') ,
+( 'LABEL','ID_SOMETHING_WRONG','en','Something was wrong','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_SOME_ACTORS_ALREADY_ASSIGNED','en','Some actor(s) is/are already assigned to task <b>{0}</b>','2014-01-15') ,
 ( 'LABEL','ID_SOME_FIELDS_REQUIRED','en','Some Fields are required.','2014-01-15') ,
 ( 'LABEL','ID_SORT_BY','en','Sort by','2015-04-28') ,
@@ -60905,9 +60954,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_SUCCESSFULLY','en','Successfully','2014-01-28') ,
 ( 'LABEL','ID_SUCCESSFULLY_CONNECTED','en','Successfully connected','2015-09-15') ,
 ( 'LABEL','ID_SUCCESSFULLY_UPLOADED','en','Successfully uploaded.','2014-09-18') ,
-( 'LABEL','ID_SUCCESSFUL_CONNECTION','en','Successful connection','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_SUCCESSFUL_CONNECTION','en','Successful connection','2014-01-15') ,
 ( 'LABEL','ID_SUCCESS_DIRECTORIES_WRITABLE','en','Success, all required directories are writable.','2014-01-15') ,
 ( 'LABEL','ID_SUCCESS_RECORD','en','Success Records:','2014-01-15') ,
 ( 'LABEL','ID_SUCESSFUL','en','Sucessful','2014-01-15') ,
@@ -60933,7 +60980,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_TABLES_REMOVED_SUCCESSFULLY','en','tables removed Successfully','2014-01-15') ,
 ( 'LABEL','ID_TABLES_REMOVED_WITH_ERRORS','en','tables removed but with errors','2014-01-15') ,
 ( 'LABEL','ID_TABLES_TO_EXPORT','en','Tables To Export','2014-01-15') ,
-( 'LABEL','ID_TABLE_ALREADY_EXISTS','en','Table already exists','2014-01-15') ,
+( 'LABEL','ID_TABLE_ALREADY_EXISTS','en','Table already exists','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_TABLE_INVALID_SYNTAX','en','Invalid syntax','2014-01-15') ,
 ( 'LABEL','ID_TABLE_NAME','en','Table Name','2014-01-15') ,
 ( 'LABEL','ID_TABLE_NAME_IS_REQUIRED','en','Table Name is required.','2014-01-15') ,
@@ -60987,15 +61036,18 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_TEXT','en','TEXT','2014-01-15') ,
 ( 'LABEL','ID_THANKS_USE_SERVICES','en','Thanks for using the ProcessMaker services','2014-01-15') ,
 ( 'LABEL','ID_THE','en','The','2016-03-02') ,
-( 'LABEL','ID_THERE_ARE_NO_LDAP_USERS','en','There are no LDAP Users','2015-09-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_THERE_ARE_NO_LDAP_USERS','en','There are no LDAP Users','2015-09-15') ,
 ( 'LABEL','ID_THERE_MUST__LEAST_HOLIDAY','en','There must be at least a holiday','2014-01-15') ,
 ( 'LABEL','ID_THERE_PROBLEM_SENDING_EMAIL','en','There was a problem sending the email to','2016-04-08') ,
 ( 'LABEL','ID_THE_APPLICATION_IS_NOT_CANCELED','en','Error: The application {0} is not canceled.','2016-06-15') ,
 ( 'LABEL','ID_THE_DEFAULT_CONFIGURATION','en','The default configuration was not defined','2016-11-16') ,
+( 'LABEL','ID_THE_FILE_SIZE_IS_BIGGER_THAN_THE_MAXIMUM_ALLOWED','en','The file size is bigger than the maximum allowed, the maximum size allowed is {0} Mbytes.','2019-02-26') ,
+( 'LABEL','ID_THE_MAXIMUM_VALUE_OF_THIS_FIELD_IS','en','The maximum value of this field is {0}.','2019-02-26') ,
+( 'LABEL','ID_THE_MIMETYPE_EXTENSION_ERROR','en','The mime type does not correspond to the permitted extension, please verify your file.','2018-10-2') ,
 ( 'LABEL','ID_THE_NAME_CHANGE_MAY_CAUSE_DATA_LOSS','en','The change might cause data loss in the PM table. Do you want to continue?','2017-03-30') ,
+( 'LABEL','ID_THE_PHP_FILES_EXECUTION_WAS_DISABLED','en','The PHP files execution was disabled please contact the system administrator.','2018-04-20') ,
 ( 'LABEL','ID_THE_REASON_REASSIGN_USER_EMPTY','en','Please complete the reassign reason.','2016-10-20') ,
+( 'LABEL','ID_THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED','en','The upload of PHP files was disabled please contact the system administrator.','2018-04-20') ,
 ( 'LABEL','ID_THE_USERNAME_EMAIL_IS_INCORRECT','en','The username or email is incorrect','2018-01-18') ,
 ( 'LABEL','ID_THIS_MONTH','en','This Month','2014-01-15') ,
 ( 'LABEL','ID_THIS_QUARTER','en','This quarter','2014-01-15') ,
@@ -61015,7 +61067,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_TIME_STARTING_EXCEED_END','en','The starting time must not exceed the end time','2014-01-15') ,
 ( 'LABEL','ID_TIME_START_WITH_TASK','en','The time starts with task','2014-01-15') ,
 ( 'LABEL','ID_TIME_UNIT','en','Time Unit','2014-01-15') ,
-( 'LABEL','ID_TIME_ZONE','en','Time Zone','2014-01-15') ,
+( 'LABEL','ID_TIME_ZONE','en','Time Zone','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_TIME_ZONE_DOES_NOT_EXIST','en','The time zone with {0}: "{1}" does not exist.','2015-11-04') ,
 ( 'LABEL','ID_TIME_ZONE_LOGIN_DESCRIPTION1','en','Your local machine time zone does not match your current profile settings.','2015-11-27') ,
 ( 'LABEL','ID_TIME_ZONE_LOGIN_DESCRIPTION2','en','Your time zone profile settings will be updated in accordance to your current location.','2015-11-27') ,
@@ -61050,6 +61104,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_TO','en','To','2014-01-15') ,
 ( 'LABEL','ID_TODAY','en','Today','2014-01-15') ,
 ( 'LABEL','ID_TOOLS','en','Tools','2014-01-15') ,
+( 'LABEL','ID_TOO_MANY_REQUESTS','en','Upon configurations, you have reached the maximum number of files to upload.','2018-12-17') ,
 ( 'LABEL','ID_TOP_MARGIN','en','Top Margin','2014-01-15') ,
 ( 'LABEL','ID_TOTAL_CASES','en','Total Cases','2014-01-15') ,
 ( 'LABEL','ID_TOTAL_CASES_REASSIGNED','en','Total Cases Reassigned','2014-01-15') ,
@@ -61069,9 +61124,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_TRIGGERS_VALIDATE_EERR1','en','* The {Object} {Description} depends.','2014-01-15') ,
 ( 'LABEL','ID_TRIGGERS_VALIDATION','en','No Dependencies were found for this trigger in {Object} definitions','2014-01-15') ,
 ( 'LABEL','ID_TRIGGERS_VALIDATION_ERR2','en','({N}) Dependencies were found for this trigger in {Object} objects','2014-01-15') ,
-( 'LABEL','ID_TRIGGERS_VALIDATION_ERR3','en','* The {Object} {Description} depends.','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_TRIGGERS_VALIDATION_ERR3','en','* The {Object} {Description} depends.','2014-01-15') ,
 ( 'LABEL','ID_TRIGGER_ASSIGN','en','Triggers has been assigned successfully.','2014-01-15') ,
 ( 'LABEL','ID_TRIGGER_COPY_OPTION','en','Copy/Import Triggers from a Process','2014-01-15') ,
 ( 'LABEL','ID_TRIGGER_COPY_OPTION_DESCRIPTION','en','With this option you can copy/import a trigger from any other processes in the system.','2014-01-15') ,
@@ -61097,7 +61150,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_UNABLE_START_CASE','en','Unable to start a case','2014-01-15') ,
 ( 'LABEL','ID_UNABLE_TO_EDIT','en','Unable to edit. Make sure your file has an editable extension.','2014-05-21') ,
 ( 'LABEL','ID_UNABLE_TO_SEND_EMAIL','en','Unable to send email, the task is closed.','2016-04-08') ,
-( 'LABEL','ID_UNASSIGNED','en','Unassigned','2014-01-15') ,
+( 'LABEL','ID_UNASSIGNED','en','Unassigned','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_UNASSIGNED_INBOX','en','Unassigned Inbox','2014-01-15') ,
 ( 'LABEL','ID_UNASSIGNED_MESSAGE','en','unassignedMessage.html','2014-01-15') ,
 ( 'LABEL','ID_UNASSIGNED_STATUS','en','Unassigned Status','2016-04-11') ,
@@ -61151,9 +61206,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_UPDATING_TABLE','en','Updating table, please wait...','2014-01-15') ,
 ( 'LABEL','ID_UPGRADE','en','Upgrade System','2014-01-15') ,
 ( 'LABEL','ID_UPGRADES_PATCHES','en','Upgrades/Patches','2014-01-15') ,
-( 'LABEL','ID_UPGRADE_ENTERPRISE','en','This feature is not available in ProcessMaker Community Edition. Please upgrade to ProcessMaker Enterprise Edition.','2015-09-11') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_UPGRADE_ENTERPRISE','en','This feature is not available in ProcessMaker Community Edition. Please upgrade to ProcessMaker Enterprise Edition.','2015-09-11') ,
 ( 'LABEL','ID_UPGRADE_FINISHED','en','Upgrade finished.','2014-09-18') ,
 ( 'LABEL','ID_UPGRADE_LABEL','en','Upgrade','2014-09-18') ,
 ( 'LABEL','ID_UPGRADE_NEVER_UPGRADE','en','Never upgraded','2014-01-15') ,
@@ -61175,11 +61228,15 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_UPLOAD_ERR_FORM_SIZE','en','The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_ERR_INI_SIZE','en','The uploaded file exceeds the upload_max_filesize directive in php.ini','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_ERR_NOT_ALLOWED_EXTENSION','en','The file has not been attached because the extension is not allowed or because the content doesn''t correspond.','2014-10-21') ,
+( 'LABEL','ID_UPLOAD_INVALID_DOC_MAX_FILESIZE','en','File size exceeds the allowable limit of {0}','2018-11-06') ,
+( 'LABEL','ID_UPLOAD_INVALID_DOC_TYPE_FILE','en','Invalid file format, please upload a file with one of the following formats {0}','2018-11-05') ,
 ( 'LABEL','ID_UPLOAD_ERR_NO_FILE','en','No file was uploaded','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_ERR_NO_TMP_DIR','en','Missing a temporary folder','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_ERR_PARTIAL','en','The uploaded file was only partially uploaded','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_ERR_UNKNOWN','en','Unknown upload error','2014-01-15') ,
-( 'LABEL','ID_UPLOAD_ERR_WRONG_ALLOWED_EXTENSION_FORMAT','en','The format is incorrect, check the following examples:    *.*   *.png   *.pdf, *.doc, *.xls','2014-08-25') ,
+( 'LABEL','ID_UPLOAD_ERR_WRONG_ALLOWED_EXTENSION_FORMAT','en','The format is incorrect, check the following examples:    *.*   *.png   *.pdf, *.doc, *.xls','2014-08-25') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_UPLOAD_FILE','en','Upload File','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_FROM_FILE','en','Upload from file','2014-01-15') ,
 ( 'LABEL','ID_UPLOAD_IMAGE','en','Upload image','2014-01-15') ,
@@ -61233,9 +61290,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_USER_GROUPS_ADHOC','en','Users and User Groups(Ad Hoc)','2014-01-15') ,
 ( 'LABEL','ID_USER_GROUP_NOT_CORRESPOND','en','This id: {0} not correspond to a {1}','2016-07-14') ,
 ( 'LABEL','ID_USER_HAVENT_RIGHTS_PAGE','en','User does not have rights on this page.','2014-01-15') ,
-( 'LABEL','ID_USER_HAVENT_RIGHTS_SYSTEM','en','User does not have access to the system','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_USER_HAVENT_RIGHTS_SYSTEM','en','User does not have access to the system','2014-01-15') ,
 ( 'LABEL','ID_USER_ID','en','Username','2014-10-09') ,
 ( 'LABEL','ID_USER_IDENTIFIER','en','User Identifier','2015-09-15') ,
 ( 'LABEL','ID_USER_INACTIVE','en','User inactive!','2014-01-15') ,
@@ -61261,7 +61316,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_USER_NOT_INITIAL ACTIVITIES','en','This user usr_uid: {0} does not have initial activities assigned in this project','2014-05-21') ,
 ( 'LABEL','ID_USER_NOT_IT_BELONGS_CASE_OR_NOT_SUPERVISOR','en','The user does not belong to case or user not is supervisor','2016-07-06') ,
 ( 'LABEL','ID_USER_NOT_REGISTER','en','the user is not register','2014-01-15') ,
-( 'LABEL','ID_USER_NOT_REGISTERED','en','User not registered!','2014-01-15') ,
+( 'LABEL','ID_USER_NOT_REGISTERED','en','User not registered!','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_USER_NOT_REGISTERED_GROUP','en','User not registered in the group','2014-01-15') ,
 ( 'LABEL','ID_USER_NOT_REGISTERED_SYSTEM','en','User not registered in the system','2014-01-15') ,
 ( 'LABEL','ID_USER_NOT_RESPONDED_REQUEST','en','The user has not responded to this request.','2016-04-08') ,
@@ -61315,9 +61372,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_VIEW_INFO','en','View Information','2014-01-15') ,
 ( 'LABEL','ID_VIEW_RESPONSE','en','View Response','2017-02-22') ,
 ( 'LABEL','ID_VIEW_USER_GROUP','en','Groups','2014-01-15') ,
-( 'LABEL','ID_VISIBLE','en','Visible','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_VISIBLE','en','Visible','2014-01-15') ,
 ( 'LABEL','ID_VISIT','en','Visit','2014-01-15') ,
 ( 'LABEL','ID_WAIT_INSTALLING_PLUGIN','en','Please wait while the plugin is being installed...','2014-10-21') ,
 ( 'LABEL','ID_WAIT_WHILE_UPGRADING_PROCESSMAKER','en','Please wait while upgrading ProcessMaker...','2014-09-18') ,
@@ -61343,7 +61398,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_WEB_ENTRY_SUMMARY','en','Web Entry Summary','2014-01-15') ,
 ( 'LABEL','ID_WEB_ENTRY_TITLE_ALREADY_EXISTS','en','The web entry title with {0}: "{1}" already exists.','2014-05-20') ,
 ( 'LABEL','ID_WEB_SERVER','en','Web Server','2014-01-15') ,
-( 'LABEL','ID_WEB_SERVICES','en','Web Services Test','2014-01-15') ,
+( 'LABEL','ID_WEB_SERVICES','en','Web Services Test','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','ID_WEB_SERVICE_PASSWORD','en','Web Service Password','2014-01-15') ,
 ( 'LABEL','ID_WEB_SERVICE_USER','en','Web Service User','2014-01-15') ,
 ( 'LABEL','ID_WEEKDAY_0','en','Sunday','2014-01-15') ,
@@ -61397,9 +61454,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','ID_YOUR_IMAGE_HAS_BEEN_SUCCESSFULLY','en','Your image has been successfully uploaded','2014-01-15') ,
 ( 'LABEL','ID_YOUR_LICENSE','en','Your license','2014-09-18') ,
 ( 'LABEL','ID_YOUR_PASSWORD_IS','en','Your password is','2014-01-15') ,
-( 'LABEL','ID_YOUR_USERMANE_IS','en','Your username is','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','ID_YOUR_USERMANE_IS','en','Your username is','2014-01-15') ,
 ( 'LABEL','ID_YOU_ARE_FIRST_STEP','en','You are in the first step!','2014-01-15') ,
 ( 'LABEL','ID_YOU_ARE_NOT_CAN_SELECT_PHOTO','en','You can not select more than one photo.','2014-10-21') ,
 ( 'LABEL','ID_YOU_DO_NOT_HAVE_PERMISSION','en','Error: You do not have permission.','2016-06-15') ,
@@ -61425,7 +61480,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','MIME_DES_CGI','en','CGI Script','2014-01-15') ,
 ( 'LABEL','MIME_DES_CPPH','en','C++ Header File','2014-01-15') ,
 ( 'LABEL','MIME_DES_CPPS','en','C++ Source File','2014-01-15') ,
-( 'LABEL','MIME_DES_CSS','en','CSS File','2014-01-15') ,
+( 'LABEL','MIME_DES_CSS','en','CSS File','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','MIME_DES_DIR','en','Directory','2014-01-15') ,
 ( 'LABEL','MIME_DES_DOC','en','Word Document','2014-01-15') ,
 ( 'LABEL','MIME_DES_DOCX','en','Word Document','2014-01-15') ,
@@ -61479,9 +61536,7 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','NEW_SITE_SUCCESS_CONFIRMNOTE','en','Note.- If you open the new site your current session will be closed.','2014-01-15') ,
 ( 'LABEL','OPEN_NEW_WS','en','Open new site','2014-01-15') ,
 ( 'LABEL','OUTPUT_CREATE','en','Output document has been created successfully','2014-01-15') ,
-( 'LABEL','PASSWORD_HISTORY','en','Password history','2014-01-15') ;
-INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
-
+( 'LABEL','PASSWORD_HISTORY','en','Password history','2014-01-15') ,
 ( 'LABEL','PAUSED','en','Pause','2014-01-15') ,
 ( 'LABEL','PENTAHO_LABEL_CONFIGURATION','en','Configuration','2014-01-15') ,
 ( 'LABEL','PENTAHO_LABEL_DATASOURCE','en','Datasource Name','2014-01-15') ,
@@ -61507,7 +61562,9 @@ INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE 
 ( 'LABEL','PENTAHO_LABEL_USER_EXIST','en','User already exists','2014-01-15') ,
 ( 'LABEL','PENTAHO_LABEL_USER_NAME','en','User Name','2014-01-15') ,
 ( 'LABEL','PENTAHO_LABEL_WS_SYNCHED','en','Workspace synchronized with Pentaho Solution','2014-01-15') ,
-( 'LABEL','PENTAHO_LABEL_WS_USER_PASSWORD','en','Pentaho Workspace User and Password','2014-01-15') ,
+( 'LABEL','PENTAHO_LABEL_WS_USER_PASSWORD','en','Pentaho Workspace User and Password','2014-01-15') ;
+INSERT INTO TRANSLATION (TRN_CATEGORY,TRN_ID,TRN_LANG,TRN_VALUE,TRN_UPDATE_DATE )  VALUES 
+
 ( 'LABEL','PENTAHO_TABLES_TRIGGERS','en','Database tables and triggers','2014-01-15') ,
 ( 'LABEL','PHOTO_GALLERY','en','Photo gallery','2014-01-15') ,
 ( 'LABEL','PORT_DEFAULT','en','Port (default 25)','2014-01-15') ,
@@ -61543,7 +61600,7 @@ INSERT INTO DASHLET_INSTANCE (DAS_INS_UID,DAS_UID,DAS_INS_OWNER_TYPE,DAS_INS_OWN
 ('00000000000000000000000000000002','00000000000000000000000000000002','EVERYBODY','','','2011-12-02 00:00:00','2011-12-02 00:00:00',1),
 ('00000000000000000000000000000003','00000000000000000000000000000003','EVERYBODY','','','2011-12-05 00:00:00','2011-12-05 00:00:00',1);
 
-INSERT INTO CONFIGURATION (CFG_UID,OBJ_UID,CFG_VALUE,PRO_UID,USR_UID,APP_UID) VALUES
+INSERT INTO CONFIGURATION (CFG_UID,OBJ_UID,CFG_VALUE,PRO_UID,USR_UID,APP_UID) VALUES 
 ('AUDIT_LOG','log','s:5:"false";','','',''),
 ('CLEAN_DYN_CONTENT_HISTORY', 'history', 'a:1:{s:7:\"updated\";b:1;}', '', '', ''),
 ('ENTERPRISE_SETTING_ENCRYPT','','a:2:{s:7:"current";s:6:"sha256";s:8:"previous";s:3:"md5";}','','',''),
@@ -61586,3 +61643,4 @@ INSERT INTO ADDONS_MANAGER (ADDON_DESCRIPTION,ADDON_ID,ADDON_NAME,ADDON_NICK,ADD
 
 INSERT INTO APP_SEQUENCE (ID) VALUES 
 ('0');
+

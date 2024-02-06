@@ -14,6 +14,19 @@ require_once 'classes/model/om/BaseOauthAuthorizationCodes.php';
  *
  * @package    classes.model
  */
-class OauthAuthorizationCodes extends BaseOauthAuthorizationCodes {
-
+class OauthAuthorizationCodes extends BaseOauthAuthorizationCodes
+{
+    /**
+     * Delete all records related to a user uid
+     * @param string $userUid User uid
+     * @return int
+     * @throws PropelException
+     */
+    public function removeByUser($userUid)
+    {
+        $criteria = new Criteria();
+        $criteria->add(OauthAuthorizationCodesPeer::USER_ID, $userUid);
+        $resultSet = OauthAuthorizationCodesPeer::doDelete($criteria);
+        return $resultSet;
+    }
 } // OauthAuthorizationCodes

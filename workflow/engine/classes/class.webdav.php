@@ -944,6 +944,8 @@ class ProcessMakerWebDav extends HTTP_WebDAV_Server
      *
      * @param string resource path to check for locks
      * @return bool true on success
+     * @link https://wiki.processmaker.com/index.php/WebDAV
+     * @deprecated
      */
     public function checkLock($path)
     {
@@ -959,7 +961,9 @@ class ProcessMakerWebDav extends HTTP_WebDAV_Server
 
         if ($res) {
             $row = mysqli_fetch_array($res);
-            mysqli_free_result($res);
+            if (is_resource($res)) {
+                mysqli_free_result($res);
+            }
 
             if ($row) {
                 $result = array("type" => "write", "scope" => $row["exclusivelock"] ? "exclusive" : "shared", "depth" => 0, "owner" => $row['owner'], "token" => $row['token'], "expires" => $row['expires']

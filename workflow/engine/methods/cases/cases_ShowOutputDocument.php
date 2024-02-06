@@ -77,8 +77,8 @@ if (defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD
     }
 }
 
-
-$info = pathinfo($oAppDocument->getAppDocFilename());
+$docFileName = fixContentDispositionFilename($oAppDocument->getAppDocFilename());
+$info = pathinfo($docFileName);
 if (!isset($_GET['ext'])) {
     $ext = $info['extension'];
 } else {
@@ -133,7 +133,7 @@ if (!$sw_file_exists) {
         $res['message'] = $info['basename'] . $ver . '.' . $ext;
         print G::json_encode($res);
     } else {
-        $nameFile = G::inflect($info['basename'] . $ver) . '.' . $ext;
+        $nameFile = $info['basename'] . $ver . '.' . $ext;
         $licensedFeatures = PMLicensedFeatures::getSingleton();
         $downloadStatus = false;
         /*----------------------------------********---------------------------------*/

@@ -636,5 +636,84 @@ class AppDocument extends BaseAppDocument
         }
         return false;
     }
+
+    /**
+     * This function will upload a file related to the AppDocument
+     *
+     * @param string $appUid
+     * @param string $userUid
+     * @param integer $delIndex
+     * @param mixed $docUid
+     * @param array $file
+     * @param string $varName
+     * @param string $appDocUid
+     *
+     * @return object
+     * @throws Exception
+    */
+    public function uploadAppDocument(
+        $appUid,
+        $userUid,
+        $delIndex = 1,
+        $docUid = -1,
+        $file = [],
+        $varName = null,
+        $appDocUid = null
+    ) {
+        $appDocType = 'ATTACHED';
+        $folderId = '';
+        // Create the folder
+        if ($docUid != -1) {
+            $appDocType = 'INPUT';
+            $folder = new AppFolder();
+            $folderId = $folder->createFolderFromInputDoc($docUid, $appUid);
+        }
+        $fieldsInput = [
+            "DOC_VERSION" => 1,
+            "APP_UID" => $appUid,
+            "DEL_INDEX" => $delIndex,
+            "USR_UID" => $userUid,
+            "DOC_UID" => $docUid,
+            "APP_DOC_TYPE" => $appDocType,
+            "APP_DOC_CREATE_DATE" => date("Y-m-d H:i:s"),
+            "APP_DOC_COMMENT" => "",
+            "APP_DOC_TITLE" => "",
+            "APP_DOC_FILENAME" => $file["name"],
+            "APP_DOC_FIELDNAME" => !empty($varName) ? $varName : null,
+            "FOLDER_UID" => $folderId
+        ];
+
+        // If the APP_DOC_UID exist will create a new version
+        if (!empty($appDocUid)) {
+            $fieldsInput["APP_DOC_UID"] = $appDocUid;
+        }
+
+        // Create the register in the database
+        $newInstance = new AppDocument();
+        $appDocUid = $newInstance->create($fieldsInput);
+        $docVersion = $newInstance->getDocVersion();
+
+        // Move the uploaded file to the documents folder
+        try {
+            $info = pathinfo($file["name"]);
+            $extension = ((isset($info["extension"])) ? $info["extension"] : "");
+            $pathCase = G::getPathFromUID($appUid);
+            $fileName = $appDocUid . "_" . $docVersion . "." . $extension;
+
+            G::uploadFile(
+                $file["tmp_name"],
+                PATH_DOCUMENT . $pathCase . PATH_SEP,
+                $fileName
+            );
+        } catch (Exception $e) {
+            // Delete the register from Database
+            $this->remove($appDocUid, $docVersion);
+
+            throw $e;
+        }
+
+        return $newInstance;
+    }
 }
+
 

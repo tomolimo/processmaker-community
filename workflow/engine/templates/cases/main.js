@@ -1,16 +1,18 @@
-var PANEL_EAST_OPEN = false;
-var centerPanel;
-var setFlag;
-var flagRefresh = true;
-var debugVarTpl = new Ext.Template('<span style="font-size:11">{value}</span>');
-var detailsText = '<i></i>';
-var debugTriggersDetailTpl = new Ext.Template('<pre style="font-size:10px"><code>{code}</code></pre>');
-var propStore;
-var triggerStore;
-var result;
-var _action = '';
+var PANEL_EAST_OPEN = false,
+    centerPanel,
+    setFlag,
+    flagRefresh = true,
+    debugVarTpl = new Ext.Template('<span style="font-size:11">{value}</span>'),
+    detailsText = '<i></i>',
+    debugTriggersDetailTpl = new Ext.Template('<pre style="font-size:10px"><code>{code}</code></pre>'),
+    propStore,
+    triggerStore,
+    result,
+    _action = '',
 //@var treeMenuItemsLoaded -> added to flag the "treeMenuItems" tree, to ensure that its onload event is executed just once
-var treeMenuItemsLoaded = false;
+    treeMenuItemsLoaded = false,
+    loader,
+    _BROWSER;
 
 debugVarTpl.compile();
 debugTriggersDetailTpl.compile();
@@ -97,34 +99,56 @@ Ext.onReady(function(){
       'render': function(tp){}
     }
   });
-
-  var loader = treeMenuItems.getLoader();
-  loader.on("load", function() {
-    // it was added since the feature to reload a specific node of tree is now working
-    if (! treeMenuItemsLoaded) { // this section of code should be executed once
-      document.getElementById('casesSubFrame').src = defaultOption;
-
-      // check if a case was open directly
-      if (defaultOption.indexOf('open') > -1) {
-        //if it is, then update cases trees
-        updateCasesTree();
-      }
-
-      if(_nodeId !== ''){
-        treePanel1 = Ext.getCmp('tree-panel');
-        if(treePanel1)
-          node = treePanel1.getNodeById(_nodeId);
-        if(node) {
-          node.select();
-          if (_nodeId === 'CASES_START_CASE') {
-            updateCasesTree();
-          }
+    /**
+     * Gets the user client browser and its version
+     * @return (object)
+     */
+    function getBrowserClient() {
+        var browsers = ["opera", "msie", "firefox", "opera", "safari", "trident"],
+            infoBrowser = navigator.userAgent.toLowerCase(),
+            versionBrowser,
+            currentBrowser = "";
+        for (var i = 0; i < browsers.length; i++) {
+            if ((currentBrowser === "") && (infoBrowser.indexOf(browsers[i]) !== -1)) {
+                currentBrowser = browsers[i];
+                versionBrowser = String(parseFloat(infoBrowser.substr(infoBrowser.indexOf(browsers[i]) + browsers[i].length + 1)));
+                return {name: currentBrowser, browser: currentBrowser, version: versionBrowser}
+            }
         }
-      }
-
-      treeMenuItemsLoaded = true;
+        return false;
     }
-  });
+    _BROWSER = getBrowserClient();
+    loader = treeMenuItems.getLoader();
+    loader.on("load", function () {
+        var treePanel1,
+            node;
+        // it was added since the feature to reload a specific node of tree is now working
+        if (!treeMenuItemsLoaded) { // this section of code should be executed once
+            if ((_BROWSER.name === "msie" || _BROWSER.name === "trident") && openCaseIE) {
+                parent.window.location.href = defaultOption;
+            } else {
+                document.getElementById('casesSubFrame').src = defaultOption;
+                // check if a case was open directly
+                if (defaultOption.indexOf('open') > -1) {
+                    //if it is, then update cases trees
+                    updateCasesTree();
+                }
+                if (_nodeId !== '') {
+                    treePanel1 = Ext.getCmp('tree-panel');
+                    if (treePanel1) {
+                        node = treePanel1.getNodeById(_nodeId);
+                    }
+                    if (node) {
+                        node.select();
+                        if (_nodeId === 'CASES_START_CASE') {
+                            updateCasesTree();
+                        }
+                    }
+                }
+            }
+            treeMenuItemsLoaded = true;
+        }
+    });
 
   // set the root node
   var root = new Ext.tree.AsyncTreeNode({
@@ -649,7 +673,7 @@ Ext.app.menuLoader = Ext.extend(Ext.ux.tree.XmlTreeLoader, {
       //}
     }else if(attr.title){
       attr.text = Ext.util.Format.htmlDecode(attr.title);
-      
+
       if( attr.cases_count )
         attr.text += ' (<label id="NOTIFIER_'+attr.id+'">' + attr.cases_count + '</label>)';
 

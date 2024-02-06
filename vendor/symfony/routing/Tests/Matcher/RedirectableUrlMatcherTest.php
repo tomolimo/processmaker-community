@@ -11,9 +11,9 @@
 
 namespace Symfony\Component\Routing\Tests\Matcher;
 
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\Routing\RequestContext;
 
 class RedirectableUrlMatcherTest extends UrlMatcherTest
 {
@@ -114,6 +114,17 @@ class RedirectableUrlMatcherTest extends UrlMatcherTest
         $coll->add('foo', new Route('/foo', array(), array(), array(), '', array('https')));
         $matcher = $this->getUrlMatcher($coll, new RequestContext());
         $matcher->expects($this->once())->method('redirect')->with('/foo', 'foo', 'https')->willReturn(array());
+        $this->assertSame(array('_route' => 'foo'), $matcher->match('/foo'));
+    }
+
+    public function testFallbackPage()
+    {
+        $coll = new RouteCollection();
+        $coll->add('foo', new Route('/foo/'));
+        $coll->add('bar', new Route('/{name}'));
+
+        $matcher = $this->getUrlMatcher($coll);
+        $matcher->expects($this->once())->method('redirect')->with('/foo/')->will($this->returnValue(array('_route' => 'foo')));
         $this->assertSame(array('_route' => 'foo'), $matcher->match('/foo'));
     }
 

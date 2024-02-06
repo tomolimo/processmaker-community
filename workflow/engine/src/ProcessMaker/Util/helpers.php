@@ -401,6 +401,81 @@ function verifyCsrfToken($request)
 }
 
 /**
+ * Get the difference between to arrays
+ * If the element is an array we will to keep the value from $array1
+ * If the element is an object we will to keep the value from $array1
+ *
+ * @param array $array1
+ * @param array $array2
+ *
+ * @return array
+ */
+function getDiffBetweenModifiedVariables(array $array1, array $array2)
+{
+    $difference = [];
+    foreach ($array1 as $key => $value) {
+        if (is_array($value)) {
+            if ($value !== $array2[$key]) {
+                $difference[$key] = $value;
+            }
+        } elseif (is_object($value)) {
+            // When using ===, it means object variables are identical and they refer to the same instance of the same class.
+            if ($value != $array2[$key]) {
+                $difference[$key] = $value;
+            }
+        } elseif (!isset($array2[$key]) || $array2[$key] != $value) {
+            $difference[$key] = $value;
+        }
+    }
+
+    return $difference;
+}
+
+/**
+ * Replace all supported variables prefixes to the prefix sent
+ *
+ * @param string $outDocFilename
+ * @param string $prefix
+ *
+ * @return string
+ *
+ * @see cases_Step.php
+ * @see \ProcessMaker\BusinessModel\Cases\OutputDocument::addCasesOutputDocument()
+ * @link https://wiki.processmaker.com/3.2/Triggers#Typing_rules_for_Case_Variables
+ */
+function replacePrefixes($outDocFilename, $prefix = '@=')
+{
+    $outDocFile = str_replace(['@@', '@#', '@=', '@%', '@?', '@$', '@&', '@Q', '@q', '@!'], $prefix, $outDocFilename);
+
+    return $outDocFile;
+}
+
+/**
+ * Encoding header filename used in Content-Disposition
+ *
+ * @param string $fileName
+ * @param string $replacement
+ *
+ * @return string
+ *
+ * @see cases_Step.php
+ * @see \ProcessMaker\BusinessModel\Cases\OutputDocument::addCasesOutputDocument()
+ */
+function fixContentDispositionFilename($fileName, $replacement = '_')
+{
+    //(double quote) has to be removed
+    //(forward slash) has to replaced by underscore
+    //(backslash) has to replaced by underscore
+    $default = [
+        '/[\"]/' => '',
+        '/[\\|\/]/' => $replacement,
+        '/\\\\/' => $replacement
+    ];
+
+    return preg_replace(array_keys($default), array_values($default), $fileName);
+}
+
+/**
  * Get the current user CSRF token.
  *
  * @return string

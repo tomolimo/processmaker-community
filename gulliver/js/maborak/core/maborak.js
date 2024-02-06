@@ -920,18 +920,11 @@ function G_DropDown(form,element,name)
 {var me=this;this.parent=G_Field;this.parent(form,element,name);this.setContent=function(content)
 {dropDownSetOption(me,content);};if(!element)return;leimnud.event.add(this.element,'change',this.updateDepententFields);}
 G_DropDown.prototype=new G_Field();function G_Text(form,element,name)
-{var me=this;this.mType="text";this.parent=G_Field;this.browser={};this.comma_separator=".";this.checkBrowser=function(){var nVer=navigator.appVersion;var nAgt=navigator.userAgent;var browserName=navigator.appName;var fullVersion=''+parseFloat(navigator.appVersion);var majorVersion=parseInt(navigator.appVersion,10);var nameOffset,verOffset,ix;if((verOffset=nAgt.indexOf("Opera"))!=-1){browserName="Opera";fullVersion=nAgt.substring(verOffset+6);if((verOffset=nAgt.indexOf("Version"))!=-1)
-fullVersion=nAgt.substring(verOffset+8);}
-else if((verOffset=nAgt.indexOf("MSIE"))!=-1){browserName="Microsoft Internet Explorer";fullVersion=nAgt.substring(verOffset+5);}
-else if((verOffset=nAgt.indexOf("Chrome"))!=-1){browserName="Chrome";fullVersion=nAgt.substring(verOffset+7);}
-else if((verOffset=nAgt.indexOf("Safari"))!=-1){browserName="Safari";fullVersion=nAgt.substring(verOffset+7);if((verOffset=nAgt.indexOf("Version"))!=-1)
-fullVersion=nAgt.substring(verOffset+8);}
-else if((verOffset=nAgt.indexOf("Firefox"))!=-1){browserName="Firefox";fullVersion=nAgt.substring(verOffset+8);}
-else if((nameOffset=nAgt.lastIndexOf(' ')+1)<(verOffset=nAgt.lastIndexOf('/')))
-{browserName=nAgt.substring(nameOffset,verOffset);fullVersion=nAgt.substring(verOffset+1);if(browserName.toLowerCase()==browserName.toUpperCase()){browserName=navigator.appName;}}
-if((ix=fullVersion.indexOf(";"))!=-1)
-fullVersion=fullVersion.substring(0,ix);if((ix=fullVersion.indexOf(" "))!=-1)
-fullVersion=fullVersion.substring(0,ix);majorVersion=parseInt(''+fullVersion,10);if(isNaN(majorVersion)){fullVersion=''+parseFloat(navigator.appVersion);majorVersion=parseInt(navigator.appVersion,10);}
+{var me=this;this.mType="text";this.parent=G_Field;this.browser={};this.comma_separator=".";this.checkBrowser=function(){var nAgt=navigator.userAgent.toLowerCase(),browserName=navigator.appName,fullVersion=''+parseFloat(navigator.appVersion),majorVersion,nameOffset,verOffset,ix;if((verOffset=nAgt.indexOf("opera"))!==-1){browserName="Opera";fullVersion=nAgt.substring(verOffset+6);if((verOffset=nAgt.indexOf("version"))!==-1){fullVersion=nAgt.substring(verOffset+8);}}else if((verOffset=nAgt.indexOf("msie"))!==-1||(verOffset=nAgt.indexOf("trident"))!==-1){browserName="Microsoft Internet Explorer";fullVersion=nAgt.substring(verOffset+5);}else if((verOffset=nAgt.indexOf("chrome"))!==-1){browserName="Chrome";fullVersion=nAgt.substring(verOffset+7);}else if((verOffset=nAgt.indexOf("safari"))!==-1){browserName="Safari";fullVersion=nAgt.substring(verOffset+7);if((verOffset=nAgt.indexOf("version"))!==-1)
+fullVersion=nAgt.substring(verOffset+8);}else if((verOffset=nAgt.indexOf("firefox"))!==-1){browserName="Firefox";fullVersion=nAgt.substring(verOffset+8);}else if((nameOffset=nAgt.lastIndexOf(' ')+1)<(verOffset=nAgt.lastIndexOf('/'))){browserName=nAgt.substring(nameOffset,verOffset);fullVersion=nAgt.substring(verOffset+1);if(browserName.toLowerCase()===browserName.toUpperCase()){browserName=navigator.appName;}}
+if((ix=fullVersion.indexOf(";"))!==-1){fullVersion=fullVersion.substring(0,ix);}
+if((ix=fullVersion.indexOf(" "))!==-1){fullVersion=fullVersion.substring(0,ix);}
+majorVersion=parseInt(''+fullVersion,10);if(isNaN(majorVersion)){fullVersion=''+parseFloat(navigator.appVersion);majorVersion=parseInt(navigator.appVersion,10);}
 this.browser={name:browserName,fullVersion:fullVersion,majorVersion:majorVersion,userAgent:navigator.userAgent};};this.parent(form,element,name);if(element){this.prev=element.value;}
 this.validate='Any';this.mask='';this.required=false;this.formula='';this.key_Change=false;var doubleChange=false;function IsUnsignedInteger(YourNumber){var Template=/^d+$/;return(Template.test(YourNumber))?1:0;}
 function replaceAll(text,busca,reemplaza){while(text.toString().indexOf(busca)!=-1){text=text.toString().replace(busca,reemplaza);}

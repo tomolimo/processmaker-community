@@ -2,6 +2,7 @@
 namespace Luracast\Restler\Format;
 
 use Luracast\Restler\RestException;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 /**
  * Extending UploadFormat Support for Multi Part Form Data and File Uploads
@@ -84,8 +85,21 @@ class UploadFormat extends Format
         throw new RestException(500, 'UploadFormat is read only');
     }
 
+    /**
+     * Decode request.
+     * 
+     * @param mixed $data
+     * @return array
+     * @throws RestException
+     * 
+     * @see Luracast\Restler\CommentParser->parseEmbeddedData()
+     */
     public function decode($data)
     {
+        $runRulesForFileEmpty = ValidationUploadedFiles::getValidationUploadedFiles()->runRulesForFileEmpty();
+        if ($runRulesForFileEmpty->fails()) {
+            throw new RestException($runRulesForFileEmpty->getStatus(), $runRulesForFileEmpty->getMessage());
+        }
         $doMimeCheck = !empty(self::$allowedMimeTypes);
         $doSizeCheck = self::$maximumFileSize ? TRUE : FALSE;
         //validate

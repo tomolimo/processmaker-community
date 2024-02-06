@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
@@ -1445,6 +1446,15 @@ function checkTree($uidOriginFolder, $uidNewFolder)
  */
 function uploadExternalDocument()
 {
+    ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        $response = [
+            'error' => $validator->getMessage(),
+            'message' => $validator->getMessage(),
+            'success' => false
+        ];
+        print_r(G::json_encode($response));
+        die();
+    });
     $response = [];
     $response['action'] = $_POST['action'] . " - " . $_POST['option'];
     $response['error'] = "error";
@@ -1531,18 +1541,6 @@ function uploadExternalDocument()
 
         //Read. Instance Document classes
         if (!empty($quequeUpload)) {
-            foreach ($quequeUpload as $key => $fileObj) {
-                $extension = pathinfo($fileObj['fileName'], PATHINFO_EXTENSION);
-                if (\Bootstrap::getDisablePhpUploadExecution() === 1 && $extension === 'php') {
-                    $message = \G::LoadTranslation('THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED');
-                    \Bootstrap::registerMonologPhpUploadExecution('phpUpload', 550, $message, $fileObj['fileName']);
-                    $response['error'] = $message;
-                    $response['message'] = $message;
-                    $response['success'] = false;
-                    print_r(G::json_encode($response));
-                    exit();
-                }
-            }
             $docUid = $_POST['docUid'];
             $appDocUid = isset($_POST['APP_DOC_UID']) ? $_POST['APP_DOC_UID'] : "";
             $docVersion = isset($_POST['docVersion']) ? $_POST['docVersion'] : "";

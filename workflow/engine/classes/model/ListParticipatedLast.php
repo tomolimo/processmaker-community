@@ -1,6 +1,7 @@
 <?php
 
 require_once 'classes/model/om/BaseListParticipatedLast.php';
+
 use ProcessMaker\BusinessModel\Cases as BmCases;
 
 /**
@@ -535,5 +536,26 @@ class ListParticipatedLast extends BaseListParticipatedLast implements ListInter
             eval('$criteriaSet->add( ListParticipatedLastPeer::' . $k . ',$v, Criteria::EQUAL);');
         }
         BasePeer::doUpdate($criteriaWhere, $criteriaSet, $con);
+    }
+
+    /**
+     * Update the column APP_STATUS
+     *
+     * @param string $appUid
+     * @param string $status, can be [TO_DO, COMPLETED, etc]
+     *
+     * @return void
+     *
+     * @see Cases::updateCase()
+    */
+    public function refreshStatus($appUid, $status = 'TO_DO')
+    {
+        //Update - WHERE
+        $criteriaWhere = new Criteria("workflow");
+        $criteriaWhere->add(ListParticipatedLastPeer::APP_UID, $appUid, Criteria::EQUAL);
+        //Update - SET
+        $criteriaSet = new Criteria("workflow");
+        $criteriaSet->add(ListParticipatedLastPeer::APP_STATUS, $status);
+        BasePeer::doUpdate($criteriaWhere, $criteriaSet, Propel::getConnection("workflow"));
     }
 }

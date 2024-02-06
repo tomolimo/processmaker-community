@@ -7,7 +7,7 @@ class Applications
     /**
      * This function return information by searching cases
      *
-     * The query is related to advanced search with diferents filters
+     * The query is related to advanced search with different filters
      * We can search by process, status of case, category of process, users, delegate date from and to
      *
      * @param string $userUid
@@ -17,11 +17,12 @@ class Applications
      * @param integer $process the pro_id
      * @param integer $status of the case
      * @param string $dir if the order is DESC or ASC
-     * @param string $sort name of column by sort
+     * @param string $sort name of column by sort, can be:
+     *        [APP_NUMBER, APP_TITLE, APP_PRO_TITLE, APP_TAS_TITLE, APP_CURRENT_USER, APP_UPDATE_DATE, DEL_DELEGATE_DATE, DEL_TASK_DUE_DATE, APP_STATUS_LABEL]
      * @param string $category uid for the process
      * @param date $dateFrom
      * @param date $dateTo
-     * @param string $columnSearch name of column for a specific search
+     * @param string $filterBy name of column for a specific search, can be: [APP_NUMBER, APP_TITLE, TAS_TITLE]
      * @return array $result result of the query
      */
     public function searchAll(
@@ -36,11 +37,8 @@ class Applications
         $category = null,
         $dateFrom = null,
         $dateTo = null,
-        $columnSearch = 'APP_TITLE'
+        $filterBy = 'APP_TITLE'
     ) {
-        //Exclude the Task Dummies in the delegations
-        $arrayTaskTypeToExclude = array("WEBENTRYEVENT", "END-MESSAGE-EVENT", "START-MESSAGE-EVENT", "INTERMEDIATE-THROW-MESSAGE-EVENT", "INTERMEDIATE-CATCH-MESSAGE-EVENT");
-
         //Start the connection to database
         $con = Propel::getConnection(AppDelegationPeer::DATABASE_NAME);
 
@@ -58,7 +56,7 @@ class Applications
         $category = $inputFilter->escapeUsingConnection($category, $con);
         $dateFrom = $inputFilter->escapeUsingConnection($dateFrom, $con);
         $dateTo = $inputFilter->escapeUsingConnection($dateTo, $con);
-        $columnSearch = $inputFilter->escapeUsingConnection($columnSearch, $con);
+        $filterBy = $inputFilter->escapeUsingConnection($filterBy, $con);
 
         //Start the transaction
         $con->begin();
@@ -101,18 +99,20 @@ class Applications
                 FROM APP_DELEGATION
         ";
         $sqlData .= " LEFT JOIN APPLICATION ON (APP_DELEGATION.APP_NUMBER = APPLICATION.APP_NUMBER)";
-        $sqlData .= " LEFT JOIN TASK ON (APP_DELEGATION.TAS_ID = TASK.TAS_ID)";
+        $sqlData .= " LEFT JOIN TASK ON (APP_DELEGATION.TAS_ID = TASK.TAS_ID ";
+        //Exclude the Task Dummies in the delegations
+        $sqlData .= " AND TASK.TAS_TYPE <> 'WEBENTRYEVENT' AND TASK.TAS_TYPE <>  'END-MESSAGE-EVENT' AND TASK.TAS_TYPE <> 'START-MESSAGE-EVENT' AND TASK.TAS_TYPE <> 'INTERMEDIATE-THROW')";
         $sqlData .= " LEFT JOIN USERS ON (APP_DELEGATION.USR_ID = USERS.USR_ID)";
         $sqlData .= " LEFT JOIN PROCESS ON (APP_DELEGATION.PRO_ID = PROCESS.PRO_ID)";
 
-        $sqlData .= " WHERE TASK.TAS_TYPE NOT IN ('" . implode("','", $arrayTaskTypeToExclude) . "')";
+        $sqlData .= " WHERE 1";
         switch ($status) {
             case 1: //DRAFT
-                $sqlData .= " AND APP_DELEGATION.DEL_THREAD_STATUS='OPEN'";
+                $sqlData .= " AND APP_DELEGATION.DEL_THREAD_STATUS = 'OPEN'";
                 $sqlData .= " AND APPLICATION.APP_STATUS_ID = 1";
                 break;
             case 2: //TO_DO
-                $sqlData .= " AND APP_DELEGATION.DEL_THREAD_STATUS='OPEN'";
+                $sqlData .= " AND APP_DELEGATION.DEL_THREAD_STATUS = 'OPEN'";
                 $sqlData .= " AND APPLICATION.APP_STATUS_ID = 2";
                 break;
             case 3: //COMPLETED
@@ -148,40 +148,28 @@ class Applications
         }
 
         if (!empty($search)) {
-            //If the filter is related to the APPLICATION table: APP_NUMBER or APP_TITLE
-            if ($columnSearch === 'APP_NUMBER' || $columnSearch === 'APP_TITLE') {
-                $sqlSearch = "SELECT APPLICATION.APP_NUMBER FROM APPLICATION";
-                $sqlSearch .= " WHERE APPLICATION.{$columnSearch} LIKE '%{$search}%'";
-                switch ($columnSearch) {
-                    case 'APP_TITLE':
-                        break;
-                    case 'APP_NUMBER':
-                        //Cast the search criteria to string
-                        if (!is_string($search)) {
-                            $search = (string)$search;
-                        }
-                        //Only if is integer we will to add to greater equal in the query
-                        if (substr($search, 0, 1) != '0' && ctype_digit($search)) {
-                            $sqlSearch .= " AND APPLICATION.{$columnSearch} >= {$search}";
-                        }
-                        break;
+            //Search: we need to considerate the filterBy and the sortColumn
+            $appColumns = ['APP_NUMBER', 'APP_TITLE'];
+            if (in_array($sort, $appColumns) && in_array($filterBy, $appColumns)) {
+                $sqlData .= " AND APP_DELEGATION.APP_NUMBER IN (";
+                //Sub query: get the appNumber(s) that match with the search
+                $sqlData .= " SELECT APPLICATION.APP_NUMBER FROM APPLICATION WHERE APPLICATION.{$filterBy} LIKE '%{$search}%'";
+                $sqlData .= " ORDER BY APPLICATION.{$sort} " . $dir;
+                //End sub query
+                $sqlData .= " )";
+            } else {
+                //If the filter is related to the APP_DELEGATION table: APP_NUMBER
+                if ($filterBy === 'APP_NUMBER') {
+                    $sqlData .= " AND APP_DELEGATION.APP_NUMBER LIKE '%{$search}%' ";
                 }
-                if (!empty($start)) {
-                    $sqlSearch .= " LIMIT $start, " . $limit;
-                } else {
-                    $sqlSearch .= " LIMIT " . $limit;
+                //If the filter is related to the APPLICATION table: APP_TITLE
+                if ($filterBy === 'APP_TITLE') {
+                    $sqlData .= " AND APPLICATION.APP_TITLE LIKE '%{$search}%' ";
                 }
-                $dataset = $stmt->executeQuery($sqlSearch);
-                $appNumbers = [-1];
-                while ($dataset->next()) {
-                    $newRow = $dataset->getRow();
-                    array_push($appNumbers, $newRow['APP_NUMBER']);
+                //If the filter is related to the TASK table: TAS_TITLE
+                if ($filterBy === 'TAS_TITLE') {
+                    $sqlData .= " AND TASK.TAS_TITLE LIKE '%{$search}%' ";
                 }
-                $sqlData .= " AND APP_DELEGATION.APP_NUMBER IN (" . implode(",", $appNumbers) . ")";
-            }
-            //If the filter is related to the TASK table: TAS_TITLE
-            if ($columnSearch === 'TAS_TITLE') {
-                $sqlData .= " AND TASK.TAS_TITLE LIKE '%{$search}%' ";
             }
         }
 
@@ -194,7 +182,6 @@ class Applications
             $sqlData .= " AND APP_DELEGATION.DEL_DELEGATE_DATE <= '{$dateTo}'";
         }
 
-        //Add the additional filters
         //Sorts the records in descending order by default
         if (!empty($sort)) {
             switch ($sort) {
@@ -203,6 +190,7 @@ class Applications
                     $orderBy = 'APP_DELEGATION.APP_NUMBER ' . $dir;
                     break;
                 case 'APP_CURRENT_USER':
+                    //@todo: this section needs to use 'User Name Display Format', currently in the extJs is defined this
                     //The column APP_CURRENT_USER is result of concat those fields
                     $orderBy = 'USR_LASTNAME ' . $dir . ' ,USR_FIRSTNAME ' . $dir;
                     break;
@@ -216,12 +204,12 @@ class Applications
         if (empty($limit)) {
             $limit = 25;
         }
-        if (!empty($start) && empty($search)) {
+        if (!empty($start)) {
             $sqlData .= " LIMIT $start, " . $limit;
         } else {
             $sqlData .= " LIMIT " . $limit;
         }
-        
+
         $dataset = $stmt->executeQuery($sqlData);
         $result = [];
         //By performance enable always the pagination
@@ -236,6 +224,7 @@ class Applications
             if (isset( $row['DEL_PRIORITY'] )) {
                 $row['DEL_PRIORITY'] = G::LoadTranslation( "ID_PRIORITY_{$priorities[$row['DEL_PRIORITY']]}" );
             }
+            //@todo: this section needs to use 'User Name Display Format', currently in the extJs is defined this
             $row["APP_CURRENT_USER"] = $row["USR_LASTNAME"].' '.$row["USR_FIRSTNAME"];
             $row["APPDELCR_APP_TAS_TITLE"] = '';
             $row["USRCR_USR_UID"] = $row["USR_UID"];
@@ -1162,6 +1151,7 @@ class Applications
             // if it has a condition
             if (trim($caseStep->getStepCondition()) != '') {
                 $pmScript->setScript($caseStep->getStepCondition());
+                $pmScript->setExecutedOn(PMScript::CONDITION);
 
                 if (! $pmScript->evaluate()) {
                     //evaluated false, jump & continue with the others steps

@@ -1,30 +1,30 @@
-[26 hours ago] b5ea7a8  (origin/bugfix/HOR-4924) HOR-4924 <Roly Rudy Gutierrez Pinto>
-[2 days ago] 646a71f  (origin/bugfix/HOR-4911) HOR-4911 <Paula Quispe>
-[3 days ago] d62c891  (origin/feature/FBI-2511) FBI-2511 [GeoMap mobile field] Google Maps shows "For development purposes only" <Roly Rudy Gutierrez Pinto>
-[3 days ago] 156ee4b  (origin/bugfix/HOR-4909) HOR-4909 <Roly Rudy Gutierrez Pinto>
-[3 days ago] 3f4e3dc  fix Cr notes <Rodrigo Quelca>
-[3 days ago] 406ef19  FBI-2511 [GeoMap mobile field] Google Maps shows “For development purposes only” <Rodrigo Quelca>
-[6 days ago] e2c480b  (origin/bugfix/HOR-4903) HOR-4903 <Roly Rudy Gutierrez Pinto>
-[6 days ago] 8e7cb35  HOR-4908 <Julio Cesar Laura Avendaño>
-[7 days ago] 5f4d99b  (origin/bugfix/HOR-4901) HOR-4901 <Roly Rudy Gutierrez Pinto>
-[10 days ago] be8f6b6  (origin/bugfix/HOR-4900) HOR-4900 <Paula Quispe>
-[13 days ago] f4966b5  (origin/bugfix/HOR-4899) HOR-4899 <Paula Quispe>
-[3 weeks ago] 87ad01c  (origin/feature/HOR-4894) HOR-4894 <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 3a207b3  (origin/bugfix/GAP-9) GAP-9 <Roly Rudy Gutierrez Pinto>
-[4 weeks ago] f791823  (origin/feature/HOR-4884) HOR-4884 <Paula Quispe>
-[4 weeks ago] a03142c  (origin/bugfix/GAP-10) GAP-10 <Roly Rudy Gutierrez Pinto>
-[4 weeks ago] 9ba28f9  (origin/bugfix/HOR-4879) HOR-4879 <Roly Rudy Gutierrez Pinto>
-[5 weeks ago] 3fc5f21  (origin/feature/HOR-4878) HOR-4878 <Paula Quispe>
-[5 weeks ago] 2699833  (origin/bugfix/HOR-4873) HOR-4873 <Paula Quispe>
-[5 weeks ago] 1b6c6f6  (origin/bugfix/HOR-4872) HOR-4872 <Paula Quispe>
-[5 weeks ago] 81d4d8f  (origin/bugfix/HOR-4865) HOR-4865 <Roly Rudy Gutierrez Pinto>
-[5 weeks ago] 26abb66  (origin/bugfix/HOR-4866) HOR-4866 <Roly Rudy Gutierrez Pinto>
-[6 weeks ago] f22a949  (origin/bugfix/HOR-4859) HOR-4859 <Paula Quispe>
-[6 weeks ago] 6e9ee0c  (origin/bugfix/HOR-4862) HOR-4862 <Paula Quispe>
-[7 weeks ago] ec2a3ef  (origin/bugfix/GAP-4) GAP-4 <Roly Rudy Gutierrez Pinto>
-[7 weeks ago] 5297cac  (origin/bugfix/HOR-4840) HOR-4840 <Paula Quispe>
-[8 weeks ago] 46b6c4c  (origin/bugfix/HOR-4834) HOR-4834 <Julio Cesar Laura Avendaño>
-[8 weeks ago] 1a5c0ca  (origin/feature/HOR-4825) HOR-4825 <Paula Quispe>
-[8 weeks ago] d4c97b8  HOR-4750 <Julio Cesar Laura Avendaño>
-[8 weeks ago] 153d261  (origin/bugfix/HOR-4818) HOR-4397 Cannot get case summary via REST from Unassigned folder <Marco Antonio Nina Mena>
-[9 weeks ago] 8c7fe41  (origin/bugfix/HOR-4815) HOR-4815 <Roly Rudy Gutierrez Pinto>
+[9 days ago] 1a1de6c  (origin/bugfix/PMC-748) PMC-748 <Paula Quispe>
+[10 days ago] 557eee1  (origin/bugfix/PMC-112) PMC-112 <Paula Quispe>
+[13 days ago] 283c0a3  (origin/bugfix/PMC-695) PMC-695 <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 3cc90d2  (origin/bugfix/PMC-693-A) PMC-693-A <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] fedf113  (origin/bugfix/PMC-387-A) PMC-387 <Paula Quispe>
+[3 weeks ago] 63ceef5  (origin/bugfix/PMC-705) PMC-705 <Andrea Adamczyk>
+[3 weeks ago] 90b1abb  (origin/bugfix/PMC-711) PMC-711 <Paula Quispe>
+[3 weeks ago] 0ee9f85  PMC-141:[Mantis - 25511] The time in the email logs is incorrectly being shown in UTC+00 despite the user's timezone <Fabio Guachalla>
+[3 weeks ago] 5dc261c  (origin/bugfix/PMC-703) PMC-703 <Julio Cesar Laura Avendaño>
+[3 weeks ago] 7169e72  PMC-387:[Mantis 26619] Date labels show inconsistency by showing one date in UTC and others in user based time zone <Fabio Guachalla>
+[3 weeks ago] cd3d6cb  (origin/bugfix/PMC-704) PMC-704 <Paula Quispe>
+[3 weeks ago] a7a205c  (origin/bugfix/PMC-359) PMC-359 <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 4e6a07a  (origin/bugfix/PMC-440) PMC-440 <Israel Bernabe>
+[4 weeks ago] 0529f25  (origin/bugfix/PMC-593) PMC-593 <Julio Cesar Laura Avendaño>
+[4 weeks ago] 6be09d3  (origin/bugfix/PMC-379-A) PMC-379-A <Israel Bernabe>
+[4 weeks ago] 48502bb  (origin/bugfix/PMC-601) PMC-601 <Paula Quispe>
+[4 weeks ago] 09987b8  (origin/bugfix/PMC-680) PMC-680 <Paula Quispe>
+[4 weeks ago] 1fc2f0c  (origin/bugfix/PMC-678) PMC-678 <Paula Quispe>
+[5 weeks ago] 8e069da  (origin/bugfix/PMC-32) PMC-32 <Israel Bernabe>
+[5 weeks ago] 0612317  (origin/bugfix/PMC-615) PMC-615 <Andrea Adamczyk>
+[5 weeks ago] c0918e1  PMC-115:Files uploaded in ABE cannot be fetched in Script task or IEE <Fabio Guachalla>
+[5 weeks ago] 9ceb114  (origin/bugfix/PMC-614) PMC-614 <Julio Cesar Laura Avendaño>
+[6 weeks ago] 04fa8e1  (origin/bugfix/PMC-557-B) PMC-557 <Paula Quispe>
+[6 weeks ago] 7867093  (origin/bugfix/PMC-143-A) PMC-143 <Paula Quispe>
+[6 weeks ago] a90e696  (origin/bugfix/PMC-541-B) PMC-541-B <Roly Rudy Gutierrez Pinto>
+[7 weeks ago] cb439fa  (origin/bugfix/PMC-608) PMC-608 <Paula Quispe>
+[7 weeks ago] 82fe93a  (origin/bugfix/PMC-425) PMC-425 <Roly Rudy Gutierrez Pinto>
+[7 weeks ago] a5a8c42  (origin/bugfix/PMC-597) PMC-597 <Paula Quispe>
+[7 weeks ago] 2ce5d4e  (origin/bugfix/PMC-541-A) PMC-541-A <Roly Rudy Gutierrez Pinto>
+[7 weeks ago] cb95200  (origin/bugfix/PMC-379) PMC-379 <Paula Quispe>

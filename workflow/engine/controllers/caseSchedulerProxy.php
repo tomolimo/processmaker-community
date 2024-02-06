@@ -1,5 +1,6 @@
 <?php
 
+use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
 class caseSchedulerProxy extends HttpProxyController
@@ -92,12 +93,7 @@ class caseSchedulerProxy extends HttpProxyController
         $sWS_USER = trim( $params->WS_USER );
         $sWS_PASS = trim( $params->WS_PASS );
 
-        if (G::is_https()) {
-            $http = 'https://';
-        } else {
-            $http = 'http://';
-        }
-        $endpoint = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2';
+        $endpoint = System::getServerMainPath() . '/services/wsdl2';
         @$client = new SoapClient( $endpoint );
 
         $user = $sWS_USER;

@@ -1486,14 +1486,31 @@ PMCanvas.prototype.hideFlowRecursively = function (shape) {
  * @chainable
  */
 PMCanvas.prototype.removeElements = function () {
-    // destroy the shapes (also destroy all the references to them)
-    var shape,
-        command;
-    if (!this.canCreateShape && !this.isDragging) {
-        command = new PMCommandDelete(this);
-        this.commandStack.add(command);
-        command.execute();
+    var that = this,
+        dialogConfirm;
+    if (!that.canCreateShape && !that.isDragging) {
+        // Delete shape with a modal Dialog Confirm.
+        dialogConfirm = new FormDesigner.main.DialogConfirm(null, "warning", "Are you sure you want to delete this element?".translate());
+        dialogConfirm.onAccept = function () {
+            that.executeCommandDelete();
+        };
+        dialogConfirm.onClose = function () {
+            PMUI.isDelete = false;
+            return that;
+        };
     }
+    return that;
+};
+
+/**
+ * Calls to Delete command and executes the action
+ * @param {PMCanvas} canvas
+ */
+PMCanvas.prototype.executeCommandDelete = function () {
+    // destroy the shapes (also destroy all the references to them)
+    var command = new PMCommandDelete(this);
+    this.commandStack.add(command);
+    command.execute();
     return this;
 };
 

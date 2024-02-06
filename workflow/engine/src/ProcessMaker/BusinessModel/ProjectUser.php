@@ -1,7 +1,9 @@
 <?php
+
 namespace ProcessMaker\BusinessModel;
 
 use \G;
+use ProcessMaker\Core\System;
 
 class ProjectUser
 {
@@ -222,12 +224,8 @@ class ProjectUser
             $sTASKS = $sActivityUID;
             $sWS_USER = trim( $oData['username'] );
             $sWS_PASS = trim( $oData['password'] );
-            if (\G::is_https()) {
-                $http = 'https://';
-            } else {
-                $http = 'http://';
-            }
-            $endpoint = $http . $_SERVER['HTTP_HOST'] . '/sys' . config("system.workspace") . '/' . SYS_LANG . '/' . SYS_SKIN . '/services/wsdl2';
+
+            $endpoint = System::getServerMainPath() . '/services/wsdl2';
             @$client = new \SoapClient( $endpoint );
             $user = $sWS_USER;
             $pass = $sWS_PASS;
@@ -323,9 +321,7 @@ class ProjectUser
     public function userLogin($username, $password)
     {
         try {
-            $http = (\G::is_https())? "https://" : "http://";
-
-            $client = new \SoapClient($http . $_SERVER["HTTP_HOST"] . "/sys" . config("system.workspace") . "/" . SYS_LANG . "/" . SYS_SKIN . "/services/wsdl2");
+            $client = new \SoapClient(System::getServerMainPath() . "/services/wsdl2");
 
             $params = array(
                 "userid"   => $username,

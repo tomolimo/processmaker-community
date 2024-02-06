@@ -1,26 +1,7 @@
 <?php
-/**
- * cases_SaveData.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
+
+use ProcessMaker\Validation\ValidationUploadedFiles;
+
 //validate the data post
 if (!isset($_SESSION['USER_LOGGED'])) {
     if(!strpos($_SERVER['REQUEST_URI'], 'gmail')) {
@@ -70,29 +51,15 @@ if (!isset($_SESSION['USER_LOGGED'])) {
 }
 
 /**
- * If you can, you may want to set post_max_size to a low value (say 1M) to make
- * testing easier. First test to see how your script behaves. Try uploading a file
- * that is larger than post_max_size. If you do you will get a message like this
- * in your error log:
- *
- * [09-Jun-2010 19:28:01] PHP Warning:  POST Content-Length of 30980857 bytes exceeds
- * the limit of 2097152 bytes in Unknown on line 0
- *
- * This makes the script is not completed.
- *
- * Solving the problem:
- * The PHP documentation http://php.net/manual/en/ini.core.php#ini.post-max-size
- * provides a hack to solve this problem:
- *
- * If the size of post data is greater than post_max_size, the $_POST and $_FILES
- * superglobals are empty.
+ * To do: The following evaluation must be moved after saving the data (so as not to lose the data entered in the form).
+ * It only remains because it is an old behavior, which must be defined by "Product Owner".
+ * @see workflow/engine/methods/services/ActionsByEmailDataFormPost.php
  */
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
-    $aMessage = array();
-    $aMessage['MESSAGE'] = G::loadTranslation('ID_UPLOAD_ERR_INI_SIZE');
-    $G_PUBLISH = new Publisher();
-    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', $aMessage);
-    G::RenderPage('publish', 'blank');
+$validator = ValidationUploadedFiles::getValidationUploadedFiles()->runRulesForFileEmpty();
+if ($validator->fails()) {
+    G::SendMessageText($validator->getMessage(), "ERROR");
+    $url = explode("sys" . config("system.workspace"), $_SERVER['HTTP_REFERER']);
+    G::header("location: " . "/sys" . config("system.workspace") . $url[1]);
     die();
 }
 

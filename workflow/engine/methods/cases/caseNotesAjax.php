@@ -1,4 +1,8 @@
 <?php
+/**
+ * @deprecated This file is not used anymore, it will be removed in future versions of PM
+ */
+
 if (! isset( $_REQUEST['action'] )) {
     $res['success'] = 'failure';
     $res['message'] = 'You may request an action';

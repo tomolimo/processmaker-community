@@ -775,11 +775,22 @@ class Process extends BaseProcess
         return $aProc;
     }
 
+    /**
+     * Get the trigger configured in committing an action in cases
+     *
+     * @param string $proUid
+     * @param string $action
+     *
+     * @return mixed
+     *
+     * @see Cases::getExecuteTriggerProcess()
+     * @link https://wiki.processmaker.com/3.2/Triggers#When_action_cases
+    */
     public function getTriggerWebBotProcess($proUid, $action)
     {
         require_once("classes/model/Triggers.php");
 
-        if ((! isset($proUid) && $proUid == '') || (! isset($action) && $action == '')) {
+        if (empty($proUid) || empty($action)){
             return false;
         }
 
@@ -788,40 +799,41 @@ class Process extends BaseProcess
 
         switch ($action) {
             case 'CREATE':
-                $var = ProcessPeer::PRO_TRI_CREATE;
+                $columnName = ProcessPeer::PRO_TRI_CREATE;
                 break;
             case 'OPEN':
-                $var = ProcessPeer::PRO_TRI_OPEN;
+                $columnName = ProcessPeer::PRO_TRI_OPEN;
                 break;
             case 'DELETED':
-                $var = ProcessPeer::PRO_TRI_DELETED;
+                $columnName = ProcessPeer::PRO_TRI_DELETED;
                 break;
             case 'CANCELED':
-                $var = ProcessPeer::PRO_TRI_CANCELED;
+                $columnName = ProcessPeer::PRO_TRI_CANCELED;
                 break;
             case 'PAUSED':
-                $var = ProcessPeer::PRO_TRI_PAUSED;
+                $columnName = ProcessPeer::PRO_TRI_PAUSED;
                 break;
             case 'REASSIGNED':
-                $var = ProcessPeer::PRO_TRI_REASSIGNED;
+                $columnName = ProcessPeer::PRO_TRI_REASSIGNED;
                 break;
             case "UNPAUSE":
-                $var = ProcessPeer::PRO_TRI_UNPAUSED;
+                $columnName = ProcessPeer::PRO_TRI_UNPAUSED;
                 break;
         }
 
-        $oCriteria = new Criteria('workflow');
-        $oCriteria->addSelectColumn($var);
-        $oCriteria->addSelectColumn(TriggersPeer::TRI_UID);
-        $oCriteria->addSelectColumn(TriggersPeer::TRI_WEBBOT);
-        $oCriteria->addJoin($var, TriggersPeer::TRI_UID, Criteria::LEFT_JOIN);
-        $oCriteria->add(ProcessPeer::PRO_UID, $proUid);
-        $oDataSet = ProcessPeer::doSelectRS($oCriteria, Propel::getDbConnection('workflow_ro'));
+        $criteria = new Criteria('workflow');
+        $criteria->addSelectColumn($columnName);
+        $criteria->addSelectColumn(TriggersPeer::TRI_UID);
+        $criteria->addSelectColumn(TriggersPeer::TRI_WEBBOT);
+        $criteria->addSelectColumn(TriggersPeer::TRI_TITLE);
+        $criteria->addJoin($columnName, TriggersPeer::TRI_UID, Criteria::LEFT_JOIN);
+        $criteria->add(ProcessPeer::PRO_UID, $proUid);
+        $criteria->add($columnName, '', Criteria::NOT_EQUAL);
+        $dataSet = ProcessPeer::doSelectRS($criteria, Propel::getDbConnection('workflow_ro'));
+        $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-        $oDataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        if ($oDataSet->next()) {
-            $row = $oDataSet->getRow();
-            $arrayWebBotTrigger = ['TRI_UID' => $row['TRI_UID'], 'TRI_WEBBOT' => $row['TRI_WEBBOT']];
+        if ($dataSet->next()) {
+            $arrayWebBotTrigger[] = $dataSet->getRow();
         }
 
         //Return

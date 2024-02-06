@@ -744,7 +744,7 @@ PMFlow.prototype.getBpmnElementType = function () {
 PMFlow.prototype.createWithBpmn = function (bpmnElementType) {
     var businessObject = PMDesigner.bpmnFactory.create(bpmnElementType, {
         id: 'flo_' + this.id,
-        name: this.getName() ? this.getName() : ""
+        name: this.getName() ? PMDesigner.escapeXMLCharacters(this.getName()) : ""
     });
     businessObject.di = PMDesigner.bpmnFactory.createDiEdge(businessObject, [], {
         id: businessObject.id + '_di'

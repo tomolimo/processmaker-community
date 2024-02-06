@@ -589,6 +589,9 @@
         <unique name="INDEX_DYN_ID">
             <unique-column name="DYN_ID"/>
         </unique>
+        <index name="INDEX_PRO_UID">
+            <index-column name="PRO_UID"/>
+        </index>
         <validator column="DYN_TYPE">
             <rule name="validValues" value="xmlform|grid" message="Please select a valid dynaform type."/>
         </validator>

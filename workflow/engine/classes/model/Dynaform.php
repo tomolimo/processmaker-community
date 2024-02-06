@@ -223,14 +223,8 @@ class Dynaform extends BaseDynaform
                     $description = "Create from a PM Table: " . $addTabName . ", ";
                 }
                 G::auditLog("CreateDynaform", $description . "Dynaform Title: " . $aData['DYN_TITLE'] . ", Type: " . $aData['DYN_TYPE'] . ", Description: " . $aData['DYN_DESCRIPTION'] . ", Mode: " . $mode);
-
-                $sXml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-                $sXml .= '<dynaForm type="' . $this->getDynType() . '" name="' . $this->getProUid() . '/' . $this->getDynUid() . '" width="500" enabletemplate="0" mode="" nextstepsave="prompt">' . "\n";
-                $sXml .= '</dynaForm>';
-                G::verifyPath(PATH_DYNAFORM . $this->getProUid(), true);
-                $oFile = fopen(PATH_DYNAFORM . $this->getProUid() . '/' . $this->getDynUid() . '.xml', 'w');
-                fwrite($oFile, $sXml);
-                fclose($oFile);
+                
+                Form::createXMLFile($this->getProUid(), $this->getDynUid(), $this->getDynType(), PATH_DYNAFORM);
                 return $this->getDynUid();
             } else {
                 $msg = '';

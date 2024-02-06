@@ -283,7 +283,10 @@ Ext.onReady(function () {
                                 }
                                 else {
                                     var messageError = "";
-                                    if (obj.failed == "1") {
+                                    if (obj.failed === true) {
+                                        messageError = obj.message;
+                                    }
+                                    else if (obj.failed == "1") {
                                         //| 1-> Fail in the type of the image
                                         messageError = _('ID_ERROR_UPLOADING_IMAGE_TYPE');
                                     }

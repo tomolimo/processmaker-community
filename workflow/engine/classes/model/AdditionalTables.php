@@ -56,8 +56,41 @@ function validateType($value, $type)
 
 class AdditionalTables extends BaseAdditionalTables
 {
-    public $fields = array();
-    public $primaryKeys = array();
+    const FLD_TYPE_VALUES = [
+        'BIGINT',
+        'BOOLEAN',
+        'CHAR',
+        'DATE',
+        'DATETIME',
+        'DECIMAL',
+        'DOUBLE',
+        'FLOAT',
+        'INTEGER',
+        'LONGVARCHAR',
+        'REAL',
+        'SMALLINT',
+        'TIME',
+        'TIMESTAMP',
+        'TINYINT',
+        'VARCHAR'
+    ];
+    const FLD_TYPE_WITH_AUTOINCREMENT = [
+        'BIGINT',
+        'INTEGER',
+        'SMALLINT',
+        'TINYINT'
+    ];
+    const FLD_TYPE_WITH_SIZE = [
+        'BIGINT',
+        'CHAR',
+        'DECIMAL',
+        'FLOAT',
+        'INTEGER',
+        'LONGVARCHAR',
+        'VARCHAR'
+    ];
+    public $fields = [];
+    public $primaryKeys = [];
 
     /**
      * Function load
@@ -707,85 +740,84 @@ class AdditionalTables extends BaseAdditionalTables
      */
     public function populateReportTable($tableName, $sConnection = 'rp', $type = 'NORMAL', $processUid = '', $gridKey = '', $addTabUid = '')
     {
-        require_once "classes/model/Application.php";
-
         $this->className = $this->getPHPName($tableName);
         $this->classPeerName = $this->className . 'Peer';
 
         if (!file_exists(PATH_WORKSPACE . 'classes/' . $this->className . '.php')) {
-            throw new Exception("ERROR: " . PATH_WORKSPACE . 'classes/' . $this->className . '.php'
-                . " class file doesn't exit!");
+            throw new Exception("ERROR: " . PATH_WORKSPACE . 'classes/' . $this->className . '.php' . " class file doesn't exit!");
         }
 
         require_once PATH_WORKSPACE . 'classes/' . $this->className . '.php';
 
+        //get fields
+        $fieldTypes = [];
+        if ($addTabUid != '') {
+            $criteria = new Criteria('workflow');
+            $criteria->add(FieldsPeer::ADD_TAB_UID, $addTabUid);
+            $dataset = FieldsPeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            while ($dataset->next()) {
+                $row = $dataset->getRow();
+                switch ($row['FLD_TYPE']) {
+                    case 'FLOAT':
+                    case 'DOUBLE':
+                    case 'INTEGER':
+                        $fieldTypes[] = array($row['FLD_NAME'] => $row['FLD_TYPE']);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        //remove old applications references
+        $connection = Propel::getConnection($sConnection);
+        $statement = $connection->createStatement();
+        $sql = "TRUNCATE " . $tableName;
+        $statement->executeQuery($sql);
+
+        $case = new Cases();
+        $context = Bootstrap::getDefaultContextLog();
+
         //select cases for this Process, ordered by APP_NUMBER
-        $con = Propel::getConnection($sConnection);
-        $stmt = $con->createStatement();
         $criteria = new Criteria('workflow');
         $criteria->add(ApplicationPeer::PRO_UID, $processUid);
         $criteria->addAscendingOrderByColumn(ApplicationPeer::APP_NUMBER);
         $dataset = ApplicationPeer::doSelectRS($criteria);
         $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
         while ($dataset->next()) {
             $row = $dataset->getRow();
-            //remove old applications references
-            $deleteSql = "DELETE FROM $tableName WHERE APP_UID = '" . $row['APP_UID'] . "'";
-            $rs = $stmt->executeQuery($deleteSql);
-            // getting the case data
-            $caseData = unserialize($row['APP_DATA']);
 
-            $fieldTypes = array();
+            //getting the case data
+            $appData = $case->unserializeData($row['APP_DATA']);
 
-            if ($addTabUid != '') {
-                require_once 'classes/model/Fields.php';
-                $criteriaField = new Criteria('workflow');
-                $criteriaField->add(FieldsPeer::ADD_TAB_UID, $addTabUid);
-                $datasetField = FieldsPeer::doSelectRS($criteriaField);
-                $datasetField->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                while ($datasetField->next()) {
-                    $rowfield = $datasetField->getRow();
-                    switch ($rowfield['FLD_TYPE']) {
-                        case 'FLOAT':
-                        case 'DOUBLE':
-                        case 'INTEGER':
-                            $fieldTypes[] = array($rowfield['FLD_NAME'] => $rowfield['FLD_TYPE']);
-                            break;
-                        default:
-                            break;
-                    }
+            //quick fix, map all empty values as NULL for Database
+            foreach ($appData as $appDataKey => $appDataValue) {
+                if (is_array($appDataValue) && count($appDataValue)) {
+                    $j = key($appDataValue);
+                    $appDataValue = is_array($appDataValue[$j]) ? $appDataValue : $appDataValue[$j];
                 }
-            }
-
-            // quick fix
-            // map all empty values as NULL for Database
-            foreach ($caseData as $dKey => $dValue) {
-                if (is_array($dValue) && count($dValue)) {
-                    $j = key($dValue);
-                    $dValue = (is_array($dValue[$j])) ? $dValue : $dValue[$j];
-                }
-                if (is_string($dValue)) {
+                if (is_string($appDataValue)) {
                     foreach ($fieldTypes as $key => $fieldType) {
-                        foreach ($fieldType as $name => $theType) {
-                            if (strtoupper($dKey) == $name) {
-                                $caseData[$dKey] = validateType($dValue, $theType);
-                                unset($name);
+                        foreach ($fieldType as $fieldTypeKey => $fieldTypeValue) {
+                            if (strtoupper($appDataKey) == $fieldTypeKey) {
+                                $appData[$appDataKey] = validateType($appDataValue, $fieldTypeValue);
+                                unset($fieldTypeKey);
                             }
                         }
                     }
                     // normal fields
-                    if (trim($dValue) === '') {
-                        $caseData[$dKey] = null;
+                    if (trim($appDataValue) === '') {
+                        $appData[$appDataKey] = null;
                     }
                 } else {
                     // grids
-                    if (is_array($caseData[$dKey])) {
-                        foreach ($caseData[$dKey] as $dIndex => $dRow) {
+                    if (is_array($appData[$appDataKey])) {
+                        foreach ($appData[$appDataKey] as $dIndex => $dRow) {
                             if (is_array($dRow)) {
                                 foreach ($dRow as $k => $v) {
                                     if (is_string($v) && trim($v) === '') {
-                                        $caseData[$dKey][$dIndex][$k] = null;
+                                        $appData[$appDataKey][$dIndex][$k] = null;
                                     }
                                 }
                             }
@@ -794,33 +826,48 @@ class AdditionalTables extends BaseAdditionalTables
                 }
             }
 
+            //populate data
+            $className = $this->className;
             if ($type === 'GRID') {
                 list($gridName, $gridUid) = explode('-', $gridKey);
-                $gridData = isset($caseData[$gridName]) ? $caseData[$gridName] : array();
-
+                $gridData = isset($appData[$gridName]) ? $appData[$gridName] : [];
                 foreach ($gridData as $i => $gridRow) {
-                    eval('$obj = new ' . $this->className . '();');
-                    $obj->fromArray($caseData, BasePeer::TYPE_FIELDNAME);
+                    try {
+                        $obj = new $className();
+                        $obj->fromArray($appData, BasePeer::TYPE_FIELDNAME);
+                        $obj->setAppUid($row['APP_UID']);
+                        $obj->setAppNumber($row['APP_NUMBER']);
+                        if (method_exists($obj, 'setAppStatus')) {
+                            $obj->setAppStatus($row['APP_STATUS']);
+                        }
+                        $obj->fromArray(array_change_key_case($gridRow, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
+                        $obj->setRow($i);
+                        $obj->save();
+                    } catch (Exception $e) {
+                        $context["message"] = $e->getMessage();
+                        $context["tableName"] = $tableName;
+                        $context["appUid"] = $row['APP_UID'];
+                        Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
+                    }
+                    unset($obj);
+                }
+            } else {
+                try {
+                    $obj = new $className();
+                    $obj->fromArray(array_change_key_case($appData, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
                     $obj->setAppUid($row['APP_UID']);
                     $obj->setAppNumber($row['APP_NUMBER']);
                     if (method_exists($obj, 'setAppStatus')) {
                         $obj->setAppStatus($row['APP_STATUS']);
                     }
-                    $obj->fromArray(array_change_key_case($gridRow, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
-                    $obj->setRow($i);
                     $obj->save();
-                    eval('$obj = new ' . $this->className . '();');
+                } catch (Exception $e) {
+                    $context["message"] = $e->getMessage();
+                    $context["tableName"] = $tableName;
+                    $context["appUid"] = $row['APP_UID'];
+                    Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
                 }
-            } else {
-                eval('$obj = new ' . $this->className . '();');
-                $obj->fromArray(array_change_key_case($caseData, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
-                $obj->setAppUid($row['APP_UID']);
-                $obj->setAppNumber($row['APP_NUMBER']);
-                if (method_exists($obj, 'setAppStatus')) {
-                    $obj->setAppStatus($row['APP_STATUS']);
-                }
-                $obj->save();
-                $obj = null;
+                unset($obj);
             }
         }
     }
@@ -1022,94 +1069,181 @@ class AdditionalTables extends BaseAdditionalTables
         return $reportTables;
     }
 
+    /**
+     * Get all data of AdditionalTables.
+     * 
+     * @param int $start
+     * @param int $limit
+     * @param string $filter
+     * @param array $process
+     * @return array
+     */
     public function getAll($start = 0, $limit = 20, $filter = '', $process = null)
     {
-        $oCriteria = new Criteria('workflow');
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_UID);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_NAME);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_DESCRIPTION);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TYPE);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TAG);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::PRO_UID);
-        $oCriteria->addSelectColumn(AdditionalTablesPeer::DBS_UID);
+        $criteria = new Criteria('workflow');
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_UID);
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_NAME);
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_DESCRIPTION);
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TYPE);
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TAG);
+        $criteria->addSelectColumn(AdditionalTablesPeer::PRO_UID);
+        $criteria->addSelectColumn(AdditionalTablesPeer::DBS_UID);
 
         if (isset($process)) {
             foreach ($process as $key => $pro_uid) {
                 if ($key == 'equal') {
-                    $oCriteria->add(AdditionalTablesPeer::PRO_UID, $pro_uid, Criteria::EQUAL);
+                    $criteria->add(AdditionalTablesPeer::PRO_UID, $pro_uid, Criteria::EQUAL);
                 } else {
-                    $oCriteria->add(AdditionalTablesPeer::PRO_UID, $pro_uid, Criteria::NOT_EQUAL);
+                    $criteria->add(AdditionalTablesPeer::PRO_UID, $pro_uid, Criteria::NOT_EQUAL);
                 }
             }
         }
 
         if ($filter != '' && is_string($filter)) {
-            $oCriteria->add(
-                $oCriteria->getNewCriterion(AdditionalTablesPeer::ADD_TAB_NAME, '%' . $filter . '%', Criteria::LIKE)->addOr(
-                    $oCriteria->getNewCriterion(AdditionalTablesPeer::ADD_TAB_DESCRIPTION, '%' . $filter . '%', Criteria::LIKE)
-                )
-            );
+            $subCriteria2 = $criteria->getNewCriterion(AdditionalTablesPeer::ADD_TAB_DESCRIPTION, '%'
+                    . $filter
+                    . '%', Criteria::LIKE);
+            $subCriteria1 = $criteria->getNewCriterion(AdditionalTablesPeer::ADD_TAB_NAME, '%'
+                            . $filter
+                            . '%', Criteria::LIKE)
+                    ->addOr($subCriteria2);
+            $criteria->add($subCriteria1);
         }
 
-        if (isset($_POST['sort'])) {
-            if ($_POST['dir'] == 'ASC') {
-                eval('$oCriteria->addAscendingOrderByColumn(AdditionalTablesPeer::' . $_POST['sort'] . ');');
-            } else {
-                eval('$oCriteria->addDescendingOrderByColumn(AdditionalTablesPeer::' . $_POST['sort'] . ');');
+        $criteria->addAsColumn("PRO_TITLE", ProcessPeer::PRO_TITLE);
+        $criteria->addAsColumn("PRO_DESCRIPTION", ProcessPeer::PRO_DESCRIPTION);
+        $criteria->addJoin(AdditionalTablesPeer::PRO_UID, ProcessPeer::PRO_UID, Criteria::LEFT_JOIN);
+
+        $stringBuild = '';
+        $stringSql = "ADDITIONAL_TABLES.ADD_TAB_NAME IN ("
+                . "SELECT TABLE_NAME "
+                . "FROM information_schema.tables "
+                . "WHERE table_schema = DATABASE()"
+                . ")";
+        $buildNumberRows = clone $criteria;
+        $buildNumberRows->clear();
+        $buildNumberRows->addSelectColumn(AdditionalTablesPeer::ADD_TAB_NAME);
+        $buildNumberRows->addAsColumn("EXISTS_TABLE", $stringSql);
+        $dataset1 = AdditionalTablesPeer::doSelectRS($buildNumberRows);
+        $dataset1->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        while ($dataset1->next()) {
+            $row = $dataset1->getRow();
+            $stringCount = "'" . G::LoadTranslation('ID_TABLE_NOT_FOUND') . "'";
+            if ($row["EXISTS_TABLE"] === "1") {
+                $stringCount = "(SELECT COUNT(*) FROM " . $row["ADD_TAB_NAME"] . ")";
             }
+            $stringBuild = $stringBuild
+                    . "WHEN '" . $row["ADD_TAB_NAME"]
+                    . "' THEN " . $stringCount
+                    . " \n";
+        }
+        $clauseRows = empty($stringBuild) ? "''" : "(CASE "
+                . AdditionalTablesPeer::ADD_TAB_NAME
+                . " "
+                . $stringBuild
+                . " END)";
+        $criteria->addAsColumn("NUM_ROWS", $clauseRows);
+
+        if (empty($_POST['sort'])) {
+            $criteria->addAscendingOrderByColumn(AdditionalTablesPeer::ADD_TAB_NAME);
         } else {
-            $oCriteria->addAscendingOrderByColumn(AdditionalTablesPeer::ADD_TAB_NAME);
+            $column = $_POST["sort"];
+            if (defined('AdditionalTablesPeer::' . $column)) {
+                $column = constant('AdditionalTablesPeer::' . $column);
+            }
+            if ($column === "NUM_ROWS") {
+                $column = "IF(" . $column . "='" . G::LoadTranslation('ID_TABLE_NOT_FOUND') . "',-1," . $column . ")";
+            }
+            if ($_POST['dir'] == 'ASC') {
+                $criteria->addAscendingOrderByColumn($column);
+            } else {
+                $criteria->addDescendingOrderByColumn($column);
+            }
         }
 
-        $criteriaCount = clone $oCriteria;
+        $criteriaCount = clone $criteria;
         $count = AdditionalTablesPeer::doCount($criteriaCount);
 
-        $oCriteria->setLimit($limit);
-        $oCriteria->setOffset($start);
+        $criteria->setLimit($limit);
+        $criteria->setOffset($start);
 
-        $oDataset = AdditionalTablesPeer::doSelectRS($oCriteria);
-        $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $dataset = AdditionalTablesPeer::doSelectRS($criteria);
+        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-        $addTables = array();
-        $proUids = array();
-
-        while ($oDataset->next()) {
-            $row = $oDataset->getRow();
-            $row['PRO_TITLE'] = $row['PRO_DESCRIPTION'] = '';
+        $addTables = [];
+        while ($dataset->next()) {
+            $row = $dataset->getRow();
             $addTables[] = $row;
-            if ($row['PRO_UID'] != '') {
-                $proUids[] = $row['PRO_UID'];
-            }
         }
 
-        //process details will have the info about the processes
-        $procDetails = array();
+        return [
+            'rows' => $addTables,
+            'count' => $count
+        ];
+    }
 
-        if (count($proUids) > 0) {
-            //now get the labels for all process, using an array of Uids,
-            $c = new Criteria('workflow');
-            $c->add(ProcessPeer::PRO_UID, $proUids, Criteria::IN);
-            $dt = ProcessPeer::doSelectRS($c);
-            $dt->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+    /**
+     * Get the table properties
+     *
+     * @param string $tabUid
+     * @param array $tabData
+     * @param boolean $isReportTable
+     *
+     * @return array
+     * @throws Exception
+    */
+    public static function getTableProperties($tabUid, $tabData = [], $isReportTable = false)
+    {
+        $criteria = new Criteria('workflow');
+        $criteria->add(AdditionalTablesPeer::ADD_TAB_UID, $tabUid, Criteria::EQUAL);
+        $dataset = AdditionalTablesPeer::doSelectOne($criteria);
 
-            while ($dt->next()) {
-                $row = $dt->getRow();
-                $procDetails[$row['PRO_UID']]['PRO_TITLE'] = $row['PRO_TITLE'];
-                $procDetails[$row['PRO_UID']]['PRO_DESCRIPTION'] = $row['PRO_DESCRIPTION'];
+        $dataValidate = [];
+        if (!is_null($dataset)) {
+            $dataValidate['rep_tab_uid'] = $tabUid;
+
+            $tableName = $dataset->getAddTabName();
+            if (substr($tableName, 0, 4) === 'PMT_') {
+                $tableNameWithoutPrefixPmt = substr($tableName, 4);
+            } else {
+                $tableNameWithoutPrefixPmt = $tableName;
             }
 
-            foreach ($addTables as $i => $addTable) {
-                if (isset($procDetails[$addTable['PRO_UID']]['PRO_TITLE'])) {
-                    $addTables[$i]['PRO_TITLE'] = $procDetails[$addTable['PRO_UID']]['PRO_TITLE'];
-                }
+            $dataValidate['rep_tab_name'] = $tableNameWithoutPrefixPmt;
+            $dataValidate['rep_tab_name_old_name'] = $tableName;
+            $dataValidate['pro_uid'] = $dataset->getProUid();
+            $dataValidate['rep_tab_dsc'] = $dataset->getAddTabDescription();
+            $dataValidate['rep_tab_connection'] = $dataset->getDbsUid();
+            $dataValidate['rep_tab_type'] = $dataset->getAddTabType();
+            $dataValidate['rep_tab_grid'] = '';
 
-                if (isset($procDetails[$addTable['PRO_UID']]['PRO_DESCRIPTION'])) {
-                    $addTables[$i]['PRO_DESCRIPTION'] = $procDetails[$addTable['PRO_UID']]['PRO_DESCRIPTION'];
+            if ($isReportTable) {
+                if (!empty($tabData['pro_uid']) && $dataValidate['pro_uid'] !== $tabData['pro_uid']) {
+                    throw (new Exception("The property pro_uid: '". $tabData['pro_uid'] . "' is incorrect."));
+                }
+                if (!empty($tabData['rep_tab_name']) && $tableName !== $tabData['rep_tab_name']) {
+                    throw (new Exception("The property rep_tab_name: '". $tabData['rep_tab_name'] . "' is incorrect."));
+                }
+                if (!empty($dataValidate['rep_tab_dsc'])) {
+                    $dataValidate['rep_tab_dsc'] = $tabData['rep_tab_dsc'];
+                }
+                $tabGrid = $dataset->getAddTabGrid();
+                if (strpos($tabGrid, '-')) {
+                    list($gridName, $gridId) = explode('-', $tabGrid);
+                    $dataValidate['rep_tab_grid'] = $gridId;
+                }
+            } else {
+                if (!empty($tabData['rep_tab_name']) && $tableName !== $tabData['pmt_tab_name']) {
+                    throw (new Exception("The property pmt_tab_name: '". $tabData['pmt_tab_name'] . "' is incorrect."));
+                }
+                if (!empty($dataValidate['pmt_tab_dsc'])) {
+                    $dataValidate['rep_tab_dsc'] = $tabData['pmt_tab_dsc'];
                 }
             }
+            $dataValidate['fields'] = $tabData['fields'];
         }
 
-        return array('rows' => $addTables, 'count' => $count);
+        return $dataValidate;
     }
 
     /**

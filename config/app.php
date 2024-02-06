@@ -12,7 +12,7 @@ return [
     'log' => env('APP_LOG', 'single'),
     'log_level' => env('APP_LOG_LEVEL', 'debug'),
     'cache_lifetime' => env('APP_CACHE_LIFETIME', 60),
-
+    'timezone' => 'UTC',
     'providers' => [
         FilesystemServiceProvider::class,
         CacheServiceProvider::class,

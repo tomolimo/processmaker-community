@@ -64,6 +64,9 @@ class PmDynaform
                 $this->jsonReplace($json, $field->id, "id", $field);
             }
             $this->record["DYN_CONTENT"] = G::json_encode($json);
+
+            //to do, this line should be removed. Related to PMC-196.
+            $this->record['DYN_CONTENT'] = G::fixStringCorrupted($this->record['DYN_CONTENT']);
         }
     }
 
@@ -1039,7 +1042,7 @@ class PmDynaform
                         },
                         token: credentials,
                         submitRest: false,
-                        googleMaps: googleMaps
+                        googleMaps: typeof googleMaps !== 'undefined' ? googleMaps : null
                     });
                     $(document).find(\"form\").submit(function (e) {
                         e.preventDefault();
@@ -1101,7 +1104,7 @@ class PmDynaform
                 "        },\n" .
                 "        token: credentials,\n" .
                 "        submitRest: false,\n" .
-                "        googleMaps: googleMaps\n" .
+                "        googleMaps: typeof googleMaps !== 'undefined' ? googleMaps : null\n" .
                 "    });\n" .
                 "    $(document).find('form').find('button').on('click', function (e) {\n" .
                 "        e.preventDefault();\n" .
@@ -1129,23 +1132,7 @@ class PmDynaform
         if (!isset($this->fields["APP_DATA"]["__DYNAFORM_OPTIONS"]["PREVIOUS_STEP"])) {
             $this->fields["APP_DATA"]["__DYNAFORM_OPTIONS"]["PREVIOUS_STEP"] = "";
         }
-        $msg = "";
-        if (isset($_SESSION['G_MESSAGE_TYPE']) && isset($_SESSION['G_MESSAGE'])) {
-            $color = "green";
-            if ($_SESSION['G_MESSAGE_TYPE'] === "ERROR") {
-                $color = "red";
-            }
-            if ($_SESSION['G_MESSAGE_TYPE'] === "WARNING") {
-                $color = "#C3C380";
-            }
-            if ($_SESSION['G_MESSAGE_TYPE'] === "INFO") {
-                $color = "green";
-            }
-            $msg = "<div style='background-color:" . $color . ";color: white;padding: 1px 2px 1px 5px;' class='userGroupTitle'>" . $_SESSION['G_MESSAGE_TYPE'] . ": " . $_SESSION['G_MESSAGE'] . "</div>";
-            unset($_SESSION['G_MESSAGE_TYPE']);
-            unset($_SESSION['G_MESSAGE']);
-        }
-        $title = $msg .
+        $title = $this->getSessionMessage() .
                 "<table width='100%' align='center'>\n" .
                 "    <tr class='userGroupTitle'>\n" .
                 "        <td width='100%' align='center'>" . G::LoadTranslation('ID_CASE') . " #: " . $this->fields["APP_NUMBER"] . "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" . G::LoadTranslation('ID_TITLE') . ": " . $this->fields["APP_TITLE"] . "</td>\n" .
@@ -1196,19 +1183,8 @@ class PmDynaform
     public function printEditSupervisor()
     {
         ob_clean();
-
         $json = G::json_decode($this->record["DYN_CONTENT"]);
         $this->jsonr($json);
-
-        $msg = "";
-
-        if (isset($_SESSION["G_MESSAGE_TYPE"]) && isset($_SESSION["G_MESSAGE"])) {
-            $msg = "<div style=\"margin: 1.2em; border: 1px solid #3C763D; padding: 0.5em; background: #B2D3B3;\"><strong>" . G::LoadTranslation("ID_INFO") . "</strong>: " . $_SESSION["G_MESSAGE"] . "</div>";
-
-            unset($_SESSION["G_MESSAGE_TYPE"]);
-            unset($_SESSION["G_MESSAGE"]);
-        }
-
         $javascrip = "
         <script type=\"text/javascript\">
             var jsondata = " . G::json_encode($json) . ";
@@ -1231,11 +1207,9 @@ class PmDynaform
             var leaveCaseWarning = " . $this->getLeaveCaseWarning() . ";
             " . $this->getTheStringVariableForGoogleMaps() . "
         </script>
-
         <script type=\"text/javascript\" src=\"/jscore/cases/core/pmDynaform.js\"></script>
-
         <div>
-            $msg
+            " . $this->getSessionMessageForSupervisor() . "
             <div style=\"display: none;\">
                 <a id=\"dyn_forward\" href=\"javascript:;\"></a>
             </div>
@@ -1320,6 +1294,7 @@ class PmDynaform
                 $this->getTheStringVariableForGoogleMaps() . "\n" .
                 "</script>\n" .
                 "<script type='text/javascript' src='/jscore/cases/core/pmDynaform.js'></script>\n" .
+                $this->getSessionMessage() .
                 "<div style='width:100%;padding: 0px 10px 0px 10px;margin:15px 0px 0px 0px;'>\n" .
                 "    <a id='dyn_forward' href='' style='float:right;font-size:12px;line-height:1;margin:0px 5px 1px 0px;'>\n" .
                 "    </a>\n" .
@@ -1356,9 +1331,20 @@ class PmDynaform
         exit();
     }
 
+    /**
+     * Print PmDynaform for Action by Email.
+     * 
+     * @param array $record
+     * @return string
+     * 
+     * @see ActionsByEmailCoreClass->sendActionsByEmail()
+     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
+     */
     public function printPmDynaformAbe($record)
     {
-        ob_clean();
+        if (ob_get_length() > 0) {
+            ob_clean();
+        }
         $this->record = $record;
         $json = G::json_decode($this->record["DYN_CONTENT"]);
         $this->jsonr($json);
@@ -1507,12 +1493,21 @@ class PmDynaform
         }
     }
 
+    /**
+     * Sync JSON definition of the Forms with Input Document information
+     * in all forms from a process
+     *
+     * @param string $processUid
+     * @param array $inputDocument
+     */
     public function synchronizeInputDocument($processUid, $inputDocument)
     {
-        $criteria = new Criteria("workflow");
+        $criteria = new Criteria('workflow');
         $criteria->addSelectColumn(DynaformPeer::DYN_UID);
         $criteria->addSelectColumn(DynaformPeer::DYN_CONTENT);
         $criteria->add(DynaformPeer::PRO_UID, $processUid, Criteria::EQUAL);
+        // Only select the forms with an input document related to a field
+        $criteria->add(DynaformPeer::DYN_CONTENT, '%"sizeUnity":%', Criteria::LIKE);
         $rsCriteria = DynaformPeer::doSelectRS($criteria);
         $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         while ($rsCriteria->next()) {
@@ -1524,7 +1519,7 @@ class PmDynaform
             if ($json2 !== $aRow['DYN_CONTENT']) {
                 $con = Propel::getConnection(DynaformPeer::DATABASE_NAME);
                 $con->begin();
-                $oPro = DynaformPeer::retrieveByPk($aRow["DYN_UID"]);
+                $oPro = DynaformPeer::retrieveByPk($aRow['DYN_UID']);
                 $oPro->setDynContent($json2);
                 $oPro->save();
                 $con->commit();
@@ -1532,6 +1527,13 @@ class PmDynaform
         }
     }
 
+    /**
+     * Replace values from an Input Document related to the form,
+     * for fields of type "file" and "multipleFile"
+     *
+     * @param object $json
+     * @param array $inputDocument
+     */
     private function jsonsid(&$json, $inputDocument)
     {
         foreach ($json as $key => $value) {
@@ -1541,15 +1543,8 @@ class PmDynaform
                 $this->jsonsid($value, $inputDocument);
             }
             if (!$sw1 && !$sw2) {
-                if ($key === "type" && $json->type === "file" && $json->variable !== "") {
-                    $a = new Criteria("workflow");
-                    $a->addSelectColumn(ProcessVariablesPeer::INP_DOC_UID);
-                    $a->add(ProcessVariablesPeer::VAR_NAME, $json->variable, Criteria::EQUAL);
-                    $ds = DynaformPeer::doSelectRS($a);
-                    $ds->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                    $ds->next();
-                    $row = $ds->getRow();
-                    if (isset($row) && $row["INP_DOC_UID"] === $inputDocument["INP_DOC_UID"]) {
+                if ($key === "type" && ($json->type === "file" || $json->type === "multipleFile") && isset($json->inp_doc_uid)) {
+                    if ($json->inp_doc_uid === $inputDocument["INP_DOC_UID"]) {
                         if (isset($json->size)) {
                             $json->size = $inputDocument["INP_DOC_MAX_FILESIZE"];
                         }
@@ -1560,6 +1555,8 @@ class PmDynaform
                             $json->extensions = $inputDocument["INP_DOC_TYPE_FILE"];
                         }
                     }
+                } else if ($key === "type" && $json->type === "grid" && !empty($json->columns)) {
+                    $this->jsonsid($json->columns, $inputDocument);
                 }
             }
         }
@@ -2212,5 +2209,54 @@ class PmDynaform
         $googleMaps->signature = $config['google_map_signature'];
         $result = 'var googleMaps = ' . G::json_encode($googleMaps) . ';';
         return $result;
+    }
+
+    /**
+     * Get session message.
+     * 
+     * @return string
+     * 
+     * @see PmDynaform->printEdit()
+     * @see PmDynaform->printABE()
+     * @link https://wiki.processmaker.com/3.1/Multiple_File_Uploader#File_Extensions
+     */
+    public function getSessionMessage()
+    {
+        $message = "";
+        if (isset($_SESSION['G_MESSAGE_TYPE']) && isset($_SESSION['G_MESSAGE'])) {
+            $color = "green";
+            if ($_SESSION['G_MESSAGE_TYPE'] === "ERROR") {
+                $color = "red";
+            }
+            if ($_SESSION['G_MESSAGE_TYPE'] === "WARNING") {
+                $color = "#C3C380";
+            }
+            if ($_SESSION['G_MESSAGE_TYPE'] === "INFO") {
+                $color = "green";
+            }
+            $message = "<div style='background-color:" . $color . ";color: white;padding: 1px 2px 1px 5px;' class='userGroupTitle'>" . $_SESSION['G_MESSAGE_TYPE'] . ": " . $_SESSION['G_MESSAGE'] . "</div>";
+            unset($_SESSION['G_MESSAGE_TYPE']);
+            unset($_SESSION['G_MESSAGE']);
+        }
+        return $message;
+    }
+
+    /**
+     * Get session message for supervisor.
+     * 
+     * @return string
+     * 
+     * @see PmDynaform->printEditSupervisor();
+     * @link https://wiki.processmaker.com/3.1/Multiple_File_Uploader#File_Extensions
+     */
+    public function getSessionMessageForSupervisor()
+    {
+        $message = "";
+        if (isset($_SESSION["G_MESSAGE_TYPE"]) && isset($_SESSION["G_MESSAGE"])) {
+            $message = "<div style=\"margin: 1.2em; border: 1px solid #3C763D; padding: 0.5em; background: #B2D3B3;\"><strong>" . G::LoadTranslation("ID_INFO") . "</strong>: " . $_SESSION["G_MESSAGE"] . "</div>";
+            unset($_SESSION["G_MESSAGE_TYPE"]);
+            unset($_SESSION["G_MESSAGE"]);
+        }
+        return $message;
     }
 }

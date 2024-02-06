@@ -8,6 +8,8 @@
  */
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Validation\ExceptionRestApi;
+use ProcessMaker\Validation\ValidationUploadedFiles;
 
 header("Content-type: text/html;charset=utf-8");
 require_once 'classes/model/AdditionalTables.php';
@@ -26,68 +28,70 @@ class pmTablesProxy extends HttpProxyController
      * @param string $httpData->limit
      * @param string $httpData->textFilter
      */
-    public function getList ($httpData)
+    public function getList($httpData)
     {
         $configurations = new Configurations();
         $processMap = new ProcessMap();
 
         // setting parameters
-        $config = $configurations->getConfiguration( 'additionalTablesList', 'pageSize', '', $_SESSION['USER_LOGGED'] );
-        $env = $configurations->getConfiguration( 'ENVIRONMENT_SETTINGS', '' );
-        $limit_size = isset( $config->pageSize ) ? $config['pageSize'] : 20;
-        $start = isset( $httpData->start ) ? $httpData->start : 0;
-        $limit = isset( $httpData->limit ) ? $httpData->limit : $limit_size;
-        $filter = isset( $httpData->textFilter ) ? $httpData->textFilter : '';
-        $pro_uid = isset( $httpData->pro_uid ) ? $httpData->pro_uid : null;
+        $config = $configurations->getConfiguration('additionalTablesList', 'pageSize', '', $_SESSION['USER_LOGGED']);
+        $env = $configurations->getConfiguration('ENVIRONMENT_SETTINGS', '');
+        $limit_size = isset($config->pageSize) ? $config['pageSize'] : 20;
+        $start = isset($httpData->start) ? $httpData->start : 0;
+        $limit = isset($httpData->limit) ? $httpData->limit : $limit_size;
+        $filter = isset($httpData->textFilter) ? $httpData->textFilter : '';
+        $pro_uid = isset($httpData->pro_uid) ? $httpData->pro_uid : null;
 
         if ($pro_uid !== null) {
-            $process = $pro_uid == '' ? array ('not_equal' => $pro_uid
-            ) : array ('equal' => $pro_uid);
-            $addTables = AdditionalTables::getAll( false, false, $filter, $process );
+            $process = $pro_uid == '' ? ['not_equal' => $pro_uid] : ['equal' => $pro_uid];
+            $addTables = AdditionalTables::getAll(false, false, $filter, $process);
 
-            $c = $processMap->getReportTablesCriteria( $pro_uid );
-            $oDataset = RoutePeer::doSelectRS( $c );
-            $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $reportTablesOldList = array ();
+            $c = $processMap->getReportTablesCriteria($pro_uid);
+            $oDataset = RoutePeer::doSelectRS($c);
+            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $reportTablesOldList = array();
             while ($oDataset->next()) {
                 $reportTablesOldList[] = $oDataset->getRow();
             }
             foreach ($reportTablesOldList as $i => $oldRepTab) {
-            	if($filter != ''){
-            		if((stripos($oldRepTab['REP_TAB_NAME'], $filter) !== false) || (stripos($oldRepTab['REP_TAB_TITLE'], $filter) !== false)){
-            			$addTables['rows'][] = array ('ADD_TAB_UID' => $oldRepTab['REP_TAB_UID'],'PRO_UID' => $oldRepTab['PRO_UID'],'DBS_UID' => ($oldRepTab['REP_TAB_CONNECTION'] == 'wf' ? 'workflow' : 'rp'),'ADD_TAB_DESCRIPTION' => $oldRepTab['REP_TAB_TITLE'],'ADD_TAB_NAME' => $oldRepTab['REP_TAB_NAME'],'ADD_TAB_TYPE' => $oldRepTab['REP_TAB_TYPE'],'TYPE' => 'CLASSIC' );
-            		}
-            	} else {
-            		$addTables['rows'][] = array ('ADD_TAB_UID' => $oldRepTab['REP_TAB_UID'],'PRO_UID' => $oldRepTab['PRO_UID'],'DBS_UID' => ($oldRepTab['REP_TAB_CONNECTION'] == 'wf' ? 'workflow' : 'rp'),'ADD_TAB_DESCRIPTION' => $oldRepTab['REP_TAB_TITLE'],'ADD_TAB_NAME' => $oldRepTab['REP_TAB_NAME'],'ADD_TAB_TYPE' => $oldRepTab['REP_TAB_TYPE'],'TYPE' => 'CLASSIC' );
-            	}
+                if ($filter != '') {
+                    if ((stripos($oldRepTab['REP_TAB_NAME'], $filter) !== false) ||
+                            (stripos($oldRepTab['REP_TAB_TITLE'], $filter) !== false)) {
+                        $addTables['rows'][] = [
+                            'ADD_TAB_UID' => $oldRepTab['REP_TAB_UID'],
+                            'PRO_UID' => $oldRepTab['PRO_UID'],
+                            'DBS_UID' => ($oldRepTab['REP_TAB_CONNECTION'] == 'wf' ? 'workflow' : 'rp'),
+                            'ADD_TAB_DESCRIPTION' => $oldRepTab['REP_TAB_TITLE'],
+                            'ADD_TAB_NAME' => $oldRepTab['REP_TAB_NAME'],
+                            'ADD_TAB_TYPE' => $oldRepTab['REP_TAB_TYPE'],
+                            'TYPE' => 'CLASSIC'
+                        ];
+                    }
+                } else {
+                    $addTables['rows'][] = [
+                        'ADD_TAB_UID' => $oldRepTab['REP_TAB_UID'],
+                        'PRO_UID' => $oldRepTab['PRO_UID'],
+                        'DBS_UID' => ($oldRepTab['REP_TAB_CONNECTION'] == 'wf' ? 'workflow' : 'rp'),
+                        'ADD_TAB_DESCRIPTION' => $oldRepTab['REP_TAB_TITLE'],
+                        'ADD_TAB_NAME' => $oldRepTab['REP_TAB_NAME'],
+                        'ADD_TAB_TYPE' => $oldRepTab['REP_TAB_TYPE'],
+                        'TYPE' => 'CLASSIC'
+                    ];
+                }
             }
             $addTables['count'] = count($addTables['rows']);
-            if($start != 0){
-           	    $addTables['rows'] = array_splice($addTables['rows'], $start);
+            if ($start != 0) {
+                $addTables['rows'] = array_splice($addTables['rows'], $start);
             }
             $addTables['rows'] = array_splice($addTables['rows'], 0, $limit);
         } else {
-            $addTables = AdditionalTables::getAll( $start, $limit, $filter );
+            $addTables = AdditionalTables::getAll($start, $limit, $filter);
         }
 
         foreach ($addTables['rows'] as $i => $table) {
-            try {
-                $con = Propel::getConnection( PmTable::resolveDbSource( $table['DBS_UID'] ) );
-                $stmt = $con->createStatement();
-                $rs = $stmt->executeQuery( 'SELECT COUNT(*) AS NUM_ROWS from ' . $table['ADD_TAB_NAME'] );
-                if ($rs->next()) {
-                    $r = $rs->getRow();
-                    $addTables['rows'][$i]['NUM_ROWS'] = $r['NUM_ROWS'];
-                } else {
-                    $addTables['rows'][$i]['NUM_ROWS'] = 0;
-                }
-
-                //removing the prefix "PMT" to allow alphabetical order (just in view)
-                if (substr( $addTables['rows'][$i]['ADD_TAB_NAME'], 0, 4 ) == 'PMT_') {
-                    $addTables['rows'][$i]['ADD_TAB_NAME'] = substr( $addTables['rows'][$i]['ADD_TAB_NAME'], 4 );
-                }
-            } catch (Exception $e) {
-                $addTables['rows'][$i]['NUM_ROWS'] = G::LoadTranslation( 'ID_TABLE_NOT_FOUND' );
+            //removing the prefix "PMT" to allow alphabetical order (just in view)
+            if (substr($addTables['rows'][$i]['ADD_TAB_NAME'], 0, 4) == 'PMT_') {
+                $addTables['rows'][$i]['ADD_TAB_NAME'] = substr($addTables['rows'][$i]['ADD_TAB_NAME'], 4);
             }
         }
 
@@ -721,6 +725,9 @@ class pmTablesProxy extends HttpProxyController
         }
 
         try {
+            ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+                throw new ExceptionRestApi($validator->getMessage());
+            });
             $result = new stdClass();
             $errors = '';
             $fromConfirm = false;
@@ -889,6 +896,11 @@ class pmTablesProxy extends HttpProxyController
             }
 
             $result->message = $msg;
+        } catch (ExceptionRestApi $e) {
+            $result = new stdClass();
+            $result->success = false;
+            $result->errorType = 'notice';
+            $result->message = $e->getMessage();
         } catch (Exception $e) {
             $result = new stdClass();
             $result->fromAdmin = $fromAdmin;
@@ -1152,7 +1164,13 @@ class pmTablesProxy extends HttpProxyController
         }
     }
 
-    public function genDataReport ($httpData)
+    /**
+     * It eliminates and generates the data report from the cases of a process.
+     * 
+     * @param object $httpData
+     * @return object
+     */
+    public function genDataReport($httpData)
     {
         $result = new stdClass();
 
@@ -1160,12 +1178,26 @@ class pmTablesProxy extends HttpProxyController
         $result->success = true;
 
         $additionalTables = new AdditionalTables();
-        $table = $additionalTables->load( $httpData->id );
-        if ($table['PRO_UID'] != '') {
-            $additionalTables->populateReportTable( $table['ADD_TAB_NAME'], PmTable::resolveDbSource( $table['DBS_UID'] ), $table['ADD_TAB_TYPE'], $table['PRO_UID'], $table['ADD_TAB_GRID'], $table['ADD_TAB_UID'] );
-            $result->message = 'generated for table ' . $table['ADD_TAB_NAME'];
-        }
+        $table = $additionalTables->load($httpData->id);
 
+        if (!empty($table) && $table['PRO_UID'] != '') {
+            try {
+                $additionalTables->populateReportTable($table['ADD_TAB_NAME'], PmTable::resolveDbSource($table['DBS_UID']), $table['ADD_TAB_TYPE'], $table['PRO_UID'], $table['ADD_TAB_GRID'], $table['ADD_TAB_UID']);
+                $result->message = 'Generated for table ' . $table['ADD_TAB_NAME'];
+            } catch (Exception $e) {
+                $context = Bootstrap::getDefaultContextLog();
+                $context['proUid'] = $table['PRO_UID'];
+                $context['tableName'] = $table['ADD_TAB_NAME'];
+                $context['message'] = $e->getMessage();
+                Bootstrap::registerMonolog('dataReport', 500, 'Generation of data report could not be completed', $context, $context['workspace'], 'processmaker.log');
+
+                $result->message = 'Generation of data report could not be completed. Please check the processmaker.log for more details.';
+                $result->success = false;
+            }
+        } else {
+            $result->message = 'Unable to retrieve the table for this id: ' . $httpData->id . '.';
+            $result->success = false;
+        }
         return $result;
     }
 

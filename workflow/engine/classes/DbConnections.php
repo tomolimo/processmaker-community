@@ -194,7 +194,7 @@ class DbConnections
             $conf = Propel::getConfiguration();
             // Iterate through the datasources of configuration, and only care about workflow, rbac or rp. Remove anything else.
             foreach ($conf['datasources'] as $key => $val) {
-                if (!in_array($key, ['workflow', 'rbac', 'rp'])) {
+                if (!in_array($key, ['workflow', 'rbac', 'rp', 'dbarray'])) {
                     unset($conf['datasources'][$key]);
                 }
             }

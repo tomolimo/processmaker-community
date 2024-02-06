@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    '320cde22f66dd4f5d3fd621d3e88b98f' => $vendorDir . '/symfony/polyfill-ctype/bootstrap.php',
     '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => $vendorDir . '/symfony/polyfill-mbstring/bootstrap.php',
     '5255c38a0faeba867671b61dfda6d864' => $vendorDir . '/paragonie/random_compat/lib/random.php',
     '023d27dca8066ef29e6739335ea73bad' => $vendorDir . '/symfony/polyfill-php70/bootstrap.php',
@@ -20,4 +21,5 @@ return array(
     '6a81470282d9479c809e94c27bb9b307' => $baseDir . '/thirdparty/HTMLPurifier/HTMLPurifier.auto.php',
     '4d91dd78b19c48ca08f9722f053de1a3' => $baseDir . '/workflow/engine/classes/class.pmFunctions.php',
     'a7e627efa6c9d1116d0855cb05b9ae90' => $baseDir . '/workflow/engine/src/ProcessMaker/Util/helpers.php',
+    '11b9e75510633a4e766ad43713ca8c86' => $baseDir . '/framework/src/Maveriks/Extension/Restler/UploadFormat.php',
 );

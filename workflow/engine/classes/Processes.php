@@ -1029,7 +1029,7 @@ class Processes
             $oData->process['PRO_DYNAFORMS']['PROCESS'] = '';
         }
 
-        if ($oData->process['PRO_DYNAFORMS']['PROCESS'] != '') {
+        if (!empty($oData->process['PRO_DYNAFORMS']['PROCESS']) && !empty($map[$oData->process['PRO_DYNAFORMS']['PROCESS']])) {
             $oData->process['PRO_DYNAFORMS']['PROCESS'] = $map[$oData->process['PRO_DYNAFORMS']['PROCESS']];
         }
 
@@ -1768,25 +1768,33 @@ class Processes
     /**
      * Create "Process User" records
      *
-     * @param array $arrayData Data to create
+     * @param array $arrayData
      *
-     * return void
+     * @return void
+     * @throws Exception
      */
     public function createProcessUser(array $arrayData)
     {
         try {
-            $processUser = new ProcessUser();
-
-            foreach ($arrayData as $value) {
-                $record = $value;
-
-                if ($processUser->Exists($record["PU_UID"])) {
-                    $result = $processUser->remove($record["PU_UID"]);
-                }
-
-                $result = $processUser->create($record);
+            $con = Propel::getConnection(ProcessUserPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($arrayData as $row) {
+                //Prepare the delete
+                $criteria = new Criteria(ProcessUserPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(ProcessUserPeer::PU_UID, $row['PU_UID']);
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(ProcessUserPeer::DATABASE_NAME);
+                $criteria->add(ProcessUserPeer::PU_UID, $row['PU_UID']);
+                $criteria->add(ProcessUserPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(ProcessUserPeer::USR_UID, $row['USR_UID']);
+                $criteria->add(ProcessUserPeer::PU_TYPE, $row['PU_TYPE']);
+                BasePeer::doInsert($criteria, $con);
             }
+            $con->commit();
         } catch (Exception $e) {
+            $con->rollback();
             throw $e;
         }
     }
@@ -1832,23 +1840,41 @@ class Processes
     /**
      * Create "Process Variables" records
      *
-     * @param array $arrayData Data to create
+     * @param array $arrayData
      *
-     * return void
+     * @return void
+     * @throws Exception
      */
     public function createProcessVariables(array $arrayData)
     {
         try {
-            foreach ($arrayData as $value) {
-                $processVariables = new ProcessVariables();
-                $record = $value;
-
-                if ($processVariables->Exists($record["VAR_UID"])) {
-                    $result = $processVariables->remove($record["VAR_UID"]);
-                }
-                $result = $processVariables->create($record);
+            $con = Propel::getConnection(ProcessVariablesPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($arrayData as $row) {
+                //Prepare the delete
+                $criteria = new Criteria(ProcessVariablesPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(ProcessVariablesPeer::VAR_UID, $row['VAR_UID']);
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(ProcessVariablesPeer::DATABASE_NAME);
+                $criteria->add(ProcessVariablesPeer::VAR_UID, $row['VAR_UID']);
+                $criteria->add(ProcessVariablesPeer::PRJ_UID, $row['PRJ_UID']);
+                $criteria->add(ProcessVariablesPeer::VAR_NAME, $row['VAR_NAME']);
+                $criteria->add(ProcessVariablesPeer::VAR_FIELD_TYPE, $row['VAR_FIELD_TYPE']);
+                $criteria->add(ProcessVariablesPeer::VAR_FIELD_SIZE, $row['VAR_FIELD_SIZE']);
+                $criteria->add(ProcessVariablesPeer::VAR_LABEL, $row['VAR_LABEL']);
+                $criteria->add(ProcessVariablesPeer::VAR_DBCONNECTION, $row['VAR_DBCONNECTION']);
+                $criteria->add(ProcessVariablesPeer::VAR_SQL, $row['VAR_SQL']);
+                $criteria->add(ProcessVariablesPeer::VAR_NULL, $row['VAR_NULL']);
+                $criteria->add(ProcessVariablesPeer::VAR_DEFAULT, $row['VAR_DEFAULT']);
+                $criteria->add(ProcessVariablesPeer::VAR_ACCEPTED_VALUES, $row['VAR_ACCEPTED_VALUES']);
+                $criteria->add(ProcessVariablesPeer::INP_DOC_UID, $row['INP_DOC_UID']);
+                BasePeer::doInsert($criteria, $con);
             }
+            $con->commit();
         } catch (Exception $e) {
+            $con->rollback();
             throw $e;
         }
     }
@@ -1895,47 +1921,93 @@ class Processes
     /**
      * Gets Input Documents Rows from aProcess.
      *
-     * @param $sProUid string.
-     * @return void
+     * @param string $proUid
+     *
+     * @return array
+     * @throws Exception
      */
-    public function getInputRows($sProUid)
+    public function getInputRows($proUid)
     {
         try {
-            $aInput = array();
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(InputDocumentPeer::PRO_UID, $sProUid);
-            $oDataset = InputDocumentPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $oDataset->next();
-            while ($aRow = $oDataset->getRow()) {
-                $oInput = new InputDocument();
-                $aInput[] = $oInput->load($aRow['INP_DOC_UID']);
-                $oDataset->next();
+            $inputList = [];
+            $criteria = new Criteria('workflow');
+            $criteria->add(InputDocumentPeer::PRO_UID, $proUid);
+            $dataset = InputDocumentPeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataset->next();
+            while ($row = $dataset->getRow()) {
+                $input = new InputDocument();
+                $infoInput = $input->load($row['INP_DOC_UID']);
+                unset($infoInput['INP_DOC_ID']);
+                $inputList[] = $infoInput;
+                $dataset->next();
             }
-            return $aInput;
-        } catch (Exception $oError) {
-            throw ($oError);
+
+            return $inputList;
+        } catch (Exception $error) {
+            throw ($error);
         }
     }
 
     /**
-     * Create Input Documents Rows from an array, removing those Objects
-     * with the same UID, and recreaiting the records from the array data.
+     * Create Input Documents
      *
-     * @param $aInput array.
+     * @param array $input
+     *
      * @return void
+     * @throws Exception
      */
-    public function createInputRows($aInput)
+    public function createInputRows($input)
     {
-        foreach ($aInput as $key => $row) {
-            $oInput = new InputDocument();
-            //unset ($row['TAS_UID']);
-            if ($oInput->InputExists($row['INP_DOC_UID'])) {
-                $oInput->remove($row['INP_DOC_UID']);
+        try {
+            $con = Propel::getConnection(InputDocumentPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($input as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(InputDocumentPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(InputDocumentPeer::INP_DOC_UID, $row['INP_DOC_UID']);
+                //Get the INP_DOC_ID column
+                $dataSet = BasePeer::doSelect($criteria, $con);
+                $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                if ($dataSet->next()) {
+                    $inputInfo = $dataSet->getRow();
+                    $row['INP_DOC_ID'] = $inputInfo['INP_DOC_ID'];
+                } else {
+                    $row['INP_DOC_ID'] = null;
+                }
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(InputDocumentPeer::DATABASE_NAME);
+                $criteria->add(InputDocumentPeer::INP_DOC_ID, $row['INP_DOC_ID']);
+                $criteria->add(InputDocumentPeer::INP_DOC_UID, $row['INP_DOC_UID']);
+                $criteria->add(InputDocumentPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(InputDocumentPeer::INP_DOC_TITLE, $row['INP_DOC_TITLE']);
+                $criteria->add(InputDocumentPeer::INP_DOC_DESCRIPTION, $row['INP_DOC_DESCRIPTION']);
+                $criteria->add(InputDocumentPeer::INP_DOC_FORM_NEEDED, $row['INP_DOC_FORM_NEEDED']);
+                $criteria->add(InputDocumentPeer::INP_DOC_ORIGINAL, $row['INP_DOC_ORIGINAL']);
+                $criteria->add(InputDocumentPeer::INP_DOC_PUBLISHED, $row['INP_DOC_PUBLISHED']);
+                $criteria->add(InputDocumentPeer::INP_DOC_VERSIONING, $row['INP_DOC_VERSIONING']);
+                $criteria->add(InputDocumentPeer::INP_DOC_DESTINATION_PATH, $row['INP_DOC_DESTINATION_PATH']);
+                $criteria->add(InputDocumentPeer::INP_DOC_TAGS, $row['INP_DOC_TAGS']);
+                $criteria->add(InputDocumentPeer::INP_DOC_TYPE_FILE, $row['INP_DOC_TYPE_FILE']);
+                $criteria->add(InputDocumentPeer::INP_DOC_MAX_FILESIZE, $row['INP_DOC_MAX_FILESIZE']);
+                $criteria->add(InputDocumentPeer::INP_DOC_MAX_FILESIZE_UNIT, $row['INP_DOC_MAX_FILESIZE_UNIT']);
+                BasePeer::doInsert($criteria, $con);
+
+                //Insert in CONTENT
+                $labels = [
+                    'INP_DOC_TITLE' => $row['INP_DOC_TITLE'],
+                    'INP_DOC_DESCRIPTION' => !empty($row['INP_DOC_DESCRIPTION']) ? $row['INP_DOC_DESCRIPTION'] : ''
+                ];
+                $this->insertToContentTable($con, $labels, $row['INP_DOC_UID'], SYS_LANG);
             }
-            $res = $oInput->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
+
     }
 
     /**
@@ -2029,47 +2101,103 @@ class Processes
     /**
      * Gets the Output Documents Rows from a Process.
      *
-     * @param $sProUid string.
-     * @return $aOutput array
+     * @param string $proUid
+     *
+     * @return array
+     * @throws Exception
      */
-    public function getOutputRows($sProUid)
+    public function getOutputRows($proUid)
     {
         try {
-            $aOutput = array();
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(OutputDocumentPeer::PRO_UID, $sProUid);
-            $oDataset = OutputDocumentPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $oDataset->next();
-            while ($aRow = $oDataset->getRow()) {
-                $oOutput = new OutputDocument();
-                $aOutput[] = $oOutput->Load($aRow['OUT_DOC_UID']);
-                $oDataset->next();
+            $outputList = [];
+            $criteria = new Criteria('workflow');
+            $criteria->add(OutputDocumentPeer::PRO_UID, $proUid);
+            $dataset = OutputDocumentPeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataset->next();
+            while ($row = $dataset->getRow()) {
+                $output = new OutputDocument();
+                $infoOutput = $output->Load($row['OUT_DOC_UID']);
+                unset($infoOutput['OUT_DOC_ID']);
+                $outputList[] = $infoOutput;
+                $dataset->next();
             }
-            return $aOutput;
-        } catch (Exception $oError) {
-            throw ($oError);
+
+            return $outputList;
+        } catch (Exception $error) {
+            throw ($error);
         }
     }
 
     /**
-     * Create Input Documents Rows from an array, removing those Objects
-     * with the same UID, and recreaiting the records from the array data.
+     * Create Input Documents
      *
-     * @param $aOutput array.
+     * @param array $output
+     *
      * @return void
+     * @throws Exception
      */
-    public function createOutputRows($aOutput)
+    public function createOutputRows($output)
     {
-        foreach ($aOutput as $key => $row) {
-            $oOutput = new OutputDocument();
-            //unset ($row['TAS_UID']);
-            if ($oOutput->OutputExists($row['OUT_DOC_UID'])) {
-                $oOutput->remove($row['OUT_DOC_UID']);
+        try {
+            $con = Propel::getConnection(OutputDocumentPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($output as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(OutputDocumentPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(OutputDocumentPeer::OUT_DOC_UID, $row['OUT_DOC_UID']);
+                //Get the OUT_DOC_ID column
+                $dataSet = BasePeer::doSelect($criteria, $con);
+                $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                if ($dataSet->next()) {
+                    $outputInfo = $dataSet->getRow();
+                    $row['OUT_DOC_ID'] = $outputInfo['OUT_DOC_ID'];
+                } else {
+                    $row['OUT_DOC_ID'] = null;
+                }
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(OutputDocumentPeer::DATABASE_NAME);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_ID, $row['OUT_DOC_ID']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_UID, $row['OUT_DOC_UID']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_TITLE, $row['OUT_DOC_TITLE']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_DESCRIPTION, $row['OUT_DOC_DESCRIPTION']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_FILENAME, $row['OUT_DOC_FILENAME']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_TEMPLATE, $row['OUT_DOC_TEMPLATE']);
+                $criteria->add(OutputDocumentPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_REPORT_GENERATOR, $row['OUT_DOC_REPORT_GENERATOR']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_LANDSCAPE, $row['OUT_DOC_LANDSCAPE']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_MEDIA, $row['OUT_DOC_MEDIA']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_LEFT_MARGIN, $row['OUT_DOC_LEFT_MARGIN']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_RIGHT_MARGIN, $row['OUT_DOC_RIGHT_MARGIN']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_TOP_MARGIN, $row['OUT_DOC_TOP_MARGIN']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_BOTTOM_MARGIN, $row['OUT_DOC_BOTTOM_MARGIN']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_GENERATE, $row['OUT_DOC_GENERATE']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_CURRENT_REVISION, $row['OUT_DOC_CURRENT_REVISION']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_FIELD_MAPPING, $row['OUT_DOC_FIELD_MAPPING']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_VERSIONING, $row['OUT_DOC_VERSIONING']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_DESTINATION_PATH, $row['OUT_DOC_DESTINATION_PATH']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_TAGS, $row['OUT_DOC_TAGS']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_PDF_SECURITY_ENABLED, $row['OUT_DOC_PDF_SECURITY_ENABLED']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_PDF_SECURITY_OPEN_PASSWORD, $row['OUT_DOC_PDF_SECURITY_OPEN_PASSWORD']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_PDF_SECURITY_OWNER_PASSWORD, $row['OUT_DOC_PDF_SECURITY_OWNER_PASSWORD']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_PDF_SECURITY_PERMISSIONS, $row['OUT_DOC_PDF_SECURITY_PERMISSIONS']);
+                $criteria->add(OutputDocumentPeer::OUT_DOC_OPEN_TYPE, $row['OUT_DOC_OPEN_TYPE']);
+                BasePeer::doInsert($criteria, $con);
+
+                //Insert in CONTENT
+                $labels = ['OUT_DOC_TITLE' => $row['OUT_DOC_TITLE'],
+                    'OUT_DOC_DESCRIPTION' => !empty($row['OUT_DOC_DESCRIPTION']) ? $row['OUT_DOC_DESCRIPTION'] : '',
+                    'OUT_DOC_FILENAME' => $row['OUT_DOC_FILENAME'],
+                    'OUT_DOC_TEMPLATE' => !empty($row['OUT_DOC_TEMPLATE']) ? $row['OUT_DOC_TEMPLATE'] : ''];
+                $this->insertToContentTable($con, $labels, $row['OUT_DOC_UID'], SYS_LANG);
             }
-            $res = $oOutput->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
     }
 
     /**
@@ -2665,37 +2793,75 @@ class Processes
     /**
      * Create Step Rows from a Process
      *
-     * @param $aStep array.
+     * @param array $step
+     *
      * @return void.
+     * @throws Exception
      */
-    public function createStepRows($aStep)
+    public function createStepRows($step)
     {
-        foreach ($aStep as $key => $row) {
-            $oStep = new Step();
-            if (isset($row['STEP_UID'])) {
-                if ($oStep->StepExists($row['STEP_UID'])) {
-                    $oStep->remove($row['STEP_UID']);
+        try {
+            $con = Propel::getConnection(StepPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($step as $key => $row) {
+                if (isset($row['STEP_UID'])) {
+                    //Prepare the delete
+                    $criteria = new Criteria(StepPeer::DATABASE_NAME);
+                    $criteria->addSelectColumn('*');
+                    $criteria->add(StepPeer::STEP_UID, $row['STEP_UID']);
+                    BasePeer::doDelete($criteria, $con);
+                    //Prepare the insert
+                    $criteria = new Criteria(StepPeer::DATABASE_NAME);
+                    $criteria->add(StepPeer::STEP_UID, $row['STEP_UID']);
+                    $criteria->add(StepPeer::PRO_UID, $row['PRO_UID']);
+                    $criteria->add(StepPeer::TAS_UID, $row['TAS_UID']);
+                    $criteria->add(StepPeer::STEP_TYPE_OBJ, $row['STEP_TYPE_OBJ']);
+                    $criteria->add(StepPeer::STEP_UID_OBJ, $row['STEP_UID_OBJ']);
+                    $criteria->add(StepPeer::STEP_CONDITION, $row['STEP_CONDITION']);
+                    $criteria->add(StepPeer::STEP_POSITION, $row['STEP_POSITION']);
+                    $criteria->add(StepPeer::STEP_MODE, $row['STEP_MODE']);
+                    BasePeer::doInsert($criteria, $con);
                 }
-                $res = $oStep->create($row);
             }
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
     }
 
     /**
      * Create Step Supervisor Rows for a Process from an array of data
      *
-     * @param $aStepSupervisor array.
+     * @param array $stepSupervisor
+     *
      * @return void.
+     * @throws Exception
      */
-    public function createStepSupervisorRows($aStepSupervisor)
+    public function createStepSupervisorRows($stepSupervisor)
     {
-        foreach ($aStepSupervisor as $key => $row) {
-            $oStepSupervisor = new StepSupervisor();
-            if ($oStepSupervisor->Exists($row['STEP_UID'])) {
-                $oStepSupervisor->remove($row['STEP_UID']);
+        try {
+            $con = Propel::getConnection(StepSupervisorPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($stepSupervisor as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(StepSupervisorPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(StepSupervisorPeer::STEP_UID, $row['STEP_UID']);
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(StepSupervisorPeer::DATABASE_NAME);
+                $criteria->add(StepSupervisorPeer::STEP_UID, $row['STEP_UID']);
+                $criteria->add(StepSupervisorPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(StepSupervisorPeer::STEP_TYPE_OBJ, $row['STEP_TYPE_OBJ']);
+                $criteria->add(StepSupervisorPeer::STEP_UID_OBJ, $row['STEP_UID_OBJ']);
+                $criteria->add(StepSupervisorPeer::STEP_POSITION, $row['STEP_POSITION']);
+                BasePeer::doInsert($criteria, $con);
             }
-            $oStepSupervisor->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
     }
 
@@ -2764,26 +2930,31 @@ class Processes
     /**
      * Get Dynaform Rows from a Process
      *
-     * @param string $sProUid
-     * @return $aDynaform array
+     * @param string $proUid
+     *
+     * @return array
+     * @throws Exception
      */
-    public function getDynaformRows($sProUid)
+    public function getDynaformRows($proUid)
     {
         try {
-            $aDynaform = array();
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(DynaformPeer::PRO_UID, $sProUid);
-            $oDataset = DynaformPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $oDataset->next();
-            while ($aRow = $oDataset->getRow()) {
-                $oDynaform = new Dynaform();
-                $aDynaform[] = $oDynaform->Load($aRow['DYN_UID']);
-                $oDataset->next();
+            $dynaformList = [];
+            $criteria = new Criteria('workflow');
+            $criteria->add(DynaformPeer::PRO_UID, $proUid);
+            $dataset = DynaformPeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataset->next();
+            while ($row = $dataset->getRow()) {
+                $dynaform = new Dynaform();
+                $infoDyn = $dynaform->Load($row['DYN_UID']);
+                unset($infoDyn['DYN_ID']);
+                $dynaformList[] = $infoDyn;
+                $dataset->next();
             }
-            return $aDynaform;
-        } catch (Exception $oError) {
-            throw ($oError);
+
+            return $dynaformList;
+        } catch (Exception $error) {
+            throw ($error);
         }
     }
 
@@ -2906,22 +3077,60 @@ class Processes
     }
 
     /**
-     * Create Dynaform Rows for a Process form an array
+     * Create dynaforms for a process
      *
-     * @param array $aDynaform
+     * @param array $dynaforms
+     *
      * @return void
+     * @throws Exception
      */
-    public function createDynaformRows($aDynaform)
+    public function createDynaformRows($dynaforms)
     {
-        foreach ($aDynaform as $key => $row) {
-            $oDynaform = new Dynaform();
-            //unset ($row['TAS_UID']);
-            if ($oDynaform->exists($row['DYN_UID'])) {
-                $oDynaform->remove($row['DYN_UID']);
+        try {
+            $con = Propel::getConnection(DynaformPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($dynaforms as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(DynaformPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(DynaformPeer::DYN_UID, $row['DYN_UID']);
+                //Get the DYN_ID column
+                $dataSet = BasePeer::doSelect($criteria, $con);
+                $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                if ($dataSet->next()) {
+                    $dynInfo = $dataSet->getRow();
+                    $row['DYN_ID'] = $dynInfo['DYN_ID'];
+                } else {
+                    $row['DYN_ID'] = null;
+                }
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(DynaformPeer::DATABASE_NAME);
+                $criteria->add(DynaformPeer::DYN_ID, $row['DYN_ID']);
+                $criteria->add(DynaformPeer::DYN_UID, $row['DYN_UID']);
+                $criteria->add(DynaformPeer::DYN_TITLE, $row['DYN_TITLE']);
+                $criteria->add(DynaformPeer::DYN_DESCRIPTION, $row['DYN_DESCRIPTION']);
+                $criteria->add(DynaformPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(DynaformPeer::DYN_TYPE, $row['DYN_TYPE']);
+                $criteria->add(DynaformPeer::DYN_FILENAME, $row['DYN_FILENAME']);
+                $criteria->add(DynaformPeer::DYN_CONTENT, $row['DYN_CONTENT']);
+                $criteria->add(DynaformPeer::DYN_LABEL, $row['DYN_LABEL']);
+                $criteria->add(DynaformPeer::DYN_VERSION, $row['DYN_VERSION']);
+                $criteria->add(DynaformPeer::DYN_UPDATE_DATE, $row['DYN_UPDATE_DATE']);
+                BasePeer::doInsert($criteria, $con);
+
+                //Insert in CONTENT
+                $labels = [
+                    'DYN_TITLE' => $row['DYN_TITLE'],
+                    'DYN_DESCRIPTION' => !empty($row['DYN_DESCRIPTION']) ? $row['DYN_DESCRIPTION'] : ''
+                ];
+                $this->insertToContentTable($con, $labels, $row['DYN_UID'], SYS_LANG);
             }
-            $res = $oDynaform->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
     }
 
     /**
@@ -3035,20 +3244,45 @@ class Processes
     /**
      * Create Step Trigger Rows for a Process form an array
      *
-     * @param array $aTrigger
+     * @param array $trigger
+     *
      * @return void
+     * @throws Exception
      */
-    public function createTriggerRows($aTrigger)
+    public function createTriggerRows($trigger)
     {
-        foreach ($aTrigger as $key => $row) {
-            $oTrigger = new Triggers();
-            //unset ($row['TAS_UID']);
-            if ($oTrigger->TriggerExists($row['TRI_UID'])) {
-                $oTrigger->remove($row['TRI_UID']);
+        try {
+            $con = Propel::getConnection(TriggersPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($trigger as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(TriggersPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(TriggersPeer::TRI_UID, $row['TRI_UID']);
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(TriggersPeer::DATABASE_NAME);
+                $criteria->add(TriggersPeer::TRI_UID, $row['TRI_UID']);
+                $criteria->add(TriggersPeer::TRI_TITLE, $row['TRI_TITLE']);
+                $criteria->add(TriggersPeer::TRI_DESCRIPTION, $row['TRI_DESCRIPTION']);
+                $criteria->add(TriggersPeer::PRO_UID, $row['PRO_UID']);
+                $criteria->add(TriggersPeer::TRI_TYPE, $row['TRI_TYPE']);
+                $criteria->add(TriggersPeer::TRI_WEBBOT, $row['TRI_WEBBOT']);
+                $criteria->add(TriggersPeer::TRI_PARAM, $row['TRI_PARAM']);
+                BasePeer::doInsert($criteria, $con);
+
+                //Insert in CONTENT
+                $labels = [
+                    'TRI_TITLE' => $row['TRI_TITLE'],
+                    'TRI_DESCRIPTION' => !empty($row['TRI_DESCRIPTION']) ? $row['TRI_DESCRIPTION'] : ''
+                ];
+                $this->insertToContentTable($con, $labels, $row['TRI_UID'], SYS_LANG);
             }
-            $res = $oTrigger->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
     }
 
     /**
@@ -3736,21 +3970,40 @@ class Processes
     /**
      * Get Task User Rows from an array of data
      *
-     * @param array $aTaskUser
-     * @return array $aStepTrigger
+     * @param array $taskUser
+     *
+     * @return void
+     * @throws Exception
      */
-    public function createTaskUserRows($aTaskUser)
+    public function createTaskUserRows($taskUser)
     {
-        if (is_array($aTaskUser)) {
-            foreach ($aTaskUser as $key => $row) {
-                $oTaskUser = new TaskUser();
-                if ($oTaskUser->TaskUserExists($row['TAS_UID'], $row['USR_UID'], $row['TU_TYPE'], $row['TU_RELATION'])) {
-                    $oTaskUser->remove($row['TAS_UID'], $row['USR_UID'], $row['TU_TYPE'], $row['TU_RELATION']);
+        try {
+            if (is_array($taskUser)) {
+                $con = Propel::getConnection(TaskUserPeer::DATABASE_NAME);
+                $con->begin();
+                foreach ($taskUser as $key => $row) {
+                    //Prepare the delete
+                    $criteria = new Criteria(TaskUserPeer::DATABASE_NAME);
+                    $criteria->addSelectColumn('*');
+                    $criteria->add(TaskUserPeer::TAS_UID, $row['TAS_UID']);
+                    $criteria->add(TaskUserPeer::USR_UID, $row['USR_UID']);
+                    $criteria->add(TaskUserPeer::TU_TYPE, $row['TU_TYPE']);
+                    $criteria->add(TaskUserPeer::TU_RELATION, $row['TU_RELATION']);
+                    $dataSet = BasePeer::doSelect($criteria, $con);
+                    if (!$dataSet->next()) {
+                        /** The validation added in method TaskUser->create is not required,
+                         *  because in the current method only assigned GROUPS are present.
+                         *  if (RBAC::isGuestUserUid($row['USR_UID']) && !$bmWebEntry->isTaskAWebEntry($row['TAS_UID'])) {...
+                         */
+                        BasePeer::doInsert($criteria, $con, false);
+                    }
                 }
-                $res = $oTaskUser->create($row);
+                $con->commit();
             }
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
-        return;
     }
 
     /**
@@ -3794,21 +4047,46 @@ class Processes
      * @param array $group
      *
      * @return void
+     * @throws Exception
      */
     public function createGroupRow($group)
     {
-        foreach ($group as $key => $row) {
-            $groupInfo = [];
-            $groupWf = new Groupwf();
-            if ($groupWf->GroupwfExists($row['GRP_UID'])) {
-                $groupInfo = $groupWf->Load($row['GRP_UID']);
-                $groupWf->remove($row['GRP_UID']);
+        try {
+            $con = Propel::getConnection(GroupwfPeer::DATABASE_NAME);
+            $con->begin();
+            foreach ($group as $key => $row) {
+                //Prepare the delete
+                $criteria = new Criteria(GroupwfPeer::DATABASE_NAME);
+                $criteria->addSelectColumn('*');
+                $criteria->add(GroupwfPeer::GRP_UID, $row['GRP_UID']);
+                //Get the GRP_ID column
+                $dataSet = BasePeer::doSelect($criteria, $con);
+                $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                if ($dataSet->next()) {
+                    $groupInfo = $dataSet->getRow();
+                    $row['GRP_ID'] = $groupInfo['GRP_ID'];
+                } else {
+                    $row['GRP_ID'] = null;
+                }
+                BasePeer::doDelete($criteria, $con);
+                //Prepare the insert
+                $criteria = new Criteria(GroupwfPeer::DATABASE_NAME);
+                $criteria->add(GroupwfPeer::GRP_ID, $row['GRP_ID']);
+                $criteria->add(GroupwfPeer::GRP_UID, $row['GRP_UID']);
+                $criteria->add(GroupwfPeer::GRP_TITLE, $row['GRP_TITLE']);
+                $criteria->add(GroupwfPeer::GRP_STATUS, $row['GRP_STATUS']);
+                $criteria->add(GroupwfPeer::GRP_LDAP_DN, $row['GRP_LDAP_DN']);
+                $criteria->add(GroupwfPeer::GRP_UX, $row['GRP_UX']);
+                BasePeer::doInsert($criteria, $con);
+
+                //Insert in CONTENT
+                $labels = ['GRP_TITLE' => $row['GRP_TITLE']];
+                $this->insertToContentTable($con, $labels, $row['GRP_UID'], SYS_LANG);
             }
-            //We will to keep the GRP_ID
-            if (!empty($groupInfo['GRP_ID'])) {
-                $row['GRP_ID'] = $groupInfo['GRP_ID'];
-            }
-            $res = $groupWf->create($row);
+            $con->commit();
+        } catch (Exception $e) {
+            $con->rollback();
+            throw $e;
         }
     }
 
@@ -4212,7 +4490,8 @@ class Processes
      * @param string $processUid Unique id of Process
      * @param array $arrayData Data
      *
-     * return void
+     * @return void
+     * @throws Exception
      */
     public function createActionsByEmail($processUid, array $arrayData)
     {
@@ -4784,45 +5063,35 @@ class Processes
     /**
      * function checkExistingGroups
      * checkExistingGroups check if any of the groups listed in the parameter
-     * array exist and wich are those, that is the result $sFilteredGroups array.
+     * array exist and which are those, that is the result $sFilteredGroups array.
      *
-     * @author gustavo cruz gustavo-at-colosa.com
-     * @param $sGroupList array of a group list
-     * @return $existingGroupList array of existing groups or null
+     * @param array $groupList, array of a group list
+     * @return array|null, array of existing groups or null
      */
-    public function checkExistingGroups($sGroupList)
+    public function checkExistingGroups($groupList)
     {
-        $aGroupwf = array();
-        $oCriteria = new Criteria('workflow');
-        $oCriteria->addSelectColumn(GroupwfPeer::GRP_UID);
-        $oCriteria->addSelectColumn(GroupwfPeer::GRP_TITLE);
-        $oDataset = GroupwfPeer::doSelectRS($oCriteria);
-        $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        $oDataset->next();
-        while ($aRow = $oDataset->getRow()) {
-            $aGroupwf[] = $aRow;
-            $oDataset->next();
-        }
-        //check if any group name exists in the dbase
-        if (is_array($sGroupList)) {
-            foreach ($aGroupwf as $groupBase) {
-                foreach ($sGroupList as $group) {
-                    if ($groupBase['GRP_TITLE'] == $group['GRP_TITLE'] && $groupBase['GRP_UID'] != $group['GRP_UID']) {
-                        $oPro = GroupwfPeer::retrieveByPk( $group['GRP_UID'] );
-                        if(is_object( $oPro ) && get_class( $oPro ) == 'Groupwf') {
-                            $group['GRP_UID'] = G::generateUniqueID();
-                        }
-                        $existingGroupList[] = $group;
+        $existingGroupList = [];
+        $criteria = new Criteria('workflow');
+        $criteria->addSelectColumn(GroupwfPeer::GRP_UID);
+        $criteria->addSelectColumn(GroupwfPeer::GRP_TITLE);
+        $dataset = GroupwfPeer::doSelectRS($criteria);
+        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $dataset->next();
+        while ($row = $dataset->getRow()) {
+            foreach ($groupList as $group) {
+                //Check if any group name exists in the database
+                if ($row['GRP_TITLE'] === $group['GRP_TITLE'] && $row['GRP_UID'] !== $group['GRP_UID']) {
+                    $groupWf = GroupwfPeer::retrieveByPk($group['GRP_UID']);
+                    if (is_object($groupWf) && get_class($groupWf) == 'Groupwf') {
+                        $group['GRP_UID'] = G::generateUniqueID();
                     }
+                    $existingGroupList[] = $group;
                 }
             }
+            $dataset->next();
         }
-        //return $sGroupList;
-        if (isset($existingGroupList)) {
-            return $existingGroupList;
-        } else {
-            return null;
-        }
+
+        return !empty($existingGroupList) ? $existingGroupList : null;
     }
 
     /**
@@ -5499,54 +5768,21 @@ class Processes
 
         $this->createProcessPropertiesFromData($oData);
 
-//        $this->createLaneRows( $oData->lanes );
-//
-//
-//        if (isset( $oData->gateways )) {
-//            $this->createGatewayRows( $oData->gateways );
-//        }
-//        $this->createDynaformRows( $oData->dynaforms );
-//        $this->createInputRows( $oData->inputs );
-//        $this->createOutputRows( $oData->outputs );
-//        $this->createStepRows( $oData->steps );
-//        $this->createStepSupervisorRows( isset( $oData->stepSupervisor ) ? $oData->stepSupervisor : array () );
-//        $this->createTriggerRows( $oData->triggers );
-//        $this->createStepTriggerRows( $oData->steptriggers );
-//        $this->createTaskUserRows( $oData->taskusers );
-//        $this->createGroupRow( $oData->groupwfs );
-//        $this->createDBConnectionsRows( isset( $oData->dbconnections ) ? $oData->dbconnections : array () );
-//        $this->createReportTables( isset( $oData->reportTables ) ? $oData->reportTables : array (), isset( $oData->reportTablesVars ) ? $oData->reportTablesVars : array () );
-//        $this->createSubProcessRows( isset( $oData->subProcess ) ? $oData->subProcess : array () );
-//        $this->createCaseTrackerRows( isset( $oData->caseTracker ) ? $oData->caseTracker : array () );
-//        $this->createCaseTrackerObjectRows( isset( $oData->caseTrackerObject ) ? $oData->caseTrackerObject : array () );
-//        $this->createObjectPermissionsRows( isset( $oData->objectPermissions ) ? $oData->objectPermissions : array () );
-//        $this->createStageRows( isset( $oData->stage ) ? $oData->stage : array () );
-//
-//        $this->createFieldCondition( isset( $oData->fieldCondition ) ? $oData->fieldCondition : array (), $oData->dynaforms );
-//
-//        // Create before to createRouteRows for avoid duplicates
-//        $this->createEventRows( isset( $oData->event ) ? $oData->event : array () );
-//
-//        $this->createCaseSchedulerRows( isset( $oData->caseScheduler ) ? $oData->caseScheduler : array () );
-//
-//        //Create data related to Configuration table
-//        $this->createTaskExtraPropertiesRows( isset( $oData->taskExtraProperties ) ? $oData->taskExtraProperties : array () );
-
-        // and finally create the files, dynaforms (xml and html), emailTemplates and Public files
         $this->createFiles($oData, $pmFilename);
     }
 
+    /**
+     * This function creates a new Process, defined in the object $oData
+     *
+     * @param object $oData
+     *
+     * @return void
+     */
     public function createProcessPropertiesFromData($oData)
     {
         $arrayProcessData = $oData->process;
-
-        // (*) Creating process dependencies
-        // creating the process category
         $this->createProcessCategoryRow(isset($oData->processCategory) ? $oData->processCategory : null);
-
         $this->createLaneRows($oData->lanes);
-
-
         if (isset($oData->gateways)) {
             $this->createGatewayRows($oData->gateways);
         }
@@ -5557,8 +5793,8 @@ class Processes
         $this->createStepSupervisorRows(isset($oData->stepSupervisor) ? $oData->stepSupervisor : array());
         $this->createTriggerRows($oData->triggers);
         $this->createStepTriggerRows($oData->steptriggers);
-        $this->createTaskUserRows($oData->taskusers);
         $this->createGroupRow($oData->groupwfs);
+        $this->createTaskUserRows($oData->taskusers);
         $this->createDBConnectionsRows(isset($oData->dbconnections) ? $oData->dbconnections : array());
         $this->createReportTables(isset($oData->reportTables) ? $oData->reportTables : array(), isset($oData->reportTablesVars) ? $oData->reportTablesVars : array());
         $this->createSubProcessRows(isset($oData->subProcess) ? $oData->subProcess : array());
@@ -5566,17 +5802,14 @@ class Processes
         $this->createCaseTrackerObjectRows(isset($oData->caseTrackerObject) ? $oData->caseTrackerObject : array());
         $this->createObjectPermissionsRows(isset($oData->objectPermissions) ? $oData->objectPermissions : array());
         $this->createStageRows(isset($oData->stage) ? $oData->stage : array());
-
         $this->createFieldCondition(isset($oData->fieldCondition) ? $oData->fieldCondition : array(), $oData->dynaforms);
 
         // Create before to createRouteRows for avoid duplicates
         $this->createEventRows(isset($oData->event) ? $oData->event : array());
-
         $this->createCaseSchedulerRows(isset($oData->caseScheduler) ? $oData->caseScheduler : array());
 
         //Create data related to Configuration table
         $this->createTaskExtraPropertiesRows(isset($oData->taskExtraProperties) ? $oData->taskExtraProperties : array());
-
         $this->createProcessUser((isset($oData->processUser)) ? $oData->processUser : array());
         $this->createProcessVariables((isset($oData->processVariables)) ? $oData->processVariables : array());
         $this->createWebEntry($arrayProcessData["PRO_UID"], $arrayProcessData["PRO_CREATE_USER"], (isset($oData->webEntry)) ? $oData->webEntry : array());
@@ -5715,10 +5948,12 @@ class Processes
     }
 
     /**
-     * this function creates a new Process, defined in the object $oData
+     * This function creates a new Process, defined in the object $oData
      *
-     * @param string $sProUid
-     * @return boolean
+     * @param object $oData
+     * @param string $pmFilename
+     *
+     * @return void
      */
     public function updateProcessFromData($oData, $pmFilename)
     {
@@ -5736,8 +5971,8 @@ class Processes
         $this->createStepSupervisorRows($oData->stepSupervisor);
         $this->createTriggerRows($oData->triggers);
         $this->createStepTriggerRows($oData->steptriggers);
-        $this->createTaskUserRows($oData->taskusers);
         $this->createGroupRow($oData->groupwfs);
+        $this->createTaskUserRows($oData->taskusers);
         $this->createDBConnectionsRows($oData->dbconnections);
         $this->updateReportTables($oData->reportTables, $oData->reportTablesVars);
         $this->createFiles($oData, $pmFilename);
@@ -6103,5 +6338,39 @@ class Processes
         $excess = strlen($proTitle) - $limit;
         $proTitle = substr($proTitle, 0, strlen($proTitle) - $excess);
         return $proTitle;
+    }
+
+    /**
+     * Delete, insert and update labels in CONTENT related to a process element
+     *
+     * @param object $connection
+     * @param array $conCategories
+     * @param string $conId
+     * @param string $conLang
+     * @param string $conParent
+     */
+    private function insertToContentTable($connection, array $conCategories, $conId, $conLang, $conParent = '') {
+        //Prepare to delete labels related in CONTENT
+        $criteria = new Criteria(ContentPeer::DATABASE_NAME);
+        $criteria->addSelectColumn('*');
+        $criteria->add(ContentPeer::CON_CATEGORY, array_keys($conCategories), Criteria::IN);
+        $criteria->add(ContentPeer::CON_ID, $conId);
+        $criteria->add(ContentPeer::CON_LANG, $conLang);
+        $criteria->add(ContentPeer::CON_PARENT, $conParent);
+        BasePeer::doDelete($criteria, $connection);
+
+        foreach ($conCategories as $conCategory => $conValue) {
+            //Prepare the insert label in CONTENT
+            $criteria = new Criteria(ContentPeer::DATABASE_NAME);
+            $criteria->add(ContentPeer::CON_CATEGORY, $conCategory);
+            $criteria->add(ContentPeer::CON_ID, $conId);
+            $criteria->add(ContentPeer::CON_LANG, $conLang);
+            $criteria->add(ContentPeer::CON_VALUE, $conValue);
+            $criteria->add(ContentPeer::CON_PARENT, $conParent);
+            BasePeer::doInsert($criteria, $connection);
+
+            //Updating all related labels in CONTENT
+            Content::updateEqualValue($conCategory, $conParent, $conId, $conValue);
+        }
     }
 }

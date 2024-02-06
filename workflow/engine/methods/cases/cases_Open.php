@@ -2,24 +2,17 @@
 /**
  * cases_Open.php
  *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.
+ * @see cases/casesList.js
+ * @see cases/cases_Step.php
+ * @see cases/cases_CatchSelfService.php
+ * @see cases/derivatedGmail.php
+ * @see cases/open.php
+ * @see controllers/Home::indexSingle()
+ * @see controllers/Home::startCase()
+ * @see pmGmail/sso.php
+ * @see webentry/access.php
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
+ * @link https://wiki.processmaker.com/3.2/Cases/Cases#Search_Criteria
  */
 
 if(isset( $_GET['gmail']) && $_GET['gmail'] == 1){
@@ -50,7 +43,8 @@ try {
     //Loading data for a Jump request
     if (!isset($_GET['APP_UID']) && isset($_GET['APP_NUMBER'])) {
         $_GET['APP_UID'] = $caseInstance->getApplicationUIDByNumber( $_GET['APP_NUMBER'] );
-        $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation( $_GET['APP_UID'], $_SESSION['USER_LOGGED'] );
+        //Get the index related to the userLogged but this thread can be OPEN or CLOSED
+        $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation($_GET['APP_UID'], $_SESSION['USER_LOGGED']);
 
         //if the application doesn't exist
         if (is_null($_GET['APP_UID'])) {
@@ -67,87 +61,86 @@ try {
         }
     }
 
-    $sAppUid = $_GET['APP_UID'];
-    $iDelIndex = $_GET['DEL_INDEX'];
-    $_action = isset($_GET['action']) ? $_GET['action'] : '';
+    $appUid = $_GET['APP_UID'];
+    $delIndex = $_GET['DEL_INDEX'];
+    $action = isset($_GET['action']) ? $_GET['action'] : '';
 
     //loading application data
-    $aFields = $caseInstance->loadCase( $sAppUid, $iDelIndex );
+    $fieldCase = $caseInstance->loadCase($appUid, $delIndex);
 
     if (!isset($_SESSION['CURRENT_TASK'])) {
-        $_SESSION['CURRENT_TASK'] = $aFields['TAS_UID'];
+        $_SESSION['CURRENT_TASK'] = $fieldCase['TAS_UID'];
     } elseif ($_SESSION['CURRENT_TASK'] == '') {
-        $_SESSION['CURRENT_TASK'] = $aFields['TAS_UID'];
+        $_SESSION['CURRENT_TASK'] = $fieldCase['TAS_UID'];
     }
 
     unset($_SESSION['ACTION']);
     $flagJump = '';
-    if ($_action == 'jump') {
+    if ($action == 'jump') {
         $_SESSION['ACTION'] = 'jump';
         $flagJump = 1;
     }
 
-    switch ($aFields['APP_STATUS']) {
+    switch ($fieldCase['APP_STATUS']) {
         case 'DRAFT':
         case 'TO_DO':
             //Check if the case is in pause, check a valid record in table APP_DELAY
-            $isPaused = AppDelay::isPaused($sAppUid, $iDelIndex);
+            $isPaused = AppDelay::isPaused($appUid, $delIndex);
 
             //Check if the case is a waiting for a SYNCHRONOUS subprocess
-            $subAppData = new \SubApplication();
-            $caseSubprocessPending = $subAppData->isSubProcessWithCasePending($sAppUid, $iDelIndex);
+            $subAppData = new SubApplication();
+            $caseSubprocessPending = $subAppData->isSubProcessWithCasePending($appUid, $delIndex);
 
             if ($isPaused || $caseSubprocessPending) {
                 //the case is paused show only the resume
-                $_SESSION['APPLICATION'] = $sAppUid;
-                $_SESSION['INDEX'] = $iDelIndex;
-                $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-                $_SESSION['TASK'] = - 1;
+                $_SESSION['APPLICATION'] = $appUid;
+                $_SESSION['INDEX'] = $delIndex;
+                $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+                $_SESSION['TASK'] = -1;
                 $_SESSION['STEP_POSITION'] = 0;
-                $_SESSION['CURRENT_TASK'] = $aFields['TAS_UID'];
+                $_SESSION['CURRENT_TASK'] = $fieldCase['TAS_UID'];
 
-                require_once (PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
+                require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
                 exit();
             }
 
             /**
              * these routine is to verify if the case was acceded from advanced search list
              */
-
-            if ($_action == 'search') {
+            if ($action == 'search') {
                 //verify if the case is with the current user
-                $aData = AppDelegation::getCurrentUsers($sAppUid, $iDelIndex);
-                if ($aData['USR_UID'] !== $_SESSION['USER_LOGGED'] && !empty($aData['USR_UID'])) {
+                $delegationUsers = AppDelegation::getCurrentUsers($appUid, $delIndex);
+                if ($delegationUsers['USR_UID'] !== $_SESSION['USER_LOGGED'] && !empty($delegationUsers['USR_UID'])) {
                     //distinct "" for selfservice
                     //so we show just the resume
                     $_SESSION['alreadyDerivated'] = true;
-                    $_SESSION['APPLICATION'] = $sAppUid;
-                    $_SESSION['INDEX'] = $iDelIndex;
-                    $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-                    $_SESSION['TASK'] = - 1;
+                    $_SESSION['APPLICATION'] = $appUid;
+                    $_SESSION['INDEX'] = $delIndex;
+                    $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+                    $_SESSION['TASK'] = -1;
                     $_SESSION['STEP_POSITION'] = 0;
 
-                    require_once (PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
+                    require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
                     exit();
                 }
 
             }
 
-            //proceed and try to open the case
-            $oAppDelegation = new AppDelegation();
-            $aDelegation = $oAppDelegation->load( $sAppUid, $iDelIndex );
+            //Proceed and try to open the case
+            $appDelegation = new AppDelegation();
+            $delegationInfo = $appDelegation->load($appUid, $delIndex);
 
-            //if there are no user in the delegation row, this case is in selfservice
-            if ($aDelegation['USR_UID'] == "") {
-                $_SESSION['APPLICATION'] = $sAppUid;
-                $_SESSION['INDEX'] = $iDelIndex;
-                $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-                $_SESSION['TASK'] = - 1;
+            //If there are no user in the delegation row, this case is in selfservice
+            if (empty($delegationInfo['USR_UID'])) {
+                $_SESSION['APPLICATION'] = $appUid;
+                $_SESSION['INDEX'] = $delIndex;
+                $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+                $_SESSION['TASK'] = -1;
                 $_SESSION['STEP_POSITION'] = 0;
-                $_SESSION['CURRENT_TASK'] = $aFields['TAS_UID'];
+                $_SESSION['CURRENT_TASK'] = $fieldCase['TAS_UID'];
 
-                //if the task is in the valid selfservice tasks for this user, then catch the case, else just view the resume
-                if ($caseInstance->isSelfService($_SESSION['USER_LOGGED'], $aFields['TAS_UID'], $sAppUid)) {
+                //If the task is in the valid selfservice tasks for this user, then catch the case, else just view the resume
+                if ($caseInstance->isSelfService($_SESSION['USER_LOGGED'], $fieldCase['TAS_UID'], $appUid)) {
                     require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_CatchSelfService.php');
                 } else {
                     require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
@@ -156,49 +149,56 @@ try {
                 exit();
             }
 
-            //If the current users is in the AppDelegation row, then open the case
-            if (($aDelegation['USR_UID'] == $_SESSION['USER_LOGGED']) && $_action != 'sent') {
-                $_SESSION['APPLICATION'] = $sAppUid;
-                $_SESSION['INDEX'] = $iDelIndex;
+            //If the current users is in the AppDelegation row and the thread is open will be open the case
+            if (($delegationInfo['USR_UID'] == $_SESSION['USER_LOGGED'] && $delegationInfo['DEL_THREAD_STATUS'] === 'OPEN')
+            && $action != 'sent')
+            {
+                $_SESSION['APPLICATION'] = $appUid;
+                $_SESSION['INDEX'] = $delIndex;
 
-                if (is_null( $aFields['DEL_INIT_DATE'] )) {
-                    $caseInstance->setDelInitDate( $sAppUid, $iDelIndex );
-                    $aFields = $caseInstance->loadCase( $sAppUid, $iDelIndex );
+                if (is_null($fieldCase['DEL_INIT_DATE'])) {
+                    $caseInstance->setDelInitDate($appUid, $delIndex);
+                    $fieldCase = $caseInstance->loadCase($appUid, $delIndex);
                 }
 
-                $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-                $_SESSION['TASK'] = $aFields['TAS_UID'];
+                $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+                $_SESSION['TASK'] = $fieldCase['TAS_UID'];
                 $_SESSION['STEP_POSITION'] = 0;
 
                 /* Redirect to next step */
-                unset( $_SESSION['bNoShowSteps'] );
+                unset($_SESSION['bNoShowSteps']);
 
-                /* Execute Before Triggers for first Task*/
-                $caseInstance->getExecuteTriggerProcess($sAppUid, 'OPEN');
-                /*end Execute Before Triggers for first Task*/
+                /** Execute a trigger when a case is open */
+                $caseInstance->getExecuteTriggerProcess($appUid, 'OPEN');
 
-                $aNextStep = $caseInstance->getNextStep( $_SESSION['PROCESS'], $_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['STEP_POSITION'] );
-                $sPage = $aNextStep['PAGE'];
-                G::header( 'location: ' . $sPage );
+                $nextStep = $caseInstance->getNextStep(
+                    $_SESSION['PROCESS'],
+                    $_SESSION['APPLICATION'],
+                    $_SESSION['INDEX'],
+                    $_SESSION['STEP_POSITION']
+                );
+                $pageOpenCase = $nextStep['PAGE'];
+
+                G::header('location: ' . $pageOpenCase);
 
             } else {
-                $_SESSION['APPLICATION'] = $sAppUid;
-                $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-                $_SESSION['TASK'] = - 1;
+                $_SESSION['APPLICATION'] = $appUid;
+                $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+                $_SESSION['TASK'] = -1;
                 $_SESSION['bNoShowSteps'] = 1;
                 $_SESSION['STEP_POSITION'] = 0;
 
                 //When the case have another user or current user doesn't have rights to this self-service,
                 //Just view the case Resume
-                if ($_action === 'search' || $_action === 'to_reassign') {
+                if ($action === 'search' || $action === 'to_reassign') {
                     //We need to use the index sent with the corresponding record
-                    $_SESSION['INDEX'] = $iDelIndex;
+                    $_SESSION['INDEX'] = $delIndex;
                 } else {
                     //Get DEL_INDEX
                     $criteria = new Criteria('workflow');
                     $criteria->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-                    $criteria->add(AppDelegationPeer::APP_UID, $sAppUid);
-                    $criteria->add(AppDelegationPeer::DEL_LAST_INDEX , 1);
+                    $criteria->add(AppDelegationPeer::APP_UID, $appUid);
+                    $criteria->add(AppDelegationPeer::DEL_LAST_INDEX, 1);
                     $rs = AppDelegationPeer::doSelectRS($criteria);
                     $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
                     $rs->next();
@@ -206,29 +206,29 @@ try {
                     $_SESSION['INDEX'] = $row['DEL_INDEX'];
                 }
 
-                $Fields = $caseInstance->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $flagJump);
+                $fields = $caseInstance->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $flagJump);
+                $_SESSION['CURRENT_TASK'] = $fields['TAS_UID'];
 
-                $_SESSION['CURRENT_TASK'] = $Fields['TAS_UID'];
-                require_once (PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
+                require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
 
             }
             break;
         default: //APP_STATUS IS COMPLETED OR CANCELLED
-            $_SESSION['APPLICATION'] = $sAppUid;
-            $_SESSION['INDEX'] = $caseInstance->getCurrentDelegationCase( $_GET['APP_UID'] );
-            $_SESSION['PROCESS'] = $aFields['PRO_UID'];
-            $_SESSION['TASK'] = - 1;
+            $_SESSION['APPLICATION'] = $appUid;
+            $_SESSION['INDEX'] = $caseInstance->getCurrentDelegationCase($_GET['APP_UID']);
+            $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
+            $_SESSION['TASK'] = -1;
             $_SESSION['STEP_POSITION'] = 0;
-            $Fields = $caseInstance->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $flagJump);
-            $_SESSION['CURRENT_TASK'] = $Fields['TAS_UID'];
+            $fields = $caseInstance->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $flagJump);
+            $_SESSION['CURRENT_TASK'] = $fields['TAS_UID'];
 
-            require_once (PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
+            require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
     }
 } catch (Exception $e) {
-    $aMessage = array ();
-    $aMessage['MESSAGE'] = $e->getMessage();
+    $message = [];
+    $message['MESSAGE'] = $e->getMessage();
     $G_PUBLISH = new Publisher();
-    $G_PUBLISH->AddContent( 'xmlform', 'xmlform', 'login/showMessage', '', $aMessage );
-    G::RenderPage( 'publishBlank', 'blank' );
+    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', $message);
+    G::RenderPage('publishBlank', 'blank');
 }
 

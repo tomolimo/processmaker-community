@@ -57,7 +57,7 @@ class AcceptHeaderItem
                 $attributes[$bit] = null;
             } else {
                 $parts = explode('=', $bit);
-                $attributes[$parts[0]] = isset($parts[1]) && strlen($parts[1]) > 0 ? $parts[1] : '';
+                $attributes[$parts[0]] = isset($parts[1]) && \strlen($parts[1]) > 0 ? $parts[1] : '';
             }
         }
 
@@ -65,14 +65,14 @@ class AcceptHeaderItem
     }
 
     /**
-     * Returns header  value's string representation.
+     * Returns header value's string representation.
      *
      * @return string
      */
     public function __toString()
     {
         $string = $this->value.($this->quality < 1 ? ';q='.$this->quality : '');
-        if (count($this->attributes) > 0) {
+        if (\count($this->attributes) > 0) {
             $string .= ';'.implode(';', array_map(function ($name, $value) {
                 return sprintf(preg_match('/[,;=]/', $value) ? '%s="%s"' : '%s=%s', $name, $value);
             }, array_keys($this->attributes), $this->attributes));

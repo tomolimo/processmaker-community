@@ -333,18 +333,16 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
     {
         try {
             $arrayAppAssignSelfServiceValueData = [];
-
             $criteria = new Criteria("workflow");
 
+            $group = new Groups();
+            //Get the GRP_ID related to the $userUid
+            $arrayId = $group->getActiveGroupsForAnUserById($userUid);
+
             $sql = "("
-                    . AppAssignSelfServiceValueGroupPeer::ASSIGNEE_ID . " IN ("
-                    . "        SELECT " . GroupUserPeer::GRP_ID . " "
-                    . "        FROM " . GroupUserPeer::TABLE_NAME . " "
-                    . "        LEFT JOIN " . GroupwfPeer::TABLE_NAME . " ON (" . GroupUserPeer::GRP_ID . "=" . GroupwfPeer::GRP_ID . ") "
-                    . "        WHERE " . GroupUserPeer::USR_UID . "='" . $userUid . "' AND " . GroupwfPeer::GRP_STATUS . "='ACTIVE'"
-                    . "    ) AND "
-                    . "    " . AppAssignSelfServiceValueGroupPeer::ASSIGNEE_TYPE . "=2 "
-                    . ")";
+                . AppAssignSelfServiceValueGroupPeer::ASSIGNEE_ID . " IN (" . implode(",", $arrayId) . ") AND "
+                . "    " . AppAssignSelfServiceValueGroupPeer::ASSIGNEE_TYPE . " = 2 "
+                . ")";
 
             $criteria->setDistinct();
             $criteria->addSelectColumn(AppAssignSelfServiceValuePeer::APP_UID);
