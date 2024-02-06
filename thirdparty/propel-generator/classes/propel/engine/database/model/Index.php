@@ -44,6 +44,12 @@ class Index extends XMLElement {
 
 	/** @var        array  */
 	private $indexColumnSizes = array();
+        
+	/**
+	 * Index type of this column.
+	 * @var string 
+	 */
+	private $indexType;
 
 	/**
 	 * Creates a new instance with default characteristics (no name or
@@ -192,6 +198,9 @@ class Index extends XMLElement {
 		if (isset($attrib["size"])) {
 			$this->indexColumnSizes[$name] = $attrib["size"];
 		}
+		if (!empty($attrib["indexType"])) {
+			$this->indexType = $attrib["indexType"];
+		}
 	}
 
 	/**
@@ -272,5 +281,14 @@ class Index extends XMLElement {
 		}
 		$result .= " </index>\n";
 		return $result;
+	}
+        
+	/**
+	 * Returns the index type of this column.
+	 * @return string
+	 */
+	public function getIndexType()
+	{
+		return $this->indexType;
 	}
 }

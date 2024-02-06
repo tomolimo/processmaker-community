@@ -30,20 +30,40 @@ $aFields = array();
 
 //Validated redirect url
 $aFields['URL'] = '';
-if (!empty($_GET['u'])) {
+if (!empty($_GET['u']) || !empty($_GET['url'])) {
     //clean url with protocols
     $flagUrl = true;
     //Most used protocols
     $protocols = ['https://', 'http://', 'ftp://', 'sftp://','smb://', 'file:', 'mailto:'];
     foreach ($protocols as $protocol) {
-        if (strpos($_GET['u'], $protocol) !== false) {
-            $_GET['u'] = '';
-            $flagUrl = false;
-            break;
+        if (!empty($_GET['u'])) {
+            if (strpos($_GET['u'], $protocol) !== false) {
+                $_GET['u'] = '';
+                $flagUrl = false;
+                break;
+            }
+        }
+        if (!empty($_GET['url'])) {
+            if (strpos($_GET['url'], $protocol) !== false) {
+                $_GET['url'] = '';
+                $flagUrl = false;
+                break;
+            }
         }
     }
     if ($flagUrl) {
-        $aFields['URL'] = htmlspecialchars(addslashes(stripslashes(strip_tags(trim(urldecode($_GET['u']))))));
+        if (!empty($_GET['u'])) {
+            $aFields['URL'] = htmlspecialchars(addslashes(stripslashes(strip_tags(trim(urldecode($_GET['u']))))));
+        } elseif (!empty($_GET['url'])) {
+            $aFields['URL'] = htmlspecialchars(addslashes(stripslashes(strip_tags(trim(urldecode($_GET['url']))))));
+        }
+        //The following validations are only for the links to an output document
+        if(!empty($_GET['v']) && (strpos($aFields['URL'], '/cases/cases_ShowOutputDocument') != false)) {
+            $aFields['URL'] .= "&v=" . $_GET['v'];
+        }
+        if(!empty($_GET['ext']) && (strpos($aFields['URL'], '/cases/cases_ShowOutputDocument') != false)) {
+            $aFields['URL'] .= "&ext=" . $_GET['ext'];
+        }
     }
 }
 

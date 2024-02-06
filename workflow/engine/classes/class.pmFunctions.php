@@ -350,14 +350,9 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
     } catch (SQLException $sqle) {
         //Logger
         $aContext['action'] = 'execute-query';
-        $aContext['exception'] = (array)$sqle;
+        $aContext['SQLExceptionMessage'] = $sqle->getMessage();
         \Bootstrap::registerMonolog('sqlExecution', 400, 'Sql Execution', $aContext, $sysSys, 'processmaker.log');
 
-        if (isset($sqle->xdebug_message)) {
-            error_log(print_r($sqle->xdebug_message, true));
-        } else {
-            error_log(print_r($sqle, true));
-        }
         $con->rollback();
         throw $sqle;
     }
@@ -931,7 +926,9 @@ function getEmailConfiguration ()
  * @param array | $attachments = [] | Attachment | An Optional arrray. An array of files (full paths) to be attached to the email.
  * @param boolean | $showMessage = true | Show message | Optional parameter. Set to TRUE to show the message in the case's message history.
  * @param int | $delIndex = 0 | Delegation index of the case | Optional parameter. The delegation index of the current task in the case.
- * @param array | $config = [] | Email server configuration | An optional array: An array of parameters to be used in the Email sent (MESS_ENGINE, MESS_SERVER, MESS_PORT, MESS_FROM_MAIL, MESS_RAUTH, MESS_ACCOUNT, MESS_PASSWORD, and SMTPSecure) Or String: UID of Email server .
+ * @param array | $config = [] | Email server configuration | An optional array: An array of parameters to be used in the Email sent (MESS_ENGINE,
+ *     MESS_SERVER, MESS_PORT, MESS_FROM_MAIL, MESS_RAUTH, MESS_ACCOUNT, MESS_PASSWORD, SMTPSecure, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET and OAUTH_REFRESH_TOKEN)
+ *     Or String: UID of Email server .
  * @return int | | result | Result of sending email
  *
  * @see class.pmFunctions::PMFSendMessageToGroup()

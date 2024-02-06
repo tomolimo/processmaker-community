@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
+use Symfony\Component\DependencyInjection\Exception\ParameterCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 
 /**
@@ -20,10 +21,16 @@ use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 class EnvVarProcessor implements EnvVarProcessorInterface
 {
     private $container;
+    private $loaders;
+    private $loadedVars = [];
 
-    public function __construct(ContainerInterface $container)
+    /**
+     * @param EnvVarLoaderInterface[] $loaders
+     */
+    public function __construct(ContainerInterface $container, \Traversable $loaders = null)
     {
         $this->container = $container;
+        $this->loaders = $loaders ?? new \ArrayIterator();
     }
 
     /**
@@ -119,21 +126,61 @@ class EnvVarProcessor implements EnvVarProcessorInterface
         }
 
         if (false !== $i || 'string' !== $prefix) {
-            if (null === $env = $getEnv($name)) {
-                return;
-            }
+            $env = $getEnv($name);
         } elseif (isset($_ENV[$name])) {
             $env = $_ENV[$name];
         } elseif (isset($_SERVER[$name]) && 0 !== strpos($name, 'HTTP_')) {
             $env = $_SERVER[$name];
         } elseif (false === ($env = getenv($name)) || null === $env) { // null is a possible value because of thread safety issues
-            if (!$this->container->hasParameter("env($name)")) {
-                throw new EnvNotFoundException(sprintf('Environment variable not found: "%s".', $name));
+            foreach ($this->loadedVars as $vars) {
+                if (false !== $env = ($vars[$name] ?? false)) {
+                    break;
+                }
             }
 
-            if (null === $env = $this->container->getParameter("env($name)")) {
-                return;
+            if (false === $env || null === $env) {
+                $loaders = $this->loaders;
+                $this->loaders = new \ArrayIterator();
+
+                try {
+                    $i = 0;
+                    $ended = true;
+                    $count = $loaders instanceof \Countable ? $loaders->count() : 0;
+                    foreach ($loaders as $loader) {
+                        if (\count($this->loadedVars) > $i++) {
+                            continue;
+                        }
+                        $this->loadedVars[] = $vars = $loader->loadEnvVars();
+                        if (false !== $env = $vars[$name] ?? false) {
+                            $ended = false;
+                            break;
+                        }
+                    }
+                    if ($ended || $count === $i) {
+                        $loaders = $this->loaders;
+                    }
+                } catch (ParameterCircularReferenceException $e) {
+                    // skip loaders that need an env var that is not defined
+                } finally {
+                    $this->loaders = $loaders;
+                }
             }
+
+            if (false === $env || null === $env) {
+                if (!$this->container->hasParameter("env($name)")) {
+                    throw new EnvNotFoundException(sprintf('Environment variable not found: "%s".', $name));
+                }
+
+                $env = $this->container->getParameter("env($name)");
+            }
+        }
+
+        if (null === $env) {
+            if (!isset($this->getProvidedTypes()[$prefix])) {
+                throw new RuntimeException(sprintf('Unsupported env var prefix "%s".', $prefix));
+            }
+
+            return null;
         }
 
         if (!is_scalar($env)) {
@@ -173,7 +220,7 @@ class EnvVarProcessor implements EnvVarProcessorInterface
         }
 
         if ('base64' === $prefix) {
-            return base64_decode($env);
+            return base64_decode(strtr($env, '-_', '+/'));
         }
 
         if ('json' === $prefix) {
@@ -236,7 +283,7 @@ class EnvVarProcessor implements EnvVarProcessorInterface
         }
 
         if ('csv' === $prefix) {
-            return str_getcsv($env);
+            return str_getcsv($env, ',', '"', \PHP_VERSION_ID >= 70400 ? '' : '\\');
         }
 
         if ('trim' === $prefix) {

@@ -97,6 +97,10 @@ class AdditionalTablesMapBuilder
 
         $tMap->addColumn('ADD_TAB_TAG', 'AddTabTag', 'string', CreoleTypes::VARCHAR, false, 256);
 
+        $tMap->addColumn('ADD_TAB_OFFLINE', 'AddTabOffline', 'int', CreoleTypes::TINYINT, true, null);
+
+        $tMap->addColumn('ADD_TAB_UPDATE_DATE', 'AddTabUpdateDate', 'int', CreoleTypes::TIMESTAMP, true, null);
+
     } // doBuild()
 
 } // AdditionalTablesMapBuilder

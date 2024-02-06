@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\AdditionalTables as AdditionalTablesModel;
 use ProcessMaker\Validation\ExceptionRestApi;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 
@@ -216,6 +217,34 @@ class pmTablesProxy extends HttpProxyController
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Update the offline property.
+     * @param stdClass $httpData
+     * @return stdClass
+     */
+    public function updateOffline(stdClass $httpData): stdClass
+    {
+        $result = new stdClass();
+        try {
+            $array = G::json_decode(stripslashes($httpData->rows));
+            $data = [];
+            $enable = false;
+            foreach ($array as $value) {
+                if ($value->type !== "NORMAL") {
+                    $data[] = $value->id;
+                    $enable = $value->offline ? 1 : 0;
+                }
+            }
+            AdditionalTablesModel::updatePropertyOffline($data, $enable);
+            $result->success = true;
+            $result->message = $enable ? G::LoadTranslation("ID_ENABLE") : G::LoadTranslation("ID_DISABLE");
+        } catch (Exception $e) {
+            $result->success = false;
+            $result->message = $e->getMessage();
+        }
+        return $result;
     }
 
     /**

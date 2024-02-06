@@ -79,7 +79,7 @@ abstract class BaseEvent extends BaseObject implements Persistent
      * The value for the evn_tas_estimated_duration field.
      * @var        double
      */
-    protected $evn_tas_estimated_duration = 0;
+    protected $evn_tas_estimated_duration = 0.0;
 
     /**
      * The value for the evn_time_unit field.
@@ -91,7 +91,7 @@ abstract class BaseEvent extends BaseObject implements Persistent
      * The value for the evn_when field.
      * @var        double
      */
-    protected $evn_when = 0;
+    protected $evn_when = 0.0;
 
     /**
      * The value for the evn_max_attempts field.
@@ -566,7 +566,7 @@ abstract class BaseEvent extends BaseObject implements Persistent
     public function setEvnTasEstimatedDuration($v)
     {
 
-        if ($this->evn_tas_estimated_duration !== $v || $v === 0) {
+        if ($this->evn_tas_estimated_duration !== $v || $v === 0.0) {
             $this->evn_tas_estimated_duration = $v;
             $this->modifiedColumns[] = EventPeer::EVN_TAS_ESTIMATED_DURATION;
         }
@@ -604,7 +604,7 @@ abstract class BaseEvent extends BaseObject implements Persistent
     public function setEvnWhen($v)
     {
 
-        if ($this->evn_when !== $v || $v === 0) {
+        if ($this->evn_when !== $v || $v === 0.0) {
             $this->evn_when = $v;
             $this->modifiedColumns[] = EventPeer::EVN_WHEN;
         }

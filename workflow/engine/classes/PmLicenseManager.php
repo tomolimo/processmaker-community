@@ -166,8 +166,14 @@ class PmLicenseManager
                     }
                 }
 
-                if (file_exists(PATH_DATA_SITE . "ee")) {
-                    $aPlugins = unserialize(trim(file_get_contents(PATH_DATA_SITE . 'ee')));
+                $eeData = Cache::get(config('system.workspace') . 'enterprise.ee', function () {
+                    if (file_exists(PATH_DATA_SITE . 'ee')) {
+                        return trim(file_get_contents(PATH_DATA_SITE . 'ee'));
+                    }
+                    return null;
+                });
+                if ($eeData) {
+                    $aPlugins = unserialize($eeData);
                     $aDenied = [];
                     foreach ($aPlugins as $aPlugin) {
                         $sClassName = substr($aPlugin ['sFilename'], 0, strpos($aPlugin ['sFilename'], '-'));
@@ -210,8 +216,14 @@ class PmLicenseManager
                     $oPluginRegistry->savePlugin($oDetails->getNamespace());
                 }
 
-                if (file_exists(PATH_DATA_SITE . 'ee')) {
-                    $aPlugins = unserialize(trim(file_get_contents(PATH_DATA_SITE . 'ee')));
+                $eeData = Cache::get(config('system.workspace') . 'enterprise.ee', function () {
+                    if (file_exists(PATH_DATA_SITE . 'ee')) {
+                        return trim(file_get_contents(PATH_DATA_SITE . 'ee'));
+                    }
+                    return null;
+                });
+                if ($eeData) {
+                    $aPlugins = unserialize($eeData);
 
                     foreach ($aPlugins as $aPlugin) {
                         $sClassName = substr($aPlugin ['sFilename'], 0, strpos($aPlugin ['sFilename'], '-'));

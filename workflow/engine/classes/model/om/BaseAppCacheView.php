@@ -163,19 +163,19 @@ abstract class BaseAppCacheView extends BaseObject implements Persistent
      * The value for the del_duration field.
      * @var        double
      */
-    protected $del_duration = 0;
+    protected $del_duration = 0.0;
 
     /**
      * The value for the del_queue_duration field.
      * @var        double
      */
-    protected $del_queue_duration = 0;
+    protected $del_queue_duration = 0.0;
 
     /**
      * The value for the del_delay_duration field.
      * @var        double
      */
-    protected $del_delay_duration = 0;
+    protected $del_delay_duration = 0.0;
 
     /**
      * The value for the del_started field.
@@ -1281,7 +1281,7 @@ abstract class BaseAppCacheView extends BaseObject implements Persistent
     public function setDelDuration($v)
     {
 
-        if ($this->del_duration !== $v || $v === 0) {
+        if ($this->del_duration !== $v || $v === 0.0) {
             $this->del_duration = $v;
             $this->modifiedColumns[] = AppCacheViewPeer::DEL_DURATION;
         }
@@ -1297,7 +1297,7 @@ abstract class BaseAppCacheView extends BaseObject implements Persistent
     public function setDelQueueDuration($v)
     {
 
-        if ($this->del_queue_duration !== $v || $v === 0) {
+        if ($this->del_queue_duration !== $v || $v === 0.0) {
             $this->del_queue_duration = $v;
             $this->modifiedColumns[] = AppCacheViewPeer::DEL_QUEUE_DURATION;
         }
@@ -1313,7 +1313,7 @@ abstract class BaseAppCacheView extends BaseObject implements Persistent
     public function setDelDelayDuration($v)
     {
 
-        if ($this->del_delay_duration !== $v || $v === 0) {
+        if ($this->del_delay_duration !== $v || $v === 0.0) {
             $this->del_delay_duration = $v;
             $this->modifiedColumns[] = AppCacheViewPeer::DEL_DELAY_DURATION;
         }

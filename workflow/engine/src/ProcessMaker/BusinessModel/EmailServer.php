@@ -5,6 +5,7 @@ use AppMessage;
 use Bootstrap;
 use Exception;
 use G;
+use Illuminate\Support\Facades\Crypt;
 use ProcessMaker\Core\System;
 use SpoolRun;
 use TemplatePower;
@@ -14,7 +15,7 @@ class EmailServer
 {
     private $arrayFieldDefinition = array(
         "MESS_UID"                 => array("type" => "string", "required" => false, "empty" => false, "defaultValues" => array(),                    "fieldNameAux" => "emailServerUid"),
-        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL", "IMAP"), "fieldNameAux" => "emailServerEngine"),
+        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL", "IMAP", "GMAILAPI"), "fieldNameAux" => "emailServerEngine"),
         "MESS_SERVER"              => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerServer"),
         "MESS_PORT"                => array("type" => "int",    "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerPort"),
         "MESS_INCOMING_SERVER"     => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerIncomingServer"),
@@ -194,7 +195,7 @@ class EmailServer
             $bodyPre = new TemplatePower(PATH_TPL . "admin" . PATH_SEP . "email.tpl");
 
             $bodyPre->prepare();
-            $bodyPre->assign("server", $_SERVER["SERVER_NAME"]);
+            $bodyPre->assign("server", System::getServerProtocol() . System::getServerHost());
             $bodyPre->assign("date", date("H:i:s"));
             $bodyPre->assign("ver", System::getVersion());
             $bodyPre->assign("engine", $engine);
@@ -809,6 +810,13 @@ class EmailServer
                     $arrayData["MESS_PASSWORD"] = G::encrypt($arrayData["MESS_PASSWORD"], "EMAILENCRYPT");
                 }
 
+                $arrayData["OAUTH_CLIENT_ID"] = !empty($arrayData["OAUTH_CLIENT_ID"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_CLIENT_ID"]) : "";
+                $arrayData["OAUTH_CLIENT_SECRET"] = !empty($arrayData["OAUTH_CLIENT_SECRET"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_CLIENT_SECRET"]) : "";
+                $arrayData["OAUTH_REFRESH_TOKEN"] = !empty($arrayData["OAUTH_REFRESH_TOKEN"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_REFRESH_TOKEN"]) : "";
+
                 $emailServer->fromArray($arrayData, \BasePeer::TYPE_FIELDNAME);
 
                 $emailServerUid = \ProcessMaker\Util\Common::generateUID();
@@ -981,6 +989,13 @@ class EmailServer
                     }
                 }
 
+                $arrayData["OAUTH_CLIENT_ID"] = !empty($arrayData["OAUTH_CLIENT_ID"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_CLIENT_ID"]) : "";
+                $arrayData["OAUTH_CLIENT_SECRET"] = !empty($arrayData["OAUTH_CLIENT_SECRET"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_CLIENT_SECRET"]) : "";
+                $arrayData["OAUTH_REFRESH_TOKEN"] = !empty($arrayData["OAUTH_REFRESH_TOKEN"]) ?
+                    Crypt::encryptString($arrayData["OAUTH_REFRESH_TOKEN"]) : "";
+
                 $emailServer->fromArray($arrayData, \BasePeer::TYPE_FIELDNAME);
 
                 if ($emailServer->validate()) {
@@ -1106,6 +1121,9 @@ class EmailServer
             $criteria->addSelectColumn(\EmailServerPeer::MESS_TRY_SEND_INMEDIATLY);
             $criteria->addSelectColumn(\EmailServerPeer::MAIL_TO);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_DEFAULT);
+            $criteria->addSelectColumn(\EmailServerPeer::OAUTH_CLIENT_ID);
+            $criteria->addSelectColumn(\EmailServerPeer::OAUTH_CLIENT_SECRET);
+            $criteria->addSelectColumn(\EmailServerPeer::OAUTH_REFRESH_TOKEN);
 
             return $criteria;
         } catch (Exception $e) {
@@ -1124,7 +1142,7 @@ class EmailServer
     public function getEmailServerDataFromRecord(array $record)
     {
         try {
-            return array(
+            return [
                 $this->getFieldNameByFormatFieldName("MESS_UID")                 => $record["MESS_UID"],
                 $this->getFieldNameByFormatFieldName("MESS_ENGINE")              => $record["MESS_ENGINE"],
                 $this->getFieldNameByFormatFieldName("MESS_SERVER")              => $record["MESS_SERVER"],
@@ -1143,8 +1161,11 @@ class EmailServer
                 $this->getFieldNameByFormatFieldName("MESS_BACKGROUND")          => '',
                 $this->getFieldNameByFormatFieldName("MESS_PASSWORD_HIDDEN")     => '',
                 $this->getFieldNameByFormatFieldName("MESS_EXECUTE_EVERY")       => '',
-                $this->getFieldNameByFormatFieldName("MESS_SEND_MAX")            => ''
-            );
+                $this->getFieldNameByFormatFieldName("MESS_SEND_MAX")            => '',
+                $this->getFieldNameByFormatFieldName("OAUTH_CLIENT_ID")          => $record["OAUTH_CLIENT_ID"],
+                $this->getFieldNameByFormatFieldName("OAUTH_CLIENT_SECRET")      => $record["OAUTH_CLIENT_SECRET"],
+                $this->getFieldNameByFormatFieldName("OAUTH_REFRESH_TOKEN")      => $record["OAUTH_REFRESH_TOKEN"]
+            ];
         } catch (Exception $e) {
             throw $e;
         }
@@ -1191,6 +1212,12 @@ class EmailServer
                 $arrayData["MESS_PASSWORD_HIDDEN"]     = '';
                 $arrayData["MESS_EXECUTE_EVERY"]       = '';
                 $arrayData["MESS_SEND_MAX"]            = '';
+                $arrayData["OAUTH_CLIENT_ID"]          = !empty($row["OAUTH_CLIENT_ID"]) ?
+                    Crypt::decryptString($row["OAUTH_CLIENT_ID"]) : '';
+                $arrayData["OAUTH_CLIENT_SECRET"]      = !empty($row["OAUTH_CLIENT_SECRET"]) ?
+                    Crypt::decryptString($row["OAUTH_CLIENT_SECRET"]) : '';
+                $arrayData["OAUTH_REFRESH_TOKEN"]      = !empty($row["OAUTH_REFRESH_TOKEN"]) ?
+                    Crypt::decryptString($row["OAUTH_REFRESH_TOKEN"]) : '';
             }
 
             //Return
@@ -1287,6 +1314,9 @@ class EmailServer
 
             while ($rsCriteria->next()) {
                 $row = $rsCriteria->getRow();
+                $row['OAUTH_CLIENT_ID'] = !empty($row['OAUTH_CLIENT_ID']) ? Crypt::decryptString($row['OAUTH_CLIENT_ID']) : '';
+                $row['OAUTH_CLIENT_SECRET'] = !empty($row['OAUTH_CLIENT_SECRET']) ? Crypt::decryptString($row['OAUTH_CLIENT_SECRET']) : '';
+                $row['OAUTH_REFRESH_TOKEN'] = !empty($row['OAUTH_REFRESH_TOKEN']) ? Crypt::decryptString($row['OAUTH_REFRESH_TOKEN']) : '';
                 $arrayEmailServer[] = $this->getEmailServerDataFromRecord($row);
             }
 
@@ -1340,6 +1370,9 @@ class EmailServer
             $row["MESS_PASSWORD_HIDDEN"] = '';
             $row["MESS_EXECUTE_EVERY"] = '';
             $row["MESS_SEND_MAX"] = '';
+            $row["OAUTH_CLIENT_ID"] = !empty($row["OAUTH_CLIENT_ID"]) ? Crypt::decryptString($row["OAUTH_CLIENT_ID"]) : '';
+            $row["OAUTH_CLIENT_SECRET"] = !empty($row["OAUTH_CLIENT_SECRET"]) ? Crypt::decryptString($row["OAUTH_CLIENT_SECRET"]) : '';
+            $row["OAUTH_REFRESH_TOKEN"] = !empty($row["OAUTH_REFRESH_TOKEN"]) ? Crypt::decryptString($row["OAUTH_REFRESH_TOKEN"]) : '';
 
             //Return
             return (!$flagGetRecord)? $this->getEmailServerDataFromRecord($row) : $row;

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Crypt;
 use ProcessMaker\BusinessModel\EmailServer;
 use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Core\System;
@@ -961,10 +962,21 @@ class WsBase
 
             $result = "";
             if ($gmail != 1) {
-                $closure = function() use ($setup, $messageArray, $gmail, $to) {
+                // Create always the record in APP_MESSAGE table
+                $spool = new SpoolRun();
+                $spool->setConfig($setup);
+                $spool->create($messageArray);
+
+                // Get the data of the record created
+                $fileData = $spool->getFileData();
+                $fileData['spoolId'] = $spool->getSpoolId();
+
+                // Create the closure and send the required data
+                $closure = function() use ($setup, $fileData, $gmail, $to) {
                     $spool = new SpoolRun();
                     $spool->setConfig($setup);
-                    $spool->create($messageArray);
+                    $spool->setSpoolId($fileData['spoolId']);
+                    $spool->setFileData($fileData);
                     $spool->sendMail();
                     return $spool;
                 };

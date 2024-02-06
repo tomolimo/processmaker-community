@@ -65,6 +65,8 @@ class Logger extends AbstractLogger
 
     /**
      * {@inheritdoc}
+     *
+     * @return void
      */
     public function log($level, $message, array $context = [])
     {
@@ -99,6 +101,6 @@ class Logger extends AbstractLogger
             $message = strtr($message, $replacements);
         }
 
-        return sprintf('%s [%s] %s', date(\DateTime::RFC3339), $level, $message).\PHP_EOL;
+        return sprintf('%s [%s] %s', date(\DateTime::RFC3339), $level, $message).PHP_EOL;
     }
 }

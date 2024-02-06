@@ -101,6 +101,7 @@
 			<xsl:apply-templates select='column'/>
 			<xsl:apply-templates select='foreign-key'/>
 			<xsl:apply-templates select='index'/>
+			<xsl:apply-templates select='fulltext'/>
 			<xsl:apply-templates select='unique'/>
 			<xsl:apply-templates select='id-method-parameter'/>
 			<xsl:apply-templates select='validator'/>
@@ -127,6 +128,13 @@
 			<xsl:apply-templates select='@*'/>
 			<xsl:apply-templates select='index-column'/>
 		</index>
+	</xsl:template>
+
+	<xsl:template match='fulltext'>
+		<fulltext>
+			<xsl:apply-templates select='@*'/>
+			<xsl:apply-templates select='index-column'/>
+		</fulltext>
 	</xsl:template>
 
 	<xsl:template match='unique'>

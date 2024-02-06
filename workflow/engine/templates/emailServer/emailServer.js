@@ -25,8 +25,6 @@ emailServer.application = {
                 case "DEL":
                     msg = _("ID_EMAIL_SERVER_DELETE_DATA");
                     break;
-                //case "LST":
-                //    break;
                 case "TEST":
                     msg = _("ID_EMAIL_SERVER_TEST_DATA");
                     break;
@@ -71,7 +69,7 @@ emailServer.application = {
                     cboEmailEngine: typeEmailEngine,
                     fromMail: Ext.getCmp("txtFromMail").getValue(),
                     fromName: Ext.getCmp("txtFromName").getValue(),
-                    sendTestMail: (Ext.getCmp("chkSendTestMail").checked)? 1 : 0,
+                    sendTestMail: (Ext.getCmp("chkSendTestMail").checked) ? 1 : 0,
                     mailTo: Ext.getCmp("txtMailTo").getValue(),
                     emailServerDefault: emailDefault
                 };
@@ -125,9 +123,6 @@ emailServer.application = {
                                 }
                             }
                             break;
-                        //case "LST":
-                        //    break;
-
                         case "TEST":
                             showTestConnection(typeEmailEngine, dataResponse.data);
 
@@ -182,6 +177,8 @@ emailServer.application = {
                     emailServerSetMailTo(Ext.getCmp("chkSendTestMail").checked);
 
                     Ext.getCmp("txtMailTo").setValue("");
+                    Ext.getCmp("textClientId").setValue("");
+                    Ext.getCmp("textClientSecret").setValue("");
 
 
                     winData.setTitle(_("ID_EMAIL_SERVER_NEW"));
@@ -195,19 +192,19 @@ emailServer.application = {
                 case "UPD":
                     var record = grdpnlMain.getSelectionModel().getSelected();
 
-                    if (typeof(record) != "undefined") {
+                    if (typeof (record) != "undefined") {
                         Ext.getCmp("emailServerUid").setValue(record.get("MESS_UID"));
 
                         Ext.getCmp("cboEmailEngine").setValue(record.get("MESS_ENGINE"));
                         emailServerSetEmailEngine(record.get("MESS_ENGINE"));
 
                         Ext.getCmp("txtServer").setValue(record.get("MESS_SERVER"));
-                        Ext.getCmp("txtPort").setValue((record.get("MESS_PORT") != 0)? record.get("MESS_PORT") : "");
+                        Ext.getCmp("txtPort").setValue((record.get("MESS_PORT") != 0) ? record.get("MESS_PORT") : "");
 
                         Ext.getCmp("txtIncomingServer").setValue(record.get("MESS_INCOMING_SERVER"));
-                        Ext.getCmp("txtIncomingPort").setValue((record.get("MESS_INCOMING_PORT") !== 0)? record.get("MESS_INCOMING_PORT") : "");
+                        Ext.getCmp("txtIncomingPort").setValue((record.get("MESS_INCOMING_PORT") !== 0) ? record.get("MESS_INCOMING_PORT") : "");
 
-                        Ext.getCmp("chkReqAuthentication").setValue((parseInt(record.get("MESS_RAUTH")) == 1)? true : false);
+                        Ext.getCmp("chkReqAuthentication").setValue((parseInt(record.get("MESS_RAUTH")) == 1) ? true : false);
 
                         emailServerSetPassword(Ext.getCmp("chkReqAuthentication").checked);
 
@@ -216,11 +213,13 @@ emailServer.application = {
                         Ext.getCmp("txtFromMail").setValue(record.get("MESS_FROM_MAIL"));
                         Ext.getCmp("txtFromName").setValue(record.get("MESS_FROM_NAME"));
 
-                        Ext.getCmp("rdoGrpSmtpSecure").setValue((record.get("SMTPSECURE") != "")? record.get("SMTPSECURE") : "No");
-                        Ext.getCmp("chkSendTestMail").setValue((parseInt(record.get("MESS_TRY_SEND_INMEDIATLY")) == 1)? true : false);
+                        Ext.getCmp("rdoGrpSmtpSecure").setValue((record.get("SMTPSECURE") != "") ? record.get("SMTPSECURE") : "No");
+                        Ext.getCmp("chkSendTestMail").setValue((parseInt(record.get("MESS_TRY_SEND_INMEDIATLY")) == 1) ? true : false);
                         emailServerSetMailTo(Ext.getCmp("chkSendTestMail").checked);
 
                         Ext.getCmp("txtMailTo").setValue(record.get("MAIL_TO"));
+                        Ext.getCmp("textClientId").setValue(record.get("OAUTH_CLIENT_ID"));
+                        Ext.getCmp("textClientSecret").setValue(record.get("OAUTH_CLIENT_SECRET"));
 
                             Ext.getCmp("chkEmailServerDefault").setValue(true);
 
@@ -235,6 +234,12 @@ emailServer.application = {
         function emailServerSetEmailEngine(cboEmailEngine)
         {
             Ext.getCmp("frmEmailServer").getForm().clearInvalid();
+
+            Ext.getCmp("textClientId").setVisible(false);
+            Ext.getCmp("textClientSecret").setVisible(false);
+            Ext.getCmp("buttonContinue").setVisible(false);
+            Ext.getCmp("btnTest").setVisible(true);
+            Ext.getCmp("btnSave").setVisible(true);
 
             if (cboEmailEngine === "PHPMAILER") {
                 Ext.getCmp("txtServer").setVisible(true);
@@ -263,7 +268,34 @@ emailServer.application = {
                 Ext.getCmp("txtIncomingServer").allowBlank = true;
                 Ext.getCmp("txtIncomingPort").allowBlank = true;
                 Ext.getCmp("txtAccountFrom").allowBlank = false;
+                Ext.getCmp("textClientId").allowBlank = true;
+                Ext.getCmp("textClientSecret").allowBlank = true;
             } else if (cboEmailEngine === "IMAP") {
+            } else if (cboEmailEngine === "GMAILAPI") {
+                Ext.getCmp("txtServer").setVisible(false);
+                Ext.getCmp("txtPort").setVisible(false);
+                Ext.getCmp("txtIncomingServer").setVisible(false);
+                Ext.getCmp("txtIncomingPort").setVisible(false);
+                Ext.getCmp("chkReqAuthentication").setVisible(false);
+                Ext.getCmp("rdoGrpSmtpSecure").setVisible(false);
+                Ext.getCmp("btnTest").setVisible(false);
+                Ext.getCmp("btnSave").setVisible(false);
+
+                Ext.getCmp("txtAccountFrom").setVisible(true);
+                Ext.getCmp("textClientId").setVisible(true);
+                Ext.getCmp("textClientSecret").setVisible(true);
+                Ext.getCmp("buttonContinue").setVisible(true);
+
+                emailServerSetPassword(false);
+
+                Ext.getCmp("txtServer").allowBlank = true;
+                Ext.getCmp("txtPort").allowBlank = true;
+                Ext.getCmp("txtIncomingServer").allowBlank = true;
+                Ext.getCmp("txtIncomingPort").allowBlank = true;
+                Ext.getCmp("txtAccountFrom").allowBlank = false;
+                Ext.getCmp("txtPassword").allowBlank = true;
+                Ext.getCmp("textClientId").allowBlank = false;
+                Ext.getCmp("textClientSecret").allowBlank = false;
             } else {
                 //MAIL
                 Ext.getCmp("txtServer").setVisible(false);
@@ -285,12 +317,14 @@ emailServer.application = {
                 Ext.getCmp("txtIncomingPort").allowBlank = true;
                 Ext.getCmp("txtAccountFrom").allowBlank = true;
                 Ext.getCmp("txtPassword").allowBlank = true;
+                Ext.getCmp("textClientId").allowBlank = true;
+                Ext.getCmp("textClientSecret").allowBlank = true;
             }
         }
 
         function emailServerSetPassword(flagPassChecked)
         {
-            if (flagPassChecked) {
+            if (flagPassChecked && Ext.getCmp("cboEmailEngine").getValue() !== 'GMAILAPI') {
                 Ext.getCmp("txtPassword").setVisible(true);
                 Ext.getCmp("txtPassword").allowBlank = false;
             } else {
@@ -317,67 +351,67 @@ emailServer.application = {
             FLAGTEST = 1;
 
             if (option === "PHPMAILER" || option === "IMAP") {
-                if (typeof(testData.resolving_name) != "undefined") {
+                if (typeof (testData.resolving_name) != "undefined") {
                     if (testData.resolving_name.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.resolving_name.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.resolving_name.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.resolving_name.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.resolving_name.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.resolving_name.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.resolving_name.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
-                if (typeof(testData.check_port) != "undefined") {
+                if (typeof (testData.check_port) != "undefined") {
                     if (testData.check_port.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.check_port.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.check_port.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.check_port.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.check_port.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.check_port.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.check_port.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
-                if (typeof(testData.establishing_connection_host) != "undefined") {
+                if (typeof (testData.establishing_connection_host) != "undefined") {
                     if (testData.establishing_connection_host.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.establishing_connection_host.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.establishing_connection_host.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.establishing_connection_host.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.establishing_connection_host.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.establishing_connection_host.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.establishing_connection_host.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
-                if (typeof(testData.login) != "undefined") {
+                if (typeof (testData.login) != "undefined") {
                     if (testData.login.result != "") {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.login.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.login.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.login.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.login.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.login.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.login.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
-                if (typeof(testData.sending_email) != "undefined") {
+                if (typeof (testData.sending_email) != "undefined") {
                     if (testData.sending_email.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.sending_email.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.sending_email.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.sending_email.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.sending_email.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.sending_email.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.sending_email.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
             } else {
                 //MAIL
-                if (typeof(testData.verifying_mail) != "undefined") {
+                if (typeof (testData.verifying_mail) != "undefined") {
                     if (testData.verifying_mail.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em;\" />" + testData.verifying_mail.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em;\" />" + testData.verifying_mail.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.verifying_mail.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.verifying_mail.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.verifying_mail.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.verifying_mail.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
 
-                if (typeof(testData.sending_email) != "undefined") {
+                if (typeof (testData.sending_email) != "undefined") {
                     if (testData.sending_email.result) {
-                        msg =  msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.sending_email.title + "<br />";
+                        msg = msg + "<img src = \"/images/select-icon.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em; color: #0000FF;\" />" + testData.sending_email.title + "<br />";
                     } else {
-                        msg =  msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.sending_email.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.sending_email.message + "</span><br />";
+                        msg = msg + "<img src = \"/images/error.png\" width=\"21\" height=\"21\" style=\"margin-right: 0.6em;\" />" + testData.sending_email.title + "<br /><span style=\"margin-left:2.3em; color: #0000FF;\">" + testData.sending_email.message + "</span><br />";
                         FLAGTEST = 0;
                     }
                 }
@@ -434,7 +468,9 @@ emailServer.application = {
                     {name: "SMTPSECURE", type: "string"},
                     {name: "MESS_TRY_SEND_INMEDIATLY", type: "int"},
                     {name: "MAIL_TO", type: "string"},
-                    {name: "MESS_DEFAULT", type: "int"}
+                    {name: "MESS_DEFAULT", type: "int"},
+                    {name: "OAUTH_CLIENT_ID", type: "string"},
+                    {name: "OAUTH_CLIENT_SECRET", type: "string"}
                 ]
             }),
 
@@ -470,7 +506,7 @@ emailServer.application = {
         var emailUrlValidationText = /^[_a-z0-9-]+(\.[_a-z0-9-]+)*@([a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4}))|((([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))$/i;
 
         Ext.apply(Ext.form.VTypes, {
-            emailUrlValidation: function(val, field)
+            emailUrlValidation: function (val, field)
             {
                 return emailUrlValidationText.test(val);
             }
@@ -482,7 +518,8 @@ emailServer.application = {
 
             data: [
                 ["PHPMAILER", "SMTP (PHPMailer)"],
-                ["MAIL", "Mail (PHP)"]
+                ["MAIL", "Mail (PHP)"],
+                ["GMAILAPI", "GMAIL API (PHPMailer)"]
             ]
         });
 
@@ -506,7 +543,7 @@ emailServer.application = {
             forceSelection: true,
 
             listeners: {
-                select: function(combo, value)
+                select: function (combo, value)
                 {
                     emailServerSetEmailEngine(Ext.getCmp("cboEmailEngine").getValue());
                 }
@@ -524,7 +561,7 @@ emailServer.application = {
             id: "txtPort",
             name: "txtPort",
 
-            fieldLabel: _("PORT_DEFAULT"),  //Port (default 25)
+            fieldLabel: _("PORT_DEFAULT"), //Port (default 25)
 
             anchor: "36%",
             maxLength: 3,
@@ -542,7 +579,7 @@ emailServer.application = {
             id: "txtIncomingPort",
             name: "txtIncomingPort",
 
-            fieldLabel: _("INCOMING_PORT_DEFAULT"),  //Port (default 993)
+            fieldLabel: _("INCOMING_PORT_DEFAULT"), //Port (default 993)
 
             anchor: "36%",
             maxLength: 3,
@@ -555,7 +592,7 @@ emailServer.application = {
 
             boxLabel: _("REQUIRE_AUTHENTICATION"), //Require authentication
 
-            handler: function()
+            handler: function ()
             {
                 emailServerSetPassword(this.checked);
             }
@@ -607,7 +644,7 @@ emailServer.application = {
             vertical: true,
 
             items: [
-                {boxLabel: "No",  inputValue: "No",  name: "rdoGrpSmtpSecure", checked: true},
+                {boxLabel: "No", inputValue: "No", name: "rdoGrpSmtpSecure", checked: true},
                 {boxLabel: "TLS", inputValue: "tls", name: "rdoGrpSmtpSecure"},
                 {boxLabel: "SSL", inputValue: "ssl", name: "rdoGrpSmtpSecure"}
             ]
@@ -619,7 +656,7 @@ emailServer.application = {
 
             boxLabel: _("SEND_TEST_MAIL"), //Send a test mail
 
-            handler: function()
+            handler: function ()
             {
                 emailServerSetMailTo(this.checked);
             }
@@ -683,14 +720,124 @@ emailServer.application = {
         var btnCancel = new Ext.Action({
             id: "btnCancel",
             text: _("ID_CANCEL"),
-
             width: 85,
             disabled: false,
-
-            handler: function ()
-            {
+            handler: function () {
+                Ext.getCmp("frmEmailServer").setVisible(true);
                 winData.hide();
             }
+        });
+
+        var textClientId = new Ext.form.TextField({
+            id: "textClientId",
+            name: "textClientId",
+            fieldLabel: _("ID_CLIENT_ID"),
+            allowBlank: false
+        });
+        var textClientSecret = new Ext.form.TextField({
+            id: "textClientSecret",
+            name: "textClientSecret",
+            fieldLabel: _("ID_CLIENT_SECRET"),
+            allowBlank: false
+        });
+        var buttonContinue = new Ext.Action({
+            id: 'buttonContinue',
+            text: _("ID_CONTINUE"),
+            width: 85,
+            handler: function () {
+                var frmEmailServer, parameters;
+                frmEmailServer = Ext.getCmp("frmEmailServer");
+                if (frmEmailServer.getForm().isValid()) {
+                    winData.setDisabled(true);
+                    
+                    parameters = {
+                        option: 'createAuthUrl',
+                        emailEngine: Ext.getCmp("cboEmailEngine").getValue(),
+                        clientID: Ext.getCmp("textClientId").getValue(),
+                        clientSecret: Ext.getCmp("textClientSecret").getValue(),
+                        fromAccount: Ext.getCmp("txtAccountFrom").getValue(),
+                        senderEmail: Ext.getCmp("txtFromMail").getValue(),
+                        senderName: Ext.getCmp("txtFromName").getValue(),
+                        sendTestMail: (Ext.getCmp("chkSendTestMail").checked) ? 1 : 0,
+                        mailTo: Ext.getCmp("txtMailTo").getValue(),
+                        setDefaultConfiguration: Ext.getCmp("chkEmailServerDefault").checked ? 1 : 0
+                    };
+                    
+                    if (EMAILSERVEROPTION === "UPD") {
+                        parameters.emailServerUid = Ext.getCmp("emailServerUid").getValue();
+                    }
+                    
+                    Ext.Ajax.request({
+                        url: "emailServerAjax",
+                        method: "POST",
+                        params: parameters,
+                        success: function (response) {
+                            winData.setDisabled(false);
+                            var dataResponse = Ext.util.JSON.decode(response.responseText);
+                            if (dataResponse.status === 200) {
+                                if (window.parent.parent) {
+                                    window.parent.parent.location = dataResponse.data;
+                                } else if (window.parent) {
+                                    window.parent.location = dataResponse.data;
+                                } else {
+                                    window.location = dataResponse.data;
+                                }
+
+                            } else {
+                                Ext.MessageBox.show({
+                                    title: _("ID_ERROR"),
+                                    icon: Ext.MessageBox.ERROR,
+                                    msg: dataResponse.message,
+                                    buttons: {ok: _("ID_ACCEPT")}
+                                });
+                            }
+                        },
+                        failure: function () {
+                            winData.setDisabled(false);
+                            Ext.MessageBox.show({
+                                title: _("ID_ERROR"),
+                                icon: Ext.MessageBox.ERROR,
+                                msg: "",
+                                buttons: {ok: _("ID_ACCEPT")}
+                            });
+                        }
+                    });
+                } else {
+                    Ext.MessageBox.alert(_("ID_INVALID_DATA"), _("ID_CHECK_FIELDS_MARK_RED"));
+                }
+            }
+        });
+
+        var frmEmailServer = new Ext.FormPanel({
+            id: "frmEmailServer",
+            frame: true,
+            labelAlign: "right",
+            labelWidth: 150,
+            autoWidth: true,
+            autoScroll: false,
+            defaults: {width: 325},
+            items: [
+                {
+                    xtype: "hidden",
+                    id: "emailServerUid",
+                    name: "emailServerUid"
+                },
+                cboEmailEngine,
+                txtServer,
+                txtPort,
+                txtIncomingServer,
+                txtIncomingPort,
+                chkReqAuthentication,
+                textClientId,
+                textClientSecret,
+                txtAccountFrom,
+                txtPassword,
+                txtFromMail,
+                txtFromName,
+                rdoGrpSmtpSecure,
+                chkSendTestMail,
+                txtMailTo
+            ]
         });
 
         //Components
@@ -698,48 +845,14 @@ emailServer.application = {
             layout: "fit",
             width: 550,
             height: 450,
-            //title: "",
             modal: true,
             resizable: false,
             closeAction: "hide",
-
-            items: [
-                new Ext.FormPanel({
-                    id: "frmEmailServer",
-
-                    frame: true,
-                    labelAlign: "right",
-                    labelWidth: 150,
-                    autoWidth: true,
-                    autoScroll: false,
-
-                    defaults: {width: 325},
-
-                    items: [
-                        {
-                            xtype: "hidden",
-                            id: "emailServerUid",
-                            name: "emailServerUid"
-                        },
-                        cboEmailEngine,
-                        txtServer,
-                        txtPort,
-                        txtIncomingServer,
-                        txtIncomingPort,
-                        chkReqAuthentication,
-                        txtAccountFrom,
-                        txtPassword,
-                        txtFromMail,
-                        txtFromName,
-                        rdoGrpSmtpSecure,
-                        chkSendTestMail,
-                        txtMailTo
-                    ]
-                })
-            ],
-
-            buttons: [btnTest, btnSave, btnCancel]
+            items: [frmEmailServer],
+            buttons: [buttonContinue, btnTest, btnSave, btnCancel]
         });
+        winData.show();
+        winData.hide();
 
         var winTestConnection = new Ext.Window({
             layout: "fit",
@@ -830,7 +943,7 @@ emailServer.application = {
             {
                 var record = grdpnlMain.getSelectionModel().getSelected();
 
-                if (typeof(record) != "undefined") {
+                if (typeof (record) != "undefined") {
                     Ext.getCmp("btnSave").disable();
 
                     EMAILSERVEROPTION = "UPD";
@@ -851,18 +964,18 @@ emailServer.application = {
             {
                 var record = grdpnlMain.getSelectionModel().getSelected();
 
-                if (typeof(record) != "undefined") {
+                if (typeof (record) != "undefined") {
                     Ext.MessageBox.confirm(
-                        _("ID_CONFIRM"),
-                        _("ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE"),
-                        function (btn)
-                        {
-                            if (btn == "yes") {
-                                EMAILSERVEROPTION = "DEL";
-
-                                emailServerProcessAjax(EMAILSERVEROPTION, record.get("MESS_UID"));
+                            _("ID_CONFIRM"),
+                            _("ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE"),
+                            function (btn) {
+                                if (btn == "yes") {
+                                    EMAILSERVEROPTION = "DEL";
+                                    Ext.getCmp("cboEmailEngine").setValue(record.get("MESS_ENGINE"));
+                                    Ext.getCmp("rdoGrpSmtpSecure").setValue((record.get("SMTPSECURE") != "") ? record.get("SMTPSECURE") : "No");
+                                    emailServerProcessAjax(EMAILSERVEROPTION, record.get("MESS_UID"));
+                                }
                             }
-                        }
                     );
                 }
             }
@@ -940,32 +1053,32 @@ emailServer.application = {
 
         var rendererMessServer = function (value)
         {
-            return (value != "")? value : "-";
+            return (value != "") ? value : "-";
         };
 
         var rendererMessPort = function (value)
         {
-            return (value != 0)? value : "-";
+            return (value != 0) ? value : "-";
         };
 
         var rendererMessIncomingServer = function (value)
         {
-            return (value !== "")? value : "-";
+            return (value !== "") ? value : "-";
         };
 
         var rendererMessIncomingPort = function (value)
         {
-            return (value !== 0)? value : "-";
+            return (value !== 0) ? value : "-";
         };
 
         var rendererMessSmtpSecure = function (value)
         {
-            return (value != "")? value : "-";
+            return (value != "") ? value : "-";
         };
 
         var rendererMessDefault = function (value)
         {
-            return (value == 1)? "<img src = \"/images/ext/default/saved.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em;\" />" : "";
+            return (value == 1) ? "<img src = \"/images/ext/default/saved.png\" width=\"17\" height=\"17\" style=\"margin-right: 0.9em;\" />" : "";
         };
 
         var cmodel = new Ext.grid.ColumnModel({
@@ -974,20 +1087,20 @@ emailServer.application = {
             },
 
             columns: [
-                {id: "MESS_UID", dataIndex: "MESS_UID", hidden: true,  header: "uid_emailServer", width: 0, hideable: false, align: "left"},
+                {id: "MESS_UID", dataIndex: "MESS_UID", hidden: true, header: "uid_emailServer", width: 0, hideable: false, align: "left"},
                 {id: "MESS_ENGINE", dataIndex: "MESS_ENGINE", hidden: false, header: _("EMAIL_ENGINE"), width: 80, hideable: true, align: "left"},
                 {id: "MESS_SERVER", dataIndex: "MESS_SERVER", hidden: false, header: _("ID_SERVER"), width: 150, hideable: true, align: "center", renderer: rendererMessServer},
-                {id: "MESS_PORT", dataIndex: "MESS_PORT", hidden: false, header: _("ID_EMAIL_SERVER_PORT"), width: 50,  hideable: true, align: "center", renderer: rendererMessPort},
+                {id: "MESS_PORT", dataIndex: "MESS_PORT", hidden: false, header: _("ID_EMAIL_SERVER_PORT"), width: 50, hideable: true, align: "center", renderer: rendererMessPort},
                 {id: "MESS_INCOMING_SERVER", dataIndex: "MESS_INCOMING_SERVER", hidden: true, header: _("ID_INCOMING_SERVER"), width: 150, hideable: true, align: "center", renderer: rendererMessIncomingServer},
-                {id: "MESS_INCOMING_PORT", dataIndex: "MESS_INCOMING_PORT", hidden: true, header: _("ID_EMAIL_SERVER_PORT"), width: 50,  hideable: true, align: "center", renderer: rendererMessIncomingPort},
-                {id: "MESS_RAUTH", dataIndex: "MESS_RAUTH", hidden: true,  header: _("REQUIRE_AUTHENTICATION"), width: 50,  hideable: false, align: "left"},
-                {id: "MESS_ACCOUNT", dataIndex: "MESS_ACCOUNT", hidden: false, header: _("ID_EMAIL_SERVER_ACCOUNT_FROM"), width: 130, hideable: true,  align: "left"},
-                {id: "MESS_PASSWORD", dataIndex: "MESS_PASSWORD", hidden: true,  header: _("ID_PASSWORD"), width: 130, hideable: false, align: "left"},
+                {id: "MESS_INCOMING_PORT", dataIndex: "MESS_INCOMING_PORT", hidden: true, header: _("ID_EMAIL_SERVER_PORT"), width: 50, hideable: true, align: "center", renderer: rendererMessIncomingPort},
+                {id: "MESS_RAUTH", dataIndex: "MESS_RAUTH", hidden: true, header: _("REQUIRE_AUTHENTICATION"), width: 50, hideable: false, align: "left"},
+                {id: "MESS_ACCOUNT", dataIndex: "MESS_ACCOUNT", hidden: false, header: _("ID_EMAIL_SERVER_ACCOUNT_FROM"), width: 130, hideable: true, align: "left"},
+                {id: "MESS_PASSWORD", dataIndex: "MESS_PASSWORD", hidden: true, header: _("ID_PASSWORD"), width: 130, hideable: false, align: "left"},
                 {id: "MESS_FROM_MAIL", dataIndex: "MESS_FROM_MAIL", hidden: false, header: _("ID_FROM_EMAIL"), width: 130, hideable: true, align: "left"},
                 {id: "MESS_FROM_NAME", dataIndex: "MESS_FROM_NAME", hidden: false, header: _("ID_FROM_NAME"), width: 150, hideable: true, align: "left"},
                 {id: "SMTPSECURE", dataIndex: "SMTPSECURE", hidden: false, header: _("USE_SECURE_CONNECTION"), width: 140, hideable: true, align: "center", renderer: rendererMessSmtpSecure},
-                {id: "MESS_TRY_SEND_INMEDIATLY", dataIndex: "MESS_TRY_SEND_INMEDIATLY", hidden: true, header: _("SEND_TEST_MAIL"), width: 50,  hideable: false, align: "left"},
-                {id: "MAIL_TO", dataIndex: "MAIL_TO", hidden: false, header: _("MAIL_TO"),  width: 150, hideable: true, align: "left"},
+                {id: "MESS_TRY_SEND_INMEDIATLY", dataIndex: "MESS_TRY_SEND_INMEDIATLY", hidden: true, header: _("SEND_TEST_MAIL"), width: 50, hideable: false, align: "left"},
+                {id: "MAIL_TO", dataIndex: "MAIL_TO", hidden: false, header: _("MAIL_TO"), width: 150, hideable: true, align: "left"},
                 {id: "MESS_DEFAULT", dataIndex: "MESS_DEFAULT", hidden: false, header: _("ID_EMAIL_SERVER_DEFAULT"), width: 50, hideable: true, align: "center", renderer: rendererMessDefault}
             ]
         });
@@ -1037,7 +1150,7 @@ emailServer.application = {
                 {
                     var record = grdpnlMain.getSelectionModel().getSelected();
 
-                    if (typeof(record) != "undefined") {
+                    if (typeof (record) != "undefined") {
                         Ext.getCmp("btnSave").disable();
 
                         EMAILSERVEROPTION = "UPD";
@@ -1062,14 +1175,14 @@ emailServer.application = {
 
         //Initialize events
         grdpnlMain.on(
-            "rowcontextmenu",
-            function (grid, rowIndex, evt)
-            {
-                var sm = grid.getSelectionModel();
-                sm.selectRow(rowIndex, sm.isSelected(rowIndex));
-            },
-            this
-        );
+                "rowcontextmenu",
+                function (grid, rowIndex, evt)
+                {
+                    var sm = grid.getSelectionModel();
+                    sm.selectRow(rowIndex, sm.isSelected(rowIndex));
+                },
+                this
+                );
 
         grdpnlMain.addListener("rowcontextmenu", onMnuContext, this);
 
@@ -1083,6 +1196,10 @@ emailServer.application = {
             autoScroll: false,
             items: [grdpnlMain]
         });
+
+        if (errorMessageIfNotAuthenticate && errorMessageIfNotAuthenticate !== "") {
+            Ext.MessageBox.alert(_("ID_INVALID_DATA"), errorMessageIfNotAuthenticate);
+        }
     }
 }
 

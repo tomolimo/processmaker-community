@@ -1189,8 +1189,6 @@ var gridbb = new Ext.PagingToolbar({
 
 var grid;
 var getGrid = function( data, element) {
-  // var grid = Ext.getCmp('gridpanel');
-
    grid = new Ext.grid.GridPanel({
     store: datastore,
     cm: cm,
@@ -1375,18 +1373,14 @@ var cm = new Ext.grid.ColumnModel([
 //By default columns are sortable
 cm.defaultSortable = true;
 
-function handleRowClick(sm, rowIndex) {//alert(rowIndex);
-    //console.log("Row Clicked: ", rowIndex);
+function handleRowClick(sm, rowIndex) {
     var selections = sm.getSelections();
     tb = ext_itemgrid.getTopToolbar();
     if (selections.length > 1) {
-        //tb.items.get('tb_delete').enable();
         tb.items.get('tb_delete')[permitodelete==1 ? 'enable': 'disable']();
         tb.items.get('tb_rename').disable();
         tb.items.get('tb_download').hide();
-        //tb.items.get('tb_download').disable();
     } else if (selections.length == 1) {
-        //tb.items.get('tb_delete')[selections[0].get('is_deletable') ? 'enable': 'disable']();
         tb.items.get('tb_delete')[permitodelete==1 ? 'enable': 'disable']();
         tb.items.get('tb_rename')[selections[0].get('is_deletable') ? 'disable': 'disable']();
         tb.items.get('tb_download')[selections[0].get('is_readable')
@@ -1888,34 +1882,20 @@ var documentsTab = {
       }
     },
     {
-      // region : "center",
-      // layout:'fit',
-      // items : [ {
       region : "center",
-      // xtype : "tabpanel",
       layout:'fit',
       id : "mainpanel",
-      // autoHeight : true,
-      // enableTabScroll : true,
-      // activeTab : 0,
-      // hideTabStripItem:0,
       items : [ {
         xtype : "editorgrid",
         layout:'fit',
         region : "center",
-        // title : "Documents",
-        // autoHeight : true,
-        // autoScroll : true,
-        // collapsible : false,
-        // closeOnTab : true,
         id : "gridpanel",
         ds : datastore,
         cm : cm,
         tbar : gridtb,
         bbar : gridbb,
         ddGroup : 'TreeDD',
-        enableDragDrop: true,
-        //plugins: expander,
+        enableDragDrop: false,
         plugins: rowExpander,
         selModel : new Ext.grid.RowSelectionModel({
           listeners : {

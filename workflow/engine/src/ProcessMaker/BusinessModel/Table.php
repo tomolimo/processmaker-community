@@ -20,7 +20,7 @@ class Table
      *
      * @return array
      */
-    public function getTables($pro_uid = '', $reportFlag = false)
+    public function getTables($pro_uid = '', $reportFlag = false, $offline = false)
     {
         //VALIDATION
         if ($reportFlag) {
@@ -87,6 +87,7 @@ class Table
             $tabData['PMT_UID']             = $tab_uid;
             $tabData['PMT_TAB_NAME']        = $table['ADD_TAB_NAME'];
             $tabData['PMT_TAB_DESCRIPTION'] = $table['ADD_TAB_DESCRIPTION'];
+            $tabData['PMT_TAB_OFFLINE'] = $table['ADD_TAB_OFFLINE'];
             $tabData['PMT_TAB_CLASS_NAME']  = $table['ADD_TAB_CLASS_NAME'];
             $tabData['PMT_NUM_ROWS']        = $tableData['count'];
         }
@@ -384,6 +385,8 @@ class Table
                 'ADD_TAB_NAME' => $dataValidate['REP_TAB_NAME'],
                 'ADD_TAB_CLASS_NAME' => $repTabClassName,
                 'ADD_TAB_DESCRIPTION' => $dataValidate['REP_TAB_DSC'],
+                'ADD_TAB_OFFLINE' => 0,
+                'ADD_TAB_UPDATE_DATE' => date('Y-m-d H:i:s'),
                 'ADD_TAB_PLG_UID' => '',
                 'DBS_UID' => ($dataValidate['REP_TAB_CONNECTION'] ? $dataValidate['REP_TAB_CONNECTION'] : 'workflow'),
                 'PRO_UID' => $dataValidate['PRO_UID'],
@@ -396,6 +399,8 @@ class Table
                 'ADD_TAB_NAME' => $dataValidate['PMT_TAB_NAME'],
                 'ADD_TAB_CLASS_NAME' => $repTabClassName,
                 'ADD_TAB_DESCRIPTION' => $dataValidate['PMT_TAB_DSC'],
+                'ADD_TAB_OFFLINE' => !empty($dataValidate['PMT_TAB_OFFLINE']) ?? 0,
+                'ADD_TAB_UPDATE_DATE' => date('Y-m-d H:i:s'),
                 'ADD_TAB_PLG_UID' => '',
                 'DBS_UID' => ($dataValidate['PMT_TAB_CONNECTION'] ? $dataValidate['PMT_TAB_CONNECTION'] : 'workflow'),
                 'PRO_UID' => '',
@@ -549,6 +554,11 @@ class Table
                 $dataValidate['rep_tab_dsc'] = $tableData['pmt_tab_dsc'];
                 $tableDsc = true;
             }
+            if (!empty($tableData['pmt_tab_offline'])) {
+                $dataValidate['rep_tab_offline'] = $tableData['pmt_tab_offline'];
+                $tableDsc = true;
+            }
+            $dataValidate['rep_tab_update_date'] = date('Y-m-d H:i:s');
         }
         if (!empty($tableData['fields'])) {
             $dataValidate['fields'] = $tableData['fields'];

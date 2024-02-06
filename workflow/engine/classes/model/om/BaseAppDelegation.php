@@ -139,19 +139,19 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
      * The value for the del_duration field.
      * @var        double
      */
-    protected $del_duration = 0;
+    protected $del_duration = 0.0;
 
     /**
      * The value for the del_queue_duration field.
      * @var        double
      */
-    protected $del_queue_duration = 0;
+    protected $del_queue_duration = 0.0;
 
     /**
      * The value for the del_delay_duration field.
      * @var        double
      */
-    protected $del_delay_duration = 0;
+    protected $del_delay_duration = 0.0;
 
     /**
      * The value for the del_started field.
@@ -181,7 +181,7 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
      * The value for the app_overdue_percentage field.
      * @var        double
      */
-    protected $app_overdue_percentage = 0;
+    protected $app_overdue_percentage = 0.0;
 
     /**
      * The value for the usr_id field.
@@ -1079,7 +1079,7 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     public function setDelDuration($v)
     {
 
-        if ($this->del_duration !== $v || $v === 0) {
+        if ($this->del_duration !== $v || $v === 0.0) {
             $this->del_duration = $v;
             $this->modifiedColumns[] = AppDelegationPeer::DEL_DURATION;
         }
@@ -1095,7 +1095,7 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     public function setDelQueueDuration($v)
     {
 
-        if ($this->del_queue_duration !== $v || $v === 0) {
+        if ($this->del_queue_duration !== $v || $v === 0.0) {
             $this->del_queue_duration = $v;
             $this->modifiedColumns[] = AppDelegationPeer::DEL_QUEUE_DURATION;
         }
@@ -1111,7 +1111,7 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     public function setDelDelayDuration($v)
     {
 
-        if ($this->del_delay_duration !== $v || $v === 0) {
+        if ($this->del_delay_duration !== $v || $v === 0.0) {
             $this->del_delay_duration = $v;
             $this->modifiedColumns[] = AppDelegationPeer::DEL_DELAY_DURATION;
         }
@@ -1215,7 +1215,7 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     public function setAppOverduePercentage($v)
     {
 
-        if ($this->app_overdue_percentage !== $v || $v === 0) {
+        if ($this->app_overdue_percentage !== $v || $v === 0.0) {
             $this->app_overdue_percentage = $v;
             $this->modifiedColumns[] = AppDelegationPeer::APP_OVERDUE_PERCENTAGE;
         }

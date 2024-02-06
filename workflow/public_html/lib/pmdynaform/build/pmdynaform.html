@@ -111,6 +111,12 @@
 					<%} else{%>
 						autoComplete = "off"
 					<%}%>
+					<%if(tabIndex !== ""){%>
+						tabindex="<%-tabIndex%>"
+					<%}%>
+					<%if(ariaLabel !== ""){%>
+						aria-label="<%-ariaLabel%>"
+					<%}%>
 				>
 				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
@@ -172,27 +178,32 @@
 				  <%}%>>
 			<div class="control-group">
 				<textarea
-							<% if  ( group === "grid") { %>
-								id = "form<%-id%>"
-								<%if(name !== ""){%>
-									name ="form<%-name%>"
-								<%}%>
-							<%} else{%>
-								<%if(name !== ""){%>
-									id = "form[<%-id%>]"
-									name ="form[<%-name%>]"
-								<%}%>
-							<%}%>
-							class="<%-namespace%>-control-<%-type%> form-control"
-							<% if ((new RegExp('^[0-9]+$')).test(rows)) { %>
-								rows="<%- rows %>"
-							<% } else { %>
-								rows= "2"
-							<% } %>
-							placeholder= "<%- placeholder %>"
-					<% if(disabled === true){%>disabled<%}%>
-				><%-value%></textarea>
-
+                    <% if  ( group === "grid") { %>
+                        id = "form<%-id%>"
+                        <%if(name !== ""){%>
+                            name ="form<%-name%>"
+                        <%}%>
+                    <%} else{%>
+                        <%if(name !== ""){%>
+                            id = "form[<%-id%>]"
+                            name ="form[<%-name%>]"
+                        <%}%>
+                    <%}%>
+                    class="<%-namespace%>-control-<%-type%> form-control"
+                    <% if ((new RegExp('^[0-9]+$')).test(rows)) { %>
+                        rows="<%- rows %>"
+                    <% } else { %>
+                        rows= "2"
+                    <% } %>
+                    placeholder= "<%- placeholder %>"
+                    <% if(disabled === true){%>disabled<%}%>
+                    <%if(tabIndex !== ""){%>
+                        tabindex="<%-tabIndex%>"
+                    <%}%>
+                    <%if(ariaLabel !== ""){%>
+                        aria-label="<%-ariaLabel%>"
+                    <%}%>
+                    ><%-value%></textarea>
 
 				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
@@ -210,7 +221,7 @@
 						value="<%-data['label']%>"
 					<%}%>
 				>
-				<span class="content-print"></span>
+				<span class="content-print" style="white-space: pre-wrap"></span>
 			</div>
 
 		</div>
@@ -256,12 +267,20 @@
 											for(var j=0; j< data.value.length; j+=1) {
 													if(data.value[j] == options[i].value){%>
 													checked
+													<%if(ariaLabelVisible){%>
+														aria-label="<%-options[i].label%>"
+													<%}%>
 										<%}}}%>
 
-										<% if(disabled === true){%>disabled<%}%>>
-										<%if(dataType !== "boolean"){%>
-											<span><%-options[i].label%></span>
+										<% if(disabled === true){%>disabled<%}%>
+										<%if(tabIndex !== ""){%>
+											tabindex="<%-tabIndex%>"
 										<%}%>
+
+									>
+									<%if(dataType !== "boolean"){%>
+										<span><%-options[i].label%></span>
+									<%}%>
 								</label>
 							</div>
 						<% } %>
@@ -335,7 +354,11 @@
 					value="<%-options[i].value%>"
 					type="checkbox"
 					<% if(options[i].selected){%>checked<%}%>
-					<% if(disabled === true){%>disabled<%}%>>
+					<% if(disabled === true){%>disabled<%}%>
+					<%if(tabIndex !== ""){%>
+						tabindex="<%-tabIndex%>"
+					<%}%>
+					>
 				</label>
 			</div>
 			<% } %>
@@ -398,6 +421,12 @@
 							type="<%-type%>"
 							<% if(value == options[i].value){%>checked<%}%>
 							<% if(disabled === true){%>disabled<%}%>
+							<%if(tabIndex !== ""){%>
+								tabindex="<%-tabIndex%>"
+							<%}%>
+							<%if(value === options[i].value && ariaLabelVisible){%>
+								aria-label="<%-options[i].label%>"
+							<%}%>
 							>
 							<span><%-options[i].label%></span>
 						</label>
@@ -455,7 +484,14 @@
 						name ="form[<%-name%>]"
 					<%}%>
 					class="<%-namespace%>-control-<%-type%> form-control"
-					<% if(disabled === true){%>disabled<%}%>>
+					<% if(disabled === true){%>disabled<%}%>
+					<%if(tabIndex !== ""){%>
+						tabindex="<%-tabIndex%>"
+					<%}%>
+					<%if(ariaLabel !== ""){%>
+						aria-label="<%-ariaLabel%>"
+					<%}%>
+					>
 					<%if(therePlaceholder){%>
 						<option disabled id="placeholder-option" value=<%-placeholderOption["value"]%> ><%-placeholderOption["label"]%></option>
 					<%}%>
@@ -488,7 +524,14 @@
 <script type="text/template" id="tpl-button">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> text-center">
 		<button id="form[<%-id%>]" type=<%-type%> class="btn btn-primary"
-			<% if(disabled === true){%>disabled<%}%>>
+			<% if(disabled === true){%>disabled<%}%>
+			<%if(tabIndex !== ""){%>
+				tabindex="<%-tabIndex%>"
+			<%}%>
+			<%if(ariaLabel !== ""){%>
+				aria-label="<%-ariaLabel%>"
+			<%}%>
+			>
 			<span><%=label%></span>
 		</button>
 	</div>
@@ -497,7 +540,14 @@
 <script type="text/template" id="tpl-submit">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> text-center">
 		<button id="form[<%-id%>]" type=<%-type%> class="btn btn-default"
-			<% if(disabled === true){%>disabled<%}%>>
+			<% if(disabled === true){%>disabled<%}%>
+			<%if(tabIndex !== ""){%>
+				tabindex="<%-tabIndex%>"
+			<%}%>
+			<%if(ariaLabel !== ""){%>
+				aria-label="<%-ariaLabel%>"
+			<%}%>
+			>
 			<span> <%=label%> </span>
 		</button>
 	</div>
@@ -522,6 +572,12 @@
 				<button type="button" class="<%-namespace%>-control-<%-type%> form-control"
 					<% if(disabled === true){%>disabled<%}%>
 						<% if(mode === "view"){%>style="display:none;"<%}%>
+						<%if(tabIndex !== ""){%>
+							tabindex="<%-tabIndex%>"
+						<%}%>
+						<%if(ariaLabel !== ""){%>
+							aria-label="<%-ariaLabel%>"
+						<%}%>
 				>
 					<%-labelButton%>
 				</button>
@@ -606,7 +662,14 @@
 				<%}%>
 				class = "pmdynaform-link form-control"
 				href="<%-href%>" target="<%-target%>" rel="<%-rel%>" class="btn btn-link <%-namespace%>-control-<%-type%>"
-				<% if(disabled === true){%>disabled<%}%>>
+				<% if(disabled === true){%>disabled<%}%>
+				<%if(tabIndex !== ""){%>
+					tabindex="<%-tabIndex%>"
+				<%}%>
+				<%if(ariaLabel !== ""){%>
+					aria-label="<%-ariaLabel%>"
+				<%}%>
+				>
 				<span> <%-text%> </span>
 			</a>
 			<span class="content-print"></span>
@@ -629,7 +692,11 @@
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> pmdynaform-field">
 		<h4 id="form[<%-id%>]">
 			<p class="<%-className[type]%>">
-				<span class="textlabel"><%=label%></span>
+				<span class="textlabel"
+				<%if(ariaLabel !== ""){%>
+					aria-label="<%-ariaLabel%>"
+				<%}%>
+				><%=label%></span>
 			</p>
 		</h4>
 	</div>
@@ -639,7 +706,11 @@
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> pmdynaform-field">
 		<h5 id="form[<%-id%>]">
 			<p class="<%-className[type]%>">
-				<span class="textlabel"><%=label%></span>
+				<span class="textlabel"
+				<%if(ariaLabel !== ""){%>
+					aria-label="<%-ariaLabel%>"
+				<%}%>
+				><%=label%></span>
 			</p>
 		</h5>
 	</div>
@@ -650,7 +721,11 @@
 		<% if(group === "form") {%>
 			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
 				<label class="control-label pmdynaform-label">
-					<span class="textlabel"><%=label %></span>
+					<span class="textlabel"
+					<%if(ariaLabel !== ""){%>
+						aria-label="<%-ariaLabel%>"
+					<%}%>
+					><%=label %></span>
 					<%if(required){%>
 					<span class="pmdynaform-field-required">*</span>
 					<%}%>
@@ -749,7 +824,11 @@
         </div>
         <div class="<%-namespace%>-control-<%-type%> col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control">
         	<p class="<%-namespace%>-control-<%-type%> control">
-        		<img id="PMD-<%-id%>" class="img-responsive <%-shape%>" src="<%-src%>" alt="<%-alternateText%>" title="<%-alt%>" scale="0">
+				<img id="PMD-<%-id%>" class="img-responsive <%-shape%>" src="<%-src%>" alt="<%-alternateText%>" title="<%-alt%>" scale="0" tabIndex="<%-tabIndex%>"
+				<%if(ariaLabel !== ""){%>
+					aria-label="<%-ariaLabel%>"
+				<%}%>
+				>
         		<span class="pmdynaform-image-comment text-primary"><%-comment%></span>
         	</p>
 			<% if (group === "form") { %>
@@ -834,6 +913,12 @@
 										placeholder= '<%- placeholder %>'
 									value= '<%-value%>'
 										<% if(disabled === true){%>disabled<%}%>
+										<%if(tabIndex !== ""){%>
+											tabindex="<%-tabIndex%>"
+										<%}%>
+										<%if(ariaLabel !== ""){%>
+											aria-label="<%-ariaLabel%>"
+										<%}%>
 										>
 								</input>
 							<input type='hidden'
@@ -983,6 +1068,12 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 					<%} else{%>
 						autoComplete = "off"
 					<%}%>
+					<%if(tabIndex !== ""){%>
+						tabindex="<%-tabIndex%>"
+					<%}%>
+					<%if(ariaLabel !== ""){%>
+						aria-label="<%-ariaLabel%>"
+					<%}%>
 				>
 				</select>
 				<% if (group === "form") { %>
@@ -1006,6 +1097,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 		</div>
 	</div>
 </script>
+
 <script type="text/template" id="tpl-grid">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%-namespace%>-<%-mode%>-<%-type%> <%-layout%>">
 		<div class="<%-namespace%>-<%-type%>-new">
@@ -1018,7 +1110,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				<%}%>
 			</p>
 			<% if  ( mode !== "view" && mode !== "disabled" && addRow) { %>
-				<button type="button" class="<%-namespace%>-<%-type%>-newitem">
+				<button type="button" class="<%-namespace%>-<%-type%>-newitem" aria-label="<%-addAriaLabel%>">
 					<span class="pmdynaform-grid-plus glyphicon glyphicon-plus glyphicon btn btn-default btn-sm"></span>
 					<span class="pmdynaform-grid-text-plus"><%-addRowText%></span>
 				</button>
@@ -1119,7 +1211,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> pmdynaform-field" role="alert">
 		<span>
 			<p class="<%-namespace%>-control-<%-type%>">
-				<span><%=label%></span>
+				<span 
+				<%if(ariaLabel !== ""){%>
+					aria-label="<%-ariaLabel%>"
+				<%}%>	
+				><%=label%></span>
 			</p>
 		</span>				
 	</div>
@@ -1230,185 +1326,213 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 </script>
 
 <script type="text/template" id="tpl-extfile">
-	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
-	    <% if(group === "form") {%>
-	    	<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
-			    <label class=" control-label pmdynaform-label">
-			    	<span class="textlabel"><%= label %></span>
-			        <%if(required){%>
-			  			<span class="pmdynaform-field-required">*</span>
-			  		<%}%>
-			    </label>
-	    	</div>
-		<%}%>
-		<div <%if(group === 'form'){ %>
-			class="pmdynaform-file-control col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
-			<%}%> >
-			<div class="pmdynaform-file-container pmdynaform-<%-type%>-container">
-				<button type="button" class="<%-namespace%>-control-<%-type%> form-control" style="display:none"><%-labelButton%></button>
-				<input type="file" style="display:none;"
-					<% if(disabled === true){%>disabled<%}%>
-					<% if(multiple === true){%>multiple<%}%>
-				>
-				<%if (hint !== "" && hint !== null){%>
-					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
-				<%}%>
-				<% if(dnd) {%>
-					<p style="float:left;" class="help-block"><%-dndMessage%></p>
-				<%}%>
-				<div class="pmdynaform-file-droparea-ext"></div>
-			</div>
-		</div>
-	</div>
+    <div id="<%-id%>"
+         class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
+        <% if(group === "form") {%>
+        <div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+            <label class=" control-label pmdynaform-label">
+                <span class="textlabel"><%= label %></span>
+                <%if(required){%>
+                <span class="pmdynaform-field-required">*</span>
+                <%}%>
+            </label>
+        </div>
+        <%}%>
+        <div
+        <%if(group === 'form'){ %>
+        class="pmdynaform-file-control col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%>
+        pmdynaform-field-control"
+        <%}%> >
+        <div class="pmdynaform-file-container<%if(dottedBox) { %>-dotted <%}%> pmdynaform-<%-type%>-container">
+            <button type="button" class="<%-namespace%>-control-<%-type%> form-control" style="display:none">
+                <%-labelButton%>
+            </button>
+            <input type="file" style="display:none;"
+            <% if(disabled === true){%>disabled<%}%>
+            <% if(multiple === true){%>multiple<%}%>
+            >
+            <%if (hint !== "" && hint !== null){%>
+            <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body"
+                  data-placement="bottom" title="<%-hint%>"></span>
+            <%}%>
+            <% if(dnd) {%>
+            <p style="float:left;" class="help-block"><%-dndMessage%></p>
+            <%}%>
+            <div class="pmdynaform-file-droparea-ext"></div>
+        </div>
+    </div>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-extvideo">
-	<div class="pmdynaform-file-containervideo">
-		<div class ="pmdynaform-file-nameaudio">
-			<span><%-name%></span>
-		</div>
-		<span class="pmdynaform-file-preview" style="float: left;">
+    <div class="pmdynaform-file-containervideo">
+        <div class="pmdynaform-file-nameaudio">
+            <span><%-name%></span>
+        </div>
+        <span class="pmdynaform-file-preview" style="float: left;">
 			<div class="pmdynaform-file-resizevideo"></div>
 		</span>
-	</div>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-extaudio">
-	<div  class="pmdynaform-file-containeraudio">
-		<div class ="pmdynaform-file-nameaudio">
-			<span><%-name%></span>
-		</div>
-    	<div class="pmdynaform-file-resizevideo"></div>
-	</div>
+    <div class="pmdynaform-file-containeraudio">
+        <div class="pmdynaform-file-nameaudio">
+            <span><%-name%></span>
+        </div>
+        <div class="pmdynaform-file-resizevideo"></div>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-extfile-plus-audio">
-	<div class="pmdynaform-file-containerimage">
-		<buttonImage>
-			<span class= "pmdynaform-file-preview">
-				<div class = "pmdynaform-file-resizeaudio-plus">
+    <div class="pmdynaform-file-containerimage">
+        <buttonImage>
+			<span class="pmdynaform-file-preview">
+				<div class="pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-play-circle" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>
-	</div>
+        </buttonImage>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-extfile-plus-video">
-	<div class="pmdynaform-file-containerimage">
-		<buttonImage>
-			<span class= "pmdynaform-file-preview">
-				<div class = "pmdynaform-file-resizeaudio-plus">
+    <div class="pmdynaform-file-containerimage">
+        <buttonImage>
+			<span class="pmdynaform-file-preview">
+				<div class="pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-film" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>
-	</div>
+        </buttonImage>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-extfile-plus-image">
-	<div class="pmdynaform-file-containerimage">
-		<buttonImage>
-			<span class= "pmdynaform-file-preview">
-				<div class = "pmdynaform-file-resizeaudio-plus">
+    <div class="pmdynaform-file-containerimage file-plus">
+        <buttonImage>
+			<span class="pmdynaform-file-preview">
+				<div class="pmdynaform-file-resizeaudio-plus">
 					<span class="glyphicon glyphicon-picture" style="margin:5px"></span>
 				</div>
 			</span>
-		</buttonImage>
-	</div>
+        </buttonImage>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-media-video">
-	<div class="pmdynaform-media-videoContainer">
-	    <video src="<%-src%>" preload="none" controls="true">
-			<p>Your browser does not support the video tag.</p>
-		</video>
-			<div class="pmdynaform-media-caption"></div>
-			<div class="pmdynaform-media-control" display="none">
-				<div class="pmdynaform-media-btmControl">
-					<div class="btnPlay btn" title="Play/Pause video">
-					<span class="glyphicon glyphicon-play"></span>
-					</div>
-					<div class="pmdynaform-media-progress-bar">
-						<div class="pmdynaform-media-progress-external">
-						</div>
-						<div class="pmdynaform-media-progress">
-							<span class="pmdynaform-media-bufferBar"></span>
-							<span class="pmdynaform-media-timeBar"></span>
-						</div>
-						<div class="pmdynaform-media-progress-external">
-						</div>
-					</div>
-					<div class="sound sound2 btn" title="Mute/Unmute sound">
-						<span class="glyphicon glyphicon-volume-up"></span></div>
-					<div class="btnFS btn" title="Switch to full screen">
-						<span class="glyphicon glyphicon-fullscreen"></span>
-					</div>
-				</div>
+    <div class="pmdynaform-media-videoContainer">
+        <video src="<%-src%>" preload="none" controls="true">
+            <p>Your browser does not support the video tag.</p>
+        </video>
+        <div class="pmdynaform-media-caption"></div>
+        <div class="pmdynaform-media-control" display="none">
+            <div class="pmdynaform-media-btmControl">
+                <div class="btnPlay btn" title="Play/Pause video">
+                    <span class="glyphicon glyphicon-play"></span>
+                </div>
+                <div class="pmdynaform-media-progress-bar">
+                    <div class="pmdynaform-media-progress-external">
+                    </div>
+                    <div class="pmdynaform-media-progress">
+                        <span class="pmdynaform-media-bufferBar"></span>
+                        <span class="pmdynaform-media-timeBar"></span>
+                    </div>
+                    <div class="pmdynaform-media-progress-external">
+                    </div>
+                </div>
+                <div class="sound sound2 btn" title="Mute/Unmute sound">
+                    <span class="glyphicon glyphicon-volume-up"></span></div>
+                <div class="btnFS btn" title="Switch to full screen">
+                    <span class="glyphicon glyphicon-fullscreen"></span>
+                </div>
+            </div>
 
-			</div>
-		</div>
+        </div>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-media-audio">
-	<div class="pmdynaform-media-audioContainer">
-	    <audio preload="auto" src="<%-src%>">
-	    	<source src="<%-src%>" type="audio/mp3">
-			<source src="<%-src%>" type="audio/m4a">
-	    	<p>Your browser does not support the video tag.</p>
-		</audio>
-			<div class="pmdynaform-media-caption"></div>
-			<div class="pmdynaform-media-control">
-				<div class="pmdynaform-media-btmControl">
-					<div class="btnPlay btn" title="Play/Pause video">
-						<span class="glyphicon glyphicon-play"></span></div>
-					<div class="pmdynaform-media-progress-bar">
-						<div class="pmdynaform-media-progress-external">
-						</div>
-						<div class="pmdynaform-media-progress">
-							<span class="pmdynaform-media-bufferBar"></span>
-							<span class="pmdynaform-media-timeBar"></span>
-						</div>
-						<div class="pmdynaform-media-progress-external">
-						</div>
-					</div>
-					<div class="sound sound2 btn" title="Mute/Unmute sound">
-						<span class="glyphicon glyphicon-volume-up"></span></div>
-					<div class="btnFS btn" title="Switch to full screen">
-						<span class="glyphicon glyphicon-fullscreen"></span>
-					</div>
-				</div>
+    <div class="pmdynaform-media-audioContainer">
+        <audio preload="auto" src="<%-src%>">
+            <source src="<%-src%>" type="audio/mp3">
+            <source src="<%-src%>" type="audio/m4a">
+            <p>Your browser does not support the video tag.</p>
+        </audio>
+        <div class="pmdynaform-media-caption"></div>
+        <div class="pmdynaform-media-control">
+            <div class="pmdynaform-media-btmControl">
+                <div class="btnPlay btn" title="Play/Pause video">
+                    <span class="glyphicon glyphicon-play"></span></div>
+                <div class="pmdynaform-media-progress-bar">
+                    <div class="pmdynaform-media-progress-external">
+                    </div>
+                    <div class="pmdynaform-media-progress">
+                        <span class="pmdynaform-media-bufferBar"></span>
+                        <span class="pmdynaform-media-timeBar"></span>
+                    </div>
+                    <div class="pmdynaform-media-progress-external">
+                    </div>
+                </div>
+                <div class="sound sound2 btn" title="Mute/Unmute sound">
+                    <span class="glyphicon glyphicon-volume-up"></span></div>
+                <div class="btnFS btn" title="Switch to full screen">
+                    <span class="glyphicon glyphicon-fullscreen"></span>
+                </div>
+            </div>
 
-			</div>
-		</div>
+        </div>
+    </div>
 </script>
 
 <script type="text/template" id="tpl-multimedia-renderingWeb">
-	<%for(var i=0; i < elements.length; i+=1){%>
-		<%if(type === 'imageMobile'){%>
-			<img src= "data:image/png;base64,<%-elements[i].base64%>"
-				class='img-thumbnail'
-			 	alt='Thumbnail Image'>
-		<%}else{%>
-			<div class = 'container-element'>
-				<%if(ieVersion === 11 || ieVersion === 12){%>
-					<a href= "<%-elements[i].downloadLink%>" class = "multimedia-open fa fa-download fa-2" aria-hidden='true'></a>
-				<%}%>
-				<%if (type === "videoMobile"){%>
-					<video type='video/mp4'
-				<%}else{%>
-					<audio
-				<%}%>
-					class= "multimedia-web col-sm-12 col-md-12 col-lg-12"
-					id="<%-elements[i].id%>"
-					src= "<%-elements[i].filePath%>" controls
-				>
-			</div>
-		<%}%>
-	<%}%>
+    <%for(var i=0; i < elements.length; i+=1){%>
+    <%if(type === 'imageMobile'){%>
+    <img src="data:image/png;base64,<%-elements[i].base64%>"
+         class='img-thumbnail'
+         alt='Thumbnail Image'>
+    <%}else{%>
+    <div class='container-element'>
+        <%if(ieVersion === 11 || ieVersion === 12){%>
+        <a href="<%-elements[i].downloadLink%>" class="multimedia-open fa fa-download fa-2" aria-hidden='true'></a>
+        <%}%>
+        <%if (type === "videoMobile"){%>
+        <video type='video/mp4'
+        <%}else{%>
+        <audio
+        <%}%>
+        class= "multimedia-web col-sm-12 col-md-12 col-lg-12"
+        id="<%-elements[i].id%>"
+        src= "<%-elements[i].filePath%>" controls
+        >
+    </div>
+    <%}%>
+    <%}%>
 </script>
 
 
+<script type="text/template" id="tpl-thumbnail-image">
+    <div id="<%-idFile%>" class="pmdynaform-file-containerimage">
+		<span class="pmdynaform-file-preview">
+			<div id="<%-idFile%>" class="pmdynaform-file-resizeimage">
+                    <div class="image-cancel" style="display:none">
+                    <div class="image-cancel-icon"> <span class="icon-cancel"> <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                    fill="#000000" viewBox="0 0 24 24"
+                                                                                    width="100%" height="100%">
+                        <path
+                                d="M12,2C6.47,2,2,6.47,2,12s4.47,10,10,10s10-4.47,10-10S17.53,2,12,2z M17,15.59L15.59,17L12,13.41L8.41,17L7,15.59 L10.59,12L7,8.41L8.41,7L12,10.59L15.59,7L17,8.41L13.41,12L17,15.59z"></path></svg> </span></div>
+                    </div>
+                    <img class="pmdynaform-image-ext" src=<%-src%>>
+
+                    <span class="pmdynaform-file-overlay">
+					    <span class="pmdynaform-file-updone"></span>
+				    </span>
+
+                <progress id="progressBar" value="0" max="100" style="width:100%;display:none"></progress>
+			</div>
+		</span>
+    </div>
+</script>
 
 
 <script type="text/template" id="tpl-extgeo">
@@ -1666,9 +1790,21 @@ is called to PMDynaform.view.Radio method "_setOptions()"
             >
             <div class="pmdynaform-multiplefile-control">
                 <%if (mode === 'disabled'){ %>
-                <button type="button" class="btn btn-uploadfile-disabled"><%- labelButton %></button>
+                <button type="button" class="btn btn-uploadfile-disabled"
+                    <%if(tabIndex !== ""){%>
+                        tabindex= "<%-tabIndex%>"
+                    <%}%>
+                    aria-label= "<%-ariaLabel%>"
+                ><%- labelButton %></button>
                 <%}else if(mode === 'edit') {%>
-                <button type="button" class="btn btn-uploadfile"><%- labelButton %></button>
+                <button type="button" class="btn btn-uploadfile"
+                    <%if(tabIndex !== ""){%>
+                        tabindex= "<%-tabIndex%>"
+                    <%}%>
+                    <%if(ariaLabel !== ""){%>
+                        aria-label= "<%-ariaLabel%>"
+                    <%}%>
+                ><%- labelButton %></button>
                 <%}%>
                 <input type="file" multiple="multiple" accept="<%-extensions%>" style="display:none">
             </div>

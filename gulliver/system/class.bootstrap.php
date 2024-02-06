@@ -944,7 +944,7 @@ class Bootstrap
         }
 
         //Remove comments..
-        $regex = array("`^([\t\s]+)`ism" => '', "`^\/\*(.+?)\*\/`ism" => "", "`([\n\A;]+)\/\*(.+?)\*\/`ism" => "$1", "`([\n\A;\s]+)//(.+?)[\n\r]`ism" => "$1\n", "`(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+`ism" => "\n");
+        $regex = array("`^([\t\s]+)`ism" => '', "`^\/\*(.+?)\*\/`ism" => "", "`([\n;]+)\/\*(.+?)\*\/`ism" => "$1", "`([\n;\s]+)//(.+?)[\n\r]`ism" => "$1\n", "`(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+`ism" => "\n");
         $output = preg_replace(array_keys($regex), $regex, $output);
         $output = $outputHeader . $output;
 

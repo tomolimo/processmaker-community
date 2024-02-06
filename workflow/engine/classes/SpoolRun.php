@@ -112,6 +112,16 @@ class SpoolRun
     }
 
     /**
+     * Set the fileData property
+     *
+     * @param array $fileData
+     */
+    public function setFileData($fileData)
+    {
+        $this->fileData = $fileData;
+    }
+
+    /**
      * Get the fileData property
      *
      * @return array
@@ -510,6 +520,7 @@ class SpoolRun
                     case 'MAIL':
                     case 'PHPMAILER':
                     case 'IMAP':
+                    case 'GMAILAPI':
                         switch ($this->config['MESS_ENGINE']) {
                             case 'MAIL':
                                 $phpMailer = new PHPMailer();
@@ -520,6 +531,11 @@ class SpoolRun
                                 $phpMailer = new PHPMailer(true);
                                 $phpMailer->Mailer = 'smtp';
                                 break;
+                            case 'GMAILAPI':
+                                $phpMailer = new PHPMailerOAuth();
+                                $phpMailer->AuthType = 'XOAUTH2';
+                                $phpMailer->isSMTP();
+                                break;
                         }
 
                         $phpMailer->SMTPAuth = (isset($this->config['SMTPAuth']) ? $this->config['SMTPAuth'] : '');
@@ -529,6 +545,7 @@ class SpoolRun
                                 break;
                             case 'IMAP':
                             case 'PHPMAILER':
+                            case 'GMAILAPI':
                                 //Posible Options for SMTPSecure are: "", "ssl" or "tls"
                                 if (isset($this->config['SMTPSecure']) && preg_match('/^(ssl|tls)$/', $this->config['SMTPSecure'])) {
                                     $phpMailer->SMTPSecure = $this->config['SMTPSecure'];
@@ -543,8 +560,15 @@ class SpoolRun
                             $phpMailer->Encoding = "8bit";
                             $phpMailer->Host = $this->config['MESS_SERVER'];
                             $phpMailer->Port = $this->config['MESS_PORT'];
-                            $phpMailer->Username = $this->config['MESS_ACCOUNT'];
-                            $phpMailer->Password = $this->config['MESS_PASSWORD'];
+                            if ($this->config['MESS_ENGINE'] !== 'GMAILAPI') {
+                                $phpMailer->Username = $this->config['MESS_ACCOUNT'];
+                                $phpMailer->Password = $this->config['MESS_PASSWORD'];
+                            } else {
+                                $phpMailer->oauthUserEmail = $this->config['MESS_ACCOUNT'];
+                                $phpMailer->oauthClientId = $this->config['OAUTH_CLIENT_ID'];
+                                $phpMailer->oauthClientSecret = $this->config['OAUTH_CLIENT_SECRET'];
+                                $phpMailer->oauthRefreshToken = $this->config['OAUTH_REFRESH_TOKEN'];
+                            }
 
                             //From
                             $phpMailer->SetFrom($this->fileData['from_email'], utf8_decode($this->fileData['from_name']));
@@ -658,42 +682,6 @@ class SpoolRun
                             }
                         } catch (Exception $error) {
                             $this->updateSpoolError($error->getMessage());
-                        }
-                        break;
-                    case 'OPENMAIL':
-                        $pack = new package($this->fileData);
-                        $header = $pack->returnHeader();
-                        $body = $pack->returnBody();
-                        $send = new smtp();
-                        $send->setServer($this->config['MESS_SERVER']);
-                        $send->setPort($this->config['MESS_PORT']);
-                        $send->setUsername($this->config['MESS_ACCOUNT']);
-
-                        $passwd = $this->config['MESS_PASSWORD'];
-                        $passwdDec = G::decrypt($passwd, 'EMAILENCRYPT');
-                        $auxPass = explode('hash:', $passwdDec);
-
-                        if (count($auxPass) > 1) {
-                            if (count($auxPass) == 2) {
-                                $passwd = $auxPass[1];
-                            } else {
-                                array_shift($auxPass);
-                                $passwd = implode('', $auxPass);
-                            }
-                        }
-
-                        $this->config['MESS_PASSWORD'] = $passwd;
-                        $send->setPassword($this->config['MESS_PASSWORD']);
-                        $send->setReturnPath($this->fileData['from_email']);
-                        $send->setHeaders($header);
-                        $send->setBody($body);
-                        $send->setEnvelopeTo($this->fileData['envelope_to']);
-                        if ($send->sendMessage()) {
-                            $this->error = '';
-                            $this->status = 'sent';
-                        } else {
-                            $this->error = implode(', ', $send->returnErrors());
-                            $this->status = 'failed';
                         }
                         break;
                 }

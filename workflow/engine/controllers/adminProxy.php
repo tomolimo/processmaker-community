@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Validation\ValidationUploadedFiles;
@@ -232,7 +233,7 @@ class adminProxy extends HttpProxyController
         return array('success' => $success, 'users' => $usersAdmin);
     }
 
-    public function getUxTypesList($type = 'assoc')
+    public static function getUxTypesList($type = 'assoc')
     {
         $list = array();
 
@@ -1500,8 +1501,14 @@ class adminProxy extends HttpProxyController
         //Installed Plugins (license info?)
         $arrayAddon = array();
 
-        if (file_exists(PATH_DATA_SITE . "ee")) {
-            $arrayAddon = unserialize(trim(file_get_contents(PATH_DATA_SITE . "ee")));
+        $eeData = Cache::get(config('system.workspace') . 'enterprise.ee', function () {
+            if (file_exists(PATH_DATA_SITE . 'ee')) {
+                return trim(file_get_contents(PATH_DATA_SITE . 'ee'));
+            }
+            return null;
+        });
+        if ($eeData) {
+            $arrayAddon = unserialize($eeData);
         }
 
         $plugins = array();

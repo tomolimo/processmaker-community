@@ -689,9 +689,8 @@ class Light
                 $sAppDocUid = $oAppDocument->getAppDocUid();
                 $iDocVersion = $oAppDocument->getDocVersion();
                 $info = pathinfo($oAppDocument->getAppDocFilename());
-                $ext = (isset($info['extension']) ? $info['extension'] : '');//BUG fix: must handle files without any extension
+                $ext = (isset($info['extension']) ? $info['extension'] : ''); //BUG fix: must handle files without any extension
 
-                //$app_uid = G::getPathFromUID($oAppDocument->Fields['APP_UID']);
                 $file = G::getPathFromFileUID($oAppDocument->Fields['APP_UID'], $sAppDocUid);
 
                 $realPath = PATH_DOCUMENT . G::getPathFromUID($app_uid) . '/' . $file[0] . $file[1] . '_' . $iDocVersion . '.' . $ext;
@@ -1338,6 +1337,8 @@ class Light
      */
     public function getConfiguration($params)
     {
+        $response = [];
+        
         $sysConf = Bootstrap::getSystemConfiguration('', '', config("system.workspace"));
         $multiTimeZone = false;
         //Set Time Zone
@@ -1395,6 +1396,8 @@ class Light
             $response['tz'] = isset($_SESSION['USR_TIME_ZONE']) ? $_SESSION['USR_TIME_ZONE'] : $sysConf['time_zone'];
         }
 
+        $response['mobile_offline_tables_download_interval'] = $sysConf['mobile_offline_tables_download_interval'];
+
         return $response;
     }
 
@@ -1403,13 +1406,13 @@ class Light
         switch (substr($size_str, -1)) {
             case 'M':
             case 'm':
-                return (int)$size_str * 1048576;
+                return (int) $size_str * 1048576;
             case 'K':
             case 'k':
-                return (int)$size_str * 1024;
+                return (int) $size_str * 1024;
             case 'G':
             case 'g':
-                return (int)$size_str * 1073741824;
+                return (int) $size_str * 1073741824;
             default:
                 return $size_str;
         }

@@ -1169,12 +1169,13 @@ class Workflow extends Handler
 
             //Getting DynaForms
             foreach ($workflowData["dynaforms"] as $dynaform) {
-                $dynFile = PATH_DYNAFORM . $dynaform["DYN_FILENAME"] . ".xml";
+                $dynFile = PATH_DYNAFORM . $dynaform["PRO_UID"] . "/" . $dynaform["DYN_UID"] . ".xml";
+                $content = file_exists($dynFile) ? file_get_contents($dynFile) : '';
 
                 $workflowFile["DYNAFORMS"][] = array(
                     "filename" => $dynaform["DYN_TITLE"],
                     "filepath" => $dynaform["DYN_FILENAME"] . ".xml",
-                    "file_content" => file_get_contents($dynFile)
+                    "file_content" => $content
                 );
 
                 $htmlFile = PATH_DYNAFORM . $dynaform["DYN_FILENAME"] . ".html";

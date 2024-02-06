@@ -21,7 +21,7 @@ Initially released in December 2012, the PHP IMAP Mailbox is a powerful and open
  
 ### Requirements
 
-* PHP 5.6, 7.0, 7.1, 7.2 or 7.3
+* PHP 5.6, 7.0, 7.1, 7.2, 7.3 or 7.4
 * PHP `imap` extension must be present; so make sure this line is active in your php.ini: `extension=php_imap.dll`
 * PHP `mbstring` extension must be present; so make sure this line is active in your php.ini: `extension=php_mbstring.dll`
 * PHP `iconv` extension must be present, if `mbstring` is not available; so make sure this line is active in your php.ini: `extension=php_iconv.dll`
@@ -34,7 +34,7 @@ Install the [latest available release](https://github.com/barbushin/php-imap/rel
 
 Install the latest available and stable source code from `master`, which is may not released / tagged yet:
 
-	$ composer require php-imap/php-imap
+	$ composer require php-imap/php-imap:dev-master
 
 Install the latest available and may unstable source code from `develop`, which is may not properly tested yet:
 

@@ -2522,6 +2522,8 @@
         <column name="ADD_TAB_TYPE" type="VARCHAR" size="32" required="false" default=""/>
         <column name="ADD_TAB_GRID" type="VARCHAR" size="256" required="false" default=""/>
         <column name="ADD_TAB_TAG" type="VARCHAR" size="256" required="false" default=""/>
+        <column name="ADD_TAB_OFFLINE" type="TINYINT" required="true" default="0"/>
+        <column name="ADD_TAB_UPDATE_DATE" type="TIMESTAMP" required="true"/>
         <index name="indexAdditionalProcess">
             <index-column name="PRO_UID"/>
         </index>
@@ -3014,9 +3016,16 @@
         </vendor>
         <column name="FOLDER_UID" type="VARCHAR" size="32" required="true" default="" primaryKey="true"/>
         <column name="FOLDER_PARENT_UID" type="VARCHAR" size="32" required="true" default=""/>
-        <column name="FOLDER_NAME" type="LONGVARCHAR" required="true"/>
+        <column name="FOLDER_NAME" type="VARCHAR" size="512" required="true"/>
         <column name="FOLDER_CREATE_DATE" type="TIMESTAMP" required="true"/>
         <column name="FOLDER_UPDATE_DATE" type="TIMESTAMP" required="true"/>
+        <index name="indexFolderName">
+            <index-column name="FOLDER_NAME"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APP_FOLDER"/>
+                <parameter name="Key_name" value="indexFolderName"/>
+            </vendor>
+        </index>
     </table>
     <table name="FIELD_CONDITION">
         <vendor type="mysql">
@@ -5004,6 +5013,9 @@
         <column name="MESS_TRY_SEND_INMEDIATLY" type="INTEGER" required="true" default="0"/>
         <column name="MAIL_TO" type="VARCHAR" size="256" required="false" default=""/>
         <column name="MESS_DEFAULT" type="INTEGER" required="true" default="0"/>
+        <column name="OAUTH_CLIENT_ID" type="VARCHAR" size="512" required="true" default=""/>
+        <column name="OAUTH_CLIENT_SECRET" type="VARCHAR" size="512" required="true" default=""/>
+        <column name="OAUTH_REFRESH_TOKEN" type="VARCHAR" size="512" required="true" default=""/>
     </table>
 
     <table name="WEB_ENTRY_EVENT">

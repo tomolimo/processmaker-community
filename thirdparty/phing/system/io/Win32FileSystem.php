@@ -446,7 +446,7 @@ class Win32FileSystem extends FileSystem {
     /* -- Basic infrastructure -- */
 
     /** compares file paths lexicographically */
-    function compare(PhingFile $f1, PhingFile $f2) {
+    function compare($f1, $f2) {
         $f1Path = $f1->getPath();
         $f2Path = $f2->getPath();
         return (boolean) strcasecmp((string) $f1Path, (string) $f2Path);        

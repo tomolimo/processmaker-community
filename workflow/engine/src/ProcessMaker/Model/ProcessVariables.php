@@ -12,6 +12,7 @@ class ProcessVariables extends Model
     public $timestamps = false;
     //primary key
     protected $primaryKey = 'VAR_UID';
+    public $incrementing = false;
 
     /**
      * Scope a query to filter an specific process

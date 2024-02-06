@@ -88,6 +88,7 @@ Ext.onReady(function() {
       fieldLabel: _('ID_CACHE_USER'), // 'User',
       disabled: false,
       name: 'user',
+      autoCreate: {tag: 'input', type: 'text', size: userNameMaxLength, autocomplete: 'off', maxlength: userNameMaxLength},
       allowBlank: false
     };
 

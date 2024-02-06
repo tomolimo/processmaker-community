@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
@@ -354,8 +355,14 @@ class AddonsStore extends BaseAddonsStore
         $oPluginRegistry = PluginRegistry::loadSingleton();
         $aPluginsPP = array();
 
-        if (file_exists(PATH_DATA_SITE . 'ee')) {
-            $aPluginsPP = unserialize(trim(file_get_contents(PATH_DATA_SITE . 'ee')));
+        $eeData = Cache::get(config('system.workspace') . 'enterprise.ee', function () {
+            if (file_exists(PATH_DATA_SITE . 'ee')) {
+                return trim(file_get_contents(PATH_DATA_SITE . 'ee'));
+            }
+            return null;
+        });
+        if ($eeData) {
+            $aPluginsPP = unserialize($eeData);
         }
 
         $pmLicenseManagerO = PmLicenseManager::getSingleton();

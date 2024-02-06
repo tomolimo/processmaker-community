@@ -593,8 +593,6 @@ Ext.onReady(function () {
         }
     }
 
-    parent.updateCasesTree();
-
     function inArray(arr, obj) {
         for (var i = 0; i < arr.length; i++) {
             if (arr[i] == obj)

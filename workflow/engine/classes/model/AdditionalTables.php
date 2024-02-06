@@ -1,23 +1,12 @@
 <?php
 
-/**
- * AdditionalTables.php
- * @package    workflow.engine.classes.model
- */
-require_once 'classes/model/om/BaseAdditionalTables.php';
+use Illuminate\Support\Facades\DB;
+use ProcessMaker\Commands\GenerateDataReport;
+use ProcessMaker\Core\MultiProcOpen;
+use ProcessMaker\Model\Application;
+use ProcessMaker\Model\Fields;
 
-/**
- * Skeleton subclass for representing a row from the 'ADDITIONAL_TABLES' table.
- *
- *
- *
- * You should add additional methods to this class to meet the
- * application requirements.  This class will only be generated as
- * long as it does not already exist in the output directory.
- * <juliocesar@colosa.com, julces2000@gmail.com>
- *
- * @package    workflow.engine.classes.model
- */
+require_once 'classes/model/om/BaseAdditionalTables.php';
 
 function validateType($value, $type)
 {
@@ -740,136 +729,34 @@ class AdditionalTables extends BaseAdditionalTables
      */
     public function populateReportTable($tableName, $sConnection = 'rp', $type = 'NORMAL', $processUid = '', $gridKey = '', $addTabUid = '')
     {
-        $this->className = $this->getPHPName($tableName);
-        $this->classPeerName = $this->className . 'Peer';
-
-        if (!file_exists(PATH_WORKSPACE . 'classes/' . $this->className . '.php')) {
-            throw new Exception("ERROR: " . PATH_WORKSPACE . 'classes/' . $this->className . '.php' . " class file doesn't exit!");
-        }
-
-        require_once PATH_WORKSPACE . 'classes/' . $this->className . '.php';
-
-        //get fields
-        $fieldTypes = [];
-        if ($addTabUid != '') {
-            $criteria = new Criteria('workflow');
-            $criteria->add(FieldsPeer::ADD_TAB_UID, $addTabUid);
-            $dataset = FieldsPeer::doSelectRS($criteria);
-            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            while ($dataset->next()) {
-                $row = $dataset->getRow();
-                switch ($row['FLD_TYPE']) {
-                    case 'FLOAT':
-                    case 'DOUBLE':
-                    case 'INTEGER':
-                        $fieldTypes[] = array($row['FLD_NAME'] => $row['FLD_TYPE']);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        //remove old applications references
-        $connection = Propel::getConnection($sConnection);
-        $statement = $connection->createStatement();
-        $sql = "TRUNCATE " . $tableName;
-        $statement->executeQuery($sql);
-
-        $case = new Cases();
-        $context = Bootstrap::getDefaultContextLog();
-
-        //select cases for this Process, ordered by APP_NUMBER
-        $criteria = new Criteria('workflow');
-        $criteria->add(ApplicationPeer::PRO_UID, $processUid);
-        $criteria->addAscendingOrderByColumn(ApplicationPeer::APP_NUMBER);
-        $dataset = ApplicationPeer::doSelectRS($criteria);
-        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        while ($dataset->next()) {
-            $row = $dataset->getRow();
-
-            //getting the case data
-            $appData = $case->unserializeData($row['APP_DATA']);
-
-            //quick fix, map all empty values as NULL for Database
-            foreach ($appData as $appDataKey => $appDataValue) {
-                if (is_array($appDataValue) && count($appDataValue)) {
-                    $j = key($appDataValue);
-                    $appDataValue = is_array($appDataValue[$j]) ? $appDataValue : $appDataValue[$j];
-                }
-                if (is_string($appDataValue)) {
-                    foreach ($fieldTypes as $key => $fieldType) {
-                        foreach ($fieldType as $fieldTypeKey => $fieldTypeValue) {
-                            if (strtoupper($appDataKey) == $fieldTypeKey) {
-                                $appData[$appDataKey] = validateType($appDataValue, $fieldTypeValue);
-                                unset($fieldTypeKey);
-                            }
-                        }
-                    }
-                    // normal fields
-                    if (trim($appDataValue) === '') {
-                        $appData[$appDataKey] = null;
-                    }
-                } else {
-                    // grids
-                    if (is_array($appData[$appDataKey])) {
-                        foreach ($appData[$appDataKey] as $dIndex => $dRow) {
-                            if (is_array($dRow)) {
-                                foreach ($dRow as $k => $v) {
-                                    if (is_string($v) && trim($v) === '') {
-                                        $appData[$appDataKey][$dIndex][$k] = null;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            //populate data
-            $className = $this->className;
-            if ($type === 'GRID') {
-                list($gridName, $gridUid) = explode('-', $gridKey);
-                $gridData = isset($appData[$gridName]) ? $appData[$gridName] : [];
-                foreach ($gridData as $i => $gridRow) {
-                    try {
-                        $obj = new $className();
-                        $obj->fromArray($appData, BasePeer::TYPE_FIELDNAME);
-                        $obj->setAppUid($row['APP_UID']);
-                        $obj->setAppNumber($row['APP_NUMBER']);
-                        if (method_exists($obj, 'setAppStatus')) {
-                            $obj->setAppStatus($row['APP_STATUS']);
-                        }
-                        $obj->fromArray(array_change_key_case($gridRow, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
-                        $obj->setRow($i);
-                        $obj->save();
-                    } catch (Exception $e) {
-                        $context["message"] = $e->getMessage();
-                        $context["tableName"] = $tableName;
-                        $context["appUid"] = $row['APP_UID'];
-                        Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
-                    }
-                    unset($obj);
-                }
-            } else {
-                try {
-                    $obj = new $className();
-                    $obj->fromArray(array_change_key_case($appData, CASE_UPPER), BasePeer::TYPE_FIELDNAME);
-                    $obj->setAppUid($row['APP_UID']);
-                    $obj->setAppNumber($row['APP_NUMBER']);
-                    if (method_exists($obj, 'setAppStatus')) {
-                        $obj->setAppStatus($row['APP_STATUS']);
-                    }
-                    $obj->save();
-                } catch (Exception $e) {
-                    $context["message"] = $e->getMessage();
-                    $context["tableName"] = $tableName;
-                    $context["appUid"] = $row['APP_UID'];
-                    Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
-                }
-                unset($obj);
-            }
-        }
+        $this->className = $className = $this->getPHPName($tableName);
+        $this->classPeerName = $classPeerName = $className . 'Peer';
+        DB::statement("TRUNCATE " . $tableName);
+        $workspace = config("system.workspace");
+        $pathWorkspace = PATH_WORKSPACE;
+        $n = Application::count();
+        $processesManager = new MultiProcOpen();
+        $processesManager->chunk($n, 1000, function($size, $start, $limit) use(
+                $workspace, 
+                $tableName, 
+                $type, 
+                $processUid, 
+                $gridKey, 
+                $addTabUid, 
+                $className, 
+                $pathWorkspace) {
+            return new GenerateDataReport(
+                    $workspace, 
+                    $tableName, 
+                    $type, 
+                    $processUid, 
+                    $gridKey, 
+                    $addTabUid, 
+                    $className, 
+                    $pathWorkspace, 
+                    $start, 
+                    $limit);
+        });
     }
 
     /**
@@ -1086,6 +973,7 @@ class AdditionalTables extends BaseAdditionalTables
         $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_DESCRIPTION);
         $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TYPE);
         $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_TAG);
+        $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_OFFLINE);
         $criteria->addSelectColumn(AdditionalTablesPeer::PRO_UID);
         $criteria->addSelectColumn(AdditionalTablesPeer::DBS_UID);
 
@@ -1122,6 +1010,9 @@ class AdditionalTables extends BaseAdditionalTables
                 . ")";
         $buildNumberRows = clone $criteria;
         $buildNumberRows->clear();
+        $buildNumberRows->addSelectColumn(AdditionalTablesPeer::PRO_UID);
+        $buildNumberRows->addSelectColumn(AdditionalTablesPeer::DBS_UID);
+        $buildNumberRows->addSelectColumn(AdditionalTablesPeer::ADD_TAB_CLASS_NAME);
         $buildNumberRows->addSelectColumn(AdditionalTablesPeer::ADD_TAB_NAME);
         $buildNumberRows->addAsColumn("EXISTS_TABLE", $stringSql);
         $dataset1 = AdditionalTablesPeer::doSelectRS($buildNumberRows);
@@ -1131,6 +1022,27 @@ class AdditionalTables extends BaseAdditionalTables
             $stringCount = "'" . G::LoadTranslation('ID_TABLE_NOT_FOUND') . "'";
             if ($row["EXISTS_TABLE"] === "1") {
                 $stringCount = "(SELECT COUNT(*) FROM " . $row["ADD_TAB_NAME"] . ")";
+            }
+            if ($row["EXISTS_TABLE"] === "0") {
+                $className = $row['ADD_TAB_CLASS_NAME'];
+                $pathWorkspace = PATH_DB . config("system.workspace") . PATH_SEP;
+                if (file_exists($pathWorkspace . 'classes/' . $className . '.php')) {
+                    $_SESSION['PROCESS'] = $row['PRO_UID']; //is required by method Propel::getConnection()
+                    require_once $pathWorkspace . 'classes/' . $className . '.php';
+                    $externalCriteria = new Criteria(PmTable::resolveDbSource($row['DBS_UID']));
+                    $externalCriteria->addSelectColumn(($className . "Peer")::COUNT);
+                    //if the external database is not available we catch the exception.
+                    try {
+                        $externalResultSet = ($className . "Peer")::doSelectRS($externalCriteria);
+                        if ($externalResultSet->next()) {
+                            $stringCount = $externalResultSet->getInt(1);
+                        }
+                    } catch (Exception $externalException) {
+                        $context = Bootstrap::getDefaultContextLog();
+                        $context = array_merge($context, $row);
+                        Bootstrap::registerMonolog("additional tables", 400, $externalException->getMessage(), $context);
+                    }
+                }
             }
             $stringBuild = $stringBuild
                     . "WHEN '" . $row["ADD_TAB_NAME"]

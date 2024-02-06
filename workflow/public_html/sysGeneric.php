@@ -293,12 +293,14 @@ if ((preg_match("/msie/i", $_SERVER ['HTTP_USER_AGENT']) != 1 ||
         $config['safari_cookie_lifetime'] == 1)) {
     ini_set('session.cookie_lifetime', $timelife);
 }
-session_start();
 
-if (!(array_key_exists('REMOTE_USER', $_SERVER) && (string)($_SERVER['REMOTE_USER']) != '')) {
+if (!(array_key_exists('REMOTE_USER', $_SERVER) && (string) ($_SERVER['REMOTE_USER']) != '')) {
     ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 1);
+    if (G::is_https()) {
+        ini_set('session.cookie_secure', 1);
+    }
 }
+session_start();
 
 //Set Time Zone
 

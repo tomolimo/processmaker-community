@@ -936,6 +936,24 @@
                         }
                     );
                     break;
+                case "tabIndex":
+                    validateValue = !isNaN(value) || value === "";
+                    if (!validateValue) {
+                        messageDialog = 'The value provided for the tab index property of the field "{0}" is invalid'.translate([target.properties.id.value]);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
+                        dialogMessage.onAccept = function () {
+                            dialogMessage.dialog.dialog("close");
+                        };
+                    } else {
+                        target.properties[prop].value = value;
+                    }
+                    break;
             }
         };
         this.form1.onSynchronizeVariables = function (variables) {

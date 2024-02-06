@@ -183,23 +183,30 @@ class Ajax
         $c->add(AppThreadPeer::APP_THREAD_STATUS, 'OPEN');
         $cant = AppThreadPeer::doCount($c);
 
-        $oCase = new Cases();
-        $aFields = $oCase->loadCase($appUid, $index);
+        $case = new Cases();
+        $fields = $case->loadCase($appUid, $index);
 
         global $RBAC;
 
         $options = [];
 
-        switch ($aFields['APP_STATUS']) {
+        switch ($fields['APP_STATUS']) {
             case 'DRAFT':
                 if (!AppDelay::isPaused($appUid, $index)) {
                     $options[] = ['text' => G::LoadTranslation('ID_PAUSED_CASE'), 'fn' => 'setUnpauseCaseDate'];
                 } else {
                     $options[] = ['text' => G::LoadTranslation('ID_UNPAUSE'), 'fn' => 'unpauseCase'];
                 }
-
-                $options[] = ['text' => G::LoadTranslation('ID_DELETE'), 'fn' => 'deleteCase'];
-
+                // Check if the user has the permission for the action Delete Case
+                if ($RBAC->userCanAccess('PM_DELETECASE') == 1) {
+                    $options[] = ['text' => G::LoadTranslation('ID_DELETE'), 'fn' => 'deleteCase'];
+                } else {
+                    // Check if the user is the owner
+                    if ($fields['APP_INIT_USER'] === $RBAC->aUserInfo['USER_INFO']['USR_UID']) {
+                        $options[] = ['text' => G::LoadTranslation('ID_DELETE'), 'fn' => 'deleteCase'];
+                    }
+                }
+                // Check if the user has the permission for the action Reassign Case
                 if ($RBAC->userCanAccess('PM_REASSIGNCASE') == 1 || $RBAC->userCanAccess('PM_REASSIGNCASE_SUPERVISOR') == 1) {
                     if (!AppDelay::isPaused($appUid, $index)) {
                         $options[] = ['text' => G::LoadTranslation('ID_REASSIGN'), 'fn' => 'getUsersToReassign'];
@@ -245,7 +252,7 @@ class Ajax
         }
 
         if ($_SESSION["TASK"] != "" && $_SESSION["TASK"] != "-1") {
-            $oTask = new Task();
+            $task = new Task();
             $tasksInParallel = explode('|', $_SESSION['TASK']);
             $tasksInParallel = array_filter($tasksInParallel, function ($value) {
                 return !empty($value);
@@ -253,12 +260,12 @@ class Ajax
             $nTasksInParallel = count($tasksInParallel);
 
             if ($nTasksInParallel > 1) {
-                $aTask = $oTask->load($tasksInParallel[$nTasksInParallel - 1]);
+                $taskProperties = $task->load($tasksInParallel[$nTasksInParallel - 1]);
             } else {
-                $aTask = $oTask->load($_SESSION['TASK']);
+                $taskProperties = $task->load($_SESSION['TASK']);
             }
 
-            if ($aTask['TAS_TYPE'] == 'ADHOC') {
+            if ($taskProperties['TAS_TYPE'] == 'ADHOC') {
                 $options[] = ['text' => G::LoadTranslation('ID_ADHOC_ASSIGNMENT'), 'fn' => 'adhocAssignmentUsers'];
             }
         }
@@ -541,45 +548,36 @@ class Ajax
         G::RenderPage('publish', 'extJs');
     }
 
+    /**
+     * Cancel case from actions menu
+     *
+     * @link https://wiki.processmaker.com/3.3/Cases/Actions#Cancel
+     *
+     * @return void
+     */
     public function cancelCase()
     {
-        $oCase = new Cases();
-        $multiple = false;
-
-        if (isset($_POST['APP_UID']) && isset($_POST['DEL_INDEX'])) {
-            $APP_UID = $_POST['APP_UID'];
-            $DEL_INDEX = $_POST['DEL_INDEX'];
-
-            $appUids = explode(',', $APP_UID);
-            $delIndexes = explode(',', $DEL_INDEX);
-            if (count($appUids) > 1 && count($delIndexes) > 1) {
-                $multiple = true;
+        try {
+            $appUid = !empty($_SESSION['APPLICATION']) ? $_SESSION['APPLICATION'] : '';
+            $index = !empty($_SESSION['INDEX']) ? $_SESSION['INDEX'] : '';
+            $usrUid = !empty($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : '';
+            $result = new stdclass();
+            if (!empty($appUid) && !empty($index) && !empty($usrUid)) {
+                $ws = new WsBase();
+                $response = (object)$ws->cancelCase($appUid, $index, $usrUid);
+                // Review if the case was cancelled, true if the case was cancelled
+                $result->status = ($response->status_code == 0) ? true : false;
+                $result->msg = $response->message;
+            } else {
+                $result->status = false;
+                $result->msg = G::LoadTranslation("ID_CASE_USER_INVALID_CANCEL_CASE", [$usrUid]);
             }
-        } elseif (isset($_POST['sApplicationUID']) && isset($_POST['iIndex'])) {
-            $APP_UID = $_POST['sApplicationUID'];
-            $DEL_INDEX = $_POST['iIndex'];
-        } else {
-            $APP_UID = $_SESSION['APPLICATION'];
-            $DEL_INDEX = $_SESSION['INDEX'];
+        } catch (Exception $e) {
+            $result->status = false;
+            $result->msg = $e->getMessage();
         }
 
-        // Save the note pause reason
-        if ($_POST['NOTE_REASON'] != '') {
-            require_once("classes/model/AppNotes.php");
-            $appNotes = new AppNotes();
-            $noteContent = addslashes($_POST['NOTE_REASON']);
-            $appNotes->postNewNote($APP_UID, $_SESSION['USER_LOGGED'], $noteContent, $_POST['NOTIFY_PAUSE']);
-        }
-        // End save
-
-
-        if ($multiple) {
-            foreach ($appUids as $i => $appUid) {
-                $oCase->cancelCase($appUid, $delIndexes[$i], $_SESSION['USER_LOGGED']);
-            }
-        } else {
-            $oCase->cancelCase($APP_UID, $DEL_INDEX, $_SESSION['USER_LOGGED']);
-        }
+        print G::json_encode($result);
     }
 
     public function getUsersToReassign()

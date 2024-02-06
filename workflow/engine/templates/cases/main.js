@@ -496,8 +496,12 @@ Ext.onReady(function(){
   /**hide*/
   menuPanelC.hide();
   menuPanelC.ownerCt.doLayout();
-  //FORMATS.casesListRefreshTime is in seconds
-  setTimeout("timer()", parseInt(FORMATS.casesListRefreshTime) * 1000);
+
+  // Get the counters the first time
+  updateCasesTree();
+
+  // FORMATS.casesListRefreshTime is in seconds
+  setInterval("timer()", parseInt(FORMATS.casesListRefreshTime) * 1000);
 });
 
 function updateCasesView(viewList) {
@@ -562,8 +566,6 @@ function timer() {
       updateCasesTree();
       updateCasesView();
     }
-    //FORMATS.casesListRefreshTime is in seconds
-    setTimeout("timer()", parseInt(FORMATS.casesListRefreshTime) * 1000);
 }
 
 Ext.data.DynamicJsonReader = function(config){

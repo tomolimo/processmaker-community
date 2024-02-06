@@ -1,9 +1,11 @@
 <?php
+
 namespace ProcessMaker\Services\Api;
 
 use Exception;
 use Luracast\Restler\RestException;
 use ProcessMaker\BusinessModel\Table as BusinessModelTable;
+use ProcessMaker\Model\AdditionalTables;
 use ProcessMaker\Services\Api;
 
 /**
@@ -14,85 +16,137 @@ use ProcessMaker\Services\Api;
 class Pmtable extends Api
 {
     /**
-     * @return array
+     * Get a list of the PM tables in the workspace. It does not include any Report Table
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @url GET
+     * @status 200
+     *
+     * @param boolean $offline {@from path}
+     *
+     * @return array
+     * @throws RestException
      *
      * @access protected
-     * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @url GET
+     * @class AccessControl {@permission PM_LOGIN}
+     * @link https://wiki.processmaker.com/3.1/REST_API_Administration/PM_Tables#PM_Tables_List:_GET_.2Fpmtable
      */
-    public function doGetPmTables()
+    public function doGetPmTables($offline = false)
     {
         try {
-            $oPmTable = new \ProcessMaker\BusinessModel\Table();
-            $response = $oPmTable->getTables();
+            if ($offline) {
+                $response = AdditionalTables::getTablesOfflineStructure();
+            } else {
+                $pmTable = new BusinessModelTable();
+                $response = $pmTable->getTables();
+            }
+
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
-     * @param string $pmt_uid {@min 1} {@max 32}
+     * Get the data of the offline PM tables
+     *
+     * @url GET /offline/data
+     * @status 200
+     *
+     * @param boolean $compress {@from path}
+     *
      * @return array
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @throws RestException
      *
      * @access protected
-     * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
+     * @class AccessControl {@permission PM_LOGIN}
+     * @link https://wiki.processmaker.com/3.1/REST_API_Administration/PM_Tables#PM_Tables_List:_GET_.2Fpmtable
+     */
+    public function doGetPmTablesDataOffline($compress = true)
+    {
+        try {
+            $data = AdditionalTables::getTablesOfflineData();
+            if ($compress) {
+                $json = json_encode($data);
+                $compressed = gzcompress($json, 5);
+                echo $compressed;
+            } else {
+                return $data;
+            }
+        } catch (Exception $e) {
+            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        }
+    }
+
+    /**
+     * Get the structure from a specific PM Table, including a list of its fields and their properties.
+     *
      * @url GET /:pmt_uid
+     * @status 200
+     *
+     * @param string $pmt_uid {@min 1} {@max 32}
+     *
+     * @return array
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_SETUP_PM_TABLES}
+     * @link https://wiki.processmaker.com/3.1/REST_API_Administration/PM_Tables#Get_PM_Table_Structure:_GET_.2Fpmtable.2F.7Bpmt_uid.7D
      */
     public function doGetPmTable($pmt_uid)
     {
         try {
-            $oPmTable = new \ProcessMaker\BusinessModel\Table();
+            $oPmTable = new BusinessModelTable();
             $response = $oPmTable->getTable($pmt_uid);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
+     * Get the data from a PM table
+     *
+     * @url GET /:pmt_uid/data
+     * @status 200
+     *
      * @param string $pmt_uid {@min 1} {@max 32}
      * @param string $filter
      * @param string $q
-     * @return array
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @return array
+     * @throws RestException
      *
      * @access protected
      * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @url GET /:pmt_uid/data
+     *
      */
     public function doGetPmTableData($pmt_uid, $filter = null, $q = "")
     {
         try {
-            $oPmTable = new \ProcessMaker\BusinessModel\Table();
+            $oPmTable = new BusinessModelTable();
             $response = $oPmTable->getTableData($pmt_uid, null, $filter, false, $q);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
+     * Create a new PM Table
+     *
+     * @url POST
+     * @status 201
+     *
      * @param array $request_data
      * @param string $pmt_tab_name {@from body}
      * @param string $pmt_tab_dsc {@from body}
-     * @return array
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @return array
+     * @throws RestException
      *
      * @access protected
      * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @url POST
-     * @status 201
      */
     public function doPostPmTable(
         $request_data,
@@ -100,58 +154,58 @@ class Pmtable extends Api
         $pmt_tab_dsc = ''
     ) {
         try {
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
+            $oReportTable = new BusinessModelTable();
             $response = $oReportTable->saveTable($request_data);
             if (isset($response['pro_uid'])) {
                 unset($response['pro_uid']);
             }
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
-     * @param string $pmt_uid {@min 1} {@max 32}
+     * Add a new record to a PM Table
      *
-     * @param array $request_data
-     * @return array
-     *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
-     * @access protected
-     * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
      * @url POST /:pmt_uid/data
      * @status 201
+     *
+     * @param string $pmt_uid {@min 1} {@max 32}
+     * @param array $request_data
+     *
+     * @return array
+     * @throws RestException
+     * @access protected
+     * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
      */
     public function doPostPmTableData(
         $pmt_uid,
         $request_data
     ) {
         try {
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
+            $oReportTable = new BusinessModelTable();
             $response = $oReportTable->saveTableData($pmt_uid, $request_data);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
-     * Update pm-table.
+     * Update the structure of a PM table.
      *
      * @url PUT /:pmt_uid
+     * @status 200
      *
      * @param string $pmt_uid {@min 1} {@max 32}
      * @param array $request_data
      *
      * @return void
-     * @throw RestException
+     * @throws RestException
      *
      * @access protected
      * @class AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @throws RestException
      */
     public function doPutPmTable(
         $pmt_uid,
@@ -167,9 +221,10 @@ class Pmtable extends Api
     }
 
     /**
-     * Update pm-table data.
+     * Update the data of an existing record in a PM table.
      *
      * @url PUT /:pmt_uid/data
+     * @status 200
      *
      * @param string $pmt_uid {@min 1} {@max 32}
      * @param array $request_data
@@ -185,37 +240,47 @@ class Pmtable extends Api
         $request_data
     ) {
         try {
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
+            $oReportTable = new BusinessModelTable();
             $response = $oReportTable->updateTableData($pmt_uid, $request_data);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
+     * Delete a specified PM table and all its data.
+     *
+     * @url DELETE /:pmt_uid
+     * @status 200
+     *
      * @param string $pmt_uid {@min 1} {@max 32}
      *
      * @return void
-     *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @throws RestException
      *
      * @access protected
      * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @url DELETE /:pmt_uid
      */
     public function doDeletePmTable($pmt_uid)
     {
         try {
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
+            $oReportTable = new BusinessModelTable();
             $response = $oReportTable->deleteTable($pmt_uid);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
+     * Delete a record from a PM table, by specifying its primary key(s). The PM Table can have up to 3 primary key
+     * fields.
+     *
+     * @url DELETE /:pmt_uid/data/:key1/:value1
+     * @url DELETE /:pmt_uid/data/:key1/:value1/:key2/:value2
+     * @url DELETE /:pmt_uid/data/:key1/:value1/:key2/:value2/:key3/:value3
+     * @status 200
+     *
      * @param string $pmt_uid {@min 1} {@max 32}
      * @param string $key1 {@min 1}
      * @param string $value1 {@min 1}
@@ -225,15 +290,10 @@ class Pmtable extends Api
      * @param string $value3
      *
      * @return array
-     *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * @throws RestException
      *
      * @access protected
      * @class  AccessControl {@permission PM_SETUP_PM_TABLES}
-     * @url DELETE /:pmt_uid/data/:key1/:value1
-     * @url DELETE /:pmt_uid/data/:key1/:value1/:key2/:value2
-     * @url DELETE /:pmt_uid/data/:key1/:value1/:key2/:value2/:key3/:value3
      */
     public function doDeletePmTableData($pmt_uid, $key1, $value1, $key2 = '', $value2 = '', $key3 = '', $value3 = '')
     {
@@ -245,10 +305,10 @@ class Pmtable extends Api
             if ($key3 != '') {
                 $rows[$key3] = $value3;
             }
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
+            $oReportTable = new BusinessModelTable();
             $response = $oReportTable->deleteTableData($pmt_uid, $rows);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }

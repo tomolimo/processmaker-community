@@ -118,6 +118,24 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
     protected $mess_default = 0;
 
     /**
+     * The value for the oauth_client_id field.
+     * @var        string
+     */
+    protected $oauth_client_id = '';
+
+    /**
+     * The value for the oauth_client_secret field.
+     * @var        string
+     */
+    protected $oauth_client_secret = '';
+
+    /**
+     * The value for the oauth_refresh_token field.
+     * @var        string
+     */
+    protected $oauth_refresh_token = '';
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -294,6 +312,39 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
     {
 
         return $this->mess_default;
+    }
+
+    /**
+     * Get the [oauth_client_id] column value.
+     * 
+     * @return     string
+     */
+    public function getOauthClientId()
+    {
+
+        return $this->oauth_client_id;
+    }
+
+    /**
+     * Get the [oauth_client_secret] column value.
+     * 
+     * @return     string
+     */
+    public function getOauthClientSecret()
+    {
+
+        return $this->oauth_client_secret;
+    }
+
+    /**
+     * Get the [oauth_refresh_token] column value.
+     * 
+     * @return     string
+     */
+    public function getOauthRefreshToken()
+    {
+
+        return $this->oauth_refresh_token;
     }
 
     /**
@@ -627,6 +678,72 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
     } // setMessDefault()
 
     /**
+     * Set the value of [oauth_client_id] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setOauthClientId($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->oauth_client_id !== $v || $v === '') {
+            $this->oauth_client_id = $v;
+            $this->modifiedColumns[] = EmailServerPeer::OAUTH_CLIENT_ID;
+        }
+
+    } // setOauthClientId()
+
+    /**
+     * Set the value of [oauth_client_secret] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setOauthClientSecret($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->oauth_client_secret !== $v || $v === '') {
+            $this->oauth_client_secret = $v;
+            $this->modifiedColumns[] = EmailServerPeer::OAUTH_CLIENT_SECRET;
+        }
+
+    } // setOauthClientSecret()
+
+    /**
+     * Set the value of [oauth_refresh_token] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setOauthRefreshToken($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->oauth_refresh_token !== $v || $v === '') {
+            $this->oauth_refresh_token = $v;
+            $this->modifiedColumns[] = EmailServerPeer::OAUTH_REFRESH_TOKEN;
+        }
+
+    } // setOauthRefreshToken()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -673,12 +790,18 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
 
             $this->mess_default = $rs->getInt($startcol + 14);
 
+            $this->oauth_client_id = $rs->getString($startcol + 15);
+
+            $this->oauth_client_secret = $rs->getString($startcol + 16);
+
+            $this->oauth_refresh_token = $rs->getString($startcol + 17);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 15; // 15 = EmailServerPeer::NUM_COLUMNS - EmailServerPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 18; // 18 = EmailServerPeer::NUM_COLUMNS - EmailServerPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating EmailServer object", $e);
@@ -927,6 +1050,15 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
             case 14:
                 return $this->getMessDefault();
                 break;
+            case 15:
+                return $this->getOauthClientId();
+                break;
+            case 16:
+                return $this->getOauthClientSecret();
+                break;
+            case 17:
+                return $this->getOauthRefreshToken();
+                break;
             default:
                 return null;
                 break;
@@ -962,6 +1094,9 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
             $keys[12] => $this->getMessTrySendInmediatly(),
             $keys[13] => $this->getMailTo(),
             $keys[14] => $this->getMessDefault(),
+            $keys[15] => $this->getOauthClientId(),
+            $keys[16] => $this->getOauthClientSecret(),
+            $keys[17] => $this->getOauthRefreshToken(),
         );
         return $result;
     }
@@ -1037,6 +1172,15 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
                 break;
             case 14:
                 $this->setMessDefault($value);
+                break;
+            case 15:
+                $this->setOauthClientId($value);
+                break;
+            case 16:
+                $this->setOauthClientSecret($value);
+                break;
+            case 17:
+                $this->setOauthRefreshToken($value);
                 break;
         } // switch()
     }
@@ -1121,6 +1265,18 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
             $this->setMessDefault($arr[$keys[14]]);
         }
 
+        if (array_key_exists($keys[15], $arr)) {
+            $this->setOauthClientId($arr[$keys[15]]);
+        }
+
+        if (array_key_exists($keys[16], $arr)) {
+            $this->setOauthClientSecret($arr[$keys[16]]);
+        }
+
+        if (array_key_exists($keys[17], $arr)) {
+            $this->setOauthRefreshToken($arr[$keys[17]]);
+        }
+
     }
 
     /**
@@ -1190,6 +1346,18 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
 
         if ($this->isColumnModified(EmailServerPeer::MESS_DEFAULT)) {
             $criteria->add(EmailServerPeer::MESS_DEFAULT, $this->mess_default);
+        }
+
+        if ($this->isColumnModified(EmailServerPeer::OAUTH_CLIENT_ID)) {
+            $criteria->add(EmailServerPeer::OAUTH_CLIENT_ID, $this->oauth_client_id);
+        }
+
+        if ($this->isColumnModified(EmailServerPeer::OAUTH_CLIENT_SECRET)) {
+            $criteria->add(EmailServerPeer::OAUTH_CLIENT_SECRET, $this->oauth_client_secret);
+        }
+
+        if ($this->isColumnModified(EmailServerPeer::OAUTH_REFRESH_TOKEN)) {
+            $criteria->add(EmailServerPeer::OAUTH_REFRESH_TOKEN, $this->oauth_refresh_token);
         }
 
 
@@ -1273,6 +1441,12 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
         $copyObj->setMailTo($this->mail_to);
 
         $copyObj->setMessDefault($this->mess_default);
+
+        $copyObj->setOauthClientId($this->oauth_client_id);
+
+        $copyObj->setOauthClientSecret($this->oauth_client_secret);
+
+        $copyObj->setOauthRefreshToken($this->oauth_refresh_token);
 
 
         $copyObj->setNew(true);

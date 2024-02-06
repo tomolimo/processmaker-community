@@ -87,7 +87,7 @@ class PhpNameGenerator implements NameGenerator {
 	{
 		$name = "";
 		$tok = strtok($schemaName, self::STD_SEPARATOR_CHAR);
-		while($tok) {
+		while($tok !== false) {
 			$name .= ucfirst(strtolower($tok));
 			$tok = strtok(self::STD_SEPARATOR_CHAR);
 		}
@@ -110,7 +110,7 @@ class PhpNameGenerator implements NameGenerator {
 	{
 		$name = "";
 		$tok = strtok($schemaName, self::STD_SEPARATOR_CHAR);
-		while($tok) {
+		while($tok !== false) {
 			$name .= ucfirst($tok);
 			$tok = strtok(self::STD_SEPARATOR_CHAR);
 		}

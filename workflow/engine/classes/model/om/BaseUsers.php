@@ -199,7 +199,7 @@ abstract class BaseUsers extends BaseObject implements Persistent
      * The value for the usr_cost_by_hour field.
      * @var        double
      */
-    protected $usr_cost_by_hour = 0;
+    protected $usr_cost_by_hour = 0.0;
 
     /**
      * The value for the usr_unit_cost field.
@@ -1394,7 +1394,7 @@ abstract class BaseUsers extends BaseObject implements Persistent
     public function setUsrCostByHour($v)
     {
 
-        if ($this->usr_cost_by_hour !== $v || $v === 0) {
+        if ($this->usr_cost_by_hour !== $v || $v === 0.0) {
             $this->usr_cost_by_hour = $v;
             $this->modifiedColumns[] = UsersPeer::USR_COST_BY_HOUR;
         }

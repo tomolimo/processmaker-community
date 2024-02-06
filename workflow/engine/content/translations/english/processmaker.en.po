@@ -2756,6 +2756,18 @@ msgid "AVAILABLE MEMBERS"
 msgstr "AVAILABLE MEMBERS"
 
 # TRANSLATION
+# LABEL/ID_AVAILABLE_OFFLINE
+#: LABEL/ID_AVAILABLE_OFFLINE
+msgid "Available offline"
+msgstr "Available offline"
+
+# TRANSLATION
+# LABEL/ID_AVAILABLE_OFFLINE_THE_MOBILE_APPLICATIONS
+#: LABEL/ID_AVAILABLE_OFFLINE_THE_MOBILE_APPLICATIONS
+msgid "Available offline, the mobile applications will download this table for offline use"
+msgstr "Available offline, the mobile applications will download this table for offline use"
+
+# TRANSLATION
 # LABEL/ID_AVAILABLE_PERMISSIONS
 #: LABEL/ID_AVAILABLE_PERMISSIONS
 msgid "AVAILABLE PERMISSIONS"
@@ -3330,6 +3342,12 @@ msgid "Case Demo"
 msgstr "Case Demo"
 
 # TRANSLATION
+# LABEL/ID_CASE_DELETE_SUCCESFULLY
+#: LABEL/ID_CASE_DELETE_SUCCESFULLY
+msgid "The Case was deleted successfully."
+msgstr "The Case was deleted successfully."
+
+# TRANSLATION
 # LABEL/ID_CASES
 #: LABEL/ID_CASES
 msgid "HOME"
@@ -3340,6 +3358,12 @@ msgstr "HOME"
 #: LABEL/ID_CASES1
 msgid "[LABEL/ID_CASES1] Cases"
 msgstr "Cases"
+
+# TRANSLATION
+# LABEL/ID_CASES_DELETE_SUCCESFULLY
+#: LABEL/ID_CASES_DELETE_SUCCESFULLY
+msgid "All Cases were deleted successfully."
+msgstr "All Cases were deleted successfully."
 
 # TRANSLATION
 # LABEL/ID_CASESLIST_APP_CURRENT_USER
@@ -4306,6 +4330,18 @@ msgstr "Click the lock to make changes."
 #: LABEL/ID_CLICK_UNLOCK
 msgid "Click the lock to prevent further changes."
 msgstr "Click the lock to prevent further changes."
+
+# TRANSLATION
+# LABEL/ID_CLIENT_ID
+#: LABEL/ID_CLIENT_ID
+msgid "Client ID"
+msgstr "Client ID"
+
+# TRANSLATION
+# LABEL/ID_CLIENT_SECRET
+#: LABEL/ID_CLIENT_SECRET
+msgid "Client Secret"
+msgstr "Client Secret"
 
 # TRANSLATION
 # LABEL/ID_CLOSE
@@ -5730,6 +5766,12 @@ msgid "Deleted Successfully"
 msgstr "Deleted Successfully"
 
 # TRANSLATION
+# LABEL/ID_DELETE_ACTION
+#: LABEL/ID_DELETE_ACTION
+msgid "Delete case"
+msgstr "Delete case"
+
+# TRANSLATION
 # LABEL/ID_DELETE_ALL_FIELDS
 #: LABEL/ID_DELETE_ALL_FIELDS
 msgid "Do you want to delete all fields?"
@@ -7034,8 +7076,8 @@ msgstr "The email was resend to"
 # TRANSLATION
 # LABEL/ID_EMAIL_SERVER_ACCOUNT_FROM
 #: LABEL/ID_EMAIL_SERVER_ACCOUNT_FROM
-msgid "Sender Account"
-msgstr "Sender Account"
+msgid "From Account"
+msgstr "From Account"
 
 # TRANSLATION
 # LABEL/ID_EMAIL_SERVER_CONFIRM_DELETE
@@ -15078,6 +15120,12 @@ msgid "Monthly"
 msgstr "Monthly"
 
 # TRANSLATION
+# LABEL/ID_MAFE_90589c47f06eb971d548591f23c285af
+#: LABEL/ID_MAFE_90589c47f06eb971d548591f23c285af
+msgid "Custom"
+msgstr "Custom"
+
+# TRANSLATION
 # LABEL/ID_MAFE_9060587edeb01a63e3d3edc959678d1e
 #: LABEL/ID_MAFE_9060587edeb01a63e3d3edc959678d1e
 msgid "[LABEL/ID_MAFE_9060587edeb01a63e3d3edc959678d1e] Before"
@@ -18018,12 +18066,6 @@ msgid "Group or User"
 msgstr "Group or User"
 
 # TRANSLATION
-# LABEL/ID_MAFE_f4b5974fd11406f8410fa7e8502a26a3
-#: LABEL/ID_MAFE_f4b5974fd11406f8410fa7e8502a26a3
-msgid "Granular"
-msgstr "Granular"
-
-# TRANSLATION
 # LABEL/ID_MAFE_f4ee0932c0b3cdb0af6d4407fc915b28
 #: LABEL/ID_MAFE_f4ee0932c0b3cdb0af6d4407fc915b28
 msgid "The variable Name already exists."
@@ -18670,6 +18712,12 @@ msgstr "SMTP (PHPMailer)"
 #: LABEL/ID_MESS_ENGINE_TYPE_3
 msgid "SMTP (OpenMail)"
 msgstr "SMTP (OpenMail)"
+
+# TRANSLATION
+# LABEL/ID_MESS_ENGINE_TYPE_4
+#: LABEL/ID_MESS_ENGINE_TYPE_4
+msgid "OAUTH (GMail OAuth)"
+msgstr "OAUTH (GMail OAuth)"
 
 # TRANSLATION
 # LABEL/ID_MESS_SEND_MAX_REQUIRED
@@ -19686,6 +19734,12 @@ msgid "Notify users of case"
 msgstr "Notify users of case"
 
 # TRANSLATION
+# LABEL/ID_NOT_ABLE_DELETE_CASES
+#: LABEL/ID_NOT_ABLE_DELETE_CASES
+msgid "You are not allowed to delete cases, please contact your System Administrator."
+msgstr "You are not allowed to delete cases, please contact your System Administrator."
+
+# TRANSLATION
 # LABEL/ID_NOT_ABLE_REASSIGN
 #: LABEL/ID_NOT_ABLE_REASSIGN
 msgid "You are not able to reassign cases of this process."
@@ -20074,6 +20128,24 @@ msgstr "User has been updated successfully"
 #: LABEL/ID_OFF
 msgid "Off"
 msgstr "Off"
+
+# TRANSLATION
+# LABEL/ID_OFFLINE_TABLES
+#: LABEL/ID_OFFLINE_TABLES
+msgid "Offline Tables"
+msgstr "Offline Tables"
+
+# TRANSLATION
+# LABEL/ID_OFFLINE_TABLES_ENABLE
+#: LABEL/ID_OFFLINE_TABLES_ENABLE
+msgid "Set Offline"
+msgstr "Set Offline"
+
+# TRANSLATION
+# LABEL/ID_OFFLINE_TABLES_DISABLE
+#: LABEL/ID_OFFLINE_TABLES_DISABLE
+msgid "Set Online"
+msgstr "Set Online"
 
 # TRANSLATION
 # LABEL/ID_OF_THE_MONTH

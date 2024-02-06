@@ -817,7 +817,10 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
                 'MESS_ACCOUNT' => $aSetup['MESS_ACCOUNT'],
                 'MESS_PASSWORD' => $aSetup['MESS_PASSWORD'],
                 'SMTPSecure' => $aSetup['SMTPSecure'],
-                'SMTPAuth' => $aSetup['MESS_RAUTH']
+                'SMTPAuth' => $aSetup['MESS_RAUTH'],
+                'OAUTH_CLIENT_ID' => $aSetup['OAUTH_CLIENT_ID'],
+                'OAUTH_CLIENT_SECRET' => $aSetup['OAUTH_CLIENT_SECRET'],
+                'OAUTH_REFRESH_TOKEN' => $aSetup['OAUTH_REFRESH_TOKEN']
             )
         );
         $oSpool->create(array('msg_uid' => $data['MSG_UID'], 'app_uid' => $data['APP_UID'], 'del_index' => $data['DEL_INDEX'], 'app_msg_type' => $data['APP_MSG_TYPE'], 'app_msg_subject' => $data['APP_MSG_SUBJECT'], 'app_msg_from' => $data['APP_MSG_FROM'], 'app_msg_to' => $data['APP_MSG_TO'], 'app_msg_body' => $data['APP_MSG_BODY'], 'app_msg_cc' => $data['APP_MSG_CC'], 'app_msg_bcc' => $data['APP_MSG_BCC'], 'app_msg_attach' => $data['APP_MSG_ATTACH'], 'app_msg_template' => $data['APP_MSG_TEMPLATE'], 'app_msg_status' => 'pending'

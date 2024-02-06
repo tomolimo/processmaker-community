@@ -40,6 +40,7 @@ use ProcessMaker\BusinessModel\Task as BmTask;
 use ProcessMaker\BusinessModel\User as BmUser;
 use ProcessMaker\Core\System;
 use ProcessMaker\Exception\UploadException;
+use ProcessMaker\Model\Application as ModelApplication;
 use ProcessMaker\Model\Delegation;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services\OAuth2\Server;
@@ -1114,35 +1115,37 @@ class Cases
      * Delete case
      *
      * @access public
-     * @param string $app_uid, Uid for case
-     * @param string $usr_uid, Uid user
+     * @param string $appUid, Uid for case
+     * @param string $usrUid, Uid user
      *
      * @return void
      * @throws Exception
      */
-    public function deleteCase($app_uid, $usr_uid)
+    public function deleteCase($appUid, $usrUid)
     {
-        Validator::isString($app_uid, '$app_uid');
-        Validator::appUid($app_uid, '$app_uid');
+        Validator::isString($appUid, '$app_uid');
+        Validator::appUid($appUid, '$app_uid');
 
-        $criteria = new Criteria();
-        $criteria->addSelectColumn(ApplicationPeer::APP_STATUS);
-        $criteria->addSelectColumn(ApplicationPeer::APP_INIT_USER);
-        $criteria->add(ApplicationPeer::APP_UID, $app_uid, Criteria::EQUAL);
-        $dataset = ApplicationPeer::doSelectRS($criteria);
-        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        $dataset->next();
-        $aRow = $dataset->getRow();
-        if ($aRow['APP_STATUS'] != 'DRAFT') {
-            throw (new Exception(G::LoadTranslation("ID_DELETE_CASE_NO_STATUS")));
+        // Review the status and owner
+        $caseInfo = ModelApplication::getCase($appUid);
+        if (!empty($caseInfo)) {
+            // Check if the requester is the owner
+            if ($caseInfo['APP_INIT_USER'] !== $usrUid) {
+                global $RBAC;
+                // If no we need to review if have the permission
+                if ($RBAC->userCanAccess('PM_DELETECASE') != 1) {
+                    throw new Exception(G::LoadTranslation('ID_NOT_ABLE_DELETE_CASES'));
+                }
+            }
+
+            // Review the status
+            if ($caseInfo['APP_STATUS'] != 'DRAFT') {
+                throw new Exception(G::LoadTranslation("ID_DELETE_CASE_NO_STATUS"));
+            }
+
+            $case = new ClassesCases();
+            $case->removeCase($appUid);
         }
-
-        if ($aRow['APP_INIT_USER'] != $usr_uid) {
-            throw (new Exception(G::LoadTranslation("ID_DELETE_CASE_NO_OWNER")));
-        }
-
-        $case = new ClassesCases();
-        $case->removeCase($app_uid);
     }
 
     /**
@@ -3227,7 +3230,6 @@ class Cases
         $arrayApplicationData = $this->getApplicationRecordByPk($applicationUid, [], false);
         $arrayApplicationData['APP_DATA'] = $case->unserializeData($arrayApplicationData['APP_DATA']);
         $flagDelete = false;
-
         foreach ($arrayVariableDocumentToDelete as $key => $value) {
             if (is_array($value) && !empty($value)) {
                 $type = '';
@@ -3252,13 +3254,15 @@ class Cases
                         $arrayDocumentDelete = $value;
 
                         foreach ($arrayDocumentDelete as $value2) {
-                            $appDocument->remove($value2['appDocUid'], (int)($value2['version']));
+                            if ($value2['appDocUid'] !== "") {
+                                $appDocument->remove($value2['appDocUid'], (int)($value2['version']));
 
-                            $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
-                                $arrayApplicationData['APP_DATA'], $variable, null, $type, $value2
-                            );
+                                $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
+                                    $arrayApplicationData['APP_DATA'], $variable, null, $type, $value2
+                                );
 
-                            $flagDelete = true;
+                                $flagDelete = true;
+                            }
                         }
                         break;
                     case 'GRID':
@@ -3270,13 +3274,15 @@ class Cases
                                 $arrayDocumentDelete = $value3;
 
                                 foreach ($arrayDocumentDelete as $value4) {
-                                    $appDocument->remove($value4['appDocUid'], (int)($value4['version']));
+                                    if ($value4['appDocUid'] !== "") {
+                                        $appDocument->remove($value4['appDocUid'], (int)($value4['version']));
 
-                                    $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
-                                        $arrayApplicationData['APP_DATA'], $grid, $variable, $type, $value4
-                                    );
+                                        $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
+                                            $arrayApplicationData['APP_DATA'], $grid, $variable, $type, $value4
+                                        );
 
-                                    $flagDelete = true;
+                                        $flagDelete = true;
+                                    }
                                 }
                             }
                         }

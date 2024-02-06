@@ -10,7 +10,6 @@ return array(
     'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'ProcessMaker\\' => array($baseDir . '/workflow/engine/src'),
     'Parsedown' => array($vendorDir . '/erusev/parsedown'),
-    'PEAR' => array($vendorDir . '/pear/pear_exception'),
     'OAuth2' => array($vendorDir . '/bshaffer/oauth2-server-php/src'),
     'Luracast\\Restler' => array($vendorDir . '/luracast/restler/vendor'),
     'Libchart\\' => array($vendorDir . '/libchart/libchart/libchart'),

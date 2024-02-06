@@ -69,7 +69,7 @@ class Admin extends Controller
 
         $this->setJSVar( 'CONFIG', $Config );
         $this->setJSVar( 'FORMATS', $c->getFormats() );
-        $this->setJSVar( 'uxTypes', AdminProxy::getUxTypesList( 'list' ) );
+        $this->setJSVar( 'uxTypes', adminProxy::getUxTypesList( 'list' ) );
 
         G::RenderPage( 'publish', 'extJs' );
     }

@@ -190,7 +190,11 @@ CREATE TABLE ".$this->quoteIdentifier($table->getName())."
 
 		foreach ($table->getIndices() as $index ) {
 			$vendor = $index->getVendorSpecificInfo();
-			$lines[] .= (($vendor && $vendor['Index_type'] == 'FULLTEXT') ? 'FULLTEXT ' : '') . "KEY " . $this->quoteIdentifier($index->getName()) . "(" . $this->getIndexColumnList($index) . ")";
+			$word = "KEY ";
+			if (!empty($index->getIndexType())) {
+				$word = $index->getIndexType() . " ";
+			}
+			$lines[] .= (($vendor && $vendor['Index_type'] == 'FULLTEXT') ? 'FULLTEXT ' : '') . $word . $this->quoteIdentifier($index->getName()) . "(" . $this->getIndexColumnList($index) . ")";
 		}
 
 	}

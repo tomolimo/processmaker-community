@@ -111,6 +111,7 @@ class ListCanceled extends BaseListCanceled implements ListInterface
         }
         if (!empty($data['TAS_UID'])) {
             $t = new Task();
+            // The load task gets some calculations related to the Indicators
             $data['TAS_ID'] = $t->load($data['TAS_UID'])['TAS_ID'];
         }
         $con = Propel::getConnection(ListCanceledPeer::DATABASE_NAME);

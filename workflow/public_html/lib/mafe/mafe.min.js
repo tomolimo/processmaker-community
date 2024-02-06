@@ -37739,8 +37739,15 @@ FormDesigner.leftPad = function (string, length, fill) {
             helpButton: "Colspan is used to define the size and number of columns of a selected row. Twelve columns can be defined as maximum. ".translate() + "The column sizes are defined with integer numbers separated by spaces. Any combination of column sizes can be defined but all the columns sizes should add 12. <br>".translate() + "ex:<br>two columns of different sizes: 8 4<br>two columns of the same size: 6 6<br>Three columns of the same size: 4 4 4<br>Three columns of different sizes: 2 8 2<br><br>" + "For a better design we recommend using values above 3.<br>If you need more info please visit <a target='_blank' href='http://getbootstrap.com/css/'>Bootstrap grid system</a>.".translate()
         };
         this.label = {label: "label".translate(), value: "", type: "text"};
+        this.tabIndex = {
+            label: "tab index".translate(),
+            value: "",
+            type: "text"
+        };
         this.href = {label: "href".translate(), value: "http://www.processmaker.com/", type: "textarea"};
         this.hint = {label: "hint".translate(), value: "", type: "textarea"};
+        this.ariaLabel = {label: "aria label".translate(), value: "", type: "textarea"};
+        this.ariaLabelVisible = {label: "aria label visible".translate(), value: true, type: "checkbox"};
         this.src = {label: "src".translate(), value: "", type: "text"};
         this.shape = {
             label: "shape".translate(), value: "", type: "select", items: [
@@ -37755,6 +37762,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.dnd = {label: "drag & drop".translate(), value: false, type: "hidden"};
         this.extensions = {label: "file extensions".translate(), value: "*", type: "text"};
         this.galleryEnabled = {label: "Enable gallery".translate(), value: true, type: "checkbox"};
+        this.availableOffline = {label: "Available offline".translate(), value: false, type: "checkbox"};
         this.cameraEnabled = {label: "Enable camera".translate(), value: true, type: "checkbox"};
         this.size = {label: "max file size".translate(), value: 1024, type: "text"};
         this.sizeUnity = {
@@ -38091,56 +38099,62 @@ FormDesigner.leftPad = function (string, length, fill) {
             this.dataType.type = "hidden";
         }
         if (type === FormDesigner.main.TypesControl.title) {
-            this.pf = ["type", "id", "label"];
+            this.pf = ["type", "id", "label", "ariaLabel"];
             this.name.type = "text";
             this.label.type = "textarea";
         }
         if (type === FormDesigner.main.TypesControl.subtitle) {
-            this.pf = ["type", "id", "label"];
+            this.pf = ["type", "id", "label", "ariaLabel"];
             this.name.type = "text";
             this.label.type = "textarea";
         }
         if (type === FormDesigner.main.TypesControl.link) {
-            this.pf = ["type", "id", "name", "label", "value", "href", "hint"];
+            this.pf = ["type", "id", "name", "label", "tabIndex", "value", "href", "hint", "ariaLabel"];
             this.name.type = "text";
             this.label.type = "text";
             this.value.label = "display text".translate();
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.image) {
-            this.pf = ["type", "id", "name", "label", "hint", "src", "shape", "alternateText", "comment", "alt"];
+            this.pf = ["type", "id", "name", "label", "tabIndex", "hint", "ariaLabel", "src", "shape", "alternateText", "comment", "alt"];
             this.name.type = "text";
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.file) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "hint",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex", "hint", "ariaLabel", "ariaLabel",
                 "required", "requiredFieldErrorMessage", "dnd", "extensions", "size", "sizeUnity", "mode", "multiple",
                 "inp_doc_uid"];
             this.name.type = "text";
             this.label.type = "text";
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.multipleFile) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex", "ariaLabel",
                 "inputDocument", "required", "requiredFieldErrorMessage", "dnd", "extensions", "size", "sizeUnity",
                 'enableVersioning', "mode", "multiple", "inp_doc_uid"];
             this.name.type = "hidden";
             this.label.type = "text";
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.submit) {
-            this.pf = ["type", "id", "name", "label"];
+            this.pf = ["type", "id", "name", "label", "tabIndex", "ariaLabel"];
             this.name.type = "text";
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.button) {
-            this.pf = ["type", "id", "name", "label"];
+            this.pf = ["type", "id", "name", "label", "tabIndex", "ariaLabel"];
             this.name.type = "text";
             this.label.type = "text";
         }
@@ -38155,8 +38169,8 @@ FormDesigner.leftPad = function (string, length, fill) {
             this.pf = ["type", "id", "name", "description", "mode"];
         }
         if (type === FormDesigner.main.TypesControl.text) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "textTransform",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "textTransform",
                 "validate", "validateMessage", "maxLength", "formula", "mode", "operation", "dbConnection",
                 "dbConnectionLabel", "sql"];
             if (this.owner instanceof FormDesigner.main.FormItem) {
@@ -38164,27 +38178,33 @@ FormDesigner.leftPad = function (string, length, fill) {
             }
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.textarea) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "validate",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "validate",
                 "validateMessage", "mode", "dbConnection", "dbConnectionLabel", "sql", "rows"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.dropdown) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
                 "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.checkbox) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "hint", "required", "requiredFieldErrorMessage", "mode", "options"];
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "options"];
             this.defaultValue.type = "checkbox";
             if (this.owner instanceof FormDesigner.main.FormItem) {
                 this.options.type = "hidden";
@@ -38195,21 +38215,24 @@ FormDesigner.leftPad = function (string, length, fill) {
                 this.dbConnectionLabel.type = "hidden";
                 this.dbConnection.type = "hidden";
                 this.sql.type = "hidden";
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
+                this.ariaLabelVisible.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.checkgroup) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
                 "dbConnectionLabel", "sql", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.radio) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "hint", "ariaLabel", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
                 "dbConnectionLabel", "sql", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.datetime) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "placeholder", "hint", "required", "requiredFieldErrorMessage", "mode", "format", "dayViewHeaderFormat",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "format", "dayViewHeaderFormat",
                 "extraFormats", "stepping", "minDate", "maxDate", "useCurrent", "collapse", "locale", "defaultDate",
                 "disabledDates", "enabledDates", "icons", "useStrict", "sideBySide", "daysOfWeekDisabled",
                 "calendarWeeks", "viewMode", "toolbarPlacement", "showTodayButton", "showClear", "widgetPositioning",
@@ -38219,19 +38242,23 @@ FormDesigner.leftPad = function (string, length, fill) {
                 "http://eonasdan.github.io/bootstrap-datetimepicker/</a>".translate();
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.suggest) {
-            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
-                "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource",
+            this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
+                "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
                 "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay", "resultsLimit",
                 "forceSelection"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
+                this.tabIndex.type = "hidden";
+                this.ariaLabel.type = "hidden";
             }
         }
         if (type === FormDesigner.main.TypesControl.annotation) {
-            this.pf = ["type", "id", "label"];
+            this.pf = ["type", "id", "label", "ariaLabel"];
             this.name.type = "text";
             this.label.label = "text".translate();
             this.label.type = "textarea";
@@ -38260,7 +38287,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         }
         if (type === FormDesigner.main.TypesControl.imagem) {
             this.pf = ["type", "id", "name", "label", "inputDocument", "hint", "required", "requiredFieldErrorMessage",
-                "cameraEnabled", "galleryEnabled", "inp_doc_uid"];
+                "cameraEnabled", "galleryEnabled", "availableOffline", "inp_doc_uid", "mode"];
             this.label.type = "text";
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
@@ -38268,12 +38295,12 @@ FormDesigner.leftPad = function (string, length, fill) {
         }
         if (type === FormDesigner.main.TypesControl.audiom) {
             this.pf = ["type", "id", "name", "label", "inputDocument", "hint", "required", "requiredFieldErrorMessage",
-                "inp_doc_uid"];
+                "inp_doc_uid", "mode"];
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.videom) {
             this.pf = ["type", "id", "name", "label", "inputDocument", "hint", "required", "requiredFieldErrorMessage",
-                "inp_doc_uid"];
+                "inp_doc_uid", "mode"];
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.cell) {
@@ -39256,6 +39283,24 @@ FormDesigner.leftPad = function (string, length, fill) {
                             }
                         }
                     );
+                    break;
+                case "tabIndex":
+                    validateValue = !isNaN(value) || value === "";
+                    if (!validateValue) {
+                        messageDialog = 'The value provided for the tab index property of the field "{0}" is invalid'.translate([target.properties.id.value]);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
+                        dialogMessage.onAccept = function () {
+                            dialogMessage.dialog.dialog("close");
+                        };
+                    } else {
+                        target.properties[prop].value = value;
+                    }
                     break;
             }
         };

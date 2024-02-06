@@ -5,6 +5,7 @@ namespace ProcessMaker\Model;
 use G;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use ProcessMaker\Core\System;
 
 class Delegation extends Model
 {
@@ -12,6 +13,10 @@ class Delegation extends Model
 
     // We don't have our standard timestamp columns
     public $timestamps = false;
+
+    // Static properties to preserve values
+    public static $usrUid = '';
+    public static $groups = [];
 
     /**
      * Returns the application this delegation belongs to
@@ -225,14 +230,21 @@ class Delegation extends Model
         $query->join('APPLICATION', function ($join) use ($filterBy, $search, $status, $query) {
             $join->on('APP_DELEGATION.APP_NUMBER', '=', 'APPLICATION.APP_NUMBER');
             if ($filterBy == 'APP_TITLE' && $search) {
-                // Cleaning "fulltext" operators in order to avoid unexpected results
-                $search = str_replace(['-', '+', '<', '>', '(', ')', '~', '*', '"'], ['', '', '', '', '', '', '', '', ''], $search);
+                $config = System::getSystemConfiguration();
+                if ((int)$config['disable_advanced_search_case_title_fulltext'] === 0) {
+                    // Cleaning "fulltext" operators in order to avoid unexpected results
+                    $search = str_replace(['-', '+', '<', '>', '(', ')', '~', '*', '"'],
+                        ['', '', '', '', '', '', '', '', ''], $search);
 
-                // Build the "fulltext" expression
-                $search = '+"' . preg_replace('/\s+/', '" +"', addslashes($search)) . '"';
+                    // Build the "fulltext" expression
+                    $search = '+"' . preg_replace('/\s+/', '" +"', addslashes($search)) . '"';
 
-                // Searching using "fulltext" index
-                $join->whereRaw("MATCH(APPLICATION.APP_TITLE) AGAINST('{$search}' IN BOOLEAN MODE)");
+                    // Searching using "fulltext" index
+                    $join->whereRaw("MATCH(APPLICATION.APP_TITLE) AGAINST('{$search}' IN BOOLEAN MODE)");
+                } else {
+                    // Searching using "like" operator
+                    $join->where('APPLICATION.APP_TITLE', 'LIKE', "%${search}%");
+                }
             }
             // Based on the below, we can further limit the join so that we have a smaller data set based on join criteria
             switch ($status) {
@@ -478,39 +490,82 @@ class Delegation extends Model
      */
     public static function countSelfService($usrUid)
     {
-        //Get the task self services related to the user
-        $taskSelfService = TaskUser::getSelfServicePerUser($usrUid);
-        //Get the task self services value based related to the user
-        $selfServiceValueBased = AppAssignSelfServiceValue::getSelfServiceCasesByEvaluatePerUser($usrUid);
+        // Set the 'usrUid' property to preserve
+        Delegation::$usrUid = $usrUid;
 
-        //Start the query for get the cases related to the user
-        $query = Delegation::query()->select('APP_NUMBER');
-        //Add Join with task filtering only the type self-service
-        $query->join('TASK', function ($join) {
-            $join->on('APP_DELEGATION.TAS_ID', '=', 'TASK.TAS_ID')
-                ->where('TASK.TAS_ASSIGN_TYPE', '=', 'SELF_SERVICE');
+        // Get and build the groups parameter related to the user
+        $groups = GroupUser::getGroups($usrUid);
+        $groups = array_map(function ($value) {
+            return "'" . $value['GRP_ID'] . "'";
+        }, $groups);
+
+        // Add dummy value to avoid syntax error in complex join
+        $groups[] = "'-1'";
+
+        // Set the 'groups' property to preserve
+        Delegation::$groups = $groups;
+
+        // Start the first query
+        $query1 = Delegation::query()->select(['APP_NUMBER', 'DEL_INDEX']);
+
+        // Add the join clause
+        $query1->join('TASK', function ($join) {
+            // Build partial plain query for a complex Join, because Eloquent doesn't support this type of Join
+            $complexJoin = "
+                ((`APP_DELEGATION`.`APP_NUMBER`, `APP_DELEGATION`.`DEL_INDEX`, `APP_DELEGATION`.`TAS_ID`) IN (
+                    SELECT
+                        `APP_ASSIGN_SELF_SERVICE_VALUE`.`APP_NUMBER`,
+                        `APP_ASSIGN_SELF_SERVICE_VALUE`.`DEL_INDEX`,
+                        `APP_ASSIGN_SELF_SERVICE_VALUE`.`TAS_ID`
+                    FROM
+                        `APP_ASSIGN_SELF_SERVICE_VALUE`
+                    INNER JOIN `APP_ASSIGN_SELF_SERVICE_VALUE_GROUP` ON
+                        `APP_ASSIGN_SELF_SERVICE_VALUE`.`ID` = `APP_ASSIGN_SELF_SERVICE_VALUE_GROUP`.`ID`
+                    WHERE (
+                        `APP_ASSIGN_SELF_SERVICE_VALUE_GROUP`.`GRP_UID` = '%s' OR (
+                        `APP_ASSIGN_SELF_SERVICE_VALUE_GROUP`.`ASSIGNEE_ID` IN (%s) AND
+                        `APP_ASSIGN_SELF_SERVICE_VALUE_GROUP`.`ASSIGNEE_TYPE` = '2')
+                    )
+                ))";
+            $groups = implode(',', Delegation::$groups);
+            $complexJoin = sprintf($complexJoin, Delegation::$usrUid, $groups);
+
+            // Add joins
+            $join->on('APP_DELEGATION.TAS_ID', '=', 'TASK.TAS_ID');
+            $join->on('TASK.TAS_ASSIGN_TYPE', '=', DB::raw("'SELF_SERVICE'"));
+            $join->on('APP_DELEGATION.DEL_THREAD_STATUS', '=', DB::raw("'OPEN'"));
+            $join->on('APP_DELEGATION.USR_ID', '=', DB::raw("'0'"))->
+            whereRaw($complexJoin);
         });
-        //Filtering the open threads and without users
-        $query->isThreadOpen()->noUserInThread();
 
-        //Get the cases unassigned
-        if (!empty($selfServiceValueBased)) {
-            $query->where(function ($query) use ($selfServiceValueBased, $taskSelfService) {
-                //Get the cases related to the task self service
-                $query->tasksIn($taskSelfService);
-                foreach ($selfServiceValueBased as $case) {
-                    //Get the cases related to the task self service value based
-                    $query->orWhere(function ($query) use ($case) {
-                        $query->case($case['APP_NUMBER'])->index($case['DEL_INDEX'])->task($case['TAS_ID']);
-                    });
-                }
-            });
+        // Get self services tasks related to the user
+        $selfServiceTasks = TaskUser::getSelfServicePerUser($usrUid);
+
+        if (!empty($selfServiceTasks)) {
+            // Start the second query
+            $query2 = Delegation::query()->select(['APP_NUMBER', 'DEL_INDEX']);
+            $query2->tasksIn($selfServiceTasks);
+            $query2->isThreadOpen();
+            $query2->noUserInThread();
+
+            // Build the complex query that uses "UNION DISTINCT" clause
+            $unionQuery = sprintf('select count(*) as aggregate from ((%s) union distinct (%s)) self_service_cases',
+                toSqlWithBindings($query1),  toSqlWithBindings($query2));
+
+            // Execute the query
+            $result = DB::selectOne($unionQuery);
+            $count = $result->aggregate;
         } else {
-            //Get the cases related to the task self service
-            $query->tasksIn($taskSelfService);
+            // Execute the query
+            $count = $query1->count();
         }
 
-        return $query->count();
+        // Clean static properties
+        Delegation::$usrUid = '';
+        Delegation::$groups = [];
+
+        // Return value
+        return $count;
     }
 
     /**

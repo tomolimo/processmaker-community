@@ -53,7 +53,7 @@ class Filesystem
         }
 
         if ($doCopy) {
-            // https://bugs.php.net/bug.php?id=64634
+            // https://bugs.php.net/64634
             if (false === $source = @fopen($originFile, 'r')) {
                 throw new IOException(sprintf('Failed to copy "%s" to "%s" because source file could not be opened for reading.', $originFile, $targetFile), 0, null, $originFile);
             }
@@ -212,7 +212,7 @@ class Filesystem
      * Change the owner of an array of files or directories.
      *
      * @param string|iterable $files     A filename, an array of files, or a \Traversable instance to change owner
-     * @param string          $user      The new owner user name
+     * @param string|int      $user      A user name or number
      * @param bool            $recursive Whether change the owner recursively or not
      *
      * @throws IOException When the change fails
@@ -239,7 +239,7 @@ class Filesystem
      * Change the group of an array of files or directories.
      *
      * @param string|iterable $files     A filename, an array of files, or a \Traversable instance to change group
-     * @param string          $group     The group name
+     * @param string|int      $group     A group name or number
      * @param bool            $recursive Whether change the group recursively or not
      *
      * @throws IOException When the change fails
@@ -281,7 +281,7 @@ class Filesystem
 
         if (true !== @rename($origin, $target)) {
             if (is_dir($origin)) {
-                // See https://bugs.php.net/bug.php?id=54097 & http://php.net/manual/en/function.rename.php#113943
+                // See https://bugs.php.net/54097 & https://php.net/rename#113943
                 $this->mirror($origin, $target, null, ['override' => $overwrite, 'delete' => $overwrite]);
                 $this->remove($origin);
 
@@ -294,13 +294,9 @@ class Filesystem
     /**
      * Tells whether a file exists and is readable.
      *
-     * @param string $filename Path to the file
-     *
-     * @return bool
-     *
      * @throws IOException When windows path is longer than 258 characters
      */
-    private function isReadable($filename)
+    private function isReadable(string $filename): bool
     {
         $maxPathLength = PHP_MAXPATHLEN - 2;
 
@@ -381,11 +377,9 @@ class Filesystem
     }
 
     /**
-     * @param string $origin
-     * @param string $target
      * @param string $linkType Name of the link type, typically 'symbolic' or 'hard'
      */
-    private function linkException($origin, $target, $linkType)
+    private function linkException(string $origin, string $target, string $linkType)
     {
         if (self::$lastError) {
             if ('\\' === \DIRECTORY_SEPARATOR && false !== strpos(self::$lastError, 'error code(1314)')) {
@@ -414,12 +408,12 @@ class Filesystem
     public function readlink($path, $canonicalize = false)
     {
         if (!$canonicalize && !is_link($path)) {
-            return;
+            return null;
         }
 
         if ($canonicalize) {
             if (!$this->exists($path)) {
-                return;
+                return null;
             }
 
             if ('\\' === \DIRECTORY_SEPARATOR) {
@@ -600,6 +594,10 @@ class Filesystem
      */
     public function isAbsolutePath($file)
     {
+        if (null === $file) {
+            @trigger_error(sprintf('Calling "%s()" with a null in the $file argument is deprecated since Symfony 4.4.', __METHOD__), E_USER_DEPRECATED);
+        }
+
         return strspn($file, '/\\', 0, 1)
             || (\strlen($file) > 3 && ctype_alpha($file[0])
                 && ':' === $file[1]
@@ -742,7 +740,10 @@ class Filesystem
         return 2 === \count($components) ? [$components[0], $components[1]] : [null, $components[0]];
     }
 
-    private static function box($func)
+    /**
+     * @return mixed
+     */
+    private static function box(callable $func)
     {
         self::$lastError = null;
         set_error_handler(__CLASS__.'::handleError');

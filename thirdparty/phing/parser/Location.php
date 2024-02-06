@@ -23,7 +23,7 @@
  * Stores the file name and line number of a XML file
  *
  * @author      Andreas Aderhold <andi@binarycloud.com>
- * @copyright © 2001,2002 THYRELL. All rights reserved
+ * @copyright 2001,2002 THYRELL. All rights reserved
  * @version   $Revision: 1.6 $ $Date: 2003/12/24 13:02:09 $
  * @access    public
  * @package   phing.parser
@@ -43,7 +43,7 @@ class Location {
      * @param  integer the column number
      * @access public
      */
-    function Location($fileName = null, $lineNumber = null, $columnNumber = null) {
+    function __construct($fileName = null, $lineNumber = null, $columnNumber = null) {
         $this->fileName = $fileName;
         $this->lineNumber = $lineNumber;
         $this->columnNumber = $columnNumber;

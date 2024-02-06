@@ -89,7 +89,7 @@ class ChildDefinition extends Definition
      * @param int|string $index
      * @param mixed      $value
      *
-     * @return self the current instance
+     * @return $this
      *
      * @throws InvalidArgumentException when $index isn't an integer
      */
@@ -109,7 +109,7 @@ class ChildDefinition extends Definition
     /**
      * @internal
      */
-    public function setAutoconfigured($autoconfigured)
+    public function setAutoconfigured($autoconfigured): self
     {
         throw new BadMethodCallException('A ChildDefinition cannot be autoconfigured.');
     }
@@ -117,7 +117,7 @@ class ChildDefinition extends Definition
     /**
      * @internal
      */
-    public function setInstanceofConditionals(array $instanceof)
+    public function setInstanceofConditionals(array $instanceof): self
     {
         throw new BadMethodCallException('A ChildDefinition cannot have instanceof conditionals set on it.');
     }

@@ -778,17 +778,38 @@ class OutputDocument extends BaseOutputDocument
         unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
     }
 
-    public function generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape = false, $aProperties = array())
+    /**
+     * Generate a PDF file using the TCPDF library
+     *
+     * @param string $outDocUid
+     * @param array $fields
+     * @param string $path
+     * @param string $filename
+     * @param string $content
+     * @param bool $landscape
+     * @param array $properties
+     *
+     * @see generate()
+     * @see \ProcessMaker\BusinessModel\Cases\OutputDocument::generate()
+     *
+     * @link https://wiki.processmaker.com/3.3/Output_Documents#Creating_Output_Documents_Usign_TCPDF_Generator
+     */
+    public function generateTcpdf($outDocUid, $fields, $path, $filename, $content, $landscape = false, $properties = [])
     {
-        require_once(PATH_THIRDPARTY . "tcpdf" . PATH_SEP . "config" . PATH_SEP . "lang" . PATH_SEP . "eng.php");
-        require_once(PATH_THIRDPARTY . "tcpdf" . PATH_SEP . "tcpdf.php");
+        // Including the basic configuration for the TCPDF library
+        require_once PATH_TRUNK . "vendor" . PATH_SEP . "tecnickcom" . PATH_SEP . "tcpdf" . PATH_SEP . "config" . PATH_SEP . "tcpdf_config.php";
 
-        $nrt = array("\n", "\r", "\t");
-        $nrthtml = array("(n /)", "(r /)", "(t /)");
+        // Initialize variables
+        $nrt = ["\n", "\r", "\t"];
+        $nrtHtml = ["(n /)", "(r /)", "(t /)"];
+        $outputType = 2;
+        $orientation = ($landscape == false) ? PDF_PAGE_ORIENTATION : 'L';
+        $media = (isset($properties['media'])) ? $properties['media'] : PDF_PAGE_FORMAT;
+        $lang = (defined('SYS_LANG')) ? SYS_LANG : 'en';
+        $strContentAux = str_replace($nrt, $nrtHtml, $content);
+        $content = null;
 
-        $strContentAux = str_replace($nrt, $nrthtml, $sContent);
-        $sContent = null;
-
+        // Convert the deprecated "font" tags into "style" tags
         while (preg_match("/^(.*)<font([^>]*)>(.*)$/i", $strContentAux, $arrayMatch)) {
             $str = trim($arrayMatch[2]);
             $strAttribute = null;
@@ -804,7 +825,7 @@ class OutputDocument extends BaseOutputDocument
 
                 $str = $strAux . $str;
 
-                //Get attributes
+                // Get attributes
                 $strStyle = null;
                 $array = explode(" ", $str);
 
@@ -813,7 +834,7 @@ class OutputDocument extends BaseOutputDocument
 
                     if (isset($arrayAux[1])) {
                         $a = trim($arrayAux[0]);
-                        $v = trim(str_replace(array("__SPACE__", "\"", "'"), array(" ", null, null), $arrayAux[1]));
+                        $v = trim(str_replace(["__SPACE__", "\"", "'"], [" ", null, null], $arrayAux[1]));
 
                         switch (strtolower($a)) {
                             case "color":
@@ -823,7 +844,7 @@ class OutputDocument extends BaseOutputDocument
                                 $strStyle = $strStyle . "font-family: $v;";
                                 break;
                             case "size":
-                                $arrayPt = array(0, 8, 10, 12, 14, 18, 24, 36);
+                                $arrayPt = [0, 8, 10, 12, 14, 18, 24, 36];
                                 $strStyle = $strStyle . "font-size: " . $arrayPt[intval($v)] . "pt;";
                                 break;
                             case "style":
@@ -842,39 +863,35 @@ class OutputDocument extends BaseOutputDocument
             }
 
             $strContentAux = $arrayMatch[1];
-            $sContent = "<span" . $strAttribute . ">" . $arrayMatch[3] . $sContent;
+            $content = "<span" . $strAttribute . ">" . $arrayMatch[3] . $content;
         }
 
-        $sContent = $strContentAux . $sContent;
+        // Replenish the content
+        $content = $strContentAux . $content;
 
-        $sContent = str_ireplace("</font>", "</span>", $sContent);
+        // Replace some remaining incorrect/deprecated HTML tags/properties
+        $content = str_ireplace("</font>", "</span>", $content);
+        $content = str_replace($nrtHtml, $nrt, $content);
+        $content = str_replace("margin-left", "text-indent", $content);
 
-        $sContent = str_replace($nrthtml, $nrt, $sContent);
+        // Instance the TCPDF library
+        $pdf = new TCPDF($orientation, PDF_UNIT, $media, true, 'UTF-8', false);
 
-        $sContent = str_replace("margin-left", "text-indent", $sContent);
-
-        // define Save file
-        $sOutput = 2;
-        $sOrientation = ($sLandscape == false) ? PDF_PAGE_ORIENTATION : 'L';
-        $sMedia = (isset($aProperties['media'])) ? $aProperties['media'] : PDF_PAGE_FORMAT;
-        $sLang = (defined('SYS_LANG')) ? SYS_LANG : 'en';
-
-        // create new PDF document
-        $pdf = new TCPDF($sOrientation, PDF_UNIT, $sMedia, true, 'UTF-8', false);
-
-        // set document information
+        // Set document information
         $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor($aFields['USR_USERNAME']);
-        $pdf->SetTitle('Processmaker');
-        $pdf->SetSubject($sFilename);
+        $pdf->SetAuthor($fields['USR_USERNAME']);
+        $pdf->SetTitle('ProcessMaker');
+        $pdf->SetSubject($filename);
         $pdf->SetCompression(true);
 
-        $margins = $aProperties['margins'];
+        // Define margins
+        $margins = $properties['margins'];
         $margins["left"] = ($margins["left"] >= 0) ? $margins["left"] : PDF_MARGIN_LEFT;
         $margins["top"] = ($margins["top"] >= 0) ? $margins["top"] : PDF_MARGIN_TOP;
         $margins["right"] = ($margins["right"] >= 0) ? $margins["right"] : PDF_MARGIN_RIGHT;
         $margins["bottom"] = ($margins["bottom"] >= 0) ? $margins["bottom"] : PDF_MARGIN_BOTTOM;
 
+        // Set margins configuration
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->SetLeftMargin($margins['left']);
@@ -882,76 +899,69 @@ class OutputDocument extends BaseOutputDocument
         $pdf->SetRightMargin($margins['right']);
         $pdf->SetAutoPageBreak(true, $margins['bottom']);
 
-        $oServerConf = ServerConf::getSingleton();
+        // Get ServerConf singleton
+        $serverConf = ServerConf::getSingleton();
 
-        // set some language dependent data:
+        // Set language configuration
         $lg = [];
         $lg['a_meta_charset'] = 'UTF-8';
-        $lg['a_meta_dir'] = ($oServerConf->isRtl($sLang)) ? 'rtl' : 'ltr';
-        $lg['a_meta_language'] = $sLang;
+        $lg['a_meta_dir'] = ($serverConf->isRtl($lang)) ? 'rtl' : 'ltr';
+        $lg['a_meta_language'] = $lang;
         $lg['w_page'] = 'page';
-
-        //set some language-dependent strings
         $pdf->setLanguageArray($lg);
 
-        if (isset($aProperties['pdfSecurity'])) {
-            $tcpdfPermissions = array('print', 'modify', 'copy', 'annot-forms', 'fill-forms', 'extract', 'assemble', 'print-high');
-            $pdfSecurity = $aProperties['pdfSecurity'];
-            $userPass = G::decrypt($pdfSecurity['openPassword'], $sUID);
-            $ownerPass = ($pdfSecurity['ownerPassword'] != '') ? G::decrypt($pdfSecurity['ownerPassword'], $sUID) : null;
+        // Set security configuration
+        if (isset($properties['pdfSecurity'])) {
+            $tcPdfPermissions = ['print', 'modify', 'copy', 'annot-forms', 'fill-forms', 'extract', 'assemble', 'print-high'];
+            $pdfSecurity = $properties['pdfSecurity'];
+            $userPass = G::decrypt($pdfSecurity['openPassword'], $outDocUid);
+            $ownerPass = ($pdfSecurity['ownerPassword'] != '') ? G::decrypt($pdfSecurity['ownerPassword'], $outDocUid) : null;
             $permissions = explode("|", $pdfSecurity['permissions']);
-            $permissions = array_diff($tcpdfPermissions, $permissions);
+            $permissions = array_diff($tcPdfPermissions, $permissions);
             $pdf->SetProtection($permissions, $userPass, $ownerPass);
         }
-        // ---------------------------------------------------------
-        // set default font subsetting mode
+
+        // Enable the font sub-setting option
         $pdf->setFontSubsetting(true);
 
-        // Set font
-        // dejavusans is a UTF-8 Unicode font, if you only need to
-        // print standard ASCII chars, you can use core fonts like
-        // helvetica or times to reduce file size.
-        //$pdf->SetFont('dejavusans', '', 14, '', true);
-        // Detect chinese, japanese, thai
-        if (preg_match('/[\x{30FF}\x{3040}-\x{309F}\x{4E00}-\x{9FFF}\x{0E00}-\x{0E7F}]/u', $sContent, $matches)) {
-            $fileArialunittf = PATH_THIRDPARTY . "tcpdf" . PATH_SEP . "fonts" . PATH_SEP . "arialuni.ttf";
-
-            $pdf->SetFont((!file_exists($fileArialunittf)) ? "kozminproregular" : $pdf->addTTFfont($fileArialunittf, "TrueTypeUnicode", "", 32));
+        // Set unicode font if is required, we need to detect if is chinese, japanese, thai, etc.
+        if (preg_match('/[\x{30FF}\x{3040}-\x{309F}\x{4E00}-\x{9FFF}\x{0E00}-\x{0E7F}]/u', $content, $matches)) {
+            // The additional fonts should be in "shared/fonts" folder
+            $fileArialUniTTF = PATH_DATA . "fonts" . PATH_SEP . "arialuni.ttf";
+            if (file_exists($fileArialUniTTF)) {
+                $font = TCPDF_FONTS::addTTFfont($fileArialUniTTF, 'TrueTypeUnicode');
+                $pdf->SetFont($font);
+            }
         }
 
-        // Add a page
-        // This method has several options, check the source code documentation for more information.
-        $pdf->AddPage();
-
-        // set text shadow effect
-        //$pdf->setTextShadow(array('enabled'=>true, 'depth_w'=>0.2, 'depth_h'=>0.2, 'color'=>array(196,196,196), 'opacity'=>1, 'blend_mode'=>'Normal'));
-        // Print text using writeHTMLCell()
-        // $pdf->writeHTMLCell($w=0, $h=0, $x='', $y='', $html, $border=0, $ln=1, $fill=0, $reseth=true, $align='', $autopadding=true);
-        if (mb_detect_encoding($sContent) == 'UTF-8') {
-            $sContent = mb_convert_encoding($sContent, 'HTML-ENTITIES', 'UTF-8');
+        // Convert the encoding of the content if is UTF-8
+        if (mb_detect_encoding($content) == 'UTF-8') {
+            $content = mb_convert_encoding($content, 'HTML-ENTITIES', 'UTF-8');
         }
+
+        // Fix the HTML using DOMDocument class
         $doc = new DOMDocument('1.0', 'UTF-8');
-        if ($sContent != '') {
-            $doc->loadHtml($sContent);
+        if ($content != '') {
+            $doc->loadHtml($content);
         }
+
+        // Add a page and put the HTML fixed
+        $pdf->AddPage();
         $pdf->writeHTML($doc->saveXML(), false, false, false, false, '');
-        // ---------------------------------------------------------
-        // Close and output PDF document
-        // This method has several options, check the source code documentation for more information.
-        //$pdf->Output('example_00.pdf', 'I');
-        //$pdf->Output('/home/hector/processmaker/example_00.pdf', 'D');
-        switch ($sOutput) {
+
+        // Generate the PDF file
+        switch ($outputType) {
             case 0:
-                // Vrew browser
-                $pdf->Output($sPath . $sFilename . '.pdf', 'I');
+                // Browser
+                $pdf->Output($path . $filename . '.pdf', 'I');
                 break;
             case 1:
-                // Donwnload
-                $pdf->Output($sPath . $sFilename . '.pdf', 'D');
+                // Download
+                $pdf->Output($path . $filename . '.pdf', 'D');
                 break;
             case 2:
-                // Save file
-                $pdf->Output($sPath . $sFilename . '.pdf', 'F');
+                // Save to file
+                $pdf->Output($path . $filename . '.pdf', 'F');
                 break;
         }
     }

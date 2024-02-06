@@ -141,8 +141,8 @@ class Container implements ResettableContainerInterface
      * Setting a synthetic service to null resets it: has() returns false and get()
      * behaves in the same way as if the service was never created.
      *
-     * @param string $id      The service identifier
-     * @param object $service The service instance
+     * @param string      $id      The service identifier
+     * @param object|null $service The service instance
      */
     public function set($id, $service)
     {
@@ -210,7 +210,7 @@ class Container implements ResettableContainerInterface
      * @param string $id              The service identifier
      * @param int    $invalidBehavior The behavior when the service does not exist
      *
-     * @return object The associated service
+     * @return object|null The associated service
      *
      * @throws ServiceCircularReferenceException When a circular reference is detected
      * @throws ServiceNotFoundException          When the service is not defined
@@ -220,9 +220,15 @@ class Container implements ResettableContainerInterface
      */
     public function get($id, $invalidBehavior = /* self::EXCEPTION_ON_INVALID_REFERENCE */ 1)
     {
-        return $this->services[$id]
+        $service = $this->services[$id]
             ?? $this->services[$id = $this->aliases[$id] ?? $id]
             ?? ('service_container' === $id ? $this : ($this->factories[$id] ?? [$this, 'make'])($id, $invalidBehavior));
+
+        if (!\is_object($service) && null !== $service) {
+            @trigger_error(sprintf('Non-object services are deprecated since Symfony 4.4, please fix the "%s" service which is of type "%s" right now.', $id, \gettype($service)), E_USER_DEPRECATED);
+        }
+
+        return $service;
     }
 
     /**
@@ -276,6 +282,8 @@ class Container implements ResettableContainerInterface
 
             throw new ServiceNotFoundException($id, null, null, $alternatives);
         }
+
+        return null;
     }
 
     /**
@@ -324,7 +332,7 @@ class Container implements ResettableContainerInterface
      */
     public function getServiceIds()
     {
-        return array_map('strval', array_unique(array_merge(['service_container'], array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->services))));
+        return array_map('strval', array_unique(array_merge(['service_container'], array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->aliases), array_keys($this->services))));
     }
 
     /**
@@ -363,8 +371,6 @@ class Container implements ResettableContainerInterface
 
     /**
      * Creates a service by requiring its factory file.
-     *
-     * @return object The service created by the file
      */
     protected function load($file)
     {
@@ -416,9 +422,14 @@ class Container implements ResettableContainerInterface
     }
 
     /**
+     * @param string|false $registry
+     * @param string|bool  $load
+     *
+     * @return mixed
+     *
      * @internal
      */
-    final protected function getService($registry, $id, $method, $load)
+    final protected function getService($registry, string $id, ?string $method, $load)
     {
         if ('service_container' === $id) {
             return $this;

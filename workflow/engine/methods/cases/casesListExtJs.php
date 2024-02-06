@@ -122,6 +122,7 @@ $headPublisher->assign('solrEnabled', $solrEnabled); //Sending the status of sol
 $headPublisher->assign('enableEnterprise', $enableEnterprise); //sending the page size
 $headPublisher->assign('columnSearchValues', $columnToSearch); //Sending the list of column for search: caseTitle, caseNumber, tasTitle
 $headPublisher->assign('filtersValues', $filters); //Sending filters defined
+$headPublisher->assign('workspace', config('system.workspace'));
 
 
 /** Define actions menu in the cases list */
@@ -130,13 +131,15 @@ $reassignCaseSup = ($RBAC->userCanAccess('PM_REASSIGNCASE_SUPERVISOR') == 1) ? '
 $headPublisher->assign('varReassignCase', $reassignCase);
 $headPublisher->assign('varReassignCaseSupervisor', $reassignCaseSup);
 
+$deleteCase = ($RBAC->userCanAccess('PM_DELETECASE') == 1) ? 'true' : 'false';
+$headPublisher->assign('varDeleteCase', $deleteCase);
+
 $c = new Configurations();
 $headPublisher->addExtJsScript('app/main', true);
 $headPublisher->addExtJsScript('cases/casesList', false); //adding a javascript file .js
 $headPublisher->addContent('cases/casesListExtJs'); //adding a html file  .html.
 $headPublisher->assign('FORMATS', $c->getFormats());
 $headPublisher->assign('userUid', $userUid);
-$headPublisher->assign('extJsViewState', $headPublisher->getExtJsViewState($userUid));
 $headPublisher->assign('isIE', Bootstrap::isIE());
 $headPublisher->assign('__OPEN_APPLICATION_UID__', $openApplicationUid);
 

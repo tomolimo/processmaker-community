@@ -73,11 +73,11 @@ class JobsPendingMapBuilder
 
         $tMap->addColumn('ATTEMPTS', 'Attempts', 'int', CreoleTypes::TINYINT, true, 3);
 
-        $tMap->addColumn('RESERVED_AT', 'ReservedAt', 'int', CreoleTypes::TINYINT, false, 10);
+        $tMap->addColumn('RESERVED_AT', 'ReservedAt', 'string', CreoleTypes::BIGINT, false, 10);
 
-        $tMap->addColumn('AVAILABLE_AT', 'AvailableAt', 'int', CreoleTypes::TINYINT, true, 10);
+        $tMap->addColumn('AVAILABLE_AT', 'AvailableAt', 'string', CreoleTypes::BIGINT, true, 10);
 
-        $tMap->addColumn('CREATED_AT', 'CreatedAt', 'int', CreoleTypes::TINYINT, true, 10);
+        $tMap->addColumn('CREATED_AT', 'CreatedAt', 'string', CreoleTypes::BIGINT, true, 10);
 
     } // doBuild()
 

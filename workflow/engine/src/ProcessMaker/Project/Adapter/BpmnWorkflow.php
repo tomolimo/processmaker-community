@@ -713,7 +713,7 @@ class BpmnWorkflow extends Project\Bpmn
                 if ($emailEvent->existsEvent($bpmnEvent->getPrjUid(), $bpmnEvent->getEvnUid())) {
                     $arrayEmailEventData = $emailEvent->getEmailEventData($bpmnEvent->getPrjUid(), $bpmnEvent->getEvnUid());
                     $arrayEmailEventData = array_change_key_case($arrayEmailEventData, CASE_UPPER);
-                    $emailEvent->delete($bpmnEvent->getPrjUid(), $arrayEmailEventData["EMAIL_EVENT_UID"], true);
+                    $emailEvent->delete($bpmnEvent->getPrjUid(), $arrayEmailEventData["EMAIL_EVENT_UID"], true, false);
                 }
             }
 

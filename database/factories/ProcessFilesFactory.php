@@ -8,7 +8,7 @@ $factory->define(\ProcessMaker\Model\ProcessFiles::class, function(Faker $faker)
         'PRO_UID' => '',
         'USR_UID' => '',
         'PRF_UPDATE_USR_UID' => '',
-        'PRF_PATH' => '',
+        'PRF_PATH' => 'dummy_path',
         'PRF_TYPE' => '',
         'PRF_EDITABLE' => 1,
         'PRF_CREATE_DATE' => $faker->dateTime(),

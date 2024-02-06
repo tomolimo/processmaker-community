@@ -69,7 +69,7 @@ class AppFolderMapBuilder
 
         $tMap->addColumn('FOLDER_PARENT_UID', 'FolderParentUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
-        $tMap->addColumn('FOLDER_NAME', 'FolderName', 'string', CreoleTypes::LONGVARCHAR, true, null);
+        $tMap->addColumn('FOLDER_NAME', 'FolderName', 'string', CreoleTypes::VARCHAR, true, 512);
 
         $tMap->addColumn('FOLDER_CREATE_DATE', 'FolderCreateDate', 'int', CreoleTypes::TIMESTAMP, true, null);
 

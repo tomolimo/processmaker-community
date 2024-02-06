@@ -1,30 +1,30 @@
-[4 weeks ago] 9ab106c6  (origin/bugfix/PMC-1319) PMC-1319: The addrow javascript function does not set the default value correctly in the suggestions fields <Rodrigo Quelca>
-[6 weeks ago] a508e099  (origin/bugfix/PMC-1330_B) PMC-1330: The Dropdown control displays a single item <Rodrigo Quelca>
-[6 weeks ago] 38c8fd9c  (origin/bugfix/PMC-1347) PMC-1347: Dependent in view mode was not loaded when the for was rendered. <Rodrigo Quelca>
-[7 weeks ago] 4e282455  (origin/bugfix/PMC-1318) PMC-1318 <Julio Cesar Laura Avendaño>
-[7 weeks ago] 1862b975  (origin/bugfix/PMC-1331) fix first option <Rodrigo Quelca>
-[7 weeks ago] 3b81265a  PMC-1331:Secondary dependent fields do not refresh data when changing the dropdowns. Also, always the first row of the SQL query set as default value in the dependent fields, and not the static empty value configured. <Rodrigo Quelca>
-[8 weeks ago] 7ee7a12c  PMC-1317:Helper getUserInfo parameter  "userName" has in web, but in mobile has "username" <Fabio Guachalla>
-[2 months ago] d50a061c  PMC-1295:Helpers to retrieve the information of the current user <Fabio Guachalla>
-[3 months ago] 4475bab4  (origin/bugfix/PMC-1221) [7543] Dependent fields - Valeo's feedback over PMC-707 <Rodrigo Quelca>
-[3 months ago] 4d8761aa  (origin/bugfix/PMC-1184) PMC-1184: Automatic call setOnchange function <Rodrigo Quelca>
-[4 months ago] f4d85b6c  (origin/bugfix/PMC-1121) PMC-1121: Dependent Fields:  The spinner does not disappear when the options are used. <Rodrigo Quelca>
-[4 months ago] 163311f9  PMC-1036:PROD-641 >> The getControl helper does not work for Suggest control <Fabio Guachalla>
-[4 months ago] 90aac5fc  PMC-1037:PROD-575 >> Loading Spinner icon disappear <Fabio Guachalla>
-[5 months ago] 6f05ac54  (origin/bugfix/PMC-1011) PMC-1011:Spinner does not disappear in multiples dependent fields <Rodrigo Quelca>
-[5 months ago] 36611ce3  PMC-953:PROD-641 >> In the second dependent field, you can choose wrong options <Fabio Guachalla>
-[5 months ago] f5e27b00  (origin/bugfix/PMC-34_B) QA rejection fixes <Rodrigo Quelca>
-[5 months ago] 384393c2  (origin/bugfix/PMC-955) PROD-575 >> Prevent the form submission if an element is still loading its dependency using "saveForm" helper does not work <Rodrigo Quelca>
-[5 months ago] 5f69517b  (origin/bugfix/PMC-954) PMC-954: PROD-575 >> The second dependent field does not display its spinner icon and its value and text <Rodrigo Quelca>
-[5 months ago] 43e205ea  PMC-939 <Fabio Guachalla>
-[5 months ago] 065e5451  (origin/bugfix/PMC-34) PMC-34: Documents in data base is wrong with multiple files <Rodrigo Quelca>
-[6 months ago] 9a30ec5d  PMC-938:Update lib for select2 <Fabio Guachalla>
-[6 months ago] 871da2b6  clear Dependent field <Fabio Guachalla>
-[6 months ago] 7cdf277c  requiredField <Fabio Guachalla>
-[6 months ago] 7eab8190  Fix: setValue after setText desn not work <Rodrigo Quelca>
-[6 months ago] 59d0a8da  (origin/feature/PMC-90_B) add row dropdown <Rodrigo Quelca>
-[6 months ago] 18321dd2  fix mobile addRow helper after delete row action <Rodrigo Quelca>
-[6 months ago] b2dc7601  PMC-73: Suggest field improvements <Fabio Guachalla>
-[6 months ago] 6eb756f2  functional test observation was fixed <Rodrigo Quelca>
-[6 months ago] 60a2974e  fix suggest double execute query <Rodrigo Quelca>
-[6 months ago] 53c7457c  PMC-73: Suggest field improvements <Fabio Guachalla>
+[4 weeks ago] 4af5aa86  (origin/bugfix/PMCORE-1357) PMCORE-1357: Dependent fields of 4 levels is not working <Rodrigo Quelca>
+[4 weeks ago] 6ff8f65b  PMCORE-645:Printed dynaform doesn't format well in firefox <fabio>
+[9 weeks ago] 90e07f19  (origin/bugfix/PMCORE-1236) PMCORE-1236 <henry>
+[9 weeks ago] 35cfeeca  PMCORE-541:New lines are not taken into account in printed dynaform <Fabio Guachalla>
+[9 weeks ago] e8ea435d  (origin/bugfix/PMCORE-1249) PMCORE-1249: When you select a control option with the "setValue" method, more "execute-query" requests are executed. <Rodrigo Quelca>
+[9 weeks ago] b9090f1a  (origin/bugfix/PMCORE-1245) PMCORE-1245 <henry>
+[9 weeks ago] 7570efbf  (origin/bugfix/PMCORE-1248) PMCORE-1248: The suggest control does not retrieve the correct text, within a grid <Rodrigo Quelca>
+[9 weeks ago] 76cc789f  (origin/bugfix/PMCORE-1247) PMCORE-1247: Dependent fields with helper setText is not working properly <Rodrigo Quelca>
+[10 weeks ago] 3931aaeb  (origin/bugfix/PMCORE-1228) SetOnChange helper >> The console displays errors and the Dynaform is not rendered. <Rodrigo Quelca>
+[2 months ago] 7e5e5c00  (origin/bugfix/PMCORE-866-A) improve PMDynaform Event Bus <henry>
+[3 months ago] 88ffe480  (origin/feature/PMCORE-1168) PMCORE-1168 <henry>
+[3 months ago] 340b11c7  (origin/feature/PMCORE-1137-B) PMCORE-1137-A <henry>
+[3 months ago] 507bb2ba  (origin/bugfix/PMCORE-1148) PMCORE-1148: PM 3.4.3 with the new Patch3_Knauf is not working in the IE11 browser <Rodrigo Quelca>
+[3 months ago] 01a5207a  PMCORE-1137 <henry>
+[3 months ago] 8d9def5f  (origin/feature/PMCORE-1137-A) PMCORE-1137-A <henry>
+[3 months ago] 66394771  PMCORE-1137 <henry>
+[3 months ago] e770b868  (origin/bugfix/PMCORE-1130) PMCORE-1130 <henry>
+[3 months ago] da9c0731  (origin/bugfix/PMCORE-1111_C) PMCORE-111: Dependent fields in grids lose its values <Rodrigo Quelca>
+[3 months ago] dc282b97  (origin/feature/PMCORE-1127) PMCORE-1127 <henry>
+[3 months ago] 6629d170  PMCORE-541: New lines are not taken into account in printed dynaform <Fabio Guachalla>
+[3 months ago] bb507c9c  FBI-1580: Tooltips in grids are being hidden in middle and small screens or when more than 6 elements are added <alex>
+[3 months ago] 26000aa5  (origin/bugfix/PMCORE-1113) PMCORE-1113 <henry>
+[3 months ago] 21a74c78  (origin/bugfix/PMCORE-1111) PMCORE-1111: Dependent fields in grids lose its values <Rodrigo Quelca>
+[4 months ago] 638f0136  PMCORE-1096:Multiple File Upload Control does not validate Required Field attribute <Fabio Guachalla>
+[4 months ago] e1e7137b  (origin/bugfix/PMCORE-522) PMCORE-522 <henry>
+[4 months ago] 0021eb5c  (origin/feature/PMCORE-1054) PMCORE-1054 <henry>
+[4 months ago] a9b5f45e  (origin/bugfix/PMCORE-1035) PMCORE-1035 <henry>
+[4 months ago] 3b913de7  (origin/bugfix/PMCORE-1019-A) PMCORE-1019 <henry>
+[4 months ago] 2cbeeef4  Words cut off in dynaform printed PDF <Fabio Guachalla>
+[4 months ago] 742d0259  Words cut off in dynaform printed PDF <Fabio Guachalla>

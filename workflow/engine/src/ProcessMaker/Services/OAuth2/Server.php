@@ -3,7 +3,11 @@ namespace ProcessMaker\Services\OAuth2;
 
 use Luracast\Restler\iAuthenticate;
 use Luracast\Restler\RestException;
+use OAuth2\Request;
+use OAuth2\Response;
+use PmoauthUserAccessTokens;
 use ProcessMaker\Core\System;
+use ProcessMaker\Policies\ControlUnderUpdating;
 
 class Server implements iAuthenticate
 {
@@ -267,30 +271,41 @@ class Server implements iAuthenticate
         }
     }
 
-
     /**
      * Stage 3: Client directly calls this api to exchange access token
-     *
-     * It can then use this access token to make calls to protected api
-     *
+     * It can then use this access token to make calls to protected api.
      * @format JsonFormat,UploadFormat
+     * @param object $request
+     * @param boolean $returnResponse
+     * @return mixed
      */
     public function postToken($request = null, $returnResponse = false)
     {
-        \ProcessMaker\Policies\ControlUnderUpdating::verifyUnderUpgrading();
-        
+        ControlUnderUpdating::verifyUnderUpgrading();
+
         // Handle a request for an OAuth2.0 Access Token and send the response to the client
         if ($request == null) {
-            $request = \OAuth2\Request::createFromGlobals();
+            $request = Request::createFromGlobals();
+        }
+
+        $grantTypeIdentifier = $request->request('grant_type');
+        if ($grantTypeIdentifier === 'password') {
+            $clientId = $request->request('client_id');
+            $clientSecret = $request->request('client_secret');
+            if (empty($clientId) || empty($clientSecret)) {
+                $message = "Invalid REST API credentials, please send a valid client_id and client_secret.";
+                $res = new Response();
+                $res->setError(400, 'invalid_client', $message);
+                $res->send();
+                return;
+            }
         }
 
         $response = $this->server->handleTokenRequest($request); //Set/Get token //PmPdo->setAccessToken()
 
         $token = $response->getParameters();
 
-        if (array_key_exists('access_token', $token)
-            && array_key_exists('refresh_token', $token)
-        ) {
+        if (array_key_exists('access_token', $token) && array_key_exists('refresh_token', $token)) {
             if ($request == null) {
                 session_start();
             }
@@ -298,16 +313,12 @@ class Server implements iAuthenticate
 
             // verify if the client is our local PM Designer client
             if ($data['client_id'] == self::getPmClientId()) {
-                //error_log('do stuff - is a request from local pm client');
-                //require_once "classes/model/PmoauthUserAccessTokens.php";
-
-                $userToken = new \PmoauthUserAccessTokens();
+                $userToken = new PmoauthUserAccessTokens();
                 $userToken->setAccessToken($token['access_token']);
                 $userToken->setRefreshToken($token['refresh_token']);
                 $userToken->setUserId($data['user_id']);
                 $userToken->setSessionId(session_id());
                 $userToken->setSessionName(session_name());
-
                 $userToken->save();
             }
         }
@@ -316,8 +327,7 @@ class Server implements iAuthenticate
             return $response;
         } else {
             $response->send();
-
-            exit(0);
+            return;
         }
     }
 
@@ -394,6 +404,19 @@ class Server implements iAuthenticate
 
     public static function getUserId()
     {
+        // If is empty, get the User Uid using the current request
+        if (empty(self::$userId) && !empty(self::$dsn)) {
+            // Get current request object
+            $request = Request::createFromGlobals();
+
+            // Get token data
+            $serverInstance = new Server();
+            $server = $serverInstance->getServer();
+            $tokenData = $server->getAccessTokenData($request);
+
+            // Set the User Uid
+            self::$userId = $tokenData['user_id'];
+        }
         return self::$userId;
     }
 

@@ -1,37 +1,37 @@
 <?php
+/**
+ * Rebuilding the cases list cache and changing the MySQL credentials
+ *
+ * @see processWorkspace()
+ *
+ * @link https://wiki.processmaker.com/3.2/Clearing_the_Case_List_Cache
+ */
+
+use ProcessMaker\Core\Installer;
+
 global $RBAC;
 $RBAC->requirePermissions('PM_SETUP');
-//  header('Pragma: no-cache');
-//  header('Cache-Control: no-store, no-cache, must-revalidate');
+// Define the content of the case list cache builder
+$headPublisher = headPublisher::getSingleton();
+$headPublisher->addExtJsScript('setup/appCacheViewConf', false); //adding a javascript file .js
+$headPublisher->addContent('setup/appCacheViewConf'); //adding a html file  .html.
 
+// Get some configurations
+$conf = new Configurations();
+$conf->loadConfig($x, 'APP_CACHE_VIEW_ENGINE', '', '', '', '');
+$lang = isset($conf->aConfig['LANG']) ? $conf->aConfig['LANG'] : 'en';
 
-$oHeadPublisher = headPublisher::getSingleton();
-//$oHeadPublisher->setExtSkin( 'xtheme-blue');
+// Assign the language configured
+$headPublisher->assign('currentLang', $lang);
 
-
-$oHeadPublisher->addExtJsScript('setup/appCacheViewConf', false); //adding a javascript file .js
-$oHeadPublisher->addContent('setup/appCacheViewConf'); //adding a html file  .html.
-
-$oConf = new Configurations();
-$oConf->loadConfig($x, 'APP_CACHE_VIEW_ENGINE', '', '', '', '');
-
-//first check about APP_CACHE_VIEW is enabled or not,
-if (isset($oConf->aConfig['LANG']) && isset($oConf->aConfig['STATUS']) && $oConf->aConfig['STATUS'] == 'active') {
-    $appCacheViewEnabled = true;
+// Get the mysql version
+$mysqlVersion = getMysqlVersion();
+$maxMysqlVersion = InstallerModule::MYSQL_VERSION_MAXIMUM_SUPPORTED;
+if (version_compare($mysqlVersion, $maxMysqlVersion, '<')) {
+    $userNameMaxLength = 16;
 } else {
-    $appCacheViewEnabled = false;
+	$userNameMaxLength = 32;
 }
-$lang = isset($oConf->aConfig['LANG']) ? $oConf->aConfig['LANG'] : 'en';
-
-//$oHeadPublisher->assign('appCacheViewEnabled', $appCacheViewEnabled);
-
-
-$labels = G::getTranslations(array('ID_PROCESSING','ID_CACHE_LANGUAGE','ID_CACHE_HOST','ID_CACHE_USER','ID_CACHE_PASSWORD','ID_CACHE_TITLE_INFO','ID_CACHE_SUBTITLE_REBUILD','ID_CACHE_BTN_BUILD','ID_CACHE_BUILDING','ID_CACHE_SUBTITLE_SETUP_DB','ID_CACHE_BTN_SETUP_PASSWRD','ID_CACHE_SUBTITLE_SETUP_SESSION','ID_CACHE_BTN_SETUP_SESSION'
-));
-// $oHeadPublisher->assign('TRANSLATIONS', $labels);
-// $TRANSLATIONS->ID_PROCESSING               = G::LoadTranslation('ID_PROCESSING');
-// $oHeadPublisher->assign( 'TRANSLATIONS',   $TRANSLATIONS); //translations
-$oHeadPublisher->assign('currentLang', $lang); //current language
-
+$headPublisher->assign('userNameMaxLength', $userNameMaxLength);
 
 G::RenderPage('publish', 'extJs');

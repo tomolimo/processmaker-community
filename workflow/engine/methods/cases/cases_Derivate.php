@@ -279,9 +279,8 @@ try {
         }
     }
 
-    //close tab only if IE11
-
-    if ($isIE && !isset($_SESSION['__OUTLOOK_CONNECTOR__'])) {
+    //close tab only if IE11 add a validation was added if the current skin is uxs 
+    if ($isIE && !isset($_SESSION['__OUTLOOK_CONNECTOR__']) && SYS_SKIN !== "uxs") {
         $script = "<script type='text/javascript'>
                        try {
                            if(top.opener) {

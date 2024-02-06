@@ -191,6 +191,7 @@ try {
     $response['filters'] = $filters;
     $response['totalCount'] = $list->getCountList($userUid, $filters);
     $response['data'] = \ProcessMaker\Util\DateTime::convertUtcToTimeZone($result);
+    !empty($response['filters']['search']) ? $response['filters']['search'] = '' : '';
     echo G::json_encode($response);
 } catch (Exception $e) {
     $msg = array("error" => $e->getMessage());

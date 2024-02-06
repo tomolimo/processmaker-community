@@ -62,7 +62,7 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
      * Parses additional static values that are valid in the supported php version.
      *
      * @param  \PDepend\Source\AST\ASTValue $value
-     * @return \PDepend\Source\AST\ASTValue
+     * @return \PDepend\Source\AST\ASTValue|null
      * @throws \PDepend\Source\Parser\UnexpectedTokenException
      */
     protected function parseStaticValueVersionSpecific(ASTValue $value)
@@ -133,6 +133,8 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
                 case Tokens::T_SR:
                     $expressions[] = $this->parseShiftRightExpression();
                     break;
+                case Tokens::T_ELLIPSIS:
+                    $this->checkEllipsisInExpressionSupport();
                 case Tokens::T_STRING_VARNAME: // TODO: Implement this
                 case Tokens::T_PLUS: // TODO: Make this a arithmetic expression
                 case Tokens::T_MINUS:
@@ -178,6 +180,7 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
                 case Tokens::T_PLUS_EQUAL:
                 case Tokens::T_MINUS_EQUAL:
                 case Tokens::T_CONCAT_EQUAL:
+                case Tokens::T_COALESCE_EQUAL:
                     $expressions[] = $this->parseAssignmentExpression(
                         array_pop($expressions)
                     );
@@ -350,5 +353,13 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
         }
 
         return $arguments;
+    }
+
+    protected function parseConstantDeclaratorValue()
+    {
+        $value = new ASTValue();
+        $value->setValue($this->parseOptionalExpression());
+
+        return $value;
     }
 }

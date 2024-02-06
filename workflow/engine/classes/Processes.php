@@ -1017,6 +1017,9 @@ class Processes
             $map[$val['DYN_UID']] = $newGuid;
             $oData->dynaforms[$key]['DYN_UID'] = $newGuid;
             unset($oData->dynaforms[$key]['DYN_ID']);
+            
+            //this is important when UID's is updated
+            $oData->dynaforms[$key]['DYN_FILENAME'] = $oData->dynaforms[$key]['PRO_UID'] . "/" . $oData->dynaforms[$key]['DYN_UID'];
         }
 
         $oData->uid["DYNAFORM"] = $map;

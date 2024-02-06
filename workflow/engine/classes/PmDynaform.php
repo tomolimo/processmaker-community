@@ -149,12 +149,16 @@ class PmDynaform
         return $labelsPo;
     }
 
-    public function getDynaformTitle($idDynaform)
+    /**
+     * Get the title of a Dynaform
+     *
+     * @param string $dynUid
+     * @return string
+     */
+    public function getDynaformTitle($dynUid)
     {
-        $d = new Dynaform();
-        $d->setDynUid($idDynaform);
-        $titleDynaform = $d->getDynTitle();
-        return $titleDynaform;
+        $dynaform = ModelDynaform::getByDynUid($dynUid);
+        return $dynaform->DYN_TITLE;
     }
 
     /**
@@ -357,6 +361,7 @@ class PmDynaform
                                 $option->value = isset($row[0]) ? $row[0] : "";
                                 $option->label = isset($row[1]) ? $row[1] : "";
                                 $json->optionsSql[] = $option;
+                                $json->queryOutputData[] = $option;
                             }
                         }
                         if ($value === "suggest" && isset($json->queryField) && $json->queryField == true) {
@@ -1022,8 +1027,17 @@ class PmDynaform
                                 . " JOIN "
                                 . $dt[$key]["table"]
                                 . ($dt[$key]["table"] == $dt[$key]["alias"] ? "" : " " . $dt[$key]["alias"]) . " "
-                                . $dt[$key]["ref_type"] . " "
-                                . rtrim($dt[$key]["ref_clause"], " INNER");
+                                . $dt[$key]["ref_type"] . " ";
+
+                        // Get the last 6 chars of the string
+                        $tempString = mb_substr($dt[$key]["ref_clause"], -6);
+
+                        // If the last section is a "INNER" statement we need to remove it
+                        if (strcasecmp($tempString, " INNER") === 0) {
+                            $from .= mb_substr($dt[$key]["ref_clause"], 0, mb_strlen($dt[$key]["ref_clause"]) - 6);
+                        } else {
+                            $from .= $dt[$key]["ref_clause"];
+                        }
                     }
                 }
             }

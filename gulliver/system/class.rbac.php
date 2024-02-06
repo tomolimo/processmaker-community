@@ -1,46 +1,7 @@
 <?php
 
-/**
- * class.rbac.php
- *
- * @package gulliver.system
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
-
 use ProcessMaker\Exception\RBACException;
 
-/**
- * File: $Id$
- *
- * RBAC class definition
- *
- * @package gulliver.system
- */
-
-/**
- * Clase Wrapper
- *
- * @package gulliver.system
- */
 class RBAC
 {
     const ADMIN_USER_UID = '00000000000000000000000000000001';
@@ -180,7 +141,11 @@ class RBAC
                 'UPD' => ['PM_SETUP'],
                 'DEL' => ['PM_SETUP'],
                 'LST' => ['PM_SETUP'],
-                'TEST' => ['PM_SETUP']
+                'TEST' => ['PM_SETUP'],
+                'createAuthUrl' => ['PM_SETUP']
+            ],
+            'emailServerGmailOAuth.php' => [
+                'code' => ['PM_SETUP']
             ],
             'processes_GetFile.php' => [
                 'mailTemplates' => ['PM_FACTORY'],
@@ -211,6 +176,24 @@ class RBAC
                 'showDynaformListHistory' => ['PM_CASES'],
                 'dynaformChangeLogViewHistory' => ['PM_CASES'],
                 'historyDynaformGridPreview' => ['PM_CASES'],
+            ],
+            'usersAjax.php' => [
+                'countryList' => ['PM_LOGIN'],
+                'stateList' => ['PM_LOGIN'],
+                'locationList' => ['PM_LOGIN'],
+                'usersList' => ['PM_USERS,PM_EDIT_USER_PROFILE_REPLACED_BY'],
+                'availableCalendars' => ['PM_LOGIN'],
+                'rolesList' => ['PM_LOGIN'],
+                'getUserLogedRole' => ['PM_USERS,PM_EDIT_USER_PROFILE_PASSWORD'],
+                'languagesList' => ['PM_LOGIN'],
+                'saveUser' => [], // This action is validated with custom logic in the same page
+                'savePersonalInfo' => [], // This action is validated with custom logic in the same page
+                'userData' => [], // This action is validated with custom logic in the same page
+                'defaultMainMenuOptionList' => ['PM_LOGIN'],
+                'defaultCasesMenuOptionList' => ['PM_LOGIN'],
+                'testPassword' => ['PM_USERS,PM_EDIT_USER_PROFILE_PASSWORD'],
+                'testUsername' => ['PM_USERS,PM_EDIT_USER_PROFILE_USERNAME'],
+                'passwordValidate' => ['PM_USERS,PM_EDIT_USER_PROFILE_PASSWORD'],
             ]
         ];
         $this->aliasPermissions['PM_CASES'] = [self::PM_GUEST_CASE];
@@ -369,7 +352,7 @@ class RBAC
             ],
             [
                 "PER_UID" => "00000000000000000000000000000015",
-                "PER_CODE" => "PM_FOLDERS_VIEW",
+                "PER_CODE" => "PM_FOLDERS_ALL",
                 "PER_NAME" => "View Folders"
             ],
             [
@@ -627,8 +610,12 @@ class RBAC
                 'PER_UID' => '00000000000000000000000000000067',
                 'PER_CODE' => 'PM_SETUP_LOG_FILES',
                 'PER_NAME' => 'Log Files'
+            ],
+            [
+                'PER_UID' => '00000000000000000000000000000068',
+                'PER_CODE' => 'PM_FOLDERS_OWNER',
+                'PER_NAME' => 'View Your Folders'
             ]
-
         ];
 
         return $permissionsAdmin;

@@ -225,6 +225,14 @@
 		<xs:attribute name="name" type="index_name" use="optional"/>
 	</xs:complexType>
 
+	<xs:complexType name="fulltext">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="index-column" type="index-column" minOccurs="1" maxOccurs="unbounded"/>
+			<xs:element ref="vendor" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:choice>
+		<xs:attribute name="name" type="index_name" use="optional"/>
+	</xs:complexType>
+
 	<xs:complexType name="unique">
 		<xs:choice maxOccurs="unbounded">
 			<xs:element name="unique-column" type="unique-column" minOccurs="1" maxOccurs="unbounded"/>
@@ -307,6 +315,7 @@
 			<xs:element name="column" type="column" maxOccurs="unbounded"/>
 			<xs:element name="foreign-key" type="foreign-key" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="index" type="index" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="fulltext" type="fulltext" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="unique" type="unique" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="id-method-parameter" type="id-method-parameter" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="validator" type="validator" minOccurs="0" maxOccurs="unbounded"/>

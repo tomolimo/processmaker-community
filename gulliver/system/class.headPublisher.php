@@ -740,44 +740,5 @@ class headPublisher
     {
         $this->disableHeaderScripts = true;
     }
-
-    /**
-     * Gets an array that contains the status of the view.
-     * 
-     * @return array $views
-     */
-    public function getExtJsViewState($userUid = '')
-    {
-        $json = new stdClass();
-        $views = array();
-        $keyState = "extJsViewState" . $userUid;
-        $prefixExtJs = "ys-";
-        $oServerConf = ServerConf::getSingleton();
-        $deleteCache = true;
-
-        $sjson = $oServerConf->getProperty($keyState);
-        if ($sjson !== "") {
-            $json = G::json_decode($sjson);
-            if (is_iterable($json)) {
-                foreach ($json as $key => $value) {
-                    $views[$key] = $value;
-                }
-            }
-        }
-        $httpCookies = explode("; ", $_SERVER['HTTP_COOKIE']);
-        foreach ($httpCookies as $cookie) {
-            $value = explode("=", $cookie);
-            if (count($value) > 1 && substr($value[0], 0, 3) === $prefixExtJs) {
-                $deleteCache = false;
-                $key = substr($value[0], 3);
-                $views[$key] = $value[1];
-            }
-        }
-        if ((array)$json != $views) {
-            $oServerConf->setProperty($keyState, G::json_encode($views));
-        }
-        return $views;
-    }
-
 }
 

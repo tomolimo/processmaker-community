@@ -241,6 +241,7 @@ class MonologProvider
      */
     public function setStream($fileLog)
     {
+        // ONLY initialize a new RotatingFileHandler if the fileLog is DIFFERENT.
         //Set Routating Handler
         $this->streamRoutating = new RotatingFileHandler($this->getPathFile() . $fileLog,
             $this->getMaxFiles(),
@@ -425,6 +426,9 @@ class MonologProvider
         if (isset(static::$levels[$levelDebug])) {
             $level = static::$levels[$levelDebug];
             $this->levelDebug = $level;
+        } else {
+            //If is other value like NONE will set with empty level
+            $this->levelDebug = '';
         }
     }
 
@@ -443,7 +447,6 @@ class MonologProvider
     {
         if (self::$instance === null) {
             self::$instance = new MonologProvider($channel, $fileLog, $readLoggingLevel);
-        } else {
             self::$instance->setConfig($channel, $fileLog, $readLoggingLevel);
         }
         return self::$instance;
@@ -467,7 +470,8 @@ class MonologProvider
     }
 
     /**
-     * Register log
+     * Register log if the level correspond to the logging_level defined
+     * In other way return false if the log was turn off or the actions does not logged
      *
      * @access public
      *
@@ -475,12 +479,22 @@ class MonologProvider
      * @param string $message The log message
      * @param array $context The log context
      *
-     * @return void
+     * @return bool
      */
     public function addLog($level, $message, $context)
     {
-        if (!empty($this->getLevelDebug())) {
-            $this->getLogger()->addRecord($level, $message, $context);
+        if (!empty($this->getLevelDebug()) && $level >= $this->getLevelDebug()) {
+            return $this->getLogger()->addRecord($level, $message, $context);
+        } else {
+            return false;
         }
+    }
+
+    /**
+     * Set the instance property
+     */
+    static function setInstance($instance)
+    {
+        self::$instance = $instance;
     }
 }

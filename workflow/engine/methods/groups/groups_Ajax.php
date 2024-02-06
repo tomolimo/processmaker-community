@@ -59,9 +59,7 @@ switch ($_POST['action']) {
         $sortDir = isset($_REQUEST["dir"]) ? $_REQUEST["dir"] : "";
 
         global $RBAC;
-        if ($limit == $start) {
-            $limit = $limit + $limit;
-        }
+
         $tasks = new TaskUser();
         $aTask = $tasks->getCountAllTaksByGroups();
 

@@ -1,20 +1,27 @@
 <?php
 
+/**
+ * Route case
+*/
+
+use ProcessMaker\Model\Application as ModelApplication;
+
 class Derivation
 {
     var $case;
+    protected $appCurrentUser;
+    protected $arraySiblings;
+    protected $aSP;
+    protected $context;
     protected $flagControl;
     protected $flagControlMulInstance;
-    protected $sys;
-    protected $context;
+    protected $flagUpdateList;
+    protected $iNewDelIndex;
     protected $regexpTaskTypeToInclude;
+    protected $removeList;
+    protected $sys;
     public $node;
     public $userLogged = null;
-    protected $flagUpdateList;
-    protected $removeList;
-    protected $aSP;
-    protected $iNewDelIndex;
-    protected $arraySiblings;
 
     public function __construct()
     {
@@ -859,7 +866,10 @@ class Derivation
         $aContext['appUid'] = $currentDelegation['APP_UID'];
         $aContext['delIndex'] = $currentDelegation['DEL_INDEX'];
 
+        // Remove the fields that will update with the thread creation
         unset($appFields['APP_ROUTING_DATA']);
+        $this->appCurrentUser = $appFields['APP_CUR_USER'];
+        unset($appFields['APP_CUR_USER']);
 
         //We close the current derivation, then we'll try to derivate to each defined route
         $this->case->CloseCurrentDelegation( $currentDelegation['APP_UID'], $currentDelegation['DEL_INDEX'] );
@@ -1208,6 +1218,7 @@ class Derivation
             $nextDel['DEL_PRIORITY'] = 3;
         }
 
+        $newDelegationUser = '';
         switch ($nextDel['TAS_ASSIGN_TYPE']) {
             case 'CANCEL_MI':
             case 'STATIC_MI':
@@ -1228,6 +1239,8 @@ class Derivation
                 if($this->flagControlMulInstance){
                     $criteriaMulti = new Criteria("workflow");
                     $criteriaMulti->addSelectColumn(AppDelegationPeer::DEL_PREVIOUS);
+                    $criteriaMulti->add(AppDelegationPeer::APP_UID, $currentDelegation['APP_UID'], Criteria::EQUAL);
+                    $criteriaMulti->add(AppDelegationPeer::DEL_INDEX, $currentDelegation['DEL_INDEX'], Criteria::EQUAL);
                     $criteriaMulti->add(AppDelegationPeer::TAS_UID, $currentDelegation['TAS_UID'], Criteria::EQUAL);
                     $criteriaMultiR = AppDelegationPeer::doSelectRS($criteriaMulti);
                     $criteriaMultiR->setFetchmode(ResultSet::FETCHMODE_ASSOC);
@@ -1235,12 +1248,14 @@ class Derivation
                     $row = $criteriaMultiR->getRow();
                     $delPrevious = $row['DEL_PREVIOUS'];
                 }
+                // Get the user that will create the new case
+                $newDelegationUser = $this->verifyCurrentUserInTask($nextDel, $aSP);
                 // Create new delegation
                 $iNewDelIndex = $this->case->newAppDelegation(
                     $appFields['PRO_UID'],
                     $currentDelegation['APP_UID'],
                     $nextDel['TAS_UID'],
-                    $this->verifyCurrentUserInTask($nextDel, $aSP),
+                    $newDelegationUser,
                     $currentDelegation['DEL_INDEX'],
                     $nextDel['DEL_PRIORITY'],
                     $delType,
@@ -1266,10 +1281,15 @@ class Derivation
             }
         }
 
-        $application = new Application();
-        $result = $application->update(['APP_UID' => $currentDelegation['APP_UID'], 'APP_ROUTING_DATA' => serialize($arrayRoutingData)]);
+        /** Update the table application */
+        $applicationFields = [
+            'APP_ROUTING_DATA' => $arrayRoutingData,
+            'APP_CUR_USER' => $newDelegationUser
+        ];
+        $colUpdated = ModelApplication::updateColumns($currentDelegation['APP_UID'], $applicationFields);
+        $appFields['APP_CUR_USER'] = !empty($colUpdated['APP_CUR_USER']) ? $colUpdated['APP_CUR_USER'] : $this->appCurrentUser;
 
-        //We updated the information relate to APP_THREAD
+        // We updated the information relate to APP_THREAD
         $iAppThreadIndex = $appFields['DEL_THREAD'];
         $isUpdatedThread = false;
         if (isset($currentDelegation['ROUTE_TYPES']) && sizeof($currentDelegation['ROUTE_TYPES']) > 1) {

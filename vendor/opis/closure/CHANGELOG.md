@@ -1,6 +1,29 @@
 CHANGELOG
 ---------
 
+### v3.5.1, 2019.11.30
+
+- Bugfix. See #47
+
+### v3.5.0, 2019.11.29
+
+- Added support for short closures (arrow functions)
+- Added `isShortClosure` method to `Opis\Closure\ReflectionClosure`
+
+### v3.4.2, 2019.11.29
+
+- Added `stream_set_option()`
+
+### v3.4.1, 2019.10.19
+
+- Fixed a [bug](https://github.com/opis/closure/issues/40) that prevented serialization to work correctly.
+
+### v3.4.0, 2019.09.03
+
+- Added `createClosure` static method in `Opis\Closure\SerializableClosure`.
+This method creates a new closure from arbitrary code, emulating `create_function`,
+but without using eval
+
 ### v3.3.1, 2019.07.10
 
 - Use `sha1` instead of `md5` for hashing file names in `Opis\Closure\ReflectionClosure` class

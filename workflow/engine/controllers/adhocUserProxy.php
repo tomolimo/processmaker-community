@@ -1,5 +1,7 @@
 <?php
 
+use \ProcessMaker\BusinessModel\Cases;
+
 class adhocUserProxy extends HttpProxyController
 {
     //list of users into adhoc option
@@ -46,21 +48,27 @@ class adhocUserProxy extends HttpProxyController
         $cases->reassignCase( $_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['USER_LOGGED'], $_POST['USR_UID'], $_POST['THETYPE'] );
         $this->success = true;
     }
-    //delete case adhoc
-    function deleteCase ($params)
+    /**
+     * Delete case from the actions menu
+     *
+     * @link https://wiki.processmaker.com/3.3/Cases/Actions#Delete
+    */
+    function deleteCase($params)
     {
-        $ainfoCase = array ();
         try {
-            $applicationUID = (isset( $_POST['APP_UID'] )) ? $_POST['APP_UID'] : $_SESSION['APPLICATION'];
+            $appUid = (isset($_POST['APP_UID'])) ? $_POST['APP_UID'] : $_SESSION['APPLICATION'];
+            // Load case information for get appNumber
+            $data = [];
             $app = new Application();
-            $caseData = $app->load( $applicationUID );
+            $caseData = $app->load($appUid);
             $data['APP_NUMBER'] = $caseData['APP_NUMBER'];
 
-            $oCase = new Cases();
-            $oCase->removeCase( $applicationUID );
+            $case = new Cases();
+            $case->deleteCase($appUid, $_SESSION['USER_LOGGED']);
 
+            // Result successfully
             $this->success = true;
-            $this->msg = G::LoadTranslation( 'ID_CASE_DELETED_SUCCESSFULLY', SYS_LANG, $data );
+            $this->msg = G::LoadTranslation('ID_CASE_DELETED_SUCCESSFULLY', SYS_LANG, $data);
         } catch (Exception $e) {
             $this->success = false;
             $this->msg = $e->getMessage();

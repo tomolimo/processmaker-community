@@ -937,19 +937,31 @@ class Process extends BaseProcess
         return $aProc;
     }
 
+    /**
+     * Delete all cases from a process
+     *
+     * @param string $proUid
+     * @throws Exception
+     *
+     * @see workflow/engine/methods/processes/processes_DeleteCases.php
+     * @link https://wiki.processmaker.com/3.2/Processes#Deleting_all_Cases_of_a_Process
+     */
     public function deleteProcessCases($proUid)
     {
         try {
-            /*get cases by process uid*/
-            $oCase = new Cases();
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->addSelectColumn(ApplicationPeer::APP_UID);
-            $oCriteria->add(ApplicationPeer::PRO_UID, $proUid);
-            $oDataset = ApplicationPeer::doSelectRS($oCriteria, Propel::getDbConnection('workflow_ro'));
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            while ($oDataset->next()) {
-                $row = $oDataset->getRow();
-                $oCase->removeCase($row['APP_UID'], false);
+            // Initialize variables
+            $casesInstance = new Cases();
+
+            // Get all cases from th process
+            $criteria = new Criteria('workflow');
+            $criteria->addSelectColumn(ApplicationPeer::APP_UID);
+            $criteria->add(ApplicationPeer::PRO_UID, $proUid);
+            $dataSet = ApplicationPeer::doSelectRS($criteria, Propel::getDbConnection('workflow_ro'));
+            $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            while ($dataSet->next()) {
+                $row = $dataSet->getRow();
+                // Delete/Remove the case
+                $casesInstance->removeCase($row['APP_UID']);
             }
         } catch (Exception $e) {
             throw ($e);

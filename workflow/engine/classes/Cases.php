@@ -2185,127 +2185,134 @@ class Cases
      * Get the next step
      *
      * @name getNextStep
-     * @param string $sProUid
-     * @param string $sAppUid
-     * @param integer $iDelIndex
-     * @param integer $iPosition
+     * @param string $proUid
+     * @param string $appUid
+     * @param integer $delIndex
+     * @param integer $position
      * @return array
      */
-    public function getNextStep($sProUid = '', $sAppUid = '', $iDelIndex = 0, $iPosition = 0)
+    public function getNextStep($proUid = '', $appUid = '', $delIndex = 0, $position = 0)
     {
-        $oPMScript = new PMScript();
-        $oApplication = new Application();
-        $aFields = $oApplication->Load($sAppUid);
-        if (!is_array($aFields['APP_DATA'])) {
-            $aFields['APP_DATA'] = G::array_merges(G::getSystemConstants(), unserialize($aFields['APP_DATA']));
+        $pmScript = new PMScript();
+        $application = new Application();
+        $fields = $application->Load($appUid);
+        $data = Cases::unserializeData($fields['APP_DATA']);
+        unset($data['USER_LOGGED']);
+        unset($data['USR_USERNAME']);
+
+        if (!is_array($fields['APP_DATA'])) {
+            $fields['APP_DATA'] = G::array_merges(G::getSystemConstants(), $data);
         }
-        $oPMScript->setFields($aFields['APP_DATA']);
+
+        $pmScript->setFields($fields['APP_DATA']);
 
         try {
             //get the current Delegation, and TaskUID
             $c = new Criteria('workflow');
-            $c->add(AppDelegationPeer::PRO_UID, $sProUid);
-            $c->add(AppDelegationPeer::APP_UID, $sAppUid);
-            $c->add(AppDelegationPeer::DEL_INDEX, $iDelIndex);
-            $aRow = AppDelegationPeer::doSelect($c);
+            $c->add(AppDelegationPeer::PRO_UID, $proUid);
+            $c->add(AppDelegationPeer::APP_UID, $appUid);
+            $c->add(AppDelegationPeer::DEL_INDEX, $delIndex);
+            $rows = AppDelegationPeer::doSelect($c);
 
-            if (!isset($aRow[0])) {
+            if (!isset($rows[0])) {
                 return false;
             }
 
-            $sTaskUid = $aRow[0]->getTasUid();
+            $taskUid = $rows[0]->getTasUid();
 
             //get max step for this task
             $c = new Criteria();
             $c->clearSelectColumns();
             $c->addSelectColumn('MAX(' . StepPeer::STEP_POSITION . ')');
-            $c->add(StepPeer::PRO_UID, $sProUid);
-            $c->add(StepPeer::TAS_UID, $sTaskUid);
+            $c->add(StepPeer::PRO_UID, $proUid);
+            $c->add(StepPeer::TAS_UID, $taskUid);
             $rs = StepPeer::doSelectRS($c);
             $rs->next();
             $row = $rs->getRow();
-            $iLastStep = intval($row[0]);
-            if ($iPosition != 10000 && $iPosition > $iLastStep) {
-                throw (new Exception(G::LoadTranslation('ID_STEP_DOES_NOT_EXIST', array(G::LoadTranslation('ID_POSITION'), $iPosition))));
+            $lastStep = intval($row[0]);
+            if ($position != 10000 && $position > $lastStep) {
+                throw (new Exception(G::LoadTranslation('ID_STEP_DOES_NOT_EXIST',
+                    [G::LoadTranslation('ID_POSITION'), $position])));
             }
-            $iPosition += 1;
-            $aNextStep = null;
-            if ($iPosition <= $iLastStep) {
-                while ($iPosition <= $iLastStep) {
-                    $bAccessStep = false;
+            $position += 1;
+            $nextStep = null;
+            if ($position <= $lastStep) {
+                while ($position <= $lastStep) {
+                    $accessStep = false;
                     //step
-                    $oStep = new Step;
-                    $oStep = $oStep->loadByProcessTaskPosition($sProUid, $sTaskUid, $iPosition);
-                    if ($oStep) {
-                        if (trim($oStep->getStepCondition()) !== '') {
-                            $oPMScript->setScript($oStep->getStepCondition());
-                            $oPMScript->setExecutedOn(PMScript::CONDITION);
-                            $bAccessStep = $oPMScript->evaluate();
+                    $step = new Step;
+                    $step = $step->loadByProcessTaskPosition($proUid, $taskUid, $position);
+                    if ($step) {
+                        if (trim($step->getStepCondition()) !== '') {
+                            $pmScript->setScript($step->getStepCondition());
+                            $pmScript->setExecutedOn(PMScript::CONDITION);
+                            $accessStep = $pmScript->evaluate();
                         } else {
-                            $bAccessStep = true;
+                            $accessStep = true;
                         }
-                        if ($bAccessStep) {
-                            switch ($oStep->getStepTypeObj()) {
+                        if ($accessStep) {
+                            switch ($step->getStepTypeObj()) {
                                 case 'DYNAFORM':
-                                    $sAction = 'EDIT';
+                                    $action = 'EDIT';
                                     break;
                                 case 'OUTPUT_DOCUMENT':
-                                    $sAction = 'GENERATE';
+                                    $action = 'GENERATE';
                                     break;
                                 case 'INPUT_DOCUMENT':
-                                    $sAction = 'ATTACH';
+                                    $action = 'ATTACH';
                                     break;
                                 case 'EXTERNAL':
-                                    $sAction = 'EDIT';
+                                    $action = 'EDIT';
                                     break;
                                 case 'MESSAGE':
-                                    $sAction = '';
+                                    $action = '';
                                     break;
                             }
-                            if (array_key_exists('gmail', $_SESSION) || (array_key_exists('gmail', $_GET) && $_GET['gmail'] == 1)) {
-                                $aNextStep = array(
-                                    'TYPE' => $oStep->getStepTypeObj(),
-                                    'UID' => $oStep->getStepUidObj(),
-                                    'POSITION' => $oStep->getStepPosition(),
-                                    'PAGE' => 'cases_Step?TYPE=' . $oStep->getStepTypeObj() . '&UID=' .
-                                    $oStep->getStepUidObj() . '&POSITION=' . $oStep->getStepPosition() .
-                                    '&ACTION=' . $sAction .
-                                    '&gmail=1'
-                                );
+                            if (array_key_exists('gmail', $_SESSION) || (array_key_exists('gmail',
+                                        $_GET) && $_GET['gmail'] == 1)) {
+                                $nextStep = [
+                                    'TYPE' => $step->getStepTypeObj(),
+                                    'UID' => $step->getStepUidObj(),
+                                    'POSITION' => $step->getStepPosition(),
+                                    'PAGE' => 'cases_Step?TYPE=' . $step->getStepTypeObj() . '&UID=' .
+                                        $step->getStepUidObj() . '&POSITION=' . $step->getStepPosition() .
+                                        '&ACTION=' . $action .
+                                        '&gmail=1'
+                                ];
                             } else {
-                                $aNextStep = array(
-                                    'TYPE' => $oStep->getStepTypeObj(),
-                                    'UID' => $oStep->getStepUidObj(),
-                                    'POSITION' => $oStep->getStepPosition(),
-                                    'PAGE' => 'cases_Step?TYPE=' . $oStep->getStepTypeObj() . '&UID=' .
-                                    $oStep->getStepUidObj() . '&POSITION=' . $oStep->getStepPosition() .
-                                    '&ACTION=' . $sAction
-                                );
+                                $nextStep = [
+                                    'TYPE' => $step->getStepTypeObj(),
+                                    'UID' => $step->getStepUidObj(),
+                                    'POSITION' => $step->getStepPosition(),
+                                    'PAGE' => 'cases_Step?TYPE=' . $step->getStepTypeObj() . '&UID=' .
+                                        $step->getStepUidObj() . '&POSITION=' . $step->getStepPosition() .
+                                        '&ACTION=' . $action
+                                ];
                             }
-                            $iPosition = $iLastStep;
+                            $position = $lastStep;
                         }
                     }
-                    $iPosition += 1;
+                    $position += 1;
                 }
             }
-            if (!$aNextStep) {
+            if (!$nextStep) {
                 if (array_key_exists('gmail', $_SESSION) || (array_key_exists('gmail', $_GET) && $_GET['gmail'] == 1)) {
-                    $aNextStep = array(
+                    $nextStep = [
                         'TYPE' => 'DERIVATION',
                         'UID' => -1,
-                        'POSITION' => ($iLastStep + 1),
+                        'POSITION' => ($lastStep + 1),
                         'PAGE' => 'cases_Step?TYPE=ASSIGN_TASK&UID=-1&POSITION=10000&ACTION=ASSIGN&gmail=1'
-                    );
+                    ];
                 } else {
-                    $aNextStep = array(
+                    $nextStep = [
                         'TYPE' => 'DERIVATION',
                         'UID' => -1,
-                        'POSITION' => ($iLastStep + 1),
+                        'POSITION' => ($lastStep + 1),
                         'PAGE' => 'cases_Step?TYPE=ASSIGN_TASK&UID=-1&POSITION=10000&ACTION=ASSIGN'
-                    );
+                    ];
                 }
             }
-            return $aNextStep;
+            return $nextStep;
         } catch (exception $e) {
             throw ($e);
         }
@@ -4213,7 +4220,7 @@ class Cases
         /** Create a register in APP_DELAY */
         $delay = new AppDelay();
 
-        foreach ($indexesClosed as $value){
+        foreach ($indexesClosed as $value) {
             $dataList = [];
             $rowDelay = AppDelay::buildAppDelayRow(
                 $caseFields['PRO_UID'],

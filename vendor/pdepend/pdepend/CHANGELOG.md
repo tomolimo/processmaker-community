@@ -1,5 +1,32 @@
+pdepend-2.7.1 (2020/02/12)
+==========================
+
+- Fixed [\#453](https://github.com/pdepend/pdepend/pull/453) Support for typed properties (nullable, array, FQN, scalar)
+- Fixed [\#446](https://github.com/pdepend/pdepend/pull/446) Suppress E_NOTICE thrown by unserialize() 
+
+pdepend-2.7.0 (2020/01/24)
+==========================
+
+- Added [\#362](https://github.com/pdepend/pdepend/pull/362) Support for php:// stream wrappers
+- Added [\#427](https://github.com/pdepend/pdepend/pull/427) PHP 7.4 features support 
+
+pdepend-2.6.1 (2019/12/21)
+==========================
+
+- Added [\#398](https://github.com/pdepend/pdepend/pull/398) Support for Symfony 5
+- Fixed [\#299](https://github.com/pdepend/pdepend/pull/299) Array concatenation in constant declaration
+
+pdepend-2.6.0 (2019/12/16)
+==========================
+
+- Added [\#383](https://github.com/pdepend/pdepend/pull/383) Support of PHP 7.1 syntax
+- Fixed [\#386](https://github.com/pdepend/pdepend/pull/386) PHP 7 and parsing some return types
+- Fixed [\#381](https://github.com/pdepend/pdepend/pull/381) Unexpected token error with invokable
+- Fixed [\#365](https://github.com/pdepend/pdepend/pull/365) unable to call method on newly created and invoked class
+- Removed not needed files from the export used by composer
+
 pdepend-2.5.2 (2017/12/13)
-=
+==========================
 
 This release contains a single bugfix for missing command options.
 

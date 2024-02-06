@@ -2,29 +2,10 @@
 /**
  * cases_ShowDocument.php
  *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
+ * Download documents related to the input document
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
-/*
- * Created on 13-02-2008
- *
- * @author David Callizaya <davidsantos@colosa.com>
+ * @link https://wiki.processmaker.com/3.2/Cases/Documents#Downloading_Files
+ * @link https://wiki.processmaker.com/3.3/Cases/Information#Uploaded_Documents
  */
 if (isset($_REQUEST['actionAjax']) && $_REQUEST['actionAjax'] == "verifySession") {
     if (!isset($_SESSION['USER_LOGGED'])) {
@@ -63,9 +44,9 @@ if (empty($_GET['v'])) {
 //Check if the user can be download the input Document
 //Send the parameter v = Version
 //Send the parameter a = Case UID
-if (defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0) {
+if ($RBAC->userCanAccess('PM_FOLDERS_ALL') != 1 && defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0) {
     if (!$oAppDocument->canDownloadInput($_SESSION['USER_LOGGED'], $_GET['a'], $docVersion)) {
-        G::header('Location: /errors/error403.php');
+        G::header('Location: /errors/error403.php?url=' . urlencode($_SERVER['REQUEST_URI']));
         die();
     }
 }

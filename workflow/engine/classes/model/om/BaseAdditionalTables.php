@@ -124,6 +124,18 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
     protected $add_tab_tag = '';
 
     /**
+     * The value for the add_tab_offline field.
+     * @var        int
+     */
+    protected $add_tab_offline = 0;
+
+    /**
+     * The value for the add_tab_update_date field.
+     * @var        int
+     */
+    protected $add_tab_update_date;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -311,6 +323,49 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
     {
 
         return $this->add_tab_tag;
+    }
+
+    /**
+     * Get the [add_tab_offline] column value.
+     * 
+     * @return     int
+     */
+    public function getAddTabOffline()
+    {
+
+        return $this->add_tab_offline;
+    }
+
+    /**
+     * Get the [optionally formatted] [add_tab_update_date] column value.
+     * 
+     * @param      string $format The date/time format string (either date()-style or strftime()-style).
+     *                          If format is NULL, then the integer unix timestamp will be returned.
+     * @return     mixed Formatted date/time value as string or integer unix timestamp (if format is NULL).
+     * @throws     PropelException - if unable to convert the date/time to timestamp.
+     */
+    public function getAddTabUpdateDate($format = 'Y-m-d H:i:s')
+    {
+
+        if ($this->add_tab_update_date === null || $this->add_tab_update_date === '') {
+            return null;
+        } elseif (!is_int($this->add_tab_update_date)) {
+            // a non-timestamp value was set externally, so we convert it
+            $ts = strtotime($this->add_tab_update_date);
+            if ($ts === -1 || $ts === false) {
+                throw new PropelException("Unable to parse value of [add_tab_update_date] as date/time value: " .
+                    var_export($this->add_tab_update_date, true));
+            }
+        } else {
+            $ts = $this->add_tab_update_date;
+        }
+        if ($format === null) {
+            return $ts;
+        } elseif (strpos($format, '%') !== false) {
+            return strftime($format, $ts);
+        } else {
+            return date($format, $ts);
+        }
     }
 
     /**
@@ -666,6 +721,57 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
     } // setAddTabTag()
 
     /**
+     * Set the value of [add_tab_offline] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setAddTabOffline($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->add_tab_offline !== $v || $v === 0) {
+            $this->add_tab_offline = $v;
+            $this->modifiedColumns[] = AdditionalTablesPeer::ADD_TAB_OFFLINE;
+        }
+
+    } // setAddTabOffline()
+
+    /**
+     * Set the value of [add_tab_update_date] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setAddTabUpdateDate($v)
+    {
+
+        if ($v !== null && !is_int($v)) {
+            $ts = strtotime($v);
+            //Date/time accepts null values
+            if ($v == '') {
+                $ts = null;
+            }
+            if ($ts === -1 || $ts === false) {
+                throw new PropelException("Unable to parse date/time value for [add_tab_update_date] from input: " .
+                    var_export($v, true));
+            }
+        } else {
+            $ts = $v;
+        }
+        if ($this->add_tab_update_date !== $ts) {
+            $this->add_tab_update_date = $ts;
+            $this->modifiedColumns[] = AdditionalTablesPeer::ADD_TAB_UPDATE_DATE;
+        }
+
+    } // setAddTabUpdateDate()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -714,12 +820,16 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
 
             $this->add_tab_tag = $rs->getString($startcol + 15);
 
+            $this->add_tab_offline = $rs->getInt($startcol + 16);
+
+            $this->add_tab_update_date = $rs->getTimestamp($startcol + 17, null);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 16; // 16 = AdditionalTablesPeer::NUM_COLUMNS - AdditionalTablesPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 18; // 18 = AdditionalTablesPeer::NUM_COLUMNS - AdditionalTablesPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating AdditionalTables object", $e);
@@ -971,6 +1081,12 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
             case 15:
                 return $this->getAddTabTag();
                 break;
+            case 16:
+                return $this->getAddTabOffline();
+                break;
+            case 17:
+                return $this->getAddTabUpdateDate();
+                break;
             default:
                 return null;
                 break;
@@ -1007,6 +1123,8 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
             $keys[13] => $this->getAddTabType(),
             $keys[14] => $this->getAddTabGrid(),
             $keys[15] => $this->getAddTabTag(),
+            $keys[16] => $this->getAddTabOffline(),
+            $keys[17] => $this->getAddTabUpdateDate(),
         );
         return $result;
     }
@@ -1085,6 +1203,12 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
                 break;
             case 15:
                 $this->setAddTabTag($value);
+                break;
+            case 16:
+                $this->setAddTabOffline($value);
+                break;
+            case 17:
+                $this->setAddTabUpdateDate($value);
                 break;
         } // switch()
     }
@@ -1173,6 +1297,14 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
             $this->setAddTabTag($arr[$keys[15]]);
         }
 
+        if (array_key_exists($keys[16], $arr)) {
+            $this->setAddTabOffline($arr[$keys[16]]);
+        }
+
+        if (array_key_exists($keys[17], $arr)) {
+            $this->setAddTabUpdateDate($arr[$keys[17]]);
+        }
+
     }
 
     /**
@@ -1246,6 +1378,14 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
 
         if ($this->isColumnModified(AdditionalTablesPeer::ADD_TAB_TAG)) {
             $criteria->add(AdditionalTablesPeer::ADD_TAB_TAG, $this->add_tab_tag);
+        }
+
+        if ($this->isColumnModified(AdditionalTablesPeer::ADD_TAB_OFFLINE)) {
+            $criteria->add(AdditionalTablesPeer::ADD_TAB_OFFLINE, $this->add_tab_offline);
+        }
+
+        if ($this->isColumnModified(AdditionalTablesPeer::ADD_TAB_UPDATE_DATE)) {
+            $criteria->add(AdditionalTablesPeer::ADD_TAB_UPDATE_DATE, $this->add_tab_update_date);
         }
 
 
@@ -1331,6 +1471,10 @@ abstract class BaseAdditionalTables extends BaseObject implements Persistent
         $copyObj->setAddTabGrid($this->add_tab_grid);
 
         $copyObj->setAddTabTag($this->add_tab_tag);
+
+        $copyObj->setAddTabOffline($this->add_tab_offline);
+
+        $copyObj->setAddTabUpdateDate($this->add_tab_update_date);
 
 
         $copyObj->setNew(true);

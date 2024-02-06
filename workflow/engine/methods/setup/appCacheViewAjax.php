@@ -1,106 +1,11 @@
 <?php
 
+use Processmaker\Core\System;
+
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
 $_GET = $filter->xssFilterHard($_GET);
 $request = isset($_POST['request']) ? $_POST['request'] : (isset($_GET['request']) ? $_GET['request'] : null);
-
-function testConnection($type, $server, $user, $passwd, $port = 'none', $dbName = "")
-{
-    if (($port == 'none') || ($port == '') || ($port == 0)) {
-        //setting defaults ports
-        switch ($type) {
-            case 'mysql':
-                $port = 3306;
-                break;
-            case 'pgsql':
-                $port = 5432;
-                break;
-            case 'mssql':
-                $port = 1433;
-                break;
-            case 'oracle':
-                $port = 1521;
-                break;
-        }
-    }
-
-    $Server = new Net($server);
-    $filter = new InputFilter();
-
-    if ($Server->getErrno() == 0) {
-        $Server->scannPort($port);
-        if ($Server->getErrno() == 0) {
-            $Server->loginDbServer($user, $passwd);
-            $Server->setDataBase($dbName, $port);
-            if ($Server->errno == 0) {
-                $response = $Server->tryConnectServer($type);
-                if ($response->status == 'SUCCESS') {
-                    if ($Server->errno == 0) {
-                        $message = "";
-                        $response = $Server->tryConnectServer($type);
-                        $server = $filter->validateInput($server);
-                        $user = $filter->validateInput($user);
-                        $passwd = $filter->validateInput($passwd);
-                        $connDatabase = mysqli_connect($server, $user, $passwd);
-                        $dbNameTest = "PROCESSMAKERTESTDC";
-                        $dbNameTest = $filter->validateInput($dbNameTest, 'nosql');
-                        $query = "CREATE DATABASE %s";
-                        $query = $filter->preventSqlInjection($query, array($dbNameTest), $connDatabase);
-                        $db = mysqli_query($connDatabase, $query);
-                        $success = false;
-                        if (!$db) {
-                            $message = mysqli_error($connDatabase);
-                        } else {
-                            $usrTest = "wfrbtest";
-                            $chkG = "GRANT ALL PRIVILEGES ON `%s`.* TO %s@'%%' IDENTIFIED BY 'sample' WITH GRANT OPTION";
-                            $chkG = $filter->preventSqlInjection($chkG, array($dbNameTest, $usrTest), $connDatabase);
-                            $ch = mysqli_query($connDatabase, $chkG);
-                            if (!$ch) {
-                                $message = mysqli_error($connDatabase);
-                            } else {
-                                $sqlCreateUser = "CREATE USER '%s'@'%%' IDENTIFIED BY '%s'";
-                                $user = $filter->validateInput($user, 'nosql');
-                                $sqlCreateUser = $filter->preventSqlInjection($sqlCreateUser, array($user . "_usertest", "sample"), $connDatabase);
-                                $result = mysqli_query($connDatabase, $sqlCreateUser);
-                                if (!$result) {
-                                    $message = mysqli_error($connDatabase);
-                                } else {
-                                    $success = true;
-                                    $message = G::LoadTranslation('ID_SUCCESSFUL_CONNECTION');
-                                }
-                                $sqlDropUser = "DROP USER '%s'@'%%'";
-                                $user = $filter->validateInput($user, 'nosql');
-                                $sqlDropUser = $filter->preventSqlInjection($sqlDropUser, array($user . "_usertest"), $connDatabase);
-                                mysqli_query($connDatabase, $sqlDropUser);
-
-                                $sqlDropUser = "DROP USER %s@'%%'";
-                                $usrTest = $filter->validateInput($usrTest, 'nosql');
-                                $sqlDropUser = $filter->preventSqlInjection($sqlDropUser, array($usrTest), $connDatabase);
-                                mysqli_query($connDatabase, $sqlDropUser);
-                            }
-                            $sqlDropDb = "DROP DATABASE %s";
-                            $dbNameTest = $filter->validateInput($dbNameTest, 'nosql');
-                            $sqlDropDb = $filter->preventSqlInjection($sqlDropDb, array($dbNameTest), $connDatabase);
-                            mysqli_query($connDatabase, $sqlDropDb);
-                        }
-                        return array($success, ($message != "") ? $message : $Server->error);
-                    } else {
-                        return array(false, $Server->error);
-                    }
-                } else {
-                    return array(false, $Server->error);
-                }
-            } else {
-                return array(false, $Server->error);
-            }
-        } else {
-            return array(false, $Server->error);
-        }
-    } else {
-        return array(false, $Server->error);
-    }
-}
 
 switch ($request) {
     //check if the APP_CACHE VIEW table and their triggers are installed
@@ -270,47 +175,41 @@ switch ($request) {
         }
         break;
     case 'recreate-root':
-        $user = $_POST['user'];
-        $passwd = $_POST['password'];
-        $server = $_POST['host'];
-        $code = $_POST['codeCaptcha'];
-        $aServer = explode(':', $server);
-        $serverName = $aServer[0];
-        $port = (count($aServer) > 1) ? $aServer[1] : "none";
+        // Get the post variables
+        $user = !empty($_POST['user']) ? $_POST['user'] : '';
+        $pass = !empty($_POST['password']) ? $_POST['password'] : '';
+        $server = !empty($_POST['host']) ? $_POST['host'] : '';
+        $code = !empty($_POST['codeCaptcha']) ? $_POST['codeCaptcha'] : '';
 
+        // Check if in the host was included the port
+        $server = explode(':', $server);
+        $serverName = $server[0];
+        $port = (count($server) > 1) ? $server[1] : '';
+
+        // Review if the captcha is not empty
+        if (empty($code)) {
+            echo G::loadTranslation('ID_CAPTCHA_CODE_INCORRECT');
+            break;
+        }
+        // Review if th captcha is incorrect
         if ($code !== $_SESSION['securimage_code_disp']['default']) {
             echo G::loadTranslation('ID_CAPTCHA_CODE_INCORRECT');
             break;
         }
-
-        list($sucess, $msgErr) = testConnection(DB_ADAPTER, $serverName, $user, $passwd, $port);
-
-        if ($sucess) {
-            $sh = G::encryptOld(filemtime(PATH_GULLIVER . "/class.g.php"));
-            $h = G::encrypt($_POST['host'] . $sh . $_POST['user'] . $sh . $_POST['password'] . $sh . (1), $sh);
-            $insertStatements = "define ( 'HASH_INSTALLATION','{$h}' );  \ndefine ( 'SYSTEM_HASH', '{$sh}' ); \n";
-            $lines = [];
-            $content = '';
-            $filename = PATH_HOME . 'engine' . PATH_SEP . 'config' . PATH_SEP . 'paths_installed.php';
-            $lines = file($filename);
-
-            $count = 1;
-            foreach ($lines as $line_num => $line) {
-                $pos = strpos($line, "define");
-                if ($pos !== false && $count < 3) {
-                    $content = $content . $line;
-                    $count++;
+        // Define a message of failure
+        $message = G::loadTranslation('ID_MESSAGE_ROOT_CHANGE_FAILURE');
+        if (!empty($user) && !empty($pass) && !empty($serverName)) {
+            list($success, $message) = System::checkPermissionsDbUser(DB_ADAPTER, $serverName, $port, $user, $pass);
+            if ($success) {
+                $id = 'ID_MESSAGE_ROOT_CHANGE_FAILURE';
+                if (System::regenerateCredentiaslPathInstalled($serverName, $user, $pass)) {
+                    $id = 'ID_MESSAGE_ROOT_CHANGE_SUCESS';
                 }
+                $message = G::loadTranslation($id);
             }
-            $content = "<?php \n" . $content . "\n" . $insertStatements . "\n";
-            if (file_put_contents($filename, $content) != false) {
-                echo G::loadTranslation('ID_MESSAGE_ROOT_CHANGE_SUCESS');
-            } else {
-                echo G::loadTranslation('ID_MESSAGE_ROOT_CHANGE_FAILURE');
-            }
-        } else {
-            echo $msgErr;
         }
+
+        echo $message;
         break;
     case 'captcha':
         require_once PATH_TRUNK . 'vendor/dapphp/securimage/securimage.php';

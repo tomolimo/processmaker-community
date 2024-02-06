@@ -111,43 +111,6 @@ class ListUnassigned extends Model
     }
 
     /**
-     * Count the self-services cases by user
-     *
-     * @param string $usrUid
-     *
-     * @return integer
-     */
-    public static function countSelfService($usrUid)
-    {
-        //Get the task self services related to the user
-        $taskSelfService = TaskUser::getSelfServicePerUser($usrUid);
-        //Get the task self services value based related to the user
-        $selfServiceValueBased = AppAssignSelfServiceValue::getSelfServiceCasesByEvaluatePerUser($usrUid);
-
-        //Start the query for get the cases related to the user
-        $query = ListUnassigned::query()->select('APP_NUMBER');
-
-        //Get the cases unassigned
-        if (!empty($selfServiceValueBased)) {
-            $query->where(function ($query) use ($selfServiceValueBased, $taskSelfService) {
-                //Get the cases related to the task self service
-                $query->tasksIn($taskSelfService);
-                foreach ($selfServiceValueBased as $case) {
-                    //Get the cases related to the task self service value based
-                    $query->orWhere(function ($query) use ($case) {
-                        $query->case($case['APP_NUMBER'])->index($case['DEL_INDEX'])->task($case['TAS_ID']);
-                    });
-                }
-            });
-        } else {
-            //Get the cases related to the task self service
-            $query->tasksIn($taskSelfService);
-        }
-
-        return $query->count();
-    }
-
-    /**
      * Search data
      *
      * @param string $userUid

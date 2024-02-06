@@ -44,7 +44,7 @@ class ValidationUploadedFiles
         $validator->addRule()
                 ->validate($file, function($file) {
                     $filesystem = new Filesystem();
-                    $extension = $filesystem->extension($file->filename);
+                    $extension = strtolower($filesystem->extension($file->filename));
 
                     return Bootstrap::getDisablePhpUploadExecution() === 1 && $extension === 'php';
                 })
@@ -70,18 +70,18 @@ class ValidationUploadedFiles
                 ->validate($file, function($file) {
                     $systemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
                     $filesWhiteList = explode(',', $systemConfiguration['upload_attempts_limit_per_user']);
-                    $userId = Server::getUserId();
+                    $userId = !empty($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : Server::getUserId();
                     $key = config("system.workspace") . '/' . $userId;
-                    $attemps = (int) trim($filesWhiteList[0]);
+                    $attempts = (int) trim($filesWhiteList[0]);
                     $minutes = (int) trim($filesWhiteList[1]);
-                    $pastAttemps = Cache::remember($key, $minutes, function() {
-                                return 1;
-                            });
+                    $pastAttempts = Cache::remember($key, $minutes, function() {
+                        return 1;
+                    });
                     //We only increase when the file path exists, useful when pre-validation is done.
                     if (isset($file->path)) {
                         Cache::increment($key, 1);
                     }
-                    if ($pastAttemps <= $attemps) {
+                    if ($pastAttempts <= $attempts) {
                         return false;
                     }
                     return true;
@@ -112,7 +112,7 @@ class ValidationUploadedFiles
                         return false;
                     }
 
-                    $extension = $filesystem->extension($file->filename);
+                    $extension = strtolower($filesystem->extension($file->filename));
                     $mimeType = $filesystem->mimeType($path);
 
                     $file = new File($path);

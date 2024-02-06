@@ -53,19 +53,19 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
 
     /**
      * The value for the reserved_at field.
-     * @var        int
+     * @var        string
      */
     protected $reserved_at;
 
     /**
      * The value for the available_at field.
-     * @var        int
+     * @var        string
      */
     protected $available_at;
 
     /**
      * The value for the created_at field.
-     * @var        int
+     * @var        string
      */
     protected $created_at;
 
@@ -130,7 +130,7 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Get the [reserved_at] column value.
      * 
-     * @return     int
+     * @return     string
      */
     public function getReservedAt()
     {
@@ -141,7 +141,7 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Get the [available_at] column value.
      * 
-     * @return     int
+     * @return     string
      */
     public function getAvailableAt()
     {
@@ -152,7 +152,7 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Get the [created_at] column value.
      * 
-     * @return     int
+     * @return     string
      */
     public function getCreatedAt()
     {
@@ -251,16 +251,16 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Set the value of [reserved_at] column.
      * 
-     * @param      int $v new value
+     * @param      string $v new value
      * @return     void
      */
     public function setReservedAt($v)
     {
 
-        // Since the native PHP type for this column is integer,
-        // we will cast the input value to an int (if it is not).
-        if ($v !== null && !is_int($v) && is_numeric($v)) {
-            $v = (int) $v;
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
         }
 
         if ($this->reserved_at !== $v) {
@@ -273,16 +273,16 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Set the value of [available_at] column.
      * 
-     * @param      int $v new value
+     * @param      string $v new value
      * @return     void
      */
     public function setAvailableAt($v)
     {
 
-        // Since the native PHP type for this column is integer,
-        // we will cast the input value to an int (if it is not).
-        if ($v !== null && !is_int($v) && is_numeric($v)) {
-            $v = (int) $v;
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
         }
 
         if ($this->available_at !== $v) {
@@ -295,16 +295,16 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
     /**
      * Set the value of [created_at] column.
      * 
-     * @param      int $v new value
+     * @param      string $v new value
      * @return     void
      */
     public function setCreatedAt($v)
     {
 
-        // Since the native PHP type for this column is integer,
-        // we will cast the input value to an int (if it is not).
-        if ($v !== null && !is_int($v) && is_numeric($v)) {
-            $v = (int) $v;
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
         }
 
         if ($this->created_at !== $v) {
@@ -339,11 +339,11 @@ abstract class BaseJobsPending extends BaseObject implements Persistent
 
             $this->attempts = $rs->getInt($startcol + 3);
 
-            $this->reserved_at = $rs->getInt($startcol + 4);
+            $this->reserved_at = $rs->getString($startcol + 4);
 
-            $this->available_at = $rs->getInt($startcol + 5);
+            $this->available_at = $rs->getString($startcol + 5);
 
-            $this->created_at = $rs->getInt($startcol + 6);
+            $this->created_at = $rs->getString($startcol + 6);
 
             $this->resetModified();
 

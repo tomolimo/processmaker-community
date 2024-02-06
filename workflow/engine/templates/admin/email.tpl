@@ -2,7 +2,7 @@
   <tbody>
     <tr>
       <td>
-  	<img id='logo' src='http://{server}/images/processmaker.logo.jpg' />
+  	<img id='logo' src='{server}/images/processmaker.logo.jpg' />
       </td>
     </tr>
     <tr>

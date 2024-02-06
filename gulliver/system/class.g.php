@@ -633,7 +633,7 @@ class G
 
         try {
             $file = G::ExpandPath('skinEngine') . 'skinEngine.php';
-            include $file;
+            include_once $file;
             $skinEngine = new SkinEngine($G_TEMPLATE, $G_SKIN, $G_CONTENT);
             $skinEngine->setLayout($layout);
             $skinEngine->dispatch();
@@ -6052,6 +6052,7 @@ class G
 
     /**
      * Add log of execution of triggers
+     *
      * @param $data
      * @param string $error
      * @param string $typeError
@@ -6059,24 +6060,22 @@ class G
      */
     public static function logTriggerExecution($data, $error = 'NO-ERROR', $typeError = '', $executionTime = 0)
     {
-        if ((!empty($data['_CODE_']) || $typeError == 'FATAL_ERROR') && isset($data['_DATA_TRIGGER_']) &&
-            !isset($data['_DATA_TRIGGER_']['_TRI_LOG_'])
-        ) {
+        if ((!empty($data['_CODE_']) || $typeError == 'FATAL_ERROR') && empty($data['_DATA_TRIGGER_']['_TRI_LOG_'])) {
             $lg = Bootstrap::getDefaultContextLog();
-            $lg['TRI_TITLE'] = isset($data['_DATA_TRIGGER_']['TRI_TITLE']) ? $data['_DATA_TRIGGER_']['TRI_TITLE'] : '';
-            $lg['TRI_UID'] = isset($data['_DATA_TRIGGER_']['TRI_UID']) ? $data['_DATA_TRIGGER_']['TRI_UID'] : '';
-            $lg['TRI_CODE'] = isset($data['_DATA_TRIGGER_']['TRI_WEBBOT']) ? $data['_DATA_TRIGGER_']['TRI_WEBBOT'] : '';
-            $lg['TRI_EXECUTION_TIME'] = $executionTime;
-            $lg['TRI_MSG_ERROR'] = $error;
-            $lg['APP_UID'] = isset($data['APPLICATION']) ? $data['APPLICATION'] : '';
-            $lg['PRO_UID'] = isset($data['PROCESS']) ? $data['PROCESS'] : '';
-            $lg['TAS_UID'] = isset($data['TASK']) ? $data['TASK'] : '';
-            $lg['USR_UID'] = isset($data['USER_LOGGED']) ? $data['USER_LOGGED'] : '';
+            $lg['triTitle'] = isset($data['_DATA_TRIGGER_']['TRI_TITLE']) ? $data['_DATA_TRIGGER_']['TRI_TITLE'] : '';
+            $lg['triUid'] = isset($data['_DATA_TRIGGER_']['TRI_UID']) ? $data['_DATA_TRIGGER_']['TRI_UID'] : '';
+            $lg['triCode'] = isset($data['_DATA_TRIGGER_']['TRI_WEBBOT']) ? $data['_DATA_TRIGGER_']['TRI_WEBBOT'] : '';
+            $lg['triExecutionTime'] = $executionTime;
+            $lg['triMessageError'] = $error;
+            $lg['appUid'] = isset($data['APPLICATION']) ? $data['APPLICATION'] : '';
+            $lg['proUid'] = isset($data['PROCESS']) ? $data['PROCESS'] : '';
+            $lg['tasUid'] = isset($data['TASK']) ? $data['TASK'] : '';
+            $lg['usrUid'] = isset($data['USER_LOGGED']) ? $data['USER_LOGGED'] : '';
 
             Bootstrap::registerMonolog(
-                (empty($sError)) ? 'TriggerExecution' : 'TriggerExecutionError',
-                (empty($sError)) ? 200 : 400,
-                (empty($sError)) ? 'Trigger Execution' : 'Trigger Execution Error',
+                (empty($error)) ? 'TriggerExecution' : 'TriggerExecutionError',
+                (empty($error)) ? 200 : 400,
+                (empty($error)) ? 'Trigger Execution' : 'Trigger Execution Error',
                 $lg,
                 $lg['workspace'],
                 'processmaker.log'

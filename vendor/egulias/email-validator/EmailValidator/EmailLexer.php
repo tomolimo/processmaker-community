@@ -73,10 +73,37 @@ class EmailLexer extends AbstractLexer
         '\0'   => self::C_NUL,
     );
 
+    /**
+     * @var bool
+     */
     protected $hasInvalidTokens = false;
 
-    protected $previous;
+    /**
+     * @var array
+     *
+     * @psalm-var array{value:string, type:null|int, position:int}|array<empty, empty>
+     */
+    protected $previous = [];
 
+    /**
+     * The last matched/seen token.
+     *
+     * @var array
+     *
+     * @psalm-var array{value:string, type:null|int, position:int}
+     */
+    public $token;
+
+    /**
+     * The next token in the input.
+     *
+     * @var array|null
+     */
+    public $lookahead;
+
+    /**
+     * @psalm-var array{value:'', type:null, position:0}
+     */
     private static $nullToken = [
         'value' => '',
         'type' => null,
@@ -86,8 +113,12 @@ class EmailLexer extends AbstractLexer
     public function __construct()
     {
         $this->previous = $this->token = self::$nullToken;
+        $this->lookahead = null;
     }
 
+    /**
+     * @return void
+     */
     public function reset()
     {
         $this->hasInvalidTokens = false;
@@ -95,15 +126,20 @@ class EmailLexer extends AbstractLexer
         $this->previous = $this->token = self::$nullToken;
     }
 
+    /**
+     * @return bool
+     */
     public function hasInvalidTokens()
     {
         return $this->hasInvalidTokens;
     }
 
     /**
-     * @param string $type
+     * @param int $type
      * @throws \UnexpectedValueException
      * @return boolean
+     *
+     * @psalm-suppress InvalidScalarArgument
      */
     public function find($type)
     {
@@ -119,7 +155,7 @@ class EmailLexer extends AbstractLexer
     /**
      * getPrevious
      *
-     * @return array token
+     * @return array
      */
     public function getPrevious()
     {
@@ -193,6 +229,11 @@ class EmailLexer extends AbstractLexer
         return  self::GENERIC;
     }
 
+    /**
+     * @param string $value
+     *
+     * @return bool
+     */
     protected function isValid($value)
     {
         if (isset($this->charValue[$value])) {
@@ -228,6 +269,9 @@ class EmailLexer extends AbstractLexer
         return false;
     }
 
+    /**
+     * @return string
+     */
     protected function getModifiers()
     {
         return 'iu';

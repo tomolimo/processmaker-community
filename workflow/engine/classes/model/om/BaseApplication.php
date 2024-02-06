@@ -145,13 +145,13 @@ abstract class BaseApplication extends BaseObject implements Persistent
      * The value for the app_duration field.
      * @var        double
      */
-    protected $app_duration = 0;
+    protected $app_duration = 0.0;
 
     /**
      * The value for the app_delay_duration field.
      * @var        double
      */
-    protected $app_delay_duration = 0;
+    protected $app_delay_duration = 0.0;
 
     /**
      * The value for the app_drive_folder_uid field.
@@ -971,7 +971,7 @@ abstract class BaseApplication extends BaseObject implements Persistent
     public function setAppDuration($v)
     {
 
-        if ($this->app_duration !== $v || $v === 0) {
+        if ($this->app_duration !== $v || $v === 0.0) {
             $this->app_duration = $v;
             $this->modifiedColumns[] = ApplicationPeer::APP_DURATION;
         }
@@ -987,7 +987,7 @@ abstract class BaseApplication extends BaseObject implements Persistent
     public function setAppDelayDuration($v)
     {
 
-        if ($this->app_delay_duration !== $v || $v === 0) {
+        if ($this->app_delay_duration !== $v || $v === 0.0) {
             $this->app_delay_duration = $v;
             $this->modifiedColumns[] = ApplicationPeer::APP_DELAY_DURATION;
         }

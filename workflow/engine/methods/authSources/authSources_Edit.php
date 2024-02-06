@@ -1,44 +1,23 @@
 <?php
-/**
- * authSources_Edit.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
 
 global $RBAC;
+
 if ($RBAC->userCanAccess('PM_SETUP_ADVANCE') != 1) {
     G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels');
     G::header('location: ../login/login');
-    die();
+    return;
 }
 
-if (! isset($_GET['sUID'])) {
+if (!isset($_GET['sUID'])) {
     G::SendTemporalMessage('ID_ERROR_OBJECT_NOT_EXISTS', 'error', 'labels');
     G::header('location: authSources_List');
-    die();
+    return;
 }
 
 if ($_GET['sUID'] == '') {
     G::SendTemporalMessage('ID_ERROR_OBJECT_NOT_EXISTS', 'error', 'labels');
     G::header('location: authSources_List');
-    die();
+    return;
 }
 
 $G_MAIN_MENU = 'processmaker';
@@ -88,7 +67,7 @@ if ($fields['AUTH_SOURCE_PROVIDER'] == 'ldap') {
 
         if ($pluginEnabled == 1) {
             $data = executeQuery("DESCRIBE USERS");
-            $fieldSet = array("USR_UID", "USR_USERNAME", "USR_PASSWORD", "USR_CREATE_DATE", "USR_UPDATE_DATE", "USR_COUNTRY", "USR_CITY", "USR_LOCATION", "DEP_UID", "USR_RESUME", "USR_ROLE", "USR_REPORTS_TO", "USR_REPLACED_BY", "USR_UX");
+            $fieldSet = ["USR_ID", "USR_UID", "USR_USERNAME", "USR_PASSWORD", "USR_CREATE_DATE", "USR_UPDATE_DATE", "USR_COUNTRY", "USR_CITY", "USR_LOCATION", "DEP_UID", "USR_RESUME", "USR_ROLE", "USR_REPORTS_TO", "USR_REPLACED_BY", "USR_UX"];
             $attributes = null;
 
             foreach ($data as $value) {
@@ -102,23 +81,21 @@ if ($fields['AUTH_SOURCE_PROVIDER'] == 'ldap') {
                 $oHeadPublisher = headPublisher::getSingleton();
 
                 $oHeadPublisher->assign("Fields", $fields);
-                $oHeadPublisher->addExtJsScript(PATH_TPL. 'ldapAdvanced/library', false, true);
-                $oHeadPublisher->addExtJsScript(PATH_TPL. 'ldapAdvanced/ldapAdvancedForm', false, true);
-                $oHeadPublisher->addExtJsScript(PATH_TPL. 'ldapAdvanced/ldapAdvancedList', false, true);
+                $oHeadPublisher->addExtJsScript(PATH_TPL . 'ldapAdvanced/library', false, true);
+                $oHeadPublisher->addExtJsScript(PATH_TPL . 'ldapAdvanced/ldapAdvancedForm', false, true);
+                $oHeadPublisher->addExtJsScript(PATH_TPL . 'ldapAdvanced/ldapAdvancedList', false, true);
                 G::RenderPage('publish', 'extJs');
-                die();
+                return;
             }
             $G_PUBLISH->AddContent("xmlform", "xmlform", 'ldapAdvanced/' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit', '', $fields, '../authSources/authSources_Save');
         } else {
-            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', array('MESSAGE' => G::LoadTranslation('ID_AUTH_SOURCE_MISSING')
-            ));
+            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', ['MESSAGE' => G::LoadTranslation('ID_AUTH_SOURCE_MISSING')]);
         }
     } else {
         if (file_exists(PATH_XMLFORM . 'authSources/' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit.xml')) {
             $G_PUBLISH->AddContent('xmlform', 'xmlform', 'authSources/' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit', '', $fields, '../authSources/authSources_Save');
         } else {
-            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', array('MESSAGE' => 'File: ' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit.xml' . ' not exists.'
-            ));
+            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', ['MESSAGE' => 'File: ' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit.xml' . ' not exists.']);
         }
     }
 

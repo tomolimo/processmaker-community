@@ -167,6 +167,20 @@ if (!defined('T_POW')) {
 }
 
 /**
+ * Define PHP 7.4's fn arrow function keyword
+ */
+if (!defined('T_FN')) {
+    define('T_FN', 42016);
+}
+
+/**
+ * Define PHP 7.4's ??= operator
+ */
+if (!defined('T_COALESCE_EQUAL')) {
+    define('T_COALESCE_EQUAL', 42017);
+}
+
+/**
  * This tokenizer uses the internal {@link token_get_all()} function as token stream
  * generator.
  *
@@ -178,140 +192,142 @@ class PHPTokenizerInternal implements Tokenizer
     /**
      * Mapping between php internal tokens and php depend tokens.
      *
-     * @var array(integer=>integer)
+     * @var array<integer, integer>
      */
     protected static $tokenMap = array(
-        T_AS                        =>  Tokens::T_AS,
-        T_DO                        =>  Tokens::T_DO,
-        T_IF                        =>  Tokens::T_IF,
-        T_SL                        =>  Tokens::T_SL,
-        T_SR                        =>  Tokens::T_SR,
-        T_DEC                       =>  Tokens::T_DEC,
-        T_FOR                       =>  Tokens::T_FOR,
-        T_INC                       =>  Tokens::T_INC,
-        T_NEW                       =>  Tokens::T_NEW,
-        T_POW                       =>  Tokens::T_POW,
-        T_TRY                       =>  Tokens::T_TRY,
-        T_USE                       =>  Tokens::T_USE,
-        T_VAR                       =>  Tokens::T_VAR,
-        T_CASE                      =>  Tokens::T_CASE,
-        T_ECHO                      =>  Tokens::T_ECHO,
-        T_ELSE                      =>  Tokens::T_ELSE,
-        T_EVAL                      =>  Tokens::T_EVAL,
-        T_EXIT                      =>  Tokens::T_EXIT,
-        T_FILE                      =>  Tokens::T_FILE,
-        T_GOTO                      =>  Tokens::T_GOTO,
-        T_LINE                      =>  Tokens::T_LINE,
-        T_LIST                      =>  Tokens::T_LIST,
-        T_NS_C                      =>  Tokens::T_NS_C,
-        T_ARRAY                     =>  Tokens::T_ARRAY,
-        T_BREAK                     =>  Tokens::T_BREAK,
-        T_CLASS                     =>  Tokens::T_CLASS,
-        T_CATCH                     =>  Tokens::T_CATCH,
-        T_CLONE                     =>  Tokens::T_CLONE,
-        T_CONST                     =>  Tokens::T_CONST,
-        T_EMPTY                     =>  Tokens::T_EMPTY,
-        T_ENDIF                     =>  Tokens::T_ENDIF,
-        T_FINAL                     =>  Tokens::T_FINAL,
-        T_ISSET                     =>  Tokens::T_ISSET,
-        T_PRINT                     =>  Tokens::T_PRINT,
-        T_THROW                     =>  Tokens::T_THROW,
-        T_TRAIT                     =>  Tokens::T_TRAIT,
-        T_UNSET                     =>  Tokens::T_UNSET,
-        T_WHILE                     =>  Tokens::T_WHILE,
-        T_ENDFOR                    =>  Tokens::T_ENDFOR,
-        T_ELSEIF                    =>  Tokens::T_ELSEIF,
-        T_FUNC_C                    =>  Tokens::T_FUNC_C,
-        T_GLOBAL                    =>  Tokens::T_GLOBAL,
-        T_PUBLIC                    =>  Tokens::T_PUBLIC,
-        T_RETURN                    =>  Tokens::T_RETURN,
-        T_STATIC                    =>  Tokens::T_STATIC,
-        T_STRING                    =>  Tokens::T_STRING,
-        T_SWITCH                    =>  Tokens::T_SWITCH,
-        T_CLASS_C                   =>  Tokens::T_CLASS_C,
-        T_COMMENT                   =>  Tokens::T_COMMENT,
-        T_DECLARE                   =>  Tokens::T_DECLARE,
-        T_DEFAULT                   =>  Tokens::T_DEFAULT,
-        T_DNUMBER                   =>  Tokens::T_DNUMBER,
-        T_EXTENDS                   =>  Tokens::T_EXTENDS,
-        T_FOREACH                   =>  Tokens::T_FOREACH,
-        T_INCLUDE                   =>  Tokens::T_INCLUDE,
-        T_LNUMBER                   =>  Tokens::T_LNUMBER,
-        T_PRIVATE                   =>  Tokens::T_PRIVATE,
-        T_REQUIRE                   =>  Tokens::T_REQUIRE,
-        T_TRAIT_C                   =>  Tokens::T_TRAIT_C,
-        T_ABSTRACT                  =>  Tokens::T_ABSTRACT,
-        T_CALLABLE                  =>  Tokens::T_CALLABLE,
-        T_ENDWHILE                  =>  Tokens::T_ENDWHILE,
-        T_FUNCTION                  =>  Tokens::T_FUNCTION,
-        T_INT_CAST                  =>  Tokens::T_INT_CAST,
-        T_IS_EQUAL                  =>  Tokens::T_IS_EQUAL,
-        T_OR_EQUAL                  =>  Tokens::T_OR_EQUAL,
-        T_CONTINUE                  =>  Tokens::T_CONTINUE,
-        T_METHOD_C                  =>  Tokens::T_METHOD_C,
-        T_ELLIPSIS                  =>  Tokens::T_ELLIPSIS,
-        T_OPEN_TAG                  =>  Tokens::T_OPEN_TAG,
-        T_SL_EQUAL                  =>  Tokens::T_SL_EQUAL,
-        T_SR_EQUAL                  =>  Tokens::T_SR_EQUAL,
-        T_VARIABLE                  =>  Tokens::T_VARIABLE,
-        T_ENDSWITCH                 =>  Tokens::T_ENDSWITCH,
-        T_DIV_EQUAL                 =>  Tokens::T_DIV_EQUAL,
-        T_AND_EQUAL                 =>  Tokens::T_AND_EQUAL,
-        T_MOD_EQUAL                 =>  Tokens::T_MOD_EQUAL,
-        T_MUL_EQUAL                 =>  Tokens::T_MUL_EQUAL,
-        T_NAMESPACE                 =>  Tokens::T_NAMESPACE,
-        T_XOR_EQUAL                 =>  Tokens::T_XOR_EQUAL,
-        T_INTERFACE                 =>  Tokens::T_INTERFACE,
-        T_BOOL_CAST                 =>  Tokens::T_BOOL_CAST,
-        T_CHARACTER                 =>  Tokens::T_CHARACTER,
-        T_CLOSE_TAG                 =>  Tokens::T_CLOSE_TAG,
-        T_INSTEADOF                 =>  Tokens::T_INSTEADOF,
-        T_PROTECTED                 =>  Tokens::T_PROTECTED,
-        T_SPACESHIP                 =>  Tokens::T_SPACESHIP,
-        T_CURLY_OPEN                =>  Tokens::T_CURLY_BRACE_OPEN,
-        T_ENDFOREACH                =>  Tokens::T_ENDFOREACH,
-        T_ENDDECLARE                =>  Tokens::T_ENDDECLARE,
-        T_IMPLEMENTS                =>  Tokens::T_IMPLEMENTS,
-        T_NUM_STRING                =>  Tokens::T_NUM_STRING,
-        T_PLUS_EQUAL                =>  Tokens::T_PLUS_EQUAL,
-        T_ARRAY_CAST                =>  Tokens::T_ARRAY_CAST,
-        T_BOOLEAN_OR                =>  Tokens::T_BOOLEAN_OR,
-        T_INSTANCEOF                =>  Tokens::T_INSTANCEOF,
-        T_LOGICAL_OR                =>  Tokens::T_LOGICAL_OR,
-        T_UNSET_CAST                =>  Tokens::T_UNSET_CAST,
-        T_DOC_COMMENT               =>  Tokens::T_DOC_COMMENT,
-        T_END_HEREDOC               =>  Tokens::T_END_HEREDOC,
-        T_MINUS_EQUAL               =>  Tokens::T_MINUS_EQUAL,
-        T_BOOLEAN_AND               =>  Tokens::T_BOOLEAN_AND,
-        T_DOUBLE_CAST               =>  Tokens::T_DOUBLE_CAST,
-        T_INLINE_HTML               =>  Tokens::T_INLINE_HTML,
-        T_LOGICAL_AND               =>  Tokens::T_LOGICAL_AND,
-        T_LOGICAL_XOR               =>  Tokens::T_LOGICAL_XOR,
-        T_OBJECT_CAST               =>  Tokens::T_OBJECT_CAST,
-        T_STRING_CAST               =>  Tokens::T_STRING_CAST,
-        T_DOUBLE_ARROW              =>  Tokens::T_DOUBLE_ARROW,
-        T_INCLUDE_ONCE              =>  Tokens::T_INCLUDE_ONCE,
-        T_IS_IDENTICAL              =>  Tokens::T_IS_IDENTICAL,
-        T_DOUBLE_COLON              =>  Tokens::T_DOUBLE_COLON,
-        T_CONCAT_EQUAL              =>  Tokens::T_CONCAT_EQUAL,
-        T_IS_NOT_EQUAL              =>  Tokens::T_IS_NOT_EQUAL,
-        T_REQUIRE_ONCE              =>  Tokens::T_REQUIRE_ONCE,
-        T_BAD_CHARACTER             =>  Tokens::T_BAD_CHARACTER,
-        T_HALT_COMPILER             =>  Tokens::T_HALT_COMPILER,
-        T_START_HEREDOC             =>  Tokens::T_START_HEREDOC,
-        T_STRING_VARNAME            =>  Tokens::T_STRING_VARNAME,
-        T_OBJECT_OPERATOR           =>  Tokens::T_OBJECT_OPERATOR,
-        T_IS_NOT_IDENTICAL          =>  Tokens::T_IS_NOT_IDENTICAL,
-        T_OPEN_TAG_WITH_ECHO        =>  Tokens::T_OPEN_TAG_WITH_ECHO,
-        T_IS_GREATER_OR_EQUAL       =>  Tokens::T_IS_GREATER_OR_EQUAL,
-        T_IS_SMALLER_OR_EQUAL       =>  Tokens::T_IS_SMALLER_OR_EQUAL,
-        T_PAAMAYIM_NEKUDOTAYIM      =>  Tokens::T_DOUBLE_COLON,
-        T_ENCAPSED_AND_WHITESPACE   =>  Tokens::T_ENCAPSED_AND_WHITESPACE,
-        T_CONSTANT_ENCAPSED_STRING  =>  Tokens::T_CONSTANT_ENCAPSED_STRING,
-        T_YIELD                     =>  Tokens::T_YIELD,
-        T_FINALLY                   =>  Tokens::T_FINALLY,
-        T_COALESCE                  =>  Tokens::T_COALESCE,
-        //T_DOLLAR_OPEN_CURLY_BRACES  =>  Tokens::T_CURLY_BRACE_OPEN,
+        T_AS                        => Tokens::T_AS,
+        T_DO                        => Tokens::T_DO,
+        T_IF                        => Tokens::T_IF,
+        T_SL                        => Tokens::T_SL,
+        T_SR                        => Tokens::T_SR,
+        T_DEC                       => Tokens::T_DEC,
+        T_FOR                       => Tokens::T_FOR,
+        T_INC                       => Tokens::T_INC,
+        T_NEW                       => Tokens::T_NEW,
+        T_POW                       => Tokens::T_POW,
+        T_TRY                       => Tokens::T_TRY,
+        T_USE                       => Tokens::T_USE,
+        T_VAR                       => Tokens::T_VAR,
+        T_CASE                      => Tokens::T_CASE,
+        T_ECHO                      => Tokens::T_ECHO,
+        T_ELSE                      => Tokens::T_ELSE,
+        T_EVAL                      => Tokens::T_EVAL,
+        T_EXIT                      => Tokens::T_EXIT,
+        T_FILE                      => Tokens::T_FILE,
+        T_GOTO                      => Tokens::T_GOTO,
+        T_LINE                      => Tokens::T_LINE,
+        T_LIST                      => Tokens::T_LIST,
+        T_NS_C                      => Tokens::T_NS_C,
+        T_ARRAY                     => Tokens::T_ARRAY,
+        T_BREAK                     => Tokens::T_BREAK,
+        T_CLASS                     => Tokens::T_CLASS,
+        T_CATCH                     => Tokens::T_CATCH,
+        T_CLONE                     => Tokens::T_CLONE,
+        T_CONST                     => Tokens::T_CONST,
+        T_EMPTY                     => Tokens::T_EMPTY,
+        T_ENDIF                     => Tokens::T_ENDIF,
+        T_FINAL                     => Tokens::T_FINAL,
+        T_ISSET                     => Tokens::T_ISSET,
+        T_PRINT                     => Tokens::T_PRINT,
+        T_THROW                     => Tokens::T_THROW,
+        T_TRAIT                     => Tokens::T_TRAIT,
+        T_UNSET                     => Tokens::T_UNSET,
+        T_WHILE                     => Tokens::T_WHILE,
+        T_ENDFOR                    => Tokens::T_ENDFOR,
+        T_ELSEIF                    => Tokens::T_ELSEIF,
+        T_FUNC_C                    => Tokens::T_FUNC_C,
+        T_GLOBAL                    => Tokens::T_GLOBAL,
+        T_PUBLIC                    => Tokens::T_PUBLIC,
+        T_RETURN                    => Tokens::T_RETURN,
+        T_STATIC                    => Tokens::T_STATIC,
+        T_STRING                    => Tokens::T_STRING,
+        T_SWITCH                    => Tokens::T_SWITCH,
+        T_CLASS_C                   => Tokens::T_CLASS_C,
+        T_COMMENT                   => Tokens::T_COMMENT,
+        T_DECLARE                   => Tokens::T_DECLARE,
+        T_DEFAULT                   => Tokens::T_DEFAULT,
+        T_DNUMBER                   => Tokens::T_DNUMBER,
+        T_EXTENDS                   => Tokens::T_EXTENDS,
+        T_FOREACH                   => Tokens::T_FOREACH,
+        T_INCLUDE                   => Tokens::T_INCLUDE,
+        T_LNUMBER                   => Tokens::T_LNUMBER,
+        T_PRIVATE                   => Tokens::T_PRIVATE,
+        T_REQUIRE                   => Tokens::T_REQUIRE,
+        T_TRAIT_C                   => Tokens::T_TRAIT_C,
+        T_ABSTRACT                  => Tokens::T_ABSTRACT,
+        T_CALLABLE                  => Tokens::T_CALLABLE,
+        T_ENDWHILE                  => Tokens::T_ENDWHILE,
+        T_FUNCTION                  => Tokens::T_FUNCTION,
+        T_INT_CAST                  => Tokens::T_INT_CAST,
+        T_IS_EQUAL                  => Tokens::T_IS_EQUAL,
+        T_OR_EQUAL                  => Tokens::T_OR_EQUAL,
+        T_CONTINUE                  => Tokens::T_CONTINUE,
+        T_METHOD_C                  => Tokens::T_METHOD_C,
+        T_ELLIPSIS                  => Tokens::T_ELLIPSIS,
+        T_OPEN_TAG                  => Tokens::T_OPEN_TAG,
+        T_SL_EQUAL                  => Tokens::T_SL_EQUAL,
+        T_SR_EQUAL                  => Tokens::T_SR_EQUAL,
+        T_VARIABLE                  => Tokens::T_VARIABLE,
+        T_ENDSWITCH                 => Tokens::T_ENDSWITCH,
+        T_DIV_EQUAL                 => Tokens::T_DIV_EQUAL,
+        T_AND_EQUAL                 => Tokens::T_AND_EQUAL,
+        T_MOD_EQUAL                 => Tokens::T_MOD_EQUAL,
+        T_MUL_EQUAL                 => Tokens::T_MUL_EQUAL,
+        T_NAMESPACE                 => Tokens::T_NAMESPACE,
+        T_XOR_EQUAL                 => Tokens::T_XOR_EQUAL,
+        T_INTERFACE                 => Tokens::T_INTERFACE,
+        T_BOOL_CAST                 => Tokens::T_BOOL_CAST,
+        T_CHARACTER                 => Tokens::T_CHARACTER,
+        T_CLOSE_TAG                 => Tokens::T_CLOSE_TAG,
+        T_INSTEADOF                 => Tokens::T_INSTEADOF,
+        T_PROTECTED                 => Tokens::T_PROTECTED,
+        T_SPACESHIP                 => Tokens::T_SPACESHIP,
+        T_CURLY_OPEN                => Tokens::T_CURLY_BRACE_OPEN,
+        T_ENDFOREACH                => Tokens::T_ENDFOREACH,
+        T_ENDDECLARE                => Tokens::T_ENDDECLARE,
+        T_IMPLEMENTS                => Tokens::T_IMPLEMENTS,
+        T_NUM_STRING                => Tokens::T_NUM_STRING,
+        T_PLUS_EQUAL                => Tokens::T_PLUS_EQUAL,
+        T_ARRAY_CAST                => Tokens::T_ARRAY_CAST,
+        T_BOOLEAN_OR                => Tokens::T_BOOLEAN_OR,
+        T_INSTANCEOF                => Tokens::T_INSTANCEOF,
+        T_LOGICAL_OR                => Tokens::T_LOGICAL_OR,
+        T_UNSET_CAST                => Tokens::T_UNSET_CAST,
+        T_DOC_COMMENT               => Tokens::T_DOC_COMMENT,
+        T_END_HEREDOC               => Tokens::T_END_HEREDOC,
+        T_MINUS_EQUAL               => Tokens::T_MINUS_EQUAL,
+        T_BOOLEAN_AND               => Tokens::T_BOOLEAN_AND,
+        T_DOUBLE_CAST               => Tokens::T_DOUBLE_CAST,
+        T_INLINE_HTML               => Tokens::T_INLINE_HTML,
+        T_LOGICAL_AND               => Tokens::T_LOGICAL_AND,
+        T_LOGICAL_XOR               => Tokens::T_LOGICAL_XOR,
+        T_OBJECT_CAST               => Tokens::T_OBJECT_CAST,
+        T_STRING_CAST               => Tokens::T_STRING_CAST,
+        T_DOUBLE_ARROW              => Tokens::T_DOUBLE_ARROW,
+        T_INCLUDE_ONCE              => Tokens::T_INCLUDE_ONCE,
+        T_IS_IDENTICAL              => Tokens::T_IS_IDENTICAL,
+        T_DOUBLE_COLON              => Tokens::T_DOUBLE_COLON,
+        T_CONCAT_EQUAL              => Tokens::T_CONCAT_EQUAL,
+        T_IS_NOT_EQUAL              => Tokens::T_IS_NOT_EQUAL,
+        T_REQUIRE_ONCE              => Tokens::T_REQUIRE_ONCE,
+        T_BAD_CHARACTER             => Tokens::T_BAD_CHARACTER,
+        T_HALT_COMPILER             => Tokens::T_HALT_COMPILER,
+        T_START_HEREDOC             => Tokens::T_START_HEREDOC,
+        T_STRING_VARNAME            => Tokens::T_STRING_VARNAME,
+        T_OBJECT_OPERATOR           => Tokens::T_OBJECT_OPERATOR,
+        T_IS_NOT_IDENTICAL          => Tokens::T_IS_NOT_IDENTICAL,
+        T_OPEN_TAG_WITH_ECHO        => Tokens::T_OPEN_TAG_WITH_ECHO,
+        T_IS_GREATER_OR_EQUAL       => Tokens::T_IS_GREATER_OR_EQUAL,
+        T_IS_SMALLER_OR_EQUAL       => Tokens::T_IS_SMALLER_OR_EQUAL,
+        // T_PAAMAYIM_NEKUDOTAYIM      => Tokens::T_DOUBLE_COLON,
+        T_ENCAPSED_AND_WHITESPACE   => Tokens::T_ENCAPSED_AND_WHITESPACE,
+        T_CONSTANT_ENCAPSED_STRING  => Tokens::T_CONSTANT_ENCAPSED_STRING,
+        T_YIELD                     => Tokens::T_YIELD,
+        T_FINALLY                   => Tokens::T_FINALLY,
+        T_COALESCE                  => Tokens::T_COALESCE,
+        T_COALESCE_EQUAL            => Tokens::T_COALESCE_EQUAL,
+        // T_DOLLAR_OPEN_CURLY_BRACES  => Tokens::T_CURLY_BRACE_OPEN,
+        T_FN                        => Tokens::T_FN,
     );
 
     /**
@@ -322,7 +338,7 @@ class PHPTokenizerInternal implements Tokenizer
     /**
      * Mapping between php internal text tokens an php depend numeric tokens.
      *
-     * @var array(string=>integer)
+     * @var array<string, integer>
      */
     protected static $literalMap = array(
         '@'              =>  Tokens::T_AT,
@@ -376,7 +392,7 @@ class PHPTokenizerInternal implements Tokenizer
 
     /**
      *
-     * @var array(mixed=>array)
+     * @var array<mixed, array>
      */
     protected static $substituteTokens = array(
         T_DOLLAR_OPEN_CURLY_BRACES  =>  array('$', '{'),
@@ -385,7 +401,7 @@ class PHPTokenizerInternal implements Tokenizer
     /**
      * BuilderContext sensitive alternative mappings.
      *
-     * @var array(integer=>array)
+     * @var array<integer, array>
      */
     protected static $alternativeMap = array(
         Tokens::T_USE => array(
@@ -432,13 +448,6 @@ class PHPTokenizerInternal implements Tokenizer
             Tokens::T_OBJECT_OPERATOR  =>  Tokens::T_STRING,
             Tokens::T_DOUBLE_COLON     =>  Tokens::T_STRING,
             Tokens::T_NAMESPACE        =>  Tokens::T_STRING,
-            Tokens::T_CONST            =>  Tokens::T_STRING,
-            Tokens::T_FUNCTION         =>  Tokens::T_STRING,
-        ),
-
-        Tokens::T_PARENT => array(
-            Tokens::T_OBJECT_OPERATOR  =>  Tokens::T_STRING,
-            Tokens::T_DOUBLE_COLON     =>  Tokens::T_STRING,
             Tokens::T_CONST            =>  Tokens::T_STRING,
             Tokens::T_FUNCTION         =>  Tokens::T_STRING,
         ),
@@ -556,7 +565,7 @@ class PHPTokenizerInternal implements Tokenizer
     /**
      * Prepared token list.
      *
-     * @var Token[]
+     * @var Token[]|null
      */
     protected $tokens = null;
 
@@ -591,6 +600,38 @@ class PHPTokenizerInternal implements Tokenizer
     }
 
     /**
+     * Returns the previous token or null if there is no one yet.
+     *
+     * @return Token|null
+     */
+    public function prevToken()
+    {
+        $this->tokenize();
+
+        if ($this->index > 0 && $this->index < $this->count - 1) {
+            return $this->tokens[$this->index - 1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the current token or null if there is no more.
+     *
+     * @return Token|null
+     */
+    public function currentToken()
+    {
+        $this->tokenize();
+
+        if ($this->index < $this->count - 1) {
+            return $this->tokens[$this->index];
+        }
+
+        return null;
+    }
+
+    /**
      * Returns the next token or {@link \PDepend\Source\Tokenizer\Tokenizer::T_EOF} if
      * there is no next token.
      *
@@ -603,6 +644,7 @@ class PHPTokenizerInternal implements Tokenizer
         if ($this->index < $this->count) {
             return $this->tokens[$this->index++];
         }
+
         return self::T_EOF;
     }
 
@@ -634,9 +676,11 @@ class PHPTokenizerInternal implements Tokenizer
         $this->tokenize();
         
         $offset = 0;
+
         do {
             $type = $this->tokens[$this->index + ++$offset]->type;
         } while ($type == Tokens::T_COMMENT || $type == Tokens::T_DOC_COMMENT);
+
         return $type;
     }
 
@@ -661,9 +705,9 @@ class PHPTokenizerInternal implements Tokenizer
      * and substitutes some of the tokens with those required by PDepend's
      * parser implementation.
      *
-     * @param array(array) $tokens Unprepared array of php tokens.
+     * @param array<array> $tokens Unprepared array of php tokens.
      *
-     * @return array(array)
+     * @return array<array>
      */
     private function substituteTokens(array $tokens)
     {
@@ -690,7 +734,7 @@ class PHPTokenizerInternal implements Tokenizer
      */
     private function tokenize()
     {
-        if ($this->tokens) {
+        if ($this->tokens !== null) {
             return;
         }
 
@@ -707,13 +751,7 @@ class PHPTokenizerInternal implements Tokenizer
             $source
         );
 
-        if (version_compare(phpversion(), '5.3.0alpha3') < 0) {
-            $tokens = PHPTokenizerHelperVersion52::tokenize($source);
-        } else {
-            $tokens = token_get_all($source);
-        }
-
-        $tokens = $this->substituteTokens($tokens);
+        $tokens = $this->substituteTokens(token_get_all($source));
 
         // Is the current token between an opening and a closing php tag?
         $inTag = false;
@@ -782,7 +820,6 @@ class PHPTokenizerInternal implements Tokenizer
 
                         array_pop($this->tokens);
                     }
-
                 } elseif (isset($tokenMap[$token[0]])) {
                     $type = $tokenMap[$token[0]];
                     // Check for a context sensitive alternative
@@ -849,7 +886,7 @@ class PHPTokenizerInternal implements Tokenizer
      * returns the collected content. The returned value will be null if there
      * was no none php token.
      *
-     * @param array &$tokens Reference to the current token stream.
+     * @param array $tokens Reference to the current token stream.
      *
      * @return string
      */
@@ -883,7 +920,7 @@ class PHPTokenizerInternal implements Tokenizer
      *
      * @param string $token The unknown string token.
      *
-     * @return array(integer => mixed)
+     * @return array<integer, mixed>
      */
     private function generateUnknownToken($token)
     {

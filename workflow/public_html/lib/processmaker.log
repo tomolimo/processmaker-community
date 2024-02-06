@@ -1,30 +1,30 @@
-[19 hours ago] de8ce865e  (origin/bugfix/PMC-1503) PMC-1503 <Andrea Adamczyk>
-[3 days ago] 635b36534  (origin/bugfix/PMC-1498) PMC-1498 <Paula Quispe>
-[2 weeks ago] 796405a01  (origin/bugfix/PMC-1452) PMC-1452 <Andrea Adamczyk>
-[3 weeks ago] 7fde8b45d  (origin/bugfix/PMC-1447) PMC-1447 Warning in processes_Import_Ajax.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] b00def4ad  (origin/bugfix/PMC-1446) PMC-1446 PHP Warning: count(): Parameter must be an array or an object that implements Countable <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 96a29a453  (origin/bugfix/PMC-1445) PMC-1445 Update gitignore file <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 09a1398e1  (origin/bugfix/PMC-1441) PMC-1441 get_class() expects parameter 1 to be object <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 2dd0d34bf  (origin/bugfix/PMC-1418) PMC-1418 Use of __autoload() function is deprecated since PHP 7.2 <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 08639eba0  (origin/bugfix/PMC-1404) PMC-1404 <Andrea Adamczyk>
-[3 weeks ago] 4cbf1f6f5  (origin/bugfix/PMC-1416) PMC-1416 <Andrea Adamczyk>
-[3 weeks ago] 95a7f10ad  (origin/bugfix/PMC-1422) PMC-1422 Warning in charts.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] db90c5554  (origin/bugfix/PMC-1423) PMC-1423 Warning in processTemplate.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 9d5faa60f  (origin/bugfix/PMC-1406_B) PMC-1406_B <Andrea Adamczyk>
-[3 weeks ago] 5da22ee5b  (origin/bugfix/PMC-1419) PMC-1419 Warning in Cases.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 7c617f236  (origin/bugfix/PMC-1428) PMC-1428 <Paula Quispe>
-[3 weeks ago] eea2b70c7  (origin/bugfix/PMC-1430) PMC-1430 <Julio Cesar Laura Avendaño>
-[3 weeks ago] 18a16a598  (origin/bugfix/PMC-1414) PMC-1414 <Andrea Adamczyk>
-[3 weeks ago] 1ffe41698  (origin/bugfix/PMC-1415) PMC-1415 Warning in class.controller.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] d1e70f9bc  (origin/bugfix/PMC-1405) PMC-1405 The body of a heredoc/nowdoc can not contain the heredoc/nowdoc closing marker as text at the start of a line since PHP 7.3. <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 5b67edbb5  (origin/bugfix/PMC-1417) PMC-1417 <Paula Quispe>
-[3 weeks ago] 22c02f306  (origin/bugfix/PMC-1425) PMC-1425 <Paula Quispe>
-[3 weeks ago] 4da3d9cf6  (origin/bugfix/PMC-1424) PMC-1424 <Paula Quispe>
-[3 weeks ago] 30e859779  (origin/bugfix/PMC-1427) PMC-1427 <Paula Quispe>
-[3 weeks ago] a3796b57d  (origin/bugfix/PMC-1426) PMC-1426 <Paula Quispe>
-[3 weeks ago] 9af3fb3f6  (origin/bugfix/PMC-1407) PMC-1407 "$this" can no longer be used in a plain function or method since PHP 7.1. <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] f7d0bb6ab  (origin/bugfix/PMC-1354) PMC-1354 <Andrea Adamczyk>
-[3 weeks ago] 0b28a2ba9  (origin/bugfix/PMC-1403) PMC-1403 Targeting a 'switch' control structure with a 'continue' statement is strongly discouraged and will throw a warning as of PHP 7.3. <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 710c33b3b  (origin/bugfix/PMC-1401) PMC-1401 warning issues in class.phpSqlParser.php <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 1283bc5d2  (origin/bugfix/PMC-1395) PMC-1395 Fatal error: Declaration of remove() <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 3b3dd1b0a  (origin/bugfix/PMC-1398) PMC-1398 <Andrea Adamczyk>
+[4 days ago] a3b294e54  (origin/feature/PMCORE-1463) PMCORE-1463 <Julio Cesar Laura Avendaño>
+[12 days ago] 4f54f0c89  PMCORE-1435:APP_DOC_STATUS is kept as ACTIVE when files in multiple file upload control are deleted <fabio>
+[12 days ago] b55ead0e6  (origin/bugfix/PMCORE-631-B) PMCORE-631 <Paula Quispe>
+[3 weeks ago] 278ef8a0b  (origin/bugfix/PMCORE-631-A) PMCORE-631-A <Paula Quispe>
+[3 weeks ago] 0d089bfe0  (origin/bugfix/PMCORE-1254-A) PMCORE-1254 <Paula Quispe>
+[4 weeks ago] c0a8cea5c  (origin/revert-pr-7298) Revert "PMCORE-1129 (pull request #7298)" <Paula Quispe>
+[4 weeks ago] 93fe2c1ae  (origin/bugfix/PMCORE-1338) PMCORE-1338 <Paula Quispe>
+[4 weeks ago] fc6094ec7  (origin/bugfix/PMCORE-1181) PMCORE-1181 Is possible to get an access token without send a valid 'client_id' and 'client_secret' <Roly Rudy Gutierrez Pinto>
+[4 weeks ago] 2475c515c  (origin/bugfix/PMCORE-1191) PMCORE-1191 <Andrea Adamczyk>
+[4 weeks ago] dae4ca5b7  (origin/bugfix/PMCORE-1353) PMCORE-1353 <Julio Cesar Laura Avendaño>
+[4 weeks ago] 38993060d  (origin/bugfix/PMCORE-631) PMCORE-631 <Paula Quispe>
+[5 weeks ago] 252c97567  (origin/bugfix/PMCORE-1288) PMCORE-1288 <Taylor Dondich>
+[5 weeks ago] 98e04ce1a  (origin/bugfix/PMCORE-999) PMCORE-999 <Paula Quispe>
+[5 weeks ago] 399db5240  (origin/bugfix/PMCORE-487-A) PMCORE-487 <Julio Cesar Laura Avendaño>
+[5 weeks ago] 8d0307ef2  PMCORE-1198:The columns in process list change for all users if any other user remove/hide the columns <fabio>
+[5 weeks ago] fe87db50d  (origin/bugfix/PMCORE-1254) PMCORE-1254 <Paula Quispe>
+[5 weeks ago] 0243fddbd  (origin/bugfix/PMCORE-548-A) PMCORE-548-A <Andrea Adamczyk>
+[5 weeks ago] 443bb3c13  (origin/bugfix/PMCORE-1151) PMCORE-1151 <paulis>
+[5 weeks ago] f1d6f250c  (origin/bugfix/PMCORE-876) PMCORE-876 The files are not shown, when we create a PM_Table from an external DB <Roly Gutierrez>
+[6 weeks ago] 3527e6103  (origin/bugfix/PMCORE-548) PMCORE-548 <Andrea Adamczyk>
+[6 weeks ago] cd5564955  (origin/bugfix/PMCORE-547) PMCORE-547 Mapping User Information Between Active Directory and ProcessMaker allows selecting USR_ID in the User Field and breaks the correlative numeration of the USR_ID field in table USERS. <Roly Gutierrez>
+[6 weeks ago] a4399d97c  (origin/bugfix/PMCORE-1129) PMCORE-1129 <Andrea Adamczyk>
+[6 weeks ago] 765535491  PMCORE-1140:Unsupported Media Type on Multiple file control PM3.4.6 <fabio>
+[6 weeks ago] 08b2842e3  (origin/bugfix/PMCORE-624) PMCORE-624 <Julio Cesar Laura Avendaño>
+[6 weeks ago] c986d6ce1  (origin/bugfix/PMCORE-635) PMCORE-635 <Julio Cesar Laura Avendaño>
+[7 weeks ago] 2d842c450  (origin/bugfix/PMCORE-1205_D) MCORE-1205: Columns from process list are not correctly displayed - depending on the other columns width could get hidden <Rodrigo Quelca>
+[7 weeks ago] ec46af1e8  (origin/bugfix/PMCORE-1279) PMCORE-1279 <Paula Quispe>
+[7 weeks ago] b45a73b0f  (origin/bugfix/PMCORE-1205_B) PMCORE-1205 Columns from process list are not correctly displayed - depending on the other columns width could get hidden <Rodrigo Quelca>
+[7 weeks ago] 277d89f22  (origin/bugfix/PMCORE-1289) PMCORE-1289 <Julio Cesar Laura Avendaño>
+[7 weeks ago] a4ced1a09  (origin/bugfix/PMCORE-1203) PMCORE-1203 Help on how batch routing feature works and help to debug the code with a client <Roly Rudy Gutierrez Pinto>

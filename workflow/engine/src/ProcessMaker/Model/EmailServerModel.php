@@ -3,6 +3,7 @@
 namespace ProcessMaker\Model;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 class EmailServerModel extends Model
 {
@@ -31,12 +32,24 @@ class EmailServerModel extends Model
             'EMAIL_SERVER.SMTPSECURE',
             'EMAIL_SERVER.MESS_TRY_SEND_INMEDIATLY',
             'EMAIL_SERVER.MAIL_TO',
-            'EMAIL_SERVER.MESS_DEFAULT'
+            'EMAIL_SERVER.MESS_DEFAULT',
+            'EMAIL_SERVER.OAUTH_CLIENT_ID',
+            'EMAIL_SERVER.OAUTH_CLIENT_SECRET',
+            'EMAIL_SERVER.OAUTH_REFRESH_TOKEN'
         ];
         $query = EmailServerModel::query()->select($selectedColumns);
         $query->where('EMAIL_SERVER.MESS_UID', '=', $messUid);
         $res = $query->get()->values()->toArray();
         $firstElement = head($res);
+
+        if (!empty($firstElement)) {
+            $firstElement['OAUTH_CLIENT_ID'] = !empty($firstElement['OAUTH_CLIENT_ID']) ?
+                Crypt::decryptString($firstElement['OAUTH_CLIENT_ID']) : '';
+            $firstElement['OAUTH_CLIENT_SECRET'] = !empty($firstElement['OAUTH_CLIENT_SECRET']) ?
+                Crypt::decryptString($firstElement['OAUTH_CLIENT_SECRET']) : '';
+            $firstElement['OAUTH_REFRESH_TOKEN'] = !empty($firstElement['OAUTH_REFRESH_TOKEN']) ?
+                Crypt::decryptString($firstElement['OAUTH_REFRESH_TOKEN']) : '';
+        }
 
         return $firstElement;
     }
@@ -64,7 +77,10 @@ class EmailServerModel extends Model
             'EMAIL_SERVER.SMTPSECURE',
             'EMAIL_SERVER.MESS_TRY_SEND_INMEDIATLY',
             'EMAIL_SERVER.MAIL_TO',
-            'EMAIL_SERVER.MESS_DEFAULT'
+            'EMAIL_SERVER.MESS_DEFAULT',
+            'EMAIL_SERVER.OAUTH_CLIENT_ID',
+            'EMAIL_SERVER.OAUTH_CLIENT_SECRET',
+            'EMAIL_SERVER.OAUTH_REFRESH_TOKEN'
         ];
         $query = EmailServerModel::query()->select($selectedColumns)
             ->where('MESS_DEFAULT', '=', 1);
@@ -77,6 +93,12 @@ class EmailServerModel extends Model
             $firstElement['MESS_PASSWORD_HIDDEN'] = '';
             $firstElement['MESS_EXECUTE_EVERY'] = '';
             $firstElement['MESS_SEND_MAX'] = '';
+            $firstElement['OAUTH_CLIENT_ID'] = !empty($firstElement['OAUTH_CLIENT_ID']) ?
+                Crypt::decryptString($firstElement['OAUTH_CLIENT_ID']) : '';
+            $firstElement['OAUTH_CLIENT_SECRET'] = !empty($firstElement['OAUTH_CLIENT_SECRET']) ?
+                Crypt::decryptString($firstElement['OAUTH_CLIENT_SECRET']) : '';
+            $firstElement['OAUTH_REFRESH_TOKEN'] = !empty($firstElement['OAUTH_REFRESH_TOKEN']) ?
+                Crypt::decryptString($firstElement['OAUTH_REFRESH_TOKEN']) : '';
         }
 
         return $firstElement;

@@ -8,7 +8,7 @@ $factory->define(\ProcessMaker\Model\Process::class, function(Faker $faker) {
     // Return with default values
     return [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 200000),
+        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => '00000000000000000000000000000001',
@@ -28,7 +28,7 @@ $factory->state(\ProcessMaker\Model\Process::class, 'foreign_keys', function (Fa
     $user = factory(\ProcessMaker\Model\User::class)->create();
     return [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 200000),
+        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => $user->USR_UID,
@@ -49,7 +49,7 @@ $factory->state(\ProcessMaker\Model\Process::class, 'flow', function (Faker $fak
     $user = factory(\ProcessMaker\Model\User::class)->create();
     $process = [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 200000),
+        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => $user->USR_UID,

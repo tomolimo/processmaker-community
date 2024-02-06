@@ -486,7 +486,9 @@ class ReportTable
                 'DBS_UID' => ($arrayData['REP_TAB_CONNECTION']) ? $arrayData['REP_TAB_CONNECTION'] : 'workflow',
                 'PRO_UID' => $arrayData['PRO_UID'],
                 'ADD_TAB_TYPE' => $arrayData['REP_TAB_TYPE'],
-                'ADD_TAB_GRID' => $arrayData['REP_TAB_GRID']
+                'ADD_TAB_GRID' => $arrayData['REP_TAB_GRID'],
+                'ADD_TAB_OFFLINE' => !empty($arrayData['REP_TAB_OFFLINE']) ?? 0,
+                'ADD_TAB_UPDATE_DATE' => date('Y-m-d H:i:s'),
             ];
 
             if ($arrayData['REP_TAB_UID'] == '' || (isset($arrayData['forceUid']) && $arrayData['forceUid'])) {
@@ -806,6 +808,8 @@ class ReportTable
                     $tableData->REP_TAB_CONNECTION = $contentSchema['DBS_UID'];
                     $tableData->REP_TAB_TYPE = (isset($contentSchema['ADD_TAB_TYPE'])) ? $contentSchema['ADD_TAB_TYPE'] : '';
                     $tableData->REP_TAB_GRID = (isset($contentSchema['ADD_TAB_GRID'])) ? $contentSchema['ADD_TAB_GRID'] : '';
+                    $tableData->REP_TAB_OFFLINE = (isset($contentSchema['ADD_TAB_OFFLINE'])) ? $contentSchema['ADD_TAB_OFFLINE'] : '0';
+                    $tableData->REP_TAB_UPDATE_DATE = date('Y-m-d H:i:s');
                     $tableData->columns = G::json_encode($columns);
                     $tableData->forceUid = true;
 

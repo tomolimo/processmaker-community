@@ -2,6 +2,7 @@
 
 namespace ProcessMaker\Core;
 
+use Bootstrap;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\Factories\Jobs;
@@ -140,12 +141,14 @@ class JobsManager
 
         $_SESSION = $environment['session'];
         $_SERVER = $environment['server'];
-        Propel::initConfiguration($environment['configuration']);
         foreach ($environment['constants'] as $key => $value) {
             if (!defined($key)) {
                 define($key, $value);
             }
         }
+
+        Propel::close();
+        Propel::init(PATH_CONFIG . "databases.php");
     }
 
     /**
@@ -190,6 +193,12 @@ class JobsManager
                         $callback($environment);
                     } catch (Exception $e) {
                         Log::error($e->getMessage() . ": " . $e->getTraceAsString());
+                        $context = [
+                            "trace" => $e->getTraceAsString(),
+                            "workspace" => $environment["constants"]["SYS_SYS"]
+                        ];
+                        Bootstrap::registerMonolog("queue:work", 400, $e->getMessage(), $context, "");
+                        throw $e;
                     }
                 });
         $instance->delay($this->delay);

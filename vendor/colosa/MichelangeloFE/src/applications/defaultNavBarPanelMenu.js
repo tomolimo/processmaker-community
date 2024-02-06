@@ -13,7 +13,7 @@ var navbarExportUpdate = function () {
 
     var handlerExportGranular = function () {
         var optionExportNormal = $("<div class='mafe-button-submenu-option normalExport'>" + "Normal".translate() + "</div>"),
-            optionExportGranular = $("<div class='mafe-button-submenu-option granularExport'>" + "Granular".translate() + "</div>"),
+            optionExportGranular = $("<div class='mafe-button-submenu-option granularExport'>" + "Custom".translate() + "</div>"),
             menuExport = $("<div class='mafe-button-menu-container sub-nav'></div>").hide(),
             $item = $("#idNavBar").find(".mafe-button-export-process").closest("li");
 

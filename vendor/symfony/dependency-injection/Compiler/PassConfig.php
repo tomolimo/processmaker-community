@@ -51,15 +51,15 @@ class PassConfig
         $this->optimizationPasses = [[
             new ValidateEnvPlaceholdersPass(),
             new ResolveChildDefinitionsPass(),
-            new ServiceLocatorTagPass(),
             new RegisterServiceSubscribersPass(),
-            new DecoratorServicePass(),
-            new ResolveParameterPlaceHoldersPass(false),
+            new ResolveParameterPlaceHoldersPass(false, false),
             new ResolveFactoryClassPass(),
-            new CheckDefinitionValidityPass(),
             new ResolveNamedArgumentsPass(),
             new AutowireRequiredMethodsPass(),
             new ResolveBindingsPass(),
+            new ServiceLocatorTagPass(),
+            new DecoratorServicePass(),
+            new CheckDefinitionValidityPass(),
             new AutowirePass(false),
             new ResolveTaggedIteratorArgumentPass(),
             new ResolveServiceSubscribersPass(),
@@ -85,6 +85,9 @@ class PassConfig
             new InlineServiceDefinitionsPass(new AnalyzeServiceReferencesPass()),
             new AnalyzeServiceReferencesPass(),
             new DefinitionErrorExceptionPass(),
+        ]];
+
+        $this->afterRemovingPasses = [[
             new CheckExceptionOnInvalidReferenceBehaviorPass(),
             new ResolveHotPathPass(),
         ]];
@@ -110,9 +113,8 @@ class PassConfig
     /**
      * Adds a pass.
      *
-     * @param CompilerPassInterface $pass     A Compiler pass
-     * @param string                $type     The pass type
-     * @param int                   $priority Used to sort the passes
+     * @param string $type     The pass type
+     * @param int    $priority Used to sort the passes
      *
      * @throws InvalidArgumentException when a pass type doesn't exist
      */
@@ -253,7 +255,7 @@ class PassConfig
      *
      * @return CompilerPassInterface[]
      */
-    private function sortPasses(array $passes)
+    private function sortPasses(array $passes): array
     {
         if (0 === \count($passes)) {
             return [];
