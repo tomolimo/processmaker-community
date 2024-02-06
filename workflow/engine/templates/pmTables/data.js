@@ -369,7 +369,6 @@ Ext.onReady(function(){
     editable: false,
     listeners:{
       select: function(c,d,i){
-        UpdatePageConfig(d.data['size']);
         bbarpaging.pageSize = parseInt(d.data['size']);
         bbarpaging.moveFirst();
       }
@@ -808,14 +807,6 @@ RetrieveRowsID = function(rows){
     }
   }
   return arrAux.join(',');
-};
-
-//Update Page Size Configuration
-UpdatePageConfig = function(pageSize){
-  Ext.Ajax.request({
-  url: 'additionalTablesAjax',
-  params: {action:'updatePageSizeData', size: pageSize}
-  });
 };
 
 /**

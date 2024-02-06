@@ -31,42 +31,44 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.1",
-        "laravel/framework": "5.7.*",
+        "php": ">=7.4",
+        "laravel/framework": "8.83.*",
         "luracast/restler": "3.0",
         "bshaffer/oauth2-server-php": "v1.0",
-        "colosa/pmui": "release/3.5.0-dev",
-        "colosa/michelangelofe": "release/3.5.0-dev",
-        "colosa/pmdynaform": "release/3.5.0-dev",
-        "colosa/taskscheduler": "release/1.0.0-dev",
-        "google/apiclient": "1.1.6",
+        "colosa/pmui": "release/3.8.0-dev",
+        "colosa/michelangelofe": "release/3.8.0-dev",
+        "colosa/pmdynaform": "release/3.8.0-dev",
+        "colosa/taskscheduler": "release/1.0.3-dev",
+        "google/apiclient": "2.9.0",
         "dapphp/securimage": "^3.6",
-        "psr/log": "1.0.0",
-        "monolog/monolog": "1.19.0",
+        "psr/log": "1.0.1",
+        "monolog/monolog": "^2.1",
         "geshi/geshi": "dev-master",
         "libchart/libchart": "1.4.0",
-        "phpmailer/phpmailer": "5.2.27",
+        "phpmailer/phpmailer": "^6.4",
         "pear/archive_tar": "1.4.*",
         "pear/console_getopt": "1.4.*",
         "typo3/class-alias-loader": "^1.0",
         "ralouphie/getallheaders": "^2.0",
         "smarty/smarty": "2.6.31",
         "pdepend/pdepend": "@stable",
-        "chumper/zipper": "^1.0",
         "php-imap/php-imap": "^3.0",
-        "nikic/php-parser": "3.1.5",
-        "laravel/tinker": "^1.0",
+        "nikic/php-parser": "4.14",
+        "laravel/tinker": "^2.0",
         "league/oauth2-client": "^2.4",
         "league/oauth2-google": "^3.0",
-        "tecnickcom/tcpdf": "6.3.*",
-        "fzaninotto/faker": "^1.7",
+        "tecnickcom/tcpdf": "6.4.*",
+        "fzaninotto/faker": "dev-master",
         "predis/predis": "1.1.1",
         "phpmyadmin/sql-parser": "^5.3",
-        "aws/aws-sdk-php": "~3.0"
+        "aws/aws-sdk-php": "~3.0",
+        "stevenmaguire/oauth2-microsoft": "^2.2",
+        "phpseclib/mcrypt_compat": "^2.0",
+        "microsoft/microsoft-graph": "^1.7"
     },
     "require-dev": {
         "guzzlehttp/guzzle": "^6.3",
-        "phpunit/phpunit": "~5.7",
+        "phpunit/phpunit": "9.5",
         "filp/whoops": "~2.0",
         "behat/behat": "^3.3",
         "behat/mink-selenium2-driver": "^1.3",
@@ -78,7 +80,8 @@
             "ProcessMaker\\": "workflow/engine/src"
         },
         "psr-4": {
-                "App\\": "app/",
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
             "Maveriks\\": "framework/src/Maveriks/",
             "Tests\\": "tests/"
         },
@@ -91,7 +94,6 @@
             "workflow/engine/includes/",
             "thirdparty/jsmin/jsmin.php",
             "thirdparty/pear",
-            "thirdparty/html2ps_pdf",
             "thirdparty/phing",
             "thirdparty/pake",
             "rbac/engine/classes/"
@@ -124,6 +126,12 @@
             "class-alias-maps": [
                 "bootstrap/classaliasmap.php"
             ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "kylekatarnls/update-helper": true,
+            "typo3/class-alias-loader": true
         }
     }
 }

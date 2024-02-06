@@ -5,6 +5,16 @@ use ProcessMaker\Core\System;
 
 $RBAC->requirePermissions('PM_USERS');
 
+if (isset($_REQUEST['userInterface']) && $_REQUEST['userInterface'] === "v2") {
+    $lang = defined("SYS_LANG") ? SYS_LANG : "en";
+
+    $html = file_get_contents(PATH_HOME . "public_html/lib/userPersonalInformation/index.html");
+    $html = str_replace("translation.en.js", "translation.{$lang}.js", $html);
+    $html = str_replace("csrfToken", csrfToken(), $html);
+    echo $html;
+    exit();
+}
+
 //calculating the max upload file size;
 $POST_MAX_SIZE = ini_get('post_max_size');
 $mul = substr($POST_MAX_SIZE, - 1);

@@ -72,7 +72,9 @@ class MysqlPlatform extends DefaultPlatform {
 		$usingInnoDB = false;
 		if(class_exists('DataModelBuilder', false))
 		{
-			$usingInnoDB = strtolower(DataModelBuilder::getBuildProperty('mysqlTableType')) == 'innodb';
+                        $val = DataModelBuilder::getBuildProperty('mysqlTableType');
+                        $val = is_null($val) ? '' : $val;
+                        $usingInnoDB = strtolower($val) == 'innodb';
 		}
 		return $usingInnoDB || false;
 	}

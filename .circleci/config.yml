@@ -1,22 +1,39 @@
 version: 2
 jobs:
- build:
-   working_directory: ~/processmaker
-   docker:
-     - image: devopsstacks/pm:n225-phpunit
-   steps:         
-     - checkout
-     - run: service mysqld restart
-     - run: yum -y install php71-imap
-     - run: mysql -u root -ppassword -e "create database test;"    
-     - run: mysql -u root -ppassword -e "create database testexternal;"    
-     - run: composer install
-     - run:
-        name: Run Test Units
+  build:
+    working_directory: ~/processmaker
+    docker:
+      - image: devopsstacks/pm:n285-phpunit
+      - image: cimg/mysql:8.0
         command: |
-          mkdir coverage
-          vendor/phpunit/phpunit/phpunit --testdox-html coverage/result.html --coverage-html coverage  --verbose tests/unit/
-     - store_artifacts:
+          mysqld --default-authentication-plugin='mysql_native_password' --optimizer-switch='derived_merge=off' --sql-mode='NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' --collation-server='utf8mb4_unicode_ci' --character-set-server='utf8mb4' --max_connections=500
+        environment:
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_ROOT_PASSWORD: 'password'
+          MYSQL_ROOT_HOST: '%'  
+    steps:         
+      - checkout
+      - run:
+          name: Install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.6.1
+      - run:
+          name: Wait for DB
+          command: dockerize -wait tcp://127.0.0.1:3306 -timeout 3m 
+      - run: mysql -u root -ppassword -h 127.0.0.1 -e "create database test;"    
+      - run: mysql -u root -ppassword -h 127.0.0.1 -e "create database testexternal;"    
+      - run: composer install
+      - run:
+          name: Run Test Units
+          command: |
+            mkdir -p coverage
+            vendor/bin/phpunit --stop-on-error --testdox-html coverage/result.html --coverage-html coverage --verbose tests/unit/
+          environment:
+            XDEBUG_MODE: coverage
+      - store_artifacts:
           path: coverage
           destination: coverage
-        
+      - store_test_results:
+          path: coverage
+          

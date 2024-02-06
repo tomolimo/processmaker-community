@@ -50,7 +50,7 @@ class PEAR_Builder extends PEAR_Common
      *
      * @access public
      */
-    function PEAR_Builder(&$ui)
+    function __construct(&$ui)
     {
         parent::PEAR_Common();
         $this->setFrontendObject($ui);
@@ -123,7 +123,7 @@ class PEAR_Builder extends PEAR_Common
         $dsp = $filter->validateInput($dsp,"path");
         // msdev doesn't tell us the output directory :/
         // open the dsp, find /out and use that directory
-        $dsptext = join(file($dsp),'');
+        $dsptext = implode('', file($dsp));
 
         // this regex depends on the build platform and type having been
         // correctly identified above.
@@ -280,7 +280,7 @@ class PEAR_Builder extends PEAR_Common
         }
         $built_files = array();
         while ($ent = readdir($dp)) {
-            if ($ent{0} == '.' || substr($ent, -3) == '.la') {
+            if ($ent[0] == '.' || substr($ent, -3) == '.la') {
                 continue;
             }
             // harvest!

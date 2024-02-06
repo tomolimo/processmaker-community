@@ -19,6 +19,7 @@ PMDesigner.remoteUrl = "";
 PMDesigner.moddle = new BpmnModdle();
 PMDesigner.bpmnFactory = new BpmnFactory(PMDesigner.moddle);
 PMDesigner.keyCodeF5 = 116;
+PMDesigner.autoSave = true;
 PMDesigner.shapeProperties = function (shape) {
     var typeShape = shape.type;
     switch (typeShape) {
@@ -63,7 +64,7 @@ LANG = (typeof SYS_LANG !== "undefined") ? SYS_LANG : enviromentVariables('LANG'
 WORKSPACE = (typeof SYS_SYS !== "undefined") ? SYS_SYS : enviromentVariables('WORKSPACE');
 SKIN = (typeof SYS_SKIN !== "undefined") ? SYS_SKIN : enviromentVariables('SKIN');
 
-DEFAULT_WINDOW_WIDTH = 943;
+DEFAULT_WINDOW_WIDTH = 1093;
 DEFAULT_WINDOW_HEIGHT = 520;
 ENABLED_FEATURES = [];
 
@@ -339,7 +340,6 @@ jQuery(document).ready(function ($) {
                     startTimerEvent: {}
                 };
                 self.updateIdentifiers(response);
-                PMDesigner.connectValidator.bpmnValidator();
                 //if (PMDesigner.currentMsgFlash) {
                 PMDesigner.msgFlash('The process was saved successfully.'.translate(), document.body, 'success', 3000, 5);
                 PMDesigner.RoutingRuleSetOrder();
@@ -395,6 +395,7 @@ jQuery(document).ready(function ($) {
     PMDesigner.connectValidator = new ConnectValidator();
     for (d = 0; d < PMDesigner.sidebar.length; d += 1) {
         PMDesigner.sidebar[d].activate();
+        PMDesigner.sidebar[d].enableActions();
     }
 
     $('.bpmn_shapes_legend').hide();
@@ -709,7 +710,7 @@ jQuery(document).ready(function ($) {
      ==============================================*/
     PMDesigner.project.setSaveInterval(40000);
     setInterval(function () {
-        if (PMDesigner.project.isDirty() && PMDesigner.project.readOnly === false) {
+        if (PMDesigner.autoSave && PMDesigner.project.isDirty() && PMDesigner.project.readOnly === false) {
             PMDesigner.project.remoteProxy.setUrl(HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + prj_uid);
             PMDesigner.msgFlash('Saving Process'.translate(), document.body, 'success', 5000, 5);
             PMDesigner.project.save(true);
@@ -1116,7 +1117,7 @@ PMDesigner.msgFlash = function (text, container, severity, duration, zorder) {
     msg.setAppendTo(container || document.body);
     msg.setSeverity(severity || "success");
     msg.setDuration(duration || 3000);
-    msg.setZOrder(zorder || 100);
+    msg.setZOrder(zorder || 200);
     msg.show();
     PMDesigner.currentMsgFlash = msg;
 };
@@ -1203,7 +1204,12 @@ PMDesigner.modeReadOnly = function () {
 PMDesigner.reloadDataTable = function () {
     $('.bpmn_validator').css('visibility', 'visible');
 };
-
+/**
+ * Disable the autosave feature
+ */
+PMDesigner.autoSaveValue = function (value) {
+    PMDesigner.autoSave = value;
+};
 /**
  * Escape XML characters method.
  * There are only five:

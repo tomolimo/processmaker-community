@@ -67,6 +67,8 @@ class AppNotesMapBuilder
 
         $tMap->addColumn('NOTE_ID', 'NoteId', 'int', CreoleTypes::INTEGER, true, null);
 
+        $tMap->addColumn('APP_NUMBER', 'AppNumber', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addColumn('APP_UID', 'AppUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
         $tMap->addColumn('USR_UID', 'UsrUid', 'string', CreoleTypes::VARCHAR, true, 32);

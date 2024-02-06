@@ -2,12 +2,31 @@
 
 namespace Illuminate\Validation;
 
-use Illuminate\Support\Traits\Macroable;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Traits\Macroable;
+use Illuminate\Validation\Rules\Dimensions;
+use Illuminate\Validation\Rules\Exists;
+use Illuminate\Validation\Rules\In;
+use Illuminate\Validation\Rules\NotIn;
+use Illuminate\Validation\Rules\RequiredIf;
+use Illuminate\Validation\Rules\Unique;
 
 class Rule
 {
     use Macroable;
+
+    /**
+     * Create a new conditional rule set.
+     *
+     * @param  callable|bool  $condition
+     * @param  array|string  $rules
+     * @param  array|string  $defaultRules
+     * @return \Illuminate\Validation\ConditionalRules
+     */
+    public static function when($condition, $rules, $defaultRules = [])
+    {
+        return new ConditionalRules($condition, $rules, $defaultRules);
+    }
 
     /**
      * Get a dimensions constraint builder instance.
@@ -17,11 +36,11 @@ class Rule
      */
     public static function dimensions(array $constraints = [])
     {
-        return new Rules\Dimensions($constraints);
+        return new Dimensions($constraints);
     }
 
     /**
-     * Get a exists constraint builder instance.
+     * Get an exists constraint builder instance.
      *
      * @param  string  $table
      * @param  string  $column
@@ -29,7 +48,7 @@ class Rule
      */
     public static function exists($table, $column = 'NULL')
     {
-        return new Rules\Exists($table, $column);
+        return new Exists($table, $column);
     }
 
     /**
@@ -44,7 +63,7 @@ class Rule
             $values = $values->toArray();
         }
 
-        return new Rules\In(is_array($values) ? $values : func_get_args());
+        return new In(is_array($values) ? $values : func_get_args());
     }
 
     /**
@@ -59,18 +78,18 @@ class Rule
             $values = $values->toArray();
         }
 
-        return new Rules\NotIn(is_array($values) ? $values : func_get_args());
+        return new NotIn(is_array($values) ? $values : func_get_args());
     }
 
     /**
      * Get a required_if constraint builder instance.
      *
-     * @param  callable  $callback
+     * @param  callable|bool  $callback
      * @return \Illuminate\Validation\Rules\RequiredIf
      */
     public static function requiredIf($callback)
     {
-        return new Rules\RequiredIf($callback);
+        return new RequiredIf($callback);
     }
 
     /**
@@ -82,6 +101,6 @@ class Rule
      */
     public static function unique($table, $column = 'NULL')
     {
-        return new Rules\Unique($table, $column);
+        return new Unique($table, $column);
     }
 }

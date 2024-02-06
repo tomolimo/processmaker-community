@@ -37,6 +37,9 @@
                 document.getElementById("form[BTNOK]").classList.remove("module_app_button___gray");
                 document.getElementById("form[BTNOK]").classList.add("button-login-success");
             }
+            if (Intl && Intl.DateTimeFormat) {
+                document.getElementById("form[BROWSER_TIME_ZONE]").value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            }
         };
         ]]>
     </JS>

@@ -76,8 +76,6 @@ class OCI8Connection extends ConnectionCommon implements Connection
 									? 'oci_pconnect'
 									: 'oci_connect';
 		$encoding = !empty($dsninfo['encoding']) ? $dsninfo['encoding'] : null;
-
-		@ini_set( 'track_errors', true );
 		
 		if ( $hostspec && $port )
 		{

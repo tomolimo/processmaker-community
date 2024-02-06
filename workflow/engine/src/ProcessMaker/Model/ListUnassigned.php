@@ -2,11 +2,19 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ListUnassigned as PropelListUnassigned;
 
+/**
+ * Class ListUnassigned
+ *
+ * @deprecated Class deprecated in Release 3.6.0
+ */
 class ListUnassigned extends Model
 {
+    use HasFactory;
+
     protected $table = "LIST_UNASSIGNED";
     // No timestamps
     public $timestamps = false;
@@ -46,8 +54,9 @@ class ListUnassigned extends Model
     /**
      * Scope a query to only include specific tasks
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  array $tasks
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array $tasks
+     *
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeTasksIn($query, array $tasks)
@@ -58,8 +67,8 @@ class ListUnassigned extends Model
     /**
      * Scope a query to only include a specific case
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  integer $appNumber
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param integer $appNumber
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -71,8 +80,8 @@ class ListUnassigned extends Model
     /**
      * Scope a query to only include a specific index
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  integer $index
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param integer $index
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -84,8 +93,8 @@ class ListUnassigned extends Model
     /**
      * Scope a query to only include a specific task
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  integer $task
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param integer $task
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -100,7 +109,7 @@ class ListUnassigned extends Model
      * @param string $userUid
      * @param array $filters
      *
-     * @return array
+     * @return int
      */
     public static function doCount($userUid, $filters = [])
     {
@@ -124,5 +133,22 @@ class ListUnassigned extends Model
         $result = $list->loadList($userUid, $filters);
 
         return $result;
+    }
+
+    /**
+     * Get the unassigned cases related to the self service timeout
+     *
+     * @return array
+     */
+    public static function selfServiceTimeout()
+    {
+        $query = ListUnassigned::query()->select();
+        $query->join('TASK', function ($join) {
+            $join->on('LIST_UNASSIGNED.TAS_ID', '=', 'TASK.TAS_ID')
+                ->where('TASK.TAS_SELFSERVICE_TIMEOUT', '=', 1);
+        });
+        $results = $query->get()->toArray();
+
+        return $results;
     }
 }

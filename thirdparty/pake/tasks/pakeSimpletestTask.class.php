@@ -95,7 +95,7 @@ class pakeSimpletestTask
   {
     $types = array('text', 'html', 'xml');
     $type = 'text';
-    if (array_key_exists(0, $args) && in_array($args[0], $types))
+    if (is_array($args) && array_key_exists(0, $args) && in_array($args[0], $types))
     {
       $type = $args[0];
       array_shift($args);

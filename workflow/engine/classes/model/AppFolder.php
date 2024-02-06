@@ -18,7 +18,6 @@ use ProcessMaker\Plugins\PluginRegistry;
  */
 /**
  *
- * @author hugo loza
  * @package workflow.engine.classes.model
  */
 class AppFolder extends BaseAppFolder
@@ -314,6 +313,9 @@ class AppFolder extends BaseAppFolder
         $oCriteria->addSelectColumn( AppDocumentPeer::APP_DOC_STATUS_DATE);
         $oCriteria->addSelectColumn( AppDocumentPeer::APP_DOC_FIELDNAME);
         $oCriteria->addSelectColumn(AppDocumentPeer::APP_DOC_DRIVE_DOWNLOAD);
+        $oCriteria->addJoin(AppDocumentPeer::APP_UID, ApplicationPeer::APP_UID, Criteria::LEFT_JOIN);
+        $oCriteria->add($oCriteria->getNewCriterion(ApplicationPeer::APP_NUMBER, 0, Criteria::GREATER_THAN)->
+            addOr($oCriteria->getNewCriterion(AppDocumentPeer::APP_UID, '00000000000000000000000000000000', Criteria::LIKE)));
 
         if ((is_array( $docIdFilter )) && (count( $docIdFilter ) > 0)) {
             //Search by App Doc UID no matter what Folder it is
@@ -668,25 +670,25 @@ class AppFolder extends BaseAppFolder
 
                     switch ($row4['OUT_DOC_GENERATE']) {
                         case "PDF":
-                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=pdf" . "&random=" . rand();
+                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=pdf" . "&random=" . rand() . "&p=1";
                             $downloadLink1 = "";
                             $downloadLabel = ".pdf";
                             $downloadLabel1 = "";
                             break;
                         case "DOC":
-                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=doc" . "&random=" . rand();
+                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=doc" . "&random=" . rand() . "&p=1";
                             $downloadLink1 = "";
                             $downloadLabel = ".doc";
                             $downloadLabel1 = "";
                             break;
                         case "BOTH":
-                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=pdf" . "&random=" . rand();
-                            $downloadLink1 = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=doc" . "&random=" . rand();
+                            $downloadLink = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=pdf" . "&random=" . rand() . "&p=1";
+                            $downloadLink1 = "../cases/cases_ShowOutputDocument?a=" . $appDocUid . "&v=" . $docVersion . "&ext=doc" . "&random=" . rand() . "&p=1";
                             $downloadLabel = ".pdf";
                             $downloadLabel1 = ".doc";
                             break;
                         case "NOFILE":
-                            $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion;
+                            $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion . "&p=1";
                             $downloadLink1 = "";
                             $downloadLabel = G::LoadTranslation("ID_DOWNLOAD");
                             $downloadLabel1 = "";
@@ -707,56 +709,23 @@ class AppFolder extends BaseAppFolder
                             $row4 = array ();
                             $versioningEnabled = false;
                         }
-                        $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion;
+                        $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion . "&p=1";
                         $downloadLink1 = "";
                         $downloadLabel = G::LoadTranslation( 'ID_DOWNLOAD' );
                         $downloadLabel1 = "";
                     } else {
                         $row4 = array ();
                         $versioningEnabled = false;
-                        $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion;
+                        $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion . "&p=1";
                         $downloadLink1 = "";
                         $downloadLabel = G::LoadTranslation( 'ID_DOWNLOAD' );
                         $downloadLabel1 = "";
-                    }
-
-                    if (! empty( $row1["APP_DOC_PLUGIN"] )) {
-                        $pluginRegistry = PluginRegistry::loadSingleton();
-                        $pluginName = $row1["APP_DOC_PLUGIN"];
-                        $fieldValue = "";
-
-                        if (file_exists( PATH_PLUGINS . $pluginName . ".php" )) {
-                            $pluginDetail = $pluginRegistry->getPluginDetails( $pluginName . ".php" );
-
-                            if ($pluginDetail) {
-                                if ($pluginDetail->isEnabled()) {
-                                    require_once (PATH_PLUGINS . $pluginName . ".php");
-                                    $pluginNameClass = $pluginName . "Plugin";
-                                    $objPluginClass = new $pluginNameClass( $pluginName );
-
-                                    if (isset( $objPluginClass->sMethodGetUrlDownload ) && ! empty( $objPluginClass->sMethodGetUrlDownload )) {
-                                        if (file_exists( PATH_PLUGINS . $pluginName . PATH_SEP . "class." . $pluginName . ".php" )) {
-                                            require_once (PATH_PLUGINS . $pluginName . PATH_SEP . "class." . $pluginName . ".php");
-                                            $pluginNameClass = $pluginName . "Class";
-                                            $objClass = new $pluginNameClass();
-
-                                            if (method_exists( $objClass, $objPluginClass->sMethodGetUrlDownload )) {
-                                                eval( "\$url = \$objClass->" . $objPluginClass->sMethodGetUrlDownload . "(\"" . $row1["APP_DOC_UID"] . "\");" );
-                                                $downloadLink = $url;
-                                                $fieldValue = $row1["APP_DOC_PLUGIN"];
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        $row1["APP_DOC_PLUGIN"] = $fieldValue;
                     }
                     break;
                 default:
                     $row4 = array ();
                     $versioningEnabled = false;
-                    $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion;
+                    $downloadLink = "../cases/cases_ShowDocument?a=" . $appDocUid . "&v=" . $docVersion . "&p=1";
                     $downloadLink1 = "";
                     $downloadLabel = G::LoadTranslation( 'ID_DOWNLOAD' );
                     $downloadLabel1 = "";

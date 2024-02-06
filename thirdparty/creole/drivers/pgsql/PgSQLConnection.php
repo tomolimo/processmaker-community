@@ -53,9 +53,7 @@ class PgSQLConnection extends ConnectionCommon implements Connection {
      * @return void
      */
     function connect($dsninfo, $flags = 0)
-    {    
-        global $php_errormsg;
-                
+    {
         if (!extension_loaded('pgsql')) {
             throw new SQLException('pgsql extension not loaded');
         }
@@ -100,9 +98,13 @@ class PgSQLConnection extends ConnectionCommon implements Connection {
         }
         
         if (!$conn) {
+            // Set message error
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Connection error.';
+
 			// hide the password from connstr
 			$cleanconnstr = preg_replace('/password=\'.*?\'($|\s)/', 'password=\'*********\'', $connstr);
-            throw new SQLException('Could not connect', $php_errormsg, $cleanconnstr);
+            throw new SQLException('Could not connect', $errorMessage, $cleanconnstr);
         }
         
         $this->dblink = $conn;        

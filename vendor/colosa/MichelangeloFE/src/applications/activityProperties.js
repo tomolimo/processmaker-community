@@ -296,17 +296,17 @@ PMDesigner.taskProperties = function (activity) {
                                 id: 'tas_not_email_from_format',
                                 name: 'tas_not_email_from_format',
                                 pmType: 'dropdown',
-                                label: 'Email From Format'.translate(),
+                                label: 'Sender Name'.translate(),
                                 controlsWidth: 300,
                                 labelWidth: "27%",
                                 options: [
                                     {
                                         id: 'assignedUser',
-                                        label: 'Assigned User'.translate(),
+                                        label: 'Previous User'.translate(),
                                         value: 0
                                     }, {
                                         id: 'emailAccountSettings',
-                                        label: 'Email Account Settings'.translate(),
+                                        label: 'Email Sender Name'.translate(),
                                         value: 1
                                     }
                                 ]
@@ -404,17 +404,17 @@ PMDesigner.taskProperties = function (activity) {
                                 id: 'tas_receive_email_from_format',
                                 name: 'tas_receive_email_from_format',
                                 pmType: 'dropdown',
-                                label: 'Email From Format'.translate(),
+                                label: 'Sender Name'.translate(),
                                 controlsWidth: 300,
                                 labelWidth: "27%",
                                 options: [
                                     {
                                         id: 'assignedUser',
-                                        label: 'Assigned User'.translate(),
+                                        label: 'Previous User'.translate(),
                                         value: 0
                                     }, {
                                         id: 'emailAccountSettings',
-                                        label: 'Email Account Settings'.translate(),
+                                        label: 'Email Sender Name'.translate(),
                                         value: 1
                                     }
                                 ]
@@ -916,7 +916,7 @@ PMDesigner.taskProperties = function (activity) {
 
         if (response instanceof Array) {
             for (i = 0; i < response.length; i += 1) {
-                if (response[i].mess_engine === "IMAP") {
+                if (response[i].mess_engine === "IMAP" || response[i].mess_engine === "GMAILAPI" || response[i].mess_engine === "OFFICE365API") {
                     if (accountField !== null) {
                         accountField.addOption({
                             value: response[i].mess_uid,
@@ -1053,6 +1053,8 @@ PMDesigner.taskProperties = function (activity) {
             message,
             i;
 
+        /**Beging validations**/
+        //Validate data inside forms.
         for (i = 0; i < tabItems.length; i += 1) {
             panel = tabItems[i].getPanel();
             if (panel instanceof PMUI.form.Form) {
@@ -1069,6 +1071,8 @@ PMDesigner.taskProperties = function (activity) {
                 return;
             }
         }
+        /**End validations**/
+
 
         tas_transfer_fly = formTimingControl.getField('tas_transfer_fly').getValue() === '["1"]';
         tas_send_last_email = formNotifications.getField('tas_send_last_email').getValue() === '["1"]';
@@ -1261,6 +1265,18 @@ PMDesigner.taskProperties = function (activity) {
     if (consolidated == '1') {
         formConsolidated.getField('consolidated_report_table').setVisible(false);
     }
+
+    /**Builds the forms**/
+    //This is necessary to do because many elements are built dynamically.
+    var tabItems = propertiesTabs.getItems(), i;
+    for (i = 0; i < tabItems.length; i += 1) {
+        tabItems[i].select();
+        setFocusTab(tabItems[i]);
+    }
+    tabItems[0].select();
+    setFocusTab(tabItems[0]);
+    /**End builds the forms**/
+
     function customDOM() {
         $customGrid = $("#customGrid");
         $customGrid.show().appendTo($("#customGridPanel").find("fieldset:eq(0)"));

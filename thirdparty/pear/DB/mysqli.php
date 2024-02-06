@@ -115,9 +115,9 @@ class DB_mysqli extends DB_common
      *
      * @access public
      */
-    function DB_mysqli()
+    function __construct()
     {
-        $this->DB_common();
+        parent::__construct();
         $this->phptype = 'mysqli';
         $this->dbsyntax = 'mysqli';
         $this->features = array(
@@ -168,7 +168,6 @@ class DB_mysqli extends DB_common
 
         $this->dsn = $dsninfo;
         $conn      = false;
-        @ini_set('track_errors', true);
 
         if ($this->getOption('ssl') === true) {
             $init = mysqli_init();
@@ -201,17 +200,16 @@ class DB_mysqli extends DB_common
             );
         }
 
-        @ini_restore('track_errors');
-
         if (!$conn) {
+            $lastError = error_get_last();
             if (($err = @mysqli_connect_error()) != '') {
                 return $this->raiseError(DB_ERROR_CONNECT_FAILED, null, null,
                                          null, $err);
-            } elseif (empty($php_errormsg)) {
+            } elseif (empty($lastError['message'])) {
                 return $this->raiseError(DB_ERROR_CONNECT_FAILED);
             } else {
                 return $this->raiseError(DB_ERROR_CONNECT_FAILED, null, null,
-                                         null, $php_errormsg);
+                                         null, $lastError['message']);
             }
         }
 

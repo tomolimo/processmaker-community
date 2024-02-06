@@ -90,7 +90,7 @@ class RegexpMapper implements FileNameMapper {
         $groups = (array) $this->reg->getGroups();            
         
         // replace \1 with value of $groups[1] and return the modified "to" string
-        return preg_replace('/\\\([\d]+)/e', "\$groups[$1]", $this->to);            
+        return preg_replace_callback('/\\\([\d]+)/', function($matches)use($groups){return $matches[$groups[$matches[1]]];}, $this->to);
     }
     
 }

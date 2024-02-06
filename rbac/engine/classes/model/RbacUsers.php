@@ -307,6 +307,7 @@ class RbacUsers extends BaseRbacUsers
         $criteria->addSelectColumn(RbacUsersPeer::UID_AUTH_SOURCE);
         $criteria->addSelectColumn('COUNT(*) AS CNT');
         $criteria->add(RbacUsersPeer::USR_STATUS, 'CLOSED', Criteria::NOT_EQUAL);
+        $criteria->add(RbacUsersPeer::USR_USERNAME, '', Criteria::NOT_EQUAL);
         $criteria->addGroupByColumn(RbacUsersPeer::UID_AUTH_SOURCE);
         $dataset = RbacUsersPeer::doSelectRS($criteria, Propel::getDbConnection('rbac_ro'));
         $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);

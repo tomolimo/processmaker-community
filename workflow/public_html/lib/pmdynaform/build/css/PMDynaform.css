@@ -663,7 +663,11 @@
   .pmdynaform-file-container,
   .pmdynaform-file-container-dotted,
   .pmdynaform-link,
-  .pmdynaform-multiplefile-control,
+  .pmdynaform-multiplefile-control {
+    display: none;
+    height: 0;
+  }
+
   .pmdynaform-multiplefile-box,
   .pm-multiplefile-grid,
   .multiplefile-icon,
@@ -720,7 +724,6 @@
 
   @-moz-document url-prefix() {
     .content-print {
-      position: absolute;
       overflow: visible !important;
     }
   }
@@ -743,7 +746,6 @@
 .pmdynaform-field .glyphicon-info-sign {
   float: right;
   z-index: 2;
-  width: 8px;
   height: fit-content;
   padding-left: 4px;
 }
@@ -973,6 +975,14 @@ a.form-control {
 
 .select2-container .select2-selection--single {
   border: 1px solid #ccc;
+}
+
+.pmdynaform-spaceHint {
+  width: 20px;
+}
+
+.modal-title-upload-modal {
+  font-size: 18px;
 }
 
 textarea {
@@ -2774,6 +2784,7 @@ textarea {
   width: 100%;
   color: #555151;
   background: #f1f1f1;
+  white-space: inherit;
 }
 
 .has-error .btn-uploadfile {
@@ -2849,11 +2860,6 @@ textarea {
   padding: 15px 0 0 0;
   list-style: none;
   margin: 0;
-}
-
-.pmdynaform-field-multipleFile {
-  padding-bottom: 15px !important;
-  padding-top: 15px !important;
 }
 
 .multiplefile-title {

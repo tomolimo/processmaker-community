@@ -89,7 +89,7 @@ class PEAR_Registry extends PEAR
      *
      * @access public
      */
-    function PEAR_Registry($pear_install_dir = PEAR_INSTALL_DIR)
+    function __construct($pear_install_dir = PEAR_INSTALL_DIR)
     {
         parent::PEAR();
         $ds = DIRECTORY_SEPARATOR;
@@ -236,7 +236,9 @@ class PEAR_Registry extends PEAR
     {
         $fp = @fopen($this->filemap, 'r');
         if (!$fp) {
-            return $this->raiseError('PEAR_Registry: could not open filemap', PEAR_REGISTRY_ERROR_FILE, null, null, $php_errormsg);
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Error opening filemap.';
+            return $this->raiseError('PEAR_Registry: could not open filemap', PEAR_REGISTRY_ERROR_FILE, null, null, $errorMessage);
         }
         $fsize = filesize($this->filemap);
         $data = fread($fp, $fsize);
@@ -286,8 +288,9 @@ class PEAR_Registry extends PEAR
             $this->lock_fp = @fopen($this->lockfile, $open_mode);
 
             if (!is_resource($this->lock_fp)) {
+                $lastError = error_get_last();
                 return $this->raiseError("could not create lock file" .
-                                         (isset($php_errormsg) ? ": " . $php_errormsg : ""));
+                                         (isset($lastError['message']) ? ": " . $lastError['message'] : ""));
             }
             if (!(int)flock($this->lock_fp, $mode)) {
                 switch ($mode) {
@@ -357,7 +360,7 @@ class PEAR_Registry extends PEAR
             return $pkglist;
         }
         while ($ent = readdir($dp)) {
-            if ($ent{0} == '.' || substr($ent, -4) != '.reg') {
+            if ($ent[0] == '.' || substr($ent, -4) != '.reg') {
                 continue;
             }
             $pkglist[] = substr($ent, 0, -4);
@@ -507,7 +510,7 @@ class PEAR_Registry extends PEAR
         if (is_array($path)) {
             static $notempty;
             if (empty($notempty)) {
-                $notempty = create_function('$a','return !empty($a);');
+                $notempty = function($a){return !empty($a);};
             }
             $pkgs = array();
             foreach ($path as $name => $attrs) {

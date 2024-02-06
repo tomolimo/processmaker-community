@@ -68,7 +68,6 @@ define( 'ARCHIVE_ZIP_PARAM_EXTRACT_AS_STRING', 'extract_as_string' );
 define( 'ARCHIVE_ZIP_PARAM_NO_COMPRESSION', 'no_compression' );
 define( 'ARCHIVE_ZIP_PARAM_BY_NAME', 'by_name' );
 define( 'ARCHIVE_ZIP_PARAM_BY_INDEX', 'by_index' );
-define( 'ARCHIVE_ZIP_PARAM_BY_EREG', 'by_ereg' );
 define( 'ARCHIVE_ZIP_PARAM_BY_PREG', 'by_preg' );
 
 define( 'ARCHIVE_ZIP_PARAM_PRE_EXTRACT', 'callback_pre_extract' );
@@ -349,7 +348,7 @@ class Archive_Zip
     /**
      * This method extract the files and folders which are in the zip archive.
      * It can extract all the archive or a part of the archive by using filter
-     * feature (extract by name, by index, by ereg, by preg). The extraction
+     * feature (extract by name, by index, by preg). The extraction
      * can occur in the current path or an other path.
      * All the advanced features are activated by the use of variable
      * parameters.
@@ -369,8 +368,6 @@ class Archive_Zip
      *               or an array of file/dir names to extract from the archive.
      *   'by_index' : A string with range of indexes separated by ',',
      *                (sample "1,3-5,12").
-     *   'by_ereg' : A regular expression (ereg) that must match the extracted
-     *               filename.
      *   'by_preg' : A regular expression (preg) that must match the extracted
      *               filename.
      *   'callback_pre_extract' : A callback function that will be called before
@@ -407,7 +404,6 @@ class Archive_Zip
                     'set_chmod' => 0,
                     'by_name' => '',
                     'by_index' => '',
-                    'by_ereg' => '',
                     'by_preg' => '') ) != 1) {
             return 0;
         }
@@ -436,8 +432,6 @@ class Archive_Zip
      *               or an array of file/dir names to delete from the archive.
      *   'by_index' : A string with range of indexes separated by ',',
      *                (sample "1,3-5,12").
-     *   'by_ereg' : A regular expression (ereg) that must match the extracted
-     *               filename.
      *   'by_preg' : A regular expression (preg) that must match the extracted
      *               filename.
      *
@@ -459,7 +453,6 @@ class Archive_Zip
         if ($this->_check_parameters($p_params,
                 array ('by_name' => '',
                     'by_index' => '',
-                    'by_ereg' => '',
                     'by_preg' => '') ) != 1) {
             return 0;
         }
@@ -467,7 +460,6 @@ class Archive_Zip
         // ----- Check that at least one rule is set
         if (   ($p_params['by_name'] == '')
             && ($p_params['by_index'] == '')
-            && ($p_params['by_ereg'] == '')
             && ($p_params['by_preg'] == '')) {
             $this->_errorLog(ARCHIVE_ZIP_ERR_INVALID_PARAMETER,
                 'At least one filtering rule must'
@@ -663,7 +655,7 @@ class Archive_Zip
 
         // ----- Extract error constants from all const.
         for (reset($v_const_list);
-        list($v_key, $v_value) = each($v_const_list);) {
+        list($v_key, $v_value) = self::each($v_const_list);) {
             if (substr($v_key, 0, strlen('ARCHIVE_ZIP_ERR_'))
                 =='ARCHIVE_ZIP_ERR_') {
                 $v_error_list[$v_key] = $v_value;
@@ -1843,15 +1835,6 @@ class Archive_Zip
                 }
             }
 
-            // ----- Look for extract by ereg rule
-            else if (   (isset($p_params[ARCHIVE_ZIP_PARAM_BY_EREG]))
-                && ($p_params[ARCHIVE_ZIP_PARAM_BY_EREG] != "")) {
-
-                if (ereg($p_params[ARCHIVE_ZIP_PARAM_BY_EREG], $v_header['stored_filename'])) {
-                    $v_extract = true;
-                }
-            }
-
             // ----- Look for extract by preg rule
             else if (   (isset($p_params[ARCHIVE_ZIP_PARAM_BY_PREG]))
                 && ($p_params[ARCHIVE_ZIP_PARAM_BY_PREG] != "")) {
@@ -2726,16 +2709,6 @@ class Archive_Zip
                 }
             }
 
-            // ----- Look for extract by ereg rule
-            else if (   (isset($p_params[ARCHIVE_ZIP_PARAM_BY_EREG]))
-                && ($p_params[ARCHIVE_ZIP_PARAM_BY_EREG] != "")) {
-
-                if (ereg($p_params[ARCHIVE_ZIP_PARAM_BY_EREG],
-                    $v_header_list[$v_nb_extracted]['stored_filename'])) {
-                    $v_found = true;
-                }
-            }
-
             // ----- Look for extract by preg rule
             else if (   (isset($p_params[ARCHIVE_ZIP_PARAM_BY_PREG]))
                 && ($p_params[ARCHIVE_ZIP_PARAM_BY_PREG] != "")) {
@@ -3230,7 +3203,7 @@ class Archive_Zip
         }
 
         // ----- Check that all the params are valid
-        for (reset($p_params); list($v_key, $v_value) = each($p_params); ) {
+        for (reset($p_params); list($v_key, $v_value) = self::each($p_params); ) {
             if (!isset($p_default[$v_key])) {
                 $this->_errorLog(ARCHIVE_ZIP_ERR_INVALID_PARAMETER,
                     'Unsupported parameter with key \''.$v_key.'\'');
@@ -3240,17 +3213,17 @@ class Archive_Zip
         }
 
         // ----- Set the default values
-        for (reset($p_default); list($v_key, $v_value) = each($p_default); ) {
+        for (reset($p_default); list($v_key, $v_value) = self::each($p_default); ) {
             if (!isset($p_params[$v_key])) {
                 $p_params[$v_key] = $p_default[$v_key];
             }
         }
-
         // ----- Check specific parameters
         $v_callback_list = array ('callback_pre_add','callback_post_add',
             'callback_pre_extract','callback_post_extract');
         for ($i=0; $i<sizeof($v_callback_list); $i++) {
             $v_key=$v_callback_list[$i];
+
             if (   (isset($p_params[$v_key])) && ($p_params[$v_key] != '')) {
                 if (!function_exists($p_params[$v_key])) {
                     $this->_errorLog(ARCHIVE_ZIP_ERR_INVALID_PARAM_VALUE,
@@ -3594,6 +3567,25 @@ class Archive_Zip
             require_once($pathTrunk.'gulliver/system/class.g.php');
         }
         return G::encryptCrc32($string);
+    }
+
+    /**
+     * Legacy "each" function, because was removed in PHP v8.x
+     *
+     * @param $array
+     * @return array|bool
+     */
+    private static function each($array) {
+        $key = key($array);
+        $value = current($array);
+        $each = is_null($key) ? false : [
+            1 => $value,
+            'value' => $value,
+            0 => $key,
+            'key' => $key,
+        ];
+        next($array);
+        return $each;
     }
 
 }

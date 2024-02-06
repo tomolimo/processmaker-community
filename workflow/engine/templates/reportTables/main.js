@@ -172,7 +172,6 @@ Ext.onReady(function(){
       editable: false,
       listeners:{
         select: function(c,d,i){
-          UpdatePageConfig(d.data['size']);
           bbarpaging.pageSize = parseInt(d.data['size']);
           bbarpaging.moveFirst();
         }
@@ -490,13 +489,6 @@ RetrieveRowsID = function(rows){
     arrAux[c] = rows[c].get('ADD_TAB_UID');
   }
   return arrAux.join(',');
-};
-//Update Page Size Configuration
-UpdatePageConfig = function(pageSize){
-  Ext.Ajax.request({
-  url: 'additionalTablesAjax',
-  params: {action:'updatePageSize', size: pageSize}
-  });
 };
 
 //Do Search Function

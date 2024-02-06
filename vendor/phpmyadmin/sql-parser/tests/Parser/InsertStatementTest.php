@@ -13,12 +13,12 @@ class InsertStatementTest extends TestCase
      *
      * @dataProvider insertProvider
      */
-    public function testInsert($test)
+    public function testInsert($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function insertProvider()
+    public function insertProvider(): array
     {
         return [
             ['parser/parseInsert'],

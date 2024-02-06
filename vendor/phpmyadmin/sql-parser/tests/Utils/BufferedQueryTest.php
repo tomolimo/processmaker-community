@@ -6,6 +6,7 @@ namespace PhpMyAdmin\SqlParser\Tests\Utils;
 
 use PhpMyAdmin\SqlParser\Tests\TestCase;
 use PhpMyAdmin\SqlParser\Utils\BufferedQuery;
+
 use function count;
 use function str_split;
 
@@ -60,7 +61,7 @@ class BufferedQueryTest extends TestCase
         $this->assertEquals($expected, $statements);
     }
 
-    public function extractProvider()
+    public function extractProvider(): array
     {
         $query =
             '/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;' . "\n" .
@@ -118,6 +119,16 @@ class BufferedQueryTest extends TestCase
                     "SELECT '\'';",
                     "SELECT '\'';",
                 ],
+            ],
+
+            [
+                'SELECT \\',
+                8,
+                [
+                    'parse_delimiter' => false,
+                    'add_delimiter' => false,
+                ],
+                ['SELECT \\'],
             ],
 
             [

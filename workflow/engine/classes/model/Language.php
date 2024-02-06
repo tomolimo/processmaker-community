@@ -933,8 +933,8 @@ class Language extends BaseLanguage
             $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
             $oDataset->next();
             $aRow = $oDataset->getRow();
-            $aRow['LANGUAGE_NAME'] = $aRow['LAN_NAME'];
             if (is_array($aRow)) {
+                $aRow['LANGUAGE_NAME'] = $aRow['LAN_NAME'];
                 return $aRow;
             } else {
                 throw (new Exception("The language '$langId' doesn\'t exist!"));

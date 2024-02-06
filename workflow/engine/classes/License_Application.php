@@ -402,7 +402,7 @@ class license_application extends Padl
         # check to see if the class has been secured
         $this->_check_secure();
         # get the dat string
-        $dat_str = (!$str) ? @file_get_contents($this->_LICENSE_PATH) : $str;
+        $dat_str = (!$str && !is_null($this->_LICENSE_PATH)) ? @file_get_contents($this->_LICENSE_PATH) : $str;
         if (strlen($dat_str) > 0) {
             # decrypt the data
             $DATA = $this->_unwrap_license($dat_str);

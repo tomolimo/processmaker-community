@@ -1,33 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Cache;
+use PHPMailer\PHPMailer\SMTP;
 use ProcessMaker\Core\System;
+use ProcessMaker\Exception\RBACException;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Validation\ValidationUploadedFiles;
-
-/**
- * adminProxy.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
 
 class adminProxy extends HttpProxyController
 {
@@ -430,7 +408,7 @@ class adminProxy extends HttpProxyController
         $SMTPSecure  = $_POST['UseSecureCon'];
 
         $Server = new Net($server);
-        $smtp = new SMTP;
+        $smtp = new SMTP();
 
         $timeout = 10;
         $hostinfo = array();
@@ -448,18 +426,23 @@ class adminProxy extends HttpProxyController
                 $this->msg = $this->result ? '' : $Server->error;
                 break;
             case 3:   //try to connect to host
-                if (preg_match('/^(.+):([0-9]+)$/', $srv, $hostinfo)) {
-                    $server = $hostinfo[1];
-                    $port = $hostinfo[2];
-                } else {
-                    $host = $srv;
+                try {
+                    if (preg_match('/^(.+):([0-9]+)$/', $srv, $hostinfo)) {
+                        $server = $hostinfo[1];
+                        $port = $hostinfo[2];
+                    } else {
+                        $server = $srv;
+                    }
+                    
+                    $tls = (strtoupper($SMTPSecure) === 'TLS');
+                    $ssl = (strtoupper($SMTPSecure) === 'SSL');
+
+                    $this->success = $smtp->Connect(($ssl ? 'ssl://':'') . $server, $port, $timeout);
+                    $this->msg = $this->result ? '' : $Server->error;
+                } catch (Exception $e) {
+                    $this->success = false;
+                    $this->msg = $e->getMessage();
                 }
-
-                $tls = (strtoupper($SMTPSecure) == 'tls');
-                $ssl = (strtoupper($SMTPSecure) == 'ssl');
-
-                $this->success = $smtp->Connect(($ssl ? 'ssl://':'').$server, $port, $timeout);
-                $this->msg = $this->result ? '' : $Server->error;
                 break;
             case 4:  //try login to host
                 if ($auth_required == 'true') {
@@ -781,10 +764,24 @@ class adminProxy extends HttpProxyController
      */
     public function getListImage($httpData)
     {
+        // Include global object RBAC
+        global $RBAC;
+
+        // Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+        if ($RBAC->userCanAccess('PM_SETUP') !== 1 || $RBAC->userCanAccess('PM_SETUP_LOGO') !== 1) {
+            throw new RBACException('ID_ACCESS_DENIED', 403);
+        }
+
         $uplogo       = PATH_TPL . 'setup' . PATH_SEP . 'uplogo.html';
         $width        = "100%";
         $upload       = new ReplacementLogo();
         $aPhotoSelect = $upload->getNameLogo($_SESSION['USER_LOGGED']);
+        if (!is_array($aPhotoSelect)) {
+            $aPhotoSelect = [];
+        }
+        if (!isset($aPhotoSelect['DEFAULT_LOGO_NAME'])) {
+            $aPhotoSelect['DEFAULT_LOGO_NAME'] = '';
+        }
         $sPhotoSelect = trim($aPhotoSelect['DEFAULT_LOGO_NAME']);
         $check        = '';
         $ainfoSite    = explode("/", $_SERVER["REQUEST_URI"]);

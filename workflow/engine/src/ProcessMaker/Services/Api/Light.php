@@ -12,6 +12,7 @@ use Luracast\Restler\RestException;
 use PmDynaform;
 use Process as ModelProcess;
 use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
+use ProcessMaker\BusinessModel\Cases\CasesList;
 use ProcessMaker\BusinessModel\DynaForm as BusinessModelDynaForm;
 use ProcessMaker\BusinessModel\Light as BusinessModelLight;
 use ProcessMaker\BusinessModel\Lists;
@@ -108,24 +109,20 @@ class Light extends Api
 
     /**
      * Get list counters
-     * @return array
-     *
-     * @copyright Colosa - Bolivia
      *
      * @url GET /counters
+     * @status 200
+     *
+     * @return array
      */
     public function countersCases()
     {
         try {
-            $userId = $this->getUserId();
+            $usrUid = $this->getUserId();
+            $count = new CasesList();
+            $result = $count->getAllCounters($usrUid);
+            $result = $this->parserCountersCases($result);
 
-                $case = new BusinessModelCases();
-                $arrayListCounter = $case->getListCounters(
-                    $userId,
-                    ['to_do', 'draft', 'sent', 'selfservice', 'paused', 'completed', 'cancelled']
-                );
-
-            $result = $this->parserCountersCases($arrayListCounter);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
@@ -153,7 +150,7 @@ class Light extends Api
         );
         $response = array();
         foreach ($data as $key => $counterList) {
-            if (isset($structure[$counterList['item']])) {
+            if (isset($structure[isset($counterList['item']) ? $counterList['item'] : null])) {
                 $name = $structure[$counterList['item']];
                 $response[$name] = $counterList['count'];
             } else {
@@ -1763,9 +1760,9 @@ class Light extends Api
      *
      * @access protected
      * @class  AccessControl {@className \ProcessMaker\Services\Api\Cases}
-     * @url GET /:app_uid/variables
+     * @url GET /:appUid/variables
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param string $dyn_uid
      * @param string $pro_uid
      * @param string $act_uid
@@ -1773,12 +1770,16 @@ class Light extends Api
      * @return mixed
      * @throws RestException
      */
-    public function doGetCaseVariables($app_uid, $dyn_uid = null, $pro_uid = null, $act_uid = null, $app_index = null)
+    public function doGetCaseVariables($appUid, $dyn_uid = null, $pro_uid = null, $act_uid = null, $app_index = null)
     {
         try {
             $usr_uid = $this->getUserId();
             $cases = new BusinessModelCases();
-            $response = $cases->getCaseVariables($app_uid, $usr_uid, $dyn_uid, $pro_uid, $act_uid, $app_index);
+            //for propel connection is required $_SESSION['PROCESS']
+            if (!empty($pro_uid)) {
+                $_SESSION['PROCESS'] = $pro_uid;
+            }
+            $response = $cases->getCaseVariables($appUid, $usr_uid, $dyn_uid, $pro_uid, $act_uid, $app_index);
 
             return DateTime::convertUtcToTimeZone($response);
         } catch (Exception $e) {

@@ -193,7 +193,7 @@
         } elseif ($this->_inBlock == true && empty($ifchk)) {
           $last =& $this->_allNodes[$this->_lastNode];
           $last->data[key($last->data)] .= "\n";
-        } elseif ($ifchk{0} != '#' && substr($ifchk,0,3) != '---') {
+        } elseif ($ifchk[0] != '#' && substr($ifchk,0,3) != '---') {
           // Create a new node and get its indent
           $node         = new pakeYAMLNode;
           $node->indent = $this->_getIndent($line);
@@ -874,7 +874,7 @@
       $ret   = array(); 
 
       foreach($keys as $key) { 
-        list($unused,$val) = each($vals);
+        list($unused,$val) = self::each($vals);
         // This is the good part!  If a key already exists, but it's part of a
         // sequence (an int), just keep addin numbers until we find a fresh one.
         if (isset($ret[$key]) and is_int($key)) {
@@ -886,5 +886,24 @@
       } 
 
       return $ret; 
+    }
+
+   /**
+    * Legacy "each" function, because was removed in PHP v8.x
+    *
+    * @param $array
+    * @return array|bool
+    */
+    private static function each($array) {
+        $key = key($array);
+        $value = current($array);
+        $each = is_null($key) ? false : [
+            1 => $value,
+            'value' => $value,
+            0 => $key,
+            'key' => $key,
+        ];
+        next($array);
+        return $each;
     }
   }

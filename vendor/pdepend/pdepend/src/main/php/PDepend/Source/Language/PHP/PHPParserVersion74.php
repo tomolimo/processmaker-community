@@ -38,11 +38,13 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
 namespace PDepend\Source\Language\PHP;
 
+use PDepend\Source\AST\ASTClosure;
 use PDepend\Source\AST\ASTFieldDeclaration;
 use PDepend\Source\AST\ASTType;
 use PDepend\Source\Parser\UnexpectedTokenException;
@@ -53,24 +55,46 @@ use PDepend\Source\Tokenizer\Tokens;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.4
  */
 abstract class PHPParserVersion74 extends PHPParserVersion73
 {
+    /**
+     * Regular expression for integer numbers representation.
+     * (Add support for octal explicit notation.)
+     *
+     * @see https://php.net/manual/en/language.types.integer.php
+     * @see https://github.com/php/doc-en/blob/085c38d45e466691062b4444c71f4dbe4198f884/language/types/integer.xml#L79-L91
+     */
+    const REGEXP_INTEGER = '/^(
+                       0
+                       |
+                       [1-9][0-9]*(?:_[0-9]+)*
+                       |
+                       0[xX][0-9a-fA-F]+(?:_[0-9a-fA-F]+)*
+                       |
+                       0[0-7]+(?:_[0-7]+)*
+                       |
+                       0[bB][01]+(?:_[01]+)*
+                     )$/x';
+
+    protected $possiblePropertyTypes = array(
+        Tokens::T_STRING,
+        Tokens::T_ARRAY,
+        Tokens::T_QUESTION_MARK,
+        Tokens::T_BACKSLASH,
+        Tokens::T_CALLABLE,
+        Tokens::T_SELF,
+    );
+
     protected function parseUnknownDeclaration($tokenType, $modifiers)
     {
         /**
          * Typed properties
          * https://www.php.net/manual/en/migration74.new-features.php#migration74.new-features.core.typed-properties
          */
-        if (in_array($tokenType, array(
-            Tokens::T_STRING,
-            Tokens::T_ARRAY,
-            Tokens::T_QUESTION_MARK,
-            Tokens::T_BACKSLASH,
-            Tokens::T_CALLABLE,
-            Tokens::T_SELF,
-        ))) {
+        if (in_array($tokenType, $this->possiblePropertyTypes, true)) {
             $type = $this->parseTypeHint();
             $declaration = $this->parseFieldDeclaration();
             $declaration->prependChild($type);
@@ -82,25 +106,9 @@ abstract class PHPParserVersion74 extends PHPParserVersion73
         return parent::parseUnknownDeclaration($tokenType, $modifiers);
     }
 
-    protected function parseMethodOrFieldDeclaration($modifiers = 0)
-    {
-        $field = parent::parseMethodOrFieldDeclaration($modifiers);
-
-        if ($field instanceof ASTType) {
-            $type = $field;
-
-            $field = parent::parseMethodOrFieldDeclaration($modifiers);
-
-            if (!($field instanceof ASTFieldDeclaration)) {
-                throw new UnexpectedTokenException($this->tokenizer->prevToken(), $this->tokenizer->getSourceFile());
-            }
-
-            $field->prependChild($type);
-        }
-
-        return $field;
-    }
-
+    /**
+     * @return ASTClosure
+     */
     protected function parseLambdaFunctionDeclaration()
     {
         $this->tokenStack->push();
@@ -111,8 +119,8 @@ abstract class PHPParserVersion74 extends PHPParserVersion73
 
         $closure = $this->builder->buildAstClosure();
         $closure->setReturnsByReference($this->parseOptionalByReference());
-        $closure->addChild($this->parseFormalParameters());
-        $closure = $this->parseCallableDeclarationAddition($closure);
+        $closure->addChild($this->parseFormalParameters($closure));
+        $this->parseCallableDeclarationAddition($closure);
 
         $closure->addChild(
             $this->buildReturnStatement(
@@ -126,6 +134,8 @@ abstract class PHPParserVersion74 extends PHPParserVersion73
     /**
      * Override PHP 7.3 checkEllipsisInExpressionSupport to stop throwing the
      * parsing exception.
+     *
+     * @return void
      */
     protected function checkEllipsisInExpressionSupport()
     {

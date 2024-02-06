@@ -123,6 +123,10 @@ class AppDelegationMapBuilder
 
         $tMap->addColumn('TAS_ID', 'TasId', 'int', CreoleTypes::INTEGER, false, null);
 
+        $tMap->addColumn('DEL_TITLE', 'DelTitle', 'string', CreoleTypes::VARCHAR, true, 999);
+
+        $tMap->addColumn('DEL_THREAD_STATUS_ID', 'DelThreadStatusId', 'int', CreoleTypes::INTEGER, true, null);
+
         $tMap->addValidator('DEL_TYPE', 'validValues', 'propel.validator.ValidValuesValidator', 'NORMAL|PARALLEL', 'Please select a valid status.');
 
         $tMap->addValidator('DEL_PRIORITY', 'validValues', 'propel.validator.ValidValuesValidator', '1|2|3|4|5', 'Please select a valid Priority.');

@@ -5656,7 +5656,7 @@ if (typeof exports !== "undefined") {
      * @chainable
      */
     Control.prototype.setFocus = function () {
-        if (this.html) {
+        if (this.html && this.html.focus) {
             this.html.focus();
         }
     };
@@ -5903,6 +5903,20 @@ if (typeof exports !== "undefined") {
         }
 
         return this;
+    };
+    /**
+     * Set a value in the parameter disabled.
+     * @param {Boolean} value
+     */
+     TextControl.prototype.setDisabled = function (value) {
+        if (typeof value === 'boolean') {
+            this.disabled = value;
+            if (this.html) {
+                this.html.disabled = value;
+            }
+        } else {
+            throw new Error("method setDisabled() only accepts boolean values.");
+        }
     };
     /**
      * Set the events for the object.
@@ -10758,7 +10772,6 @@ if (typeof exports !== "undefined") {
                 this.addEvent('click').listen(this.html, function (e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.focus();
                     if (typeof that.handler === 'function') {
                         that.handler(that);
                     }
@@ -11873,8 +11886,7 @@ if (typeof exports !== "undefined") {
     Menu.prototype.show = function (x, y) {
         var rootMenu = this.getRootMenu(),
             targetElement = (this.targetElement && this.targetElement.html) || document.body,
-            zIndex = $(targetElement).zIndex();
-
+            zIndex = parseInt(targetElement.style.zIndex);
         x = x || 0;
         y = y || 0;
         rootMenu.setPosition({
@@ -13561,7 +13573,7 @@ if (typeof exports !== "undefined") {
             j,
             controls = this.getControls();
 
-        if (this.controls[i]) {
+        if (this.controls[i] && this.controls[i].setFocus) {
             this.controls[i].setFocus();
         }
         return this;
@@ -13691,6 +13703,17 @@ if (typeof exports !== "undefined") {
      */
     TextField.prototype.setMaxLength = function (maxLength) {
         this.controls[0].setMaxLength(maxLength);
+        return this;
+    };
+    /**
+     * Set the parameter disabled for the control.
+     * @param {[disabled]} value 
+     * @chainable
+     */
+     TextField.prototype.setDisabled = function (value) {
+        if (typeof value === 'boolean') {
+            this.controls[0].setDisabled(value);
+        }
         return this;
     };
     /**
@@ -17857,7 +17880,7 @@ if (typeof exports !== "undefined") {
         if (this.layout) {
             this.layout.applyLayout();
         }
-        if (this.getFields().length) {
+        if (this.getFields().length && this.setFocus) {
             this.setFocus(0);
         }
         this.setButtonPanelPosition(this.buttonPanelPosition);
@@ -17910,7 +17933,7 @@ if (typeof exports !== "undefined") {
             fields = this.getFields();
 
         for (j = 0; j < fields.length; j += 1) {
-            if ((!fields[j].isReadOnly || !fields[j].isReadOnly()) && !fields[j].disabled && fields[j].isVisible()) {
+            if ((!fields[j].isReadOnly || !fields[j].isReadOnly()) && !fields[j].disabled && fields[j].isVisible() && fields[j].setFocus) {
                 fields[j].setFocus();
                 break;
             }
@@ -36588,6 +36611,7 @@ if (typeof exports !== "undefined") {
         if (parent.getID() !== oldParent.getID()) {
             oldParent.removePort(port);
             parent.addPort(port, this.after.x, this.after.y, true);
+            port.oldParent = oldParent;
         } else {
             parent.definePortPosition(port,
                 new PMUI.util.Point(this.after.x, this.after.y));
@@ -36634,6 +36658,7 @@ if (typeof exports !== "undefined") {
             parent.removePort(port);
             oldParent.addPort(port, this.before.x, this.before.y, true);
             port.canvas.regularShapes.insert(port);
+            port.oldParent = parent;
         } else {
             parent.definePortPosition(port,
                 new PMUI.util.Point(this.before.x, this.before.y));
@@ -50881,7 +50906,9 @@ if (typeof exports !== "undefined") {
     };
 
     ButtonField.prototype.click = function () {
-        this.controls[0].click();
+        if (this.controls[0].click) {
+            this.controls[0].click();
+        }
         return this;
     };
     /**

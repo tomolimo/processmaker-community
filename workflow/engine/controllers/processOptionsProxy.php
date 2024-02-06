@@ -5,7 +5,7 @@ class processOptionsProxy extends HttpProxyController
 
     public function loadInputDocuments ($params)
     {
-        $oProcessMap = new ProcessMap( new DBConnection() );
+        $oProcessMap = new ProcessMap();
 
         $pro_uid = $params->PRO_UID;
         $start = isset( $params->start ) ? $params->start : 0;
@@ -24,7 +24,7 @@ class processOptionsProxy extends HttpProxyController
 
     public function canDeleteInputDoc ($params)
     {
-        $oProcessMap = new ProcessMap( new DBConnection() );
+        $oProcessMap = new ProcessMap();
         $aRows = $oProcessMap->getAllInputDocsByTask( $params->PRO_UID );
         $response = isset( $aRows[$params->IDOC_UID] ) ? false : true;
         $this->success = $response;

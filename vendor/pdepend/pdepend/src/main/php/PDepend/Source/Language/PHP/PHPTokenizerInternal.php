@@ -182,6 +182,44 @@ if (!defined('T_COALESCE_EQUAL')) {
 }
 
 /**
+ * Define PHP 8.0 tokens
+ */
+if (!defined('T_NAME_QUALIFIED')) {
+    define('T_NAME_QUALIFIED', 42314);
+}
+
+if (!defined('T_NAME_FULLY_QUALIFIED')) {
+    define('T_NAME_FULLY_QUALIFIED', 42312);
+}
+
+if (!defined('T_NAME_RELATIVE')) {
+    define('T_NAME_RELATIVE', 42313);
+}
+
+if (!defined('T_MATCH')) {
+    define('T_MATCH', 42341);
+}
+
+if (!defined('T_ATTRIBUTE')) {
+    define('T_ATTRIBUTE', 42383);
+}
+
+if (!defined('T_NULLSAFE_OBJECT_OPERATOR')) {
+    define('T_NULLSAFE_OBJECT_OPERATOR', 42387);
+}
+
+/**
+ * Define PHP 8.1 tokens
+ */
+if (!defined('T_READONLY')) {
+    define('T_READONLY', 42401);
+}
+
+if (!defined('T_ENUM')) {
+    define('T_ENUM', 42372);
+}
+
+/**
  * This tokenizer uses the internal {@link token_get_all()} function as token stream
  * generator.
  *
@@ -193,7 +231,7 @@ class PHPTokenizerInternal implements FullTokenizer
     /**
      * Mapping between php internal tokens and php depend tokens.
      *
-     * @var array<integer, integer>
+     * @var array<int, integer>
      */
     protected static $tokenMap = array(
         T_AS                        => Tokens::T_AS,
@@ -227,6 +265,7 @@ class PHPTokenizerInternal implements FullTokenizer
         T_CONST                     => Tokens::T_CONST,
         T_EMPTY                     => Tokens::T_EMPTY,
         T_ENDIF                     => Tokens::T_ENDIF,
+        T_ENUM                      => Tokens::T_ENUM,
         T_FINAL                     => Tokens::T_FINAL,
         T_ISSET                     => Tokens::T_ISSET,
         T_PRINT                     => Tokens::T_PRINT,
@@ -275,6 +314,8 @@ class PHPTokenizerInternal implements FullTokenizer
         T_MOD_EQUAL                 => Tokens::T_MOD_EQUAL,
         T_MUL_EQUAL                 => Tokens::T_MUL_EQUAL,
         T_NAMESPACE                 => Tokens::T_NAMESPACE,
+        T_NAME_FULLY_QUALIFIED      => Tokens::T_STRING,
+        T_NAME_QUALIFIED            => Tokens::T_STRING,
         T_XOR_EQUAL                 => Tokens::T_XOR_EQUAL,
         T_INTERFACE                 => Tokens::T_INTERFACE,
         T_BOOL_CAST                 => Tokens::T_BOOL_CAST,
@@ -329,6 +370,9 @@ class PHPTokenizerInternal implements FullTokenizer
         T_COALESCE_EQUAL            => Tokens::T_COALESCE_EQUAL,
         // T_DOLLAR_OPEN_CURLY_BRACES  => Tokens::T_CURLY_BRACE_OPEN,
         T_FN                        => Tokens::T_FN,
+        T_MATCH                     => Tokens::T_STRING,
+        T_NULLSAFE_OBJECT_OPERATOR  => Tokens::T_NULLSAFE_OBJECT_OPERATOR,
+        T_READONLY                  => Tokens::T_READONLY,
     );
 
     /**
@@ -389,10 +433,10 @@ class PHPTokenizerInternal implements FullTokenizer
         '__dir__'        =>  Tokens::T_DIR,
         '__trait__'      =>  Tokens::T_TRAIT_C,
         '__namespace__'  =>  Tokens::T_NS_C,
+        'readonly'       =>  Tokens::T_READONLY,
     );
 
     /**
-     *
      * @var array<mixed, array>
      */
     protected static $substituteTokens = array(
@@ -402,7 +446,9 @@ class PHPTokenizerInternal implements FullTokenizer
     /**
      * BuilderContext sensitive alternative mappings.
      *
-     * @var array<integer, array>
+     * Re-map based on the previous token
+     *
+     * @var array<int, array>
      */
     protected static $alternativeMap = array(
         Tokens::T_USE => array(
@@ -506,8 +552,18 @@ class PHPTokenizerInternal implements FullTokenizer
         Tokens::T_CLASS => array(
             Tokens::T_DOUBLE_COLON     => Tokens::T_CLASS_FQN,
         ),
+
+        Tokens::T_READONLY => array(
+            Tokens::T_OBJECT_OPERATOR  => Tokens::T_STRING,
+            Tokens::T_FUNCTION         => Tokens::T_STRING,
+            Tokens::T_CONST            => Tokens::T_STRING,
+            Tokens::T_DOUBLE_COLON     => Tokens::T_STRING,
+        ),
     );
 
+    /**
+     * @var array<int, array<int, array<string, integer|string>>>
+     */
     protected static $reductionMap = array(
         Tokens::T_CONCAT => array(
             Tokens::T_CONCAT => array(
@@ -545,21 +601,21 @@ class PHPTokenizerInternal implements FullTokenizer
     /**
      * The source file instance.
      *
-     * @var \PDepend\Source\AST\ASTCompilationUnit
+     * @var ASTCompilationUnit|null
      */
-    protected $sourceFile = '';
+    protected $sourceFile = null;
 
     /**
      * Count of all tokens.
      *
-     * @var integer
+     * @var int
      */
     protected $count = 0;
 
     /**
      * Internal stream pointer index.
      *
-     * @var integer
+     * @var int
      */
     protected $index = 0;
 
@@ -573,14 +629,14 @@ class PHPTokenizerInternal implements FullTokenizer
     /**
      * The next free identifier for unknown string tokens.
      *
-     * @var integer
+     * @var int
      */
     private $unknownTokenID = 1000;
 
     /**
      * Returns the name of the source file.
      *
-     * @return \PDepend\Source\AST\ASTCompilationUnit
+     * @return ASTCompilationUnit|null
      */
     public function getSourceFile()
     {
@@ -633,10 +689,10 @@ class PHPTokenizerInternal implements FullTokenizer
     }
 
     /**
-     * Returns the next token or {@link \PDepend\Source\Tokenizer\Tokenizer::T_EOF} if
+     * Returns the next token or {@link Tokenizer::T_EOF} if
      * there is no next token.
      *
-     * @return Token|integer
+     * @return int|Token
      */
     public function next()
     {
@@ -650,10 +706,10 @@ class PHPTokenizerInternal implements FullTokenizer
     }
 
     /**
-     * Returns the next token type or {@link \PDepend\Source\Tokenizer\Tokenizer::T_EOF} if
+     * Returns the next token type or {@link Tokenizer::T_EOF} if
      * there is no next token.
      *
-     * @return integer
+     * @return int
      */
     public function peek()
     {
@@ -669,8 +725,9 @@ class PHPTokenizerInternal implements FullTokenizer
     /**
      * Returns the token type at the given position relatively to the current position.
      *
-     * @param integer $shift positive or negative to apply to the current index.
-     * @return integer
+     * @param int $shift positive or negative to apply to the current index.
+     *
+     * @return int
      */
     public function peekAt($shift)
     {
@@ -693,27 +750,34 @@ class PHPTokenizerInternal implements FullTokenizer
      * Returns the type of next token, after the current token. This method
      * ignores all comments between the current and the next token.
      *
-     * @return integer
+     * @return int|null
+     *
      * @since  0.9.12
      */
     public function peekNext()
     {
         $this->tokenize();
-        
+
         $offset = 0;
 
         do {
-            $type = $this->tokens[$this->index + ++$offset]->type;
+            $index = $this->index + ++$offset;
+
+            if (!isset($this->tokens[$index])) {
+                return null;
+            }
+
+            $type = $this->tokens[$index]->type;
         } while ($type == Tokens::T_COMMENT || $type == Tokens::T_DOC_COMMENT);
 
         return $type;
     }
 
     /**
-     * Returns the previous token type or {@link \PDepend\Source\Tokenizer\Tokenizer::T_BOF}
+     * Returns the previous token type or {@link Tokenizer::T_BOF}
      * if there is no previous token.
      *
-     * @return integer
+     * @return int
      */
     public function prev()
     {
@@ -726,28 +790,140 @@ class PHPTokenizerInternal implements FullTokenizer
     }
 
     /**
+     * Split PHP 8 T_NAME(_FULLY)_QUALIFIED token into PHP 7 compatible tokens.
+     *
+     * @param array<int|string> $token
+     *
+     * @return array<array>
+     */
+    private function splitQualifiedNameToken($token)
+    {
+        $result = array();
+
+        foreach (explode('\\', $token[1]) as $index => $string) {
+            if ($index) {
+                $result[] = array(
+                    T_NS_SEPARATOR,
+                    '\\',
+                    $token[2],
+                );
+            }
+
+            if ($string !== '') {
+                $result[] = array(
+                    T_STRING,
+                    $string,
+                    $token[2],
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Split PHP 8 T_NAME_RELATIVE token into PHP 7 compatible tokens.
+     *
+     * @param array<int|string> $token
+     * @param string            $namespace
+     *
+     * @return array<array>
+     */
+    private function splitRelativeNameToken($token, $namespace)
+    {
+        $result = array(
+            array(
+                T_NAMESPACE,
+                'namespace',
+                $token[2],
+            ),
+        );
+
+        foreach (explode('\\', $namespace) as $string) {
+            $result[] = array(
+                T_NS_SEPARATOR,
+                '\\',
+                $token[2],
+            );
+
+            if ($string !== '') {
+                $result[] = array(
+                    T_STRING,
+                    $string,
+                    $token[2],
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * This method takes an array of tokens returned by <b>token_get_all()</b>
      * and substitutes some of the tokens with those required by PDepend's
      * parser implementation.
      *
-     * @param array<array> $tokens Unprepared array of php tokens.
+     * @param array<array<int, integer|string>|string> $tokens Unprepared array of php tokens.
      *
-     * @return array<array>
+     * @return array<array<int, integer|string>|string>
      */
     private function substituteTokens(array $tokens)
     {
         $result = array();
-        foreach ($tokens as $token) {
+        $attributeComment = null;
+        $attributeCommentLine = null;
+        $brackets = 0;
+
+        foreach ($tokens as $index => $token) {
             $temp = (array) $token;
             $temp = $temp[0];
-            if (isset(self::$substituteTokens[$temp])) {
+
+            if ($attributeComment) {
+                if ($temp === '[') {
+                    $brackets++;
+                }
+
+                if ($temp === ']') {
+                    $brackets--;
+                }
+
+                if ($brackets <= 0) {
+                    $result[] = array(T_COMMENT, "$attributeComment */", $attributeCommentLine);
+                    $attributeComment = null;
+
+                    continue;
+                }
+
+                $attributeComment .= is_array($token) ? $token[1] : $token;
+            } elseif ($temp === T_ATTRIBUTE) {
+                $attributeComment = '/* @';
+                $attributeCommentLine = $token[2];
+                $brackets = 1;
+            } elseif ($temp === T_NAME_QUALIFIED || $temp === T_NAME_FULLY_QUALIFIED) {
+                foreach ($this->splitQualifiedNameToken($token) as $subToken) {
+                    $result[] = $subToken;
+                }
+            } elseif ($temp === T_NAME_RELATIVE && preg_match('/^namespace\\\\(.*)$/', $token[1], $match)) {
+                foreach ($this->splitRelativeNameToken($token, $match[1]) as $subToken) {
+                    $result[] = $subToken;
+                }
+            } elseif (isset(self::$substituteTokens[$temp])) {
                 foreach (self::$substituteTokens[$temp] as $token) {
                     $result[] = $token;
                 }
+            } elseif ($temp === '?' && isset($tokens[$index + 1][0]) && $tokens[$index + 1][0] === T_OBJECT_OPERATOR) {
+                $tokens[$index + 1] = array(
+                    T_NULLSAFE_OBJECT_OPERATOR,
+                    '?->',
+                    1,
+                );
+
+                continue;
             } else {
                 $result[] = $token;
             }
         }
+
         return $result;
     }
 
@@ -767,14 +943,8 @@ class PHPTokenizerInternal implements FullTokenizer
         $this->index  = 0;
         $this->count  = 0;
 
-        // Replace short open tags, short open tags will produce invalid results
-        // in all environments with disabled short open tags.
+        // No longer replacing short open tags since some want to track them.
         $source = $this->sourceFile->getSource();
-        $source = preg_replace(
-            array('(<\?=)', '(<\?(\s))'),
-            array('<?php echo ', '<?php\1'),
-            $source
-        );
 
         $tokens = $this->substituteTokens(token_get_all($source));
 
@@ -802,7 +972,7 @@ class PHPTokenizerInternal implements FullTokenizer
                 $token = array(null, $token);
             }
 
-            if ($token[0] === T_OPEN_TAG) {
+            if ($token[0] === T_OPEN_TAG || $token[0] === T_OPEN_TAG_WITH_ECHO) {
                 $type  = $tokenMap[$token[0]];
                 $image = $token[1];
                 $inTag = true;
@@ -893,7 +1063,7 @@ class PHPTokenizerInternal implements FullTokenizer
                 }
 
                 $startLine += $lines;
-                
+
                 // Store current type
                 if ($type !== Tokens::T_COMMENT && $type !== Tokens::T_DOC_COMMENT) {
                     $previousType = $type;
@@ -911,9 +1081,9 @@ class PHPTokenizerInternal implements FullTokenizer
      * returns the collected content. The returned value will be null if there
      * was no none php token.
      *
-     * @param array $tokens Reference to the current token stream.
+     * @param array<array<int, integer|string>|string> $tokens Reference to the current token stream.
      *
-     * @return string
+     * @return string|null
      */
     private function consumeNonePhpTokens(array &$tokens)
     {
@@ -945,7 +1115,7 @@ class PHPTokenizerInternal implements FullTokenizer
      *
      * @param string $token The unknown string token.
      *
-     * @return array<integer, mixed>
+     * @return array<int, mixed>
      */
     private function generateUnknownToken($token)
     {

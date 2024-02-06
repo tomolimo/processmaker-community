@@ -2,13 +2,13 @@
 
 namespace ProcessMaker\BusinessModel\Files;
 
-use Chumper\Zipper\Zipper;
 use Configurations;
 use Exception;
 use G;
 use ProcessMaker\Core\System;
 use SplFileInfo;
 use Symfony\Component\Finder\Finder;
+use ZipArchive;
 
 class FilesLogs extends Files
 {
@@ -227,13 +227,13 @@ class FilesLogs extends Files
     private function createZip($files)
     {
         try {
-            $zipper = new Zipper();
+            $zipper = new ZipArchive();
             $name = str_replace('.log', '.zip', $files[0]);
             if (count($files) > 1) {
                 $name = 'processmaker_logs.zip';
             }
 
-            $zipper->zip($this->getPathDataSaveFile() . $name);
+            $zipper->open($this->getPathDataSaveFile() . $name, ZipArchive::CREATE);
 
             $pathFileLogs = $this->getPathFiles();
             $pathSep = '/';
@@ -247,7 +247,7 @@ class FilesLogs extends Files
             foreach ($files as $key => $file) {
                 $info = pathinfo($file);
                 if (file_exists($pathFileLogs . $info['basename'])) {
-                    $zipper->add($pathFileLogs . $info['basename']);
+                    $zipper->addFile($pathFileLogs . $info['basename'], $info['basename']);
                 }
             }
             $zipper->close();

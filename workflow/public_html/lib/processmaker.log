@@ -1,30 +1,30 @@
-[17 hours ago] 49a19d69a  (HEAD -> release/3.5.7, origin/release/3.5.7) PMCORE-2296 Suggested control, query with left join is not working <Roly Rudy Gutierrez Pinto>
-[18 hours ago] 16bb29695  (origin/bugfix/PMCORE-2551) PMCORE-2551 <Julio Cesar Laura Avendaño>
-[2 weeks ago] c3135802b  (origin/release/3.5.6) Solving conflicts in cherry-pick for PMCORE-2424 <Julio Cesar Laura Avendaño>
-[2 weeks ago] d157ba58c  PMCORE-2390 <Julio Cesar Laura Avendaño>
-[8 weeks ago] 8297cdd26  update default timezones <Henry Jordan>
-[8 weeks ago] 29c91bf5e  (origin/release/3.5.4) PMCORE-561-A <Andrea Adamczyk>
-[9 weeks ago] e952badcd  (origin/bugfix/PMCORE-561-A) PMCORE-561-A <Andrea Adamczyk>
-[9 weeks ago] f6fe0c152  (origin/bugfix/PMCORE-2324) PMCORE-2324 SQL Injection via 'Category' parameter in proxyNewCasesList endpoint <Roly Rudy Gutierrez Pinto>
-[9 weeks ago] 138504741  (origin/bugfix/PMCORE-2342) PMCORE-2342 <Paula Quispe>
-[9 weeks ago] 73487eedd  PMCORE-2325:Stored Cross-Site Scripting in cases email form <fabio>
-[9 weeks ago] 7558aa9a9  (origin/bugfix/PMCORE-2326) PMCORE-2326 <Henry Jordan>
-[9 weeks ago] f01aa054e  (origin/bugfix/PMCORE-2320) PMCORE-2320 <Julio Cesar Laura Avendaño>
-[10 weeks ago] 96b449dc2  (origin/bugfix/PMCORE-1884-A) PMCORE-1884 <Paula Quispe>
-[10 weeks ago] f6aac2d16  (origin/bugfix/PMCORE-2308) PMCORE-2308 <Andrea Adamczyk>
-[2 months ago] e592cbe06  PMCORE-2175 <Henry Jordan>
-[2 months ago] e3fc39e53  (origin/bugfix/PMCORE-2297) PMCORE-2297 The server response a 500 error by trying to login with SAML plugin <Roly Rudy Gutierrez Pinto>
-[2 months ago] d60bf88cd  (origin/bugfix/PMCORE-1207) PMCORE-1207 Generic message for wrong credentials and AD users <Roly Rudy Gutierrez Pinto>
-[2 months ago] 95058efa9  (origin/feature/PMCORE-2197) feature/PMCORE-2197 <Henry Jordan>
-[2 months ago] 8012f6e9e  (origin/bugfix/PMCORE-2267) PMCORE-2267 Unit test: Failed asserting that exception of type "Exception" is thrown. <Roly Rudy Gutierrez Pinto>
-[2 months ago] d007a1e16  (origin/bugfix/PMCORE-529) PMCORE-529 <Andrea Adamczyk>
-[2 months ago] eb2c4cb32  (origin/bugfix/PMCORE-1884) PMCORE-1884 <Paula Quispe>
-[3 months ago] 90ba93f07  (origin/bugfix/PMCORE-1451) PMCORE-1451 La validación de contraseñas también comprueba las políticas de las contraseñas de Active Directory. <Roly Rudy Gutierrez Pinto>
-[3 months ago] cd8930910  (origin/bugfix/PMCORE-2149) PMCORE-2149 <Paula Quispe>
-[3 months ago] 3d5d11987  (origin/feature/PMCORE-2199) PMCORE-2199 <Julio Cesar Laura Avendaño>
-[3 months ago] d748e45eb  (origin/bugfix/PMCORE-561) PMCORE-561 <Andrea Adamczyk>
-[3 months ago] 3db929c75  (origin/bugfix/PMCORE-737) PMCORE-737 <Paula Quispe>
-[3 months ago] 7d682da3f  (origin/bugfix/PMCORE-1751) PMCORE-1751 <Andrea Adamczyk>
-[3 months ago] a04673622  (origin/bugfix/PMCORE-530) PMCORE-530 <Andrea Adamczyk>
-[3 months ago] 60be91dc5  (origin/bugfix/PMCORE-2179) PMCORE-2179 <Julio Cesar Laura Avendaño>
-[3 months ago] 1241225d3  (origin/bugfix/PMCORE-2150) PMCORE-2150 PMFUpdateUser() function doesn't update due date to all users in RBAC_USERS <Roly Rudy Gutierrez Pinto>
+[24 hours ago] 36eeb62c50  (origin/bugfix/PMCORE-4055) PMCORE-4055 No custom error page <Roly Gutierrez>
+[3 days ago] eaf1abeffe  Missing snippet of code related to plguin pmDMS, add links for attached files <Julio Cesar Laura Avendaño>
+[3 days ago] 32b711f6b1  PMCORE-4067 <luNunezProcessmaker>
+[3 days ago] 5d0b3afeba  PMCORE-4052 <luNunezProcessmaker>
+[7 days ago] 96a881483b  PMCORE-4065 <Paula Quispe>
+[10 days ago] a15d3e076d  (origin/feature/PMCORE-4147) PMCORE-4147 <Paula Quispe>
+[2 weeks ago] 2007460382  (origin/bugfix/PMCORE-4211) PMCORE-4211 <Paula Quispe>
+[2 weeks ago] a68a597246  (origin/bugfix/PMCORE-4209) PMCORE-4209 <Julio Cesar Laura Avendaño>
+[3 weeks ago] 672d8f4b57  (origin/bugfix/PMCORE-4204) PMCORE-4204 <Julio Cesar Laura Avendaño>
+[7 weeks ago] 1aacce650c  PMCORE-3704 <Luciana Nuñez>
+[8 weeks ago] d204f1c7a8  PMCORE-4147 <Paula Quispe>
+[8 weeks ago] 19abdb1fe9  (origin/bugfix/PMCORE-3814) Deleting a draft case sets sidebar to Inbox <Martin Laguna>
+[8 weeks ago] 5274511b55  (origin/bugfix/PMDMS-23) bugfix/PMDMS-23 <Julio Cesar Laura Avendaño>
+[8 weeks ago] c45994fd23  (origin/bugfix/PMCORE-4131) PMCORE-4131 <Paula Quispe>
+[9 weeks ago] fc3a405b42  PMCORE-4150 <Paula Quispe>
+[9 weeks ago] cac6b117d7  PMCORE-4052 <Luciana Nuñez>
+[10 weeks ago] d7f6d2e9bd  (origin/feature/PMCORE-4137) Double click opens case in Case Detail <Martin Laguna>
+[2 months ago] 46c48a9bb0  (origin/bugfix/PMCORE-4046) PMCORE-4046 User Enumeration <Roly Gutierrez>
+[2 months ago] 5f3ec06143  (origin/bugfix/PMCORE-4148) PMCORE-4148 Validation of uploaded files is currently validating the 'content type' 'application/json' <Roly Gutierrez>
+[2 months ago] 82f607ad7d  (origin/bugfix/PMCORE-4144) PMCORE-4144 <Julio Cesar Laura Avendaño>
+[3 months ago] 3308da5204  (origin/bugfix/PMCORE-4120) PMCORE-4128 <Julio Cesar Laura Avendaño>
+[3 months ago] 0b39c2693d  (origin/bugfix/PMCORE-4133) PMCORE-4133 <Julio Cesar Laura Avendaño>
+[3 months ago] 4c4b1feeb2  PMCORE-4121 <Julio Cesar Laura Avendaño>
+[3 months ago] 34b92db567  (origin/bugfix/PMCORE-4130) PMCORE-4130 <Paula Quispe>
+[3 months ago] fbf556cb4c  (origin/bugfix/PMCORE-4135) PMCORE-4135 <Paula Quispe>
+[3 months ago] 963bbdf016  PMCORE-4120 <Julio Cesar Laura Avendaño>
+[3 months ago] 2b40332e31  (origin/bugfix/PMCORE-4125) PMCORE-4125 <Julio Cesar Laura Avendaño>
+[3 months ago] 596f40b89b  (origin/bugfix/PMCORE-4126) PMCORE-4126 Steps is not showing in the open case <Roly Gutierrez>
+[3 months ago] 9dd9c51cd1  PMCORE-4119 <Luciana Nuñez>
+[3 months ago] f17bfea699  (origin/bugfix/PMCORE-4059-A) PMCORE-4059 Password Policy is not working <Roly Gutierrez>

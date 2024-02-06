@@ -1,0 +1,31 @@
+<script type="text/javascript">
+</script>
+<div class="panel-default">
+    <p>{php}echo G::LoadTranslation('ID_HAVE_AN_ACTIVE_SESSION_PLEASE_SELECT_ONE_OPTION',[$_SESSION['USR_USERNAME']]);{/php}</p>
+</div>
+<form id="{$form_id}" 
+      method="post" 
+      enctype="multipart/form-data" 
+      action="{$form_action}" 
+      class="form-signin" 
+      style="margin:0px;" 
+      accept-charset="UTF-8" 
+      role="form">
+    <input style="" 
+           class="module_app_button___gray" 
+           id="form[buttonContinue]" 
+           name="form[buttonContinue]" 
+           type="submit" 
+           value="{php}echo G::LoadTranslation('ID_CONTINUE_WITH_THE_SESSION');{/php}" />
+    {php}echo G::LoadTranslation('ID_OR');{/php}
+    <input style="" 
+           class="module_app_button___gray" 
+           id="form[buttonLogout]" 
+           name="form[buttonLogout]" 
+           type="submit" 
+           value="{php}echo G::LoadTranslation('ID_LOGOUT_FROM_THE_ACTIVE_SESSION');{/php}" />
+</form>
+<script src="/lib/pmdynaform/libs/respondjs/respond.min.js">
+</script>
+<script src="/lib/pmdynaform/libs/html5shiv/html5shiv.js">
+</script>

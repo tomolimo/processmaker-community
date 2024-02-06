@@ -1,8 +1,12 @@
 <?php
 namespace ProcessMaker\Services\Api;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use G;
+use Exception;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\Group as BmGroup;
+use ProcessMaker\BusinessModel\User;
+use ProcessMaker\Services\Api;
 
 /**
  * Group Api Controller
@@ -19,14 +23,13 @@ class Group extends Api
     public function __construct()
     {
         try {
-            $user = new \ProcessMaker\BusinessModel\User();
-
+            $user = new User();
             $usrUid = $this->getUserId();
-
-            if (!$user->checkPermission($usrUid, "PM_USERS")) {
-                throw new \Exception(\G::LoadTranslation("ID_USER_NOT_HAVE_PERMISSION", array($usrUid)));
+            // Review the permissions roles to access the API
+            if (!$user->checkPermission($usrUid, "PM_USERS") && !$user->checkPermission($usrUid, "PM_FACTORY")) {
+                throw new Exception(G::LoadTranslation("ID_USER_NOT_HAVE_PERMISSION", [$usrUid]));
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
@@ -37,19 +40,17 @@ class Group extends Api
     public function index($filter = null, $lfilter = null, $rfilter = null, $start = null, $limit = null)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
-            $arrayFilterData = array(
+            $arrayFilterData = [
                 "filter"       => (!is_null($filter))? $filter : ((!is_null($lfilter))? $lfilter : ((!is_null($rfilter))? $rfilter : null)),
                 "filterOption" => (!is_null($filter))? ""      : ((!is_null($lfilter))? "LEFT"   : ((!is_null($rfilter))? "RIGHT"  : ""))
-            );
-
+            ];
             $response = $group->getGroups($arrayFilterData, null, null, $start, $limit);
 
             return $response["data"];
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -61,14 +62,13 @@ class Group extends Api
     public function doGet($grp_uid)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
             $response = $group->getGroup($grp_uid);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -89,16 +89,14 @@ class Group extends Api
     public function doPost($request_data)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
             $arrayData = $group->create($request_data);
-
             $response = $arrayData;
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -118,12 +116,11 @@ class Group extends Api
     public function doPut($grp_uid, $request_data)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
             $arrayData = $group->update($grp_uid, $request_data);
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -137,12 +134,11 @@ class Group extends Api
     public function doDelete($grp_uid)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
             $group->delete($grp_uid);
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -154,14 +150,13 @@ class Group extends Api
     public function doGetUsers($grp_uid, $filter = null, $start = null, $limit = null)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
-            $response = $group->getUsers("USERS", $grp_uid, array("filter" => $filter), null, null, $start, $limit);
+            $response = $group->getUsers("USERS", $grp_uid, ["filter" => $filter], null, null, $start, $limit);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -173,14 +168,13 @@ class Group extends Api
     public function doGetAvailableUsers($grp_uid, $filter = null, $start = null, $limit = null)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
-            $response = $group->getUsers("AVAILABLE-USERS", $grp_uid, array("filter" => $filter), null, null, $start, $limit);
+            $response = $group->getUsers("AVAILABLE-USERS", $grp_uid, ["filter" => $filter], null, null, $start, $limit);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -192,14 +186,13 @@ class Group extends Api
     public function doGetSupervisorUsers($grp_uid, $filter = null, $start = null, $limit = null)
     {
         try {
-            $group = new \ProcessMaker\BusinessModel\Group();
+            $group = new BmGroup();
             $group->setFormatFieldNameInUppercase(false);
-
-            $response = $group->getUsers("SUPERVISOR", $grp_uid, array("filter" => $filter), null, null, $start, $limit);
+            $response = $group->getUsers("SUPERVISOR", $grp_uid, ["filter" => $filter], null, null, $start, $limit);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 }

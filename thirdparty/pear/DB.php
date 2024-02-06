@@ -353,7 +353,7 @@ class DB
      * @see DB::parseDSN(), DB_common::setOption(), DB::isError()
      * @access public
      */
-    function &connect($dsn, $options = array())
+    public static function &connect($dsn, $options = array())
     {
         $dsninfo = DB::parseDSN($dsn);
         $dsninfo['phptype'] = $dsninfo['phptype'] === 'mysql' ? 'mysqli' : $dsninfo['phptype'];
@@ -427,7 +427,7 @@ class DB
      *
      * @access public
      */
-    function isError($value)
+    public static function isError($value)
     {
         return is_a($value, 'DB_Error');
     }
@@ -465,7 +465,7 @@ class DB
      *
      * @return boolean whether $query is a data manipulation query
      */
-    function isManip($query)
+    public static function isManip($query)
     {
         $manips = 'INSERT|UPDATE|DELETE|LOAD DATA|'.'REPLACE|CREATE|DROP|'.
                   'ALTER|GRANT|REVOKE|'.'LOCK|UNLOCK';
@@ -569,7 +569,7 @@ class DB
      *
      * @author Tomas V.V.Cox <cox@idecnet.com>
      */
-    function parseDSN($dsn)
+    public static function parseDSN($dsn)
     {
         $parsed = array(
             'phptype'  => false,
@@ -703,12 +703,11 @@ class DB
      * @return boolean true if the extension was already or successfully
      *                 loaded, false if it could not be loaded
      */
-    function assertExtension($name)
+    public static function assertExtension($name)
     {
         if (!extension_loaded($name)) {
             $dlext = OS_WINDOWS ? '.dll' : '.so';
             $dlprefix = OS_WINDOWS ? 'php_' : '';
-            @dl($dlprefix . $name . $dlext);
             return extension_loaded($name);
         }
         return true;
@@ -742,7 +741,7 @@ class DB_Error extends PEAR_Error
      *
      * @see PEAR_Error
      */
-    function DB_Error($code = DB_ERROR, $mode = PEAR_ERROR_RETURN,
+    function __construct($code = DB_ERROR, $mode = PEAR_ERROR_RETURN,
               $level = E_USER_NOTICE, $debuginfo = null)
     {
         if (is_int($code)) {
@@ -794,7 +793,7 @@ class DB_result
      * @param resource $result  result resource id
      * @param array    $options assoc array with optional result options
      */
-    function DB_result(&$dbh, $result, $options = array())
+    function __construct(&$dbh, $result, $options = array())
     {
         $this->dbh = &$dbh;
         $this->result = $result;
@@ -1093,7 +1092,7 @@ class DB_row
      *
      * @param resource row data as array
      */
-    function DB_row(&$arr)
+    function __construct(&$arr)
     {
         foreach ($arr as $key => $value) {
             $this->$key = &$arr[$key];

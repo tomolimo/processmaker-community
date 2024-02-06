@@ -6,7 +6,7 @@
       <label class="panel-login">
         <div class="login_result"><h4>{$form.TITLE}</h4></div>
       </label>
-      {$form.USR_USERNAME}
+      {if isset($form.USR_USERNAME)}{$form.USR_USERNAME}{/if}
       {$form.CASE}
       {$form.PIN}   
       

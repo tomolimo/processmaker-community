@@ -1,30 +1,30 @@
-[8 weeks ago] a9ede644  (origin/bugfix/PMCORE-2311-C) PMCORE-2311-C <Andrea Adamczyk>
-[9 weeks ago] 734f5c8f  (origin/bugfix/PMCORE-2311-B) PMCORE-2311-B <Andrea Adamczyk>
-[9 weeks ago] e1b2fc4e  (origin/bugfix/PMCORE-2136-C) PMCORE-2136-C <Henry Jordan>
-[9 weeks ago] 0e0de9d8  (origin/bugfix/PMCORE-2311-A) PMCORE-2311-A <Andrea Adamczyk>
-[9 weeks ago] d6c268a9  (origin/bugfix/PMCORE-2136-B) PMCORE-2136-B <Henry Jordan>
-[9 weeks ago] db51b322  (origin/bugfix/PMCORE-2136-A) PMCORE-2136-A <Henry Jordan>
-[9 weeks ago] 18b5e64f  PMCORE-2311 <Andrea Adamczyk>
-[2 months ago] a1283ec8  (origin/bugfix/PMCORE-2278) PMCORE-2278 <Henry Jordan>
-[3 months ago] 440c12da  (origin/bugfix/PMCORE-2136) PMCORE-2136 <Henry Jordan>
-[3 months ago] 2bf373db  (origin/bugfix/PMCORE-561) PMCORE-561 <Andrea Adamczyk>
-[3 months ago] 9af801bc  (origin/bugfix/PMCORE-2040) PMCORE-2040 <Henry Jordan>
-[3 months ago] 4568d802  (origin/bugfix/PMCORE-2044) PMCORE-2044 <Henry Jordan>
-[3 months ago] 9166e496  (origin/feature/PMCORE-2095) Fix CR observations by Rodrigo <Julio Cesar Laura Avendaño>
-[3 months ago] 1f85f34e  (origin/bugfix/PMCORE-694) PMCORE-694 <Henry Jordan>
-[3 months ago] a5ffc5de  (origin/bugfix/PMCORE-2128) PMCORE-2128 <Julio Cesar Laura Avendaño>
-[3 months ago] 7ddb25d1  Fix PM observations <Julio Cesar Laura Avendaño>
-[3 months ago] 009637ed  PMCORE-2099 <Julio Cesar Laura Avendaño>
-[3 months ago] 41259199  PMCORE-2096 <Julio Cesar Laura Avendaño>
-[4 months ago] 5b3dce87  Fix PM observations <Julio Cesar Laura Avendaño>
-[4 months ago] 7f2dcb73  (origin/bugfix/PMCORE-2099) PMCORE-2099 <Julio Cesar Laura Avendaño>
-[4 months ago] c0cb7a81  (origin/bugfix/PMCORE-2096) PMCORE-2096 <Julio Cesar Laura Avendaño>
-[4 months ago] c09985a7  (origin/feature/PMCORE-2112) PMCORE-2112: Add Fixed Location Property to geomap mobile control <Rodrigo Quelca>
-[5 months ago] 8f7a7423  translate <fabio>
-[5 months ago] e3dd3b95  PMCORE-1829:default-vaule property does not have hint <fabio>
-[5 months ago] 24c0137d  PMCORE-1828:Hint to max-date property of date-time control was not update <fabio>
-[5 months ago] 45574666  (origin/bugfix/PMCORE-1776) PMCORE-1776 <Henry Jordan>
-[5 months ago] 0b76dd90  (origin/bugfix/PMCORE-1745_B) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
-[5 months ago] 50aee6d9  (origin/bugfix/PMCORE-1745) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
-[6 months ago] 970aedbb  PMCORE-1712:PMFTotalCalculation trigger Wizard help letters get out of the box <Fabio Guachalla>
-[6 months ago] e624023a  (origin/bugfix/PMCORE-1688) PMCORE-1688 Review the composer from the release/3.5.0 <Roly Rudy Gutierrez Pinto>
+[7 months ago] d9826dac  PMCORE-3997:Error in the console when the Intermediate event's property is opened <Fabio Guachalla>
+[7 months ago] 72a851a1  (origin/bugfix/PMCORE-3982, composer/bugfix/PMCORE-3982) PMCORE-3982 Update composer with the branches with release/3.8.0 <Roly Gutierrez>
+[8 months ago] 8ffe6622  (origin/feature/PMCORE-3929, composer/feature/PMCORE-3929) PMCORE-3929 MS Modern Authentication / GMAIL API IMAP for ABE <Julio Cesar Laura Avendaño>
+[8 months ago] f1bad771  (origin/bugfix/PMCORE-3928-A, composer/bugfix/PMCORE-3928-A) PMCORE-3928 `Hide Active Session Warning` disabled is not saved in the processmaker log <Roly Gutierrez>
+[8 months ago] 4404d7c5  PMCORE-3909 PMCORE-3905: Add option to disable session warning in web entry when "Require user login" is selected <Roly Gutierrez>
+[10 months ago] 56a5dbbc  (origin/bugfix/PMCORE-3868, composer/bugfix/PMCORE-3868) PMCORE-3868: [28189] Slow saving issues with processes <Rodrigo Quelca>
+[11 months ago] 5578bc83  (origin/bugfix/PMCORE-3849, composer/bugfix/PMCORE-3849) PMCORE-3849 Pagination Title is not saved <Roly Gutierrez>
+[11 months ago] 32279c12  (origin/bugfix/PMCORE-3830, composer/bugfix/PMCORE-3830) PMCORE-3830 Header and Footer Logo add spaces in the Output document. <Roly Gutierrez>
+[11 months ago] 75b6cf08  (origin/bugfix/PMCORE-3825, composer/bugfix/PMCORE-3825) PMCORE-3825 Update composer with the branches with release/3.7.5 <Roly Gutierrez>
+[12 months ago] 83bf546d  (origin/bugfix/PMCORE-859-A, composer/bugfix/PMCORE-859-A) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full <Roly Gutierrez>
+[1 year ago] 43b6837b  PMCORE-3787:Negative values are accepted for Position  fields <Fabio Guachalla>
+[1 year ago] 88f393a2  PMCORE-3788:Footer and header always are disabled <Fabio Guachalla>
+[1 year ago] 027d0d76  (origin/bugfix/PMCORE-859, composer/bugfix/PMCORE-859) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full. <Roly Gutierrez>
+[1 year, 1 month ago] 1e78fa69  (origin/bugfix/PMCORE-3686, composer/bugfix/PMCORE-3686) PMCORE-3686 <Paula.Quispe>
+[1 year, 3 months ago] e106f7b8  (origin/bugfix/PMCORE-3644, composer/bugfix/PMCORE-3644) PMCORE-3644 <Andrea Adamczyk>
+[1 year, 3 months ago] 2fc13a59  PMCORE-2410:Dynaforms: importing a json - the message displayed has a grammar mistake <Fabio Guachalla>
+[1 year, 4 months ago] c41e8ef7  PMCORE-3609:UI: Send a JSON format to save the header and footer <fabio>
+[1 year, 4 months ago] d6a61dd8  (origin/bugfix/PMCORE-3603_B, composer/bugfix/PMCORE-3603_B) PMCORE-3603: Dynaform > Titles on the menu are smaller than PM 3.7.1 <Rodrigo Quelca>
+[1 year, 4 months ago] cbc52332  PMCORE-3535:UI: Add the new fields for header button <fabio>
+[1 year, 4 months ago] 433ed93d  (origin/revert-pr-1961, composer/revert-pr-1961) Revert "PMCORE-3595 (pull request #1961)" <Julio Cesar Laura Avendaño>
+[1 year, 4 months ago] a8e90e26  Revert "PMCORE-3535 (pull request #1960)" <Fabio Guachalla>
+[1 year, 4 months ago] 2b292bd9  PMCORE-3595:UI: Improve a new element for margin section <Fabio Guachalla>
+[1 year, 4 months ago] 6029e696  PMCORE-3535:UI: Add the new fields for header button <Fabio Guachalla>
+[1 year, 4 months ago] 0d382ef8  (origin/bugfix/PMCORE-3591, composer/bugfix/PMCORE-3591) PMCORE-3591 <Andrea Adamczyk>
+[1 year, 5 months ago] 5104e465  PMCORE-3496:Designer > Trigger > search > An error is displayed in the Browser's console <fabio>
+[1 year, 5 months ago] 1b7e9865  PMCORE-3497:Designer > Public File >Upload > An error is displayed in the Browser's console <Fabio Guachalla>
+[1 year, 5 months ago] 4f913d11  PMCORE-3495 <Henry Jordan>
+[1 year, 5 months ago] eec0b937  PMCORE-3494: Create/Select Variable" frame does not have a correct place. <Rodrigo Quelca>
+[1 year, 5 months ago] 387a2b58  PMCORE-3463: Vulnerable JS Library - Telefonica of Guatemala Security Analysis (Issue Rep# 1) <Rodrigo Quelca>
+[1 year, 5 months ago] f0de553f  PMCORE-3484:Date Time Picker does not close on designer PMCORE_3.7.0-5474 <Fabio Guachalla>

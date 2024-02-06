@@ -559,6 +559,11 @@ x-btn-mc em.x-btn-arrow {
   right: auto;
   left: 0;
 }
+
+img.x-form-trigger.x-form-arrow-trigger {
+  border-left: solid 1px rgb(156, 153, 153);
+}
+
 .x-form-field-wrap {
   right: 0;
   left: auto;

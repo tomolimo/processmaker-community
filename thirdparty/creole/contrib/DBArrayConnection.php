@@ -83,7 +83,7 @@ class DBArrayResultSet extends ResultSetCommon implements ResultSet
     public function getString($column)
     {
         $idx = (is_int($column) ? $column - 1 : $column);
-        if (!array_key_exists($idx, $this->fields)) {
+        if (is_array($this->fields) && !array_key_exists($idx, $this->fields)) {
             throw new SQLException("Invalid resultset column: " . $column);
         }
         if ($this->fields[$idx] === null) {

@@ -133,7 +133,7 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
      * The value for the oauth_refresh_token field.
      * @var        string
      */
-    protected $oauth_refresh_token = '';
+    protected $oauth_refresh_token;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -736,7 +736,7 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
             $v = (string) $v;
         }
 
-        if ($this->oauth_refresh_token !== $v || $v === '') {
+        if ($this->oauth_refresh_token !== $v) {
             $this->oauth_refresh_token = $v;
             $this->modifiedColumns[] = EmailServerPeer::OAUTH_REFRESH_TOKEN;
         }

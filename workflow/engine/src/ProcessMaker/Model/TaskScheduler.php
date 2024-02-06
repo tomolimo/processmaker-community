@@ -2,7 +2,8 @@
 
 namespace ProcessMaker\Model;
 
-use \Illuminate\Database\Eloquent\Model;
+use App\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TaskScheduler
@@ -12,6 +13,8 @@ use \Illuminate\Database\Eloquent\Model;
  */
 class TaskScheduler extends Model
 {
+    use HasFactory;
+
     protected $table = 'SCHEDULER';
     public $timestamps = true;
     const CREATED_AT = 'creation_date';

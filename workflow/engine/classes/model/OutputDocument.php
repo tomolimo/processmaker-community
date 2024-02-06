@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
+use ProcessMaker\PDF\TCPDFHeaderFooter;
 
 class OutputDocument extends BaseOutputDocument
 {
@@ -681,15 +683,12 @@ class OutputDocument extends BaseOutputDocument
                 if (isset($aProperties['report_generator'])) {
                     switch ($aProperties['report_generator']) {
                         case 'TCPDF':
-                            $this->generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
-                            break;
-                        case 'HTML2PDF':
                         default:
-                            $this->generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
+                            $this->generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
                             break;
                     }
                 } else {
-                    $this->generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
+                    $this->generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
                 }
             }
             //end if $sTypeDocToGener
@@ -800,15 +799,13 @@ class OutputDocument extends BaseOutputDocument
         // Check and prepare the fonts path used by TCPDF library
         self::checkTcPdfFontsPath();
 
-        // Including the basic configuration for the TCPDF library
-        require_once PATH_TRUNK . "vendor" . PATH_SEP . "tecnickcom" . PATH_SEP . "tcpdf" . PATH_SEP . "config" . PATH_SEP . "tcpdf_config.php";
-
         // Initialize variables
         $nrt = ["\n", "\r", "\t"];
         $nrtHtml = ["(n /)", "(r /)", "(t /)"];
         $outputType = 2;
-        $orientation = ($landscape == false) ? PDF_PAGE_ORIENTATION : 'L';
-        $media = (isset($properties['media'])) ? $properties['media'] : PDF_PAGE_FORMAT;
+        // Page orientation (P=portrait, L=landscape).
+        $orientation = ($landscape == false) ? 'P' : 'L';
+        $media = (isset($properties['media'])) ? $properties['media'] : 'A4';
         $lang = (defined('SYS_LANG')) ? SYS_LANG : 'en';
         $strContentAux = str_replace($nrt, $nrtHtml, $content);
         $content = null;
@@ -879,7 +876,7 @@ class OutputDocument extends BaseOutputDocument
         $content = str_replace("margin-left", "text-indent", $content);
 
         // Instance the TCPDF library
-        $pdf = new TCPDF($orientation, PDF_UNIT, $media, true, 'UTF-8', false);
+        $pdf = new TCPDFHeaderFooter($orientation, PDF_UNIT, strtoupper($media), true, 'UTF-8', false);
 
         // Set document information
         $pdf->SetCreator(PDF_CREATOR);
@@ -896,8 +893,15 @@ class OutputDocument extends BaseOutputDocument
         $margins["bottom"] = ($margins["bottom"] >= 0) ? $margins["bottom"] : PDF_MARGIN_BOTTOM;
 
         // Set margins configuration
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
+        $headerOptions = $this->setHeaderOptions($pdf, $fields);
+        $footerOptions = $this->setFooterOptions($pdf, $fields);
+        $pdf->setPrintHeader($headerOptions);
+        $pdf->setPrintFooter($footerOptions);
+        // Important: footer position depends on header enable
+        if ($footerOptions === true) {
+            $pdf->setPrintHeader(true);
+        }
+
         $pdf->SetLeftMargin($margins['left']);
         $pdf->SetTopMargin($margins['top']);
         $pdf->SetRightMargin($margins['right']);
@@ -961,10 +965,16 @@ class OutputDocument extends BaseOutputDocument
         }
 
         // Fix the HTML using DOMDocument class
+        libxml_use_internal_errors(true);
         $doc = new DOMDocument('1.0', 'UTF-8');
         if ($content != '') {
             $doc->loadHtml($content);
+            foreach (libxml_get_errors() as $error) {
+                $detail = (array) $error;
+                Log::channel(':OutputDocument::generateTcpdf')->warning('DOMDocument::loadHtml', Bootstrap::context($detail));
+            }
         }
+        libxml_clear_errors();
 
         // Add a page and put the HTML fixed
         $pdf->AddPage();
@@ -984,219 +994,6 @@ class OutputDocument extends BaseOutputDocument
                 // Save to file
                 $pdf->Output($path . $filename . '.pdf', 'F');
                 break;
-        }
-    }
-
-    public function generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape = false, $aProperties = array())
-    {
-        define("MAX_FREE_FRACTION", 1);
-        define('PATH_OUTPUT_FILE_DIRECTORY', PATH_HTML . 'files/' . $_SESSION['APPLICATION'] . '/outdocs/');
-        G::verifyPath(PATH_OUTPUT_FILE_DIRECTORY, true);
-        require_once(PATH_THIRDPARTY . 'html2ps_pdf/config.inc.php');
-        require_once(PATH_THIRDPARTY . 'html2ps_pdf/pipeline.factory.class.php');
-
-        parse_config_file(PATH_THIRDPARTY . 'html2ps_pdf/html2ps.config');
-
-        $GLOBALS['g_config'] = array(
-            'cssmedia' => 'screen',
-            'media' => 'Letter',
-            'scalepoints' => false,
-            'renderimages' => true,
-            'renderfields' => true,
-            'renderforms' => false,
-            'pslevel' => 3,
-            'renderlinks' => true,
-            'pagewidth' => 800,
-            'landscape' => $sLandscape,
-            'method' => 'fpdf',
-            'margins' => array('left' => 15, 'right' => 15, 'top' => 15, 'bottom' => 15,),
-            'encoding' => (version_compare(PHP_VERSION, '5.4.0', '<') ? '' : 'utf-8'),
-            'ps2pdf' => false,
-            'compress' => true,
-            'output' => 2,
-            'pdfversion' => '1.3',
-            'transparency_workaround' => false,
-            'imagequality_workaround' => false,
-            'draw_page_border' => isset($_REQUEST['pageborder']),
-            'debugbox' => false,
-            'html2xhtml' => true,
-            'mode' => 'html',
-            'smartpagebreak' => true
-        );
-
-        $GLOBALS['g_config'] = array_merge($GLOBALS['g_config'], $aProperties);
-        $g_media = Media::predefined($GLOBALS['g_config']['media']);
-        $g_media->set_landscape($GLOBALS['g_config']['landscape']);
-        $g_media->set_margins($GLOBALS['g_config']['margins']);
-        $g_media->set_pixels($GLOBALS['g_config']['pagewidth']);
-
-
-        if (isset($GLOBALS['g_config']['pdfSecurity'])) {
-            if (isset($GLOBALS['g_config']['pdfSecurity']['openPassword']) &&
-                $GLOBALS['g_config']['pdfSecurity']['openPassword'] != ""
-            ) {
-                $GLOBALS['g_config']['pdfSecurity']['openPassword'] = G::decrypt(
-                    $GLOBALS['g_config']['pdfSecurity']['openPassword'],
-                    $sUID
-                );
-            }
-
-            if (isset($GLOBALS['g_config']['pdfSecurity']['ownerPassword']) &&
-                $GLOBALS['g_config']['pdfSecurity']['ownerPassword'] != ""
-            ) {
-                $GLOBALS['g_config']['pdfSecurity']['ownerPassword'] = G::decrypt(
-                    $GLOBALS['g_config']['pdfSecurity']['ownerPassword'],
-                    $sUID
-                );
-            }
-
-            $g_media->set_security($GLOBALS['g_config']['pdfSecurity']);
-
-            require_once(HTML2PS_DIR . 'pdf.fpdf.encryption.php');
-        }
-
-        $pipeline = new Pipeline();
-
-        if (extension_loaded('curl')) {
-            require_once(HTML2PS_DIR . 'fetcher.url.curl.class.php');
-
-            $pipeline->fetchers = array(new FetcherURLCurl());
-
-            if (isset($proxy)) {
-                if ($proxy != '') {
-                    $pipeline->fetchers[0]->set_proxy($proxy);
-                }
-            }
-        } else {
-            require_once(HTML2PS_DIR . 'fetcher.url.class.php');
-            $pipeline->fetchers[] = new FetcherURL();
-        }
-
-        $pipeline->data_filters[] = new DataFilterDoctype();
-        $pipeline->data_filters[] = new DataFilterUTF8($GLOBALS['g_config']['encoding']);
-
-        if ($GLOBALS['g_config']['html2xhtml']) {
-            $pipeline->data_filters[] = new DataFilterHTML2XHTML();
-        } else {
-            $pipeline->data_filters[] = new DataFilterXHTML2XHTML();
-        }
-
-        $pipeline->parser = new ParserXHTML();
-        $pipeline->pre_tree_filters = [];
-        $header_html = '';
-        $footer_html = '';
-        $filter = new PreTreeFilterHeaderFooter($header_html, $footer_html);
-        $pipeline->pre_tree_filters[] = $filter;
-
-        if ($GLOBALS['g_config']['renderfields']) {
-            $pipeline->pre_tree_filters[] = new PreTreeFilterHTML2PSFields();
-        }
-
-        if ($GLOBALS['g_config']['method'] === 'ps') {
-            $pipeline->layout_engine = new LayoutEnginePS();
-        } else {
-            $pipeline->layout_engine = new LayoutEngineDefault();
-        }
-
-        $pipeline->post_tree_filters = [];
-
-        if ($GLOBALS['g_config']['pslevel'] == 3) {
-            $image_encoder = new PSL3ImageEncoderStream();
-        } else {
-            $image_encoder = new PSL2ImageEncoderStream();
-        }
-
-        switch ($GLOBALS['g_config']['method']) {
-            case 'fastps':
-                if ($GLOBALS['g_config']['pslevel'] == 3) {
-                    $pipeline->output_driver = new OutputDriverFastPS($image_encoder);
-                } else {
-                    $pipeline->output_driver = new OutputDriverFastPSLevel2($image_encoder);
-                }
-                break;
-            case 'pdflib':
-                $pipeline->output_driver = new OutputDriverPDFLIB16($GLOBALS['g_config']['pdfversion']);
-                break;
-            case 'fpdf':
-                $pipeline->output_driver = new OutputDriverFPDF();
-                break;
-            case 'png':
-                $pipeline->output_driver = new OutputDriverPNG();
-                break;
-            case 'pcl':
-                $pipeline->output_driver = new OutputDriverPCL();
-                break;
-            default:
-                die('Unknown output method');
-        }
-
-        if (isset($GLOBALS['g_config']['watermarkhtml'])) {
-            $watermark_text = $GLOBALS['g_config']['watermarkhtml'];
-        } else {
-            $watermark_text = '';
-        }
-
-        $pipeline->output_driver->set_watermark($watermark_text);
-
-        if ($watermark_text != '') {
-            $dispatcher = $pipeline->getDispatcher();
-        }
-
-        if ($GLOBALS['g_config']['debugbox']) {
-            $pipeline->output_driver->set_debug_boxes(true);
-        }
-
-        if ($GLOBALS['g_config']['draw_page_border']) {
-            $pipeline->output_driver->set_show_page_border(true);
-        }
-
-        if ($GLOBALS['g_config']['ps2pdf']) {
-            $pipeline->output_filters[] = new OutputFilterPS2PDF($GLOBALS['g_config']['pdfversion']);
-        }
-
-        if ($GLOBALS['g_config']['compress'] && $GLOBALS['g_config']['method'] == 'fastps') {
-            $pipeline->output_filters[] = new OutputFilterGZip();
-        }
-
-        if (!isset($GLOBALS['g_config']['process_mode'])) {
-            $GLOBALS['g_config']['process_mode'] = '';
-        }
-
-        if ($GLOBALS['g_config']['process_mode'] == 'batch') {
-            $filename = 'batch';
-        } else {
-            $filename = $sFilename;
-        }
-
-        switch ($GLOBALS['g_config']['output']) {
-            case 0:
-                $pipeline->destination = new DestinationBrowser($filename);
-                break;
-            case 1:
-                $pipeline->destination = new DestinationDownload($filename);
-                break;
-            case 2:
-                $pipeline->destination = new DestinationFile($filename);
-                break;
-        }
-
-        copy($sPath . $sFilename . '.html', PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
-        try {
-            $status = $pipeline->process(System::getServerProtocolHost() . '/files/' . $_SESSION['APPLICATION'] . '/outdocs/' . $sFilename . '.html', $g_media);
-            copy(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf', $sPath . $sFilename . '.pdf');
-            unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf');
-            unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
-        } catch (Exception $e) {
-            if ($e->getMessage() == 'ID_OUTPUT_NOT_GENERATE') {
-                include_once 'classes/model/AppDocument.php';
-                $dataDocument = explode('_', $sFilename);
-                if (!isset($dataDocument[1])) {
-                    $dataDocument[1] = 1;
-                }
-                $oAppDocument = new AppDocument();
-                $oAppDocument->remove($dataDocument[0], $dataDocument[1]);
-                G::SendTemporalMessage(G::LoadTranslation('ID_OUTPUT_NOT_GENERATE'), 'Error');
-            }
         }
     }
 
@@ -1361,5 +1158,77 @@ class OutputDocument extends BaseOutputDocument
 
         // Save the CSS file
         file_put_contents(K_PATH_FONTS . 'fonts.css', $css);
+    }
+    
+    /**
+     * Set and build if header options exist.
+     * @param TCPDFHeaderFooter $pdf
+     * @param array $fields
+     * @return bool
+     */
+    private function setHeaderOptions(TCPDFHeaderFooter $pdf, array $fields): bool
+    {
+        if (empty($this->out_doc_header)) {
+            return false;
+        }
+        $header = json_decode($this->out_doc_header);
+        if ($header->enableHeader === false) {
+            return false;
+        }
+
+        $struct = $pdf->getHeaderStruct();
+
+        $struct->setLogo(G::replaceDataField($header->logo ?? '', $fields));
+        $struct->setLogoWidth($header->logoWidth ?? 0);
+        $struct->setLogoPositionX($header->logoPositionX ?? 0);
+        $struct->setLogoPositionY($header->logoPositionY ?? 0);
+
+        $struct->setTitle(G::replaceDataField($header->title ?? '', $fields));
+        $struct->setTitleFontSize($header->titleFontSize ?? 0);
+        $struct->setTitleFontPositionX($header->titleFontPositionX ?? 0);
+        $struct->setTitleFontPositionY($header->titleFontPositionY ?? 0);
+
+        $struct->setPageNumber($header->pageNumber ?? false);
+        $struct->setPageNumberTitle(G::replaceDataField($header->pageNumberTitle ?? '', $fields));
+        $struct->setPageNumberTotal($header->pageNumberTotal ?? false);
+        $struct->setPageNumberPositionX($header->pageNumberPositionX ?? 0);
+        $struct->setPageNumberPositionY($header->pageNumberPositionY ?? 0);
+        return true;
+    }
+
+    /**
+     * Set and build if footer options exist.
+     * @param TCPDFHeaderFooter $pdf
+     * @param array $fields
+     * @return bool
+     */
+    private function setFooterOptions(TCPDFHeaderFooter $pdf, array $fields): bool
+    {
+        if (empty($this->out_doc_footer)) {
+            return false;
+        }
+        $footer = json_decode($this->out_doc_footer);
+        if ($footer->enableFooter === false) {
+            return false;
+        }
+
+        $struct = $pdf->getFooterStruct();
+
+        $struct->setLogo(G::replaceDataField($footer->logo ?? '', $fields));
+        $struct->setLogoWidth($footer->logoWidth ?? 0);
+        $struct->setLogoPositionX($footer->logoPositionX ?? 0);
+        $struct->setLogoPositionY($footer->logoPositionY ?? 0);
+
+        $struct->setTitle(G::replaceDataField($footer->title ?? '', $fields));
+        $struct->setTitleFontSize($footer->titleFontSize ?? 0);
+        $struct->setTitleFontPositionX($footer->titleFontPositionX ?? 0);
+        $struct->setTitleFontPositionY($footer->titleFontPositionY ?? 0);
+
+        $struct->setPageNumber($footer->pageNumber ?? false);
+        $struct->setPageNumberTitle(G::replaceDataField($footer->pageNumberTitle ?? '', $fields));
+        $struct->setPageNumberTotal($footer->pageNumberTotal ?? false);
+        $struct->setPageNumberPositionX($footer->pageNumberPositionX ?? 0);
+        $struct->setPageNumberPositionY($footer->pageNumberPositionY ?? 0);
+        return true;
     }
 }

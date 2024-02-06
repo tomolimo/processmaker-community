@@ -415,7 +415,7 @@
                                     for (var i = 0; i < response.length; i += 1) {
                                         if (response[i].prf_uid == formEmailEvent.getField('prf_uid').getValue()) {
                                             formEmailEvent.getField('filecontent').setValue(response[i].prf_content);
-                                            if (!$(tinyMCE.activeEditor.getContent()).text().trim().length) {
+                                            if (tinyMCE.activeEditor && !$(tinyMCE.activeEditor.getContent()).text().trim().length) {
                                                 tinyMCE.activeEditor.setContent(response[i].prf_content);
                                             }
                                             break;

@@ -1,5 +1,7 @@
 <?php
 
+use ProcessMaker\Model\ProcessCategory as ModelCategories;
+
 class ProcessProxy extends HttpProxyController
 {
 
@@ -9,15 +11,29 @@ class ProcessProxy extends HttpProxyController
         $RBAC->allows(basename(__FILE__), $name);
         parent::call($name);
     }
-    /**
-     * get Process Categories List with defailt value (empty option) and -All- aoption
-     */
-    public function categoriesList ()
-    {
-        $data = $this->getCategoriesList();
-        $defaultOption[] = Array ('CATEGORY_UID' => '<reset>','CATEGORY_NAME' => G::LoadTranslation( 'ID_ALL' ));
 
-        return array_merge( $defaultOption, $data );
+    /**
+     * Get Categories list with default values
+     *
+     * @link https://wiki.processmaker.com/3.2/Processes#Designer_Menu
+     */
+    public function categoriesList()
+    {
+        $defaultOption = [];
+        // Add the option All categories
+        $defaultOption[] = [
+            'CATEGORY_UID' => '',
+            'CATEGORY_NAME' => G::LoadTranslation('ID_ALL')
+        ];
+        // Add the option Without categories
+        $defaultOption[] = [
+            'CATEGORY_UID' => 'NONE',
+            'CATEGORY_NAME' => G::LoadTranslation('ID_PROCESS_NO_CATEGORY')
+        ];
+
+        $listCategories = ModelCategories::getCategories();
+
+        return array_merge($defaultOption, $listCategories);
     }
 
     /**
@@ -263,7 +279,7 @@ class ProcessProxy extends HttpProxyController
         switch ($httpData->type) {
             case 'process':
 
-                $oProcessMap = new ProcessMap( new DBConnection() );
+                $oProcessMap = new ProcessMap();
                 $process = $oProcessMap->editProcessNew( $httpData->UID );
                 $category = ProcessCategoryPeer::retrieveByPk( $process['PRO_CATEGORY'] );
                 $categoryName = is_object( $category ) ? $category->getCategoryName() : '';
@@ -388,7 +404,7 @@ class ProcessProxy extends HttpProxyController
      */
     public function getPMVariables ($param)
     {
-        $oProcessMap = new ProcessMap( new DBConnection() );
+        $oProcessMap = new ProcessMap();
         $rows = getDynaformsVars( $param->PRO_UID );
         foreach ($rows as $i => $var) {
             $rows[$i]['sName'] = "@@{$var['sName']}";

@@ -239,6 +239,11 @@ class Applications
         return $result;
     }
 
+    /**
+     * Function for get all cases
+     *
+     * @deprecated Class deprecated in Release 3.6.x
+     */
     public function getAll(
         $userUid,
         $start = null,
@@ -1180,7 +1185,7 @@ class Applications
                     $outputDoc = $appDocument->getObject($appUid, $index, $caseStep->getStepUidObj(), 'OUTPUT');
                     $stepItem['title'] = $oDocument->getOutDocTitle();
 
-                    if ($outputDoc['APP_DOC_UID']) {
+                    if (!empty($outputDoc['APP_DOC_UID'])) {
                         $stepItem['url'] = "cases/cases_Step?UID=$stepUid&TYPE=$stepType&POSITION=$stepPosition&ACTION=VIEW&DOC={$outputDoc['APP_DOC_UID']}";
                     } else {
                         $stepItem['url'] = "cases/cases_Step?UID=$stepUid&TYPE=$stepType&POSITION=$stepPosition&ACTION=GENERATE";

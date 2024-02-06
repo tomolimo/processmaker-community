@@ -1,5 +1,7 @@
 <?php
 
+use ProcessMaker\Model\Application as ModelApplication;
+use ProcessMaker\Model\Process as ProcessModel;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Util\DateTime;
 
@@ -69,32 +71,11 @@ if ($delegation->alreadyRouted($_SESSION['APPLICATION'], $_SESSION['INDEX'])) {
         die();
     } else {
         die('<script type="text/javascript">'
-            . 'window.parent.location="casesListExtJs?action=todo";'
-            . '</script>');
+            .'if(window.parent && window.parent.parent){'
+            .'window.parent.parent.postMessage("redirect=todo","*");'
+            .'}</script>');
     }
 }
-/**
- * cases_Step.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
 
 /* Permissions */
 switch ($RBAC->userCanAccess('PM_CASES')) {
@@ -163,6 +144,16 @@ $oStep = new Step();
 $bmWebEntry = new \ProcessMaker\BusinessModel\WebEntry;
 
 $Fields = $oCase->loadCase($_SESSION['APPLICATION']);
+
+if (!ProcessModel::isActive($Fields['PRO_UID'], 'PRO_UID')) {
+    $G_PUBLISH = new Publisher();
+    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', [
+        'MESSAGE' => G::LoadTranslation('ID_CASE_NOT_ALLOW_TO_BE_CREATED_DUE_TO_THE_PROCESS_IS_INACTIVE')
+    ]);
+    G::RenderPage('publish', 'blank');
+    exit();
+}
+
 $Fields['APP_DATA'] = array_merge($Fields['APP_DATA'], G::getSystemConstants());
 $sStatus = $Fields['APP_STATUS'];
 
@@ -244,18 +235,19 @@ if (isset($_GET['breakpoint'])) {
 }
 #end trigger debug session.......
 
-//Save data - Start
+// Save data - Start
 unset($Fields['APP_STATUS']);
 unset($Fields['APP_PROC_STATUS']);
 unset($Fields['APP_PROC_CODE']);
 unset($Fields['APP_PIN']);
+unset($Fields['APP_FINISH_DATE']);
 
 $Fields["USER_UID"] = $_SESSION["USER_LOGGED"];
 $Fields["CURRENT_DYNAFORM"] = $_GET["UID"];
 $Fields["OBJECT_TYPE"] = ($_GET["UID"] == "-1") ? "ASSIGN_TASK" : $_GET["TYPE"];
 
 $oCase->updateCase($_SESSION['APPLICATION'], $Fields);
-//Save data - End
+// Save data - End
 
 //Obtain previous and next step - Start
 try {
@@ -741,7 +733,7 @@ try {
             $aData = $oCase->loadCase($_SESSION['APPLICATION']);
 
             $aFields['PROCESS'] = $oProcess->load($_SESSION['PROCESS']);
-            $aFields['PREVIOUS_PAGE'] = $aPreviousStep['PAGE'];
+            $aFields['PREVIOUS_PAGE'] = isset($aPreviousStep['PAGE']) ? $aPreviousStep['PAGE'] : null;
             $aFields['PREVIOUS_PAGE_LABEL'] = G::LoadTranslation('ID_PREVIOUS_STEP');
             $aFields['ASSIGN_TASK'] = G::LoadTranslation('ID_ASSIGN_TASK');
             $aFields['END_OF_PROCESS'] = G::LoadTranslation('ID_END_OF_PROCESS');
@@ -774,6 +766,7 @@ try {
             //Take the first derivation rule as the task derivation rule type.
             $aFields['PROCESS']['ROU_TYPE'] = $aFields['TASK'][1]['ROU_TYPE'];
             $aFields['PROCESS']['ROU_FINISH_FLAG'] = false;
+            $aFields['PROCESS']['ERROR'] = '';
 
             foreach ($aFields['TASK'] as $sKey => &$aValues) {
                 $sPriority = ''; //set priority value
@@ -788,6 +781,9 @@ try {
                 $hiddenName = "form[TASKS][" . $sKey . "][TAS_UID]";
                 $hiddenField = '<input type="hidden" name="' . $hiddenName . '" id="' . $hiddenName . '" value="' . $aValues['NEXT_TASK']['TAS_UID'] . '">';
                 $aFields['TASK'][$sKey]['NEXT_TASK']['TAS_HIDDEN_FIELD'] = $hiddenField;
+                $aFields['TASK'][$sKey]['NEXT_TASK']['USR_HIDDEN_FIELD'] = '';
+                $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_FINISH_FLAG'] = $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_FINISH_FLAG'] ?? false;
+                $aFields['TASK'][$sKey]['NEXT_TASK']['TAS_NEXT'] = $aFields['TASK'][$sKey]['NEXT_TASK']['TAS_NEXT'] ?? '';
 
                 switch ($aValues['NEXT_TASK']['TAS_ASSIGN_TYPE']) {
                     case 'EVALUATE':
@@ -1016,6 +1012,8 @@ try {
                         $aFields['TASK'][$sKey]['NEXT_TASK']['SOURCE_UID'] = '<input type="hidden" name="' . $hiddenName . '[SOURCE_UID]"        id="' . $hiddenName . '[SOURCE_UID]"        value="' . $aValues['SOURCE_UID'] . '">';
                     }
                 }
+                $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_PREVIOUS_TASK'] = $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_PREVIOUS_TASK'] ?? '';
+                $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_PREVIOUS_TYPE'] = $aFields['TASK'][$sKey]['NEXT_TASK']['ROU_PREVIOUS_TYPE'] ?? '';
             }
 
             $aFields['PROCESSING_MESSAGE'] = G::loadTranslation('ID_PROCESSING');
@@ -1061,7 +1059,10 @@ try {
                     $tplFile = 'webentry/cases_ScreenDerivation';
                     $caseId = $currentTask['APP_UID'];
                     $delIndex = $currentTask['DEL_INDEX'];
-                    $derivationResponse = PMFDerivateCase($caseId, $delIndex, true);
+                    // Swap temporary APP_NUMBER
+                    $newAppNumber = $bmWebEntry->swapTemporaryAppNumber($caseId);
+                    $Fields['APP_NUMBER'] = $Fields['APP_DATA']['APP_NUMBER'] = $newAppNumber;
+                    $derivationResponse = PMFDerivateCase($caseId, $delIndex, false);
                     if ($derivationResponse) {
                         $webEntryUrl = $bmWebEntry->getCallbackUrlByTask($currentTask['TAS_UID']);
                         $delegationData = $Fields['APP_DATA'];
@@ -1074,6 +1075,9 @@ try {
                 }
             }
 
+            if (!isset($aFields['PROCESS']['DISABLED'])) {
+                $aFields['PROCESS']['DISABLED'] = '';
+            }
             $G_PUBLISH->AddContent('smarty', $tplFile, '', '', $aFields);
             break;
         case 'EXTERNAL':

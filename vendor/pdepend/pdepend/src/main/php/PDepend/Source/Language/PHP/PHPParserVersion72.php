@@ -38,6 +38,7 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
@@ -48,8 +49,16 @@ namespace PDepend\Source\Language\PHP;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.4
  */
 abstract class PHPParserVersion72 extends PHPParserVersion71
 {
+    /**
+     * use Foo\Bar\{TestA, TestB,} trailing comma is supported since PHP 7.2
+     */
+    protected function allowUseGroupDeclarationTrailingComma()
+    {
+        return true;
+    }
 }

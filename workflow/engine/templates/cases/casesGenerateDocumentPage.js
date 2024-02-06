@@ -154,11 +154,18 @@
     );
 
     Ext.onReady(function(){
+      var i;
       Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
       Ext.QuickTips.init();
-
       generateDocumentGrid();
-
+      if (document.getElementsByTagName('input')) {
+        document.getElementsByTagName('input')[0].ariaLabel = "pagination";
+      }
+      if (document.getElementsByTagName('button')) {
+        for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+          document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].getAttribute('id');
+        }
+      }
     });
 
 
@@ -233,7 +240,7 @@
               {name : 'OUTDOCTITLE'},
               {name : 'ORIGIN'},
               {name : 'CREATED_BY'},
-              {name : 'CREATE_DATE'},
+              {name : 'CREATE_DATE_LABEL'},
               {name : 'FILEDOCLABEL'},
               {name : 'FILEPDFLABEL'},
               {name : 'DELETE_FILE'},
@@ -329,7 +336,7 @@
             {dataIndex: "OUTDOCTITLE", header: _("ID_OUTPUT_DOCUMENT"), sortable: true, width: 70},
             {dataIndex: "ORIGIN",      header: _("ID_ORIGIN_TASK"),     sortable: true, width: 70},
             {dataIndex: "CREATED_BY",  header: _("ID_CREATED_BY"),      sortable: true, width: 70},
-            {dataIndex: "CREATE_DATE", header: _("ID_CREATE_DATE"),     sortable: true, width: 70, renderer: startDateRender},
+            {dataIndex: "CREATE_DATE_LABEL", header: _("ID_CREATE_DATE"), sortable: true, width: 70},
             {dataIndex: "DELETE_FILE", header: _("ID_ACTIONS"),         sortable: false, menuDisabled: true, hideable: false, width: 30, align: "center", renderer: renderDeleteFile}
           ]
         }),

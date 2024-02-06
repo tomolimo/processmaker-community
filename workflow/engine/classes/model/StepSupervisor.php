@@ -166,8 +166,8 @@ class StepSupervisor extends BaseStepSupervisor
             $oDataset->next();
             $aRow = $oDataset->getRow();
             return (int) $aRow['POSITION'];
-        } catch (Exception $oException) {
-            throw $Exception;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -189,8 +189,8 @@ class StepSupervisor extends BaseStepSupervisor
             $oDataset->next();
             $aRow = $oDataset->getRow();
             return (int) $aRow['POSITION'];
-        } catch (Exception $oException) {
-            throw $Exception;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -217,8 +217,8 @@ class StepSupervisor extends BaseStepSupervisor
                 $this->update( array ('STEP_UID' => $aRow['STEP_UID'],'PRO_UID' => $aRow['PRO_UID'],'STEP_TYPE_OBJ' => $aRow['STEP_TYPE_OBJ'],'STEP_UID_OBJ' => $aRow['STEP_UID_OBJ'],'STEP_POSITION' => $aRow['STEP_POSITION'] - 1
                 ) );
             }
-        } catch (Exception $oException) {
-            throw $Exception;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -254,7 +254,7 @@ class StepSupervisor extends BaseStepSupervisor
      *
      * @return array
      */
-    public function verifyDynaformAssigStepSupervisor ($dynUid, $proUid)
+    public static function verifyDynaformAssigStepSupervisor ($dynUid, $proUid)
     {
         $res = array();
         $oCriteria = new Criteria();

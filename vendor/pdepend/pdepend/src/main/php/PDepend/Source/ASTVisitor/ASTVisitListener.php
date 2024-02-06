@@ -44,6 +44,7 @@ namespace PDepend\Source\ASTVisitor;
 
 use PDepend\Source\AST\ASTClass;
 use PDepend\Source\AST\ASTCompilationUnit;
+use PDepend\Source\AST\ASTEnum;
 use PDepend\Source\AST\ASTFunction;
 use PDepend\Source\AST\ASTInterface;
 use PDepend\Source\AST\ASTMethod;
@@ -63,7 +64,8 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new class instance.
      *
-     * @param  \PDepend\Source\AST\ASTClass $class The context class instance.
+     * @param ASTClass $class The context class instance.
+     *
      * @return void
      */
     public function startVisitClass(ASTClass $class);
@@ -71,16 +73,35 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a class instance.
      *
-     * @param  \PDepend\Source\AST\ASTClass $class The context class instance.
+     * @param ASTClass $class The context class instance.
+     *
      * @return void
      */
     public function endVisitClass(ASTClass $class);
 
     /**
+     * Is called when the visitor starts a new enum instance.
+     *
+     * @return void
+     *
+     * @since  2.11.1
+     */
+    public function startVisitEnum(ASTEnum $enum);
+
+    /**
+     * Is called when the visitor ends with an enum instance.
+     *
+     * @return void
+     *
+     * @since  2.11.1
+     */
+    public function endVisitEnum(ASTEnum $enum);
+
+    /**
      * Is called when the visitor starts a new trait instance.
      *
-     * @param  \PDepend\Source\AST\ASTTrait $trait
      * @return void
+     *
      * @since  1.0.0
      */
     public function startVisitTrait(ASTTrait $trait);
@@ -88,8 +109,8 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a trait instance.
      *
-     * @param  \PDepend\Source\AST\ASTTrait $trait
      * @return void
+     *
      * @since  1.0.0
      */
     public function endVisitTrait(ASTTrait $trait);
@@ -97,7 +118,8 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new file instance.
      *
-     * @param  \PDepend\Source\AST\ASTCompilationUnit $compilationUnit The context file instance.
+     * @param ASTCompilationUnit $compilationUnit The context file instance.
+     *
      * @return void
      */
     public function startVisitFile(ASTCompilationUnit $compilationUnit);
@@ -105,7 +127,8 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a file instance.
      *
-     * @param  \PDepend\Source\AST\ASTCompilationUnit $compilationUnit The context file instance.
+     * @param ASTCompilationUnit $compilationUnit The context file instance.
+     *
      * @return void
      */
     public function endVisitFile(ASTCompilationUnit $compilationUnit);
@@ -113,7 +136,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new function instance.
      *
-     * @param  \PDepend\Source\AST\ASTFunction $function
      * @return void
      */
     public function startVisitFunction(ASTFunction $function);
@@ -121,7 +143,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a function instance.
      *
-     * @param  ASTFunction $function
      * @return void
      */
     public function endVisitFunction(ASTFunction $function);
@@ -129,7 +150,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new interface instance.
      *
-     * @param  \PDepend\Source\AST\ASTInterface $interface
      * @return void
      */
     public function startVisitInterface(ASTInterface $interface);
@@ -137,7 +157,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with an interface instance.
      *
-     * @param  \PDepend\Source\AST\ASTInterface $interface
      * @return void
      */
     public function endVisitInterface(ASTInterface $interface);
@@ -145,7 +164,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new method instance.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     public function startVisitMethod(ASTMethod $method);
@@ -153,7 +171,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a method instance.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     public function endVisitMethod(ASTMethod $method);
@@ -161,7 +178,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new namespace instance.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespace
      * @return void
      */
     public function startVisitNamespace(ASTNamespace $namespace);
@@ -169,7 +185,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a namespace instance.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespace
      * @return void
      */
     public function endVisitNamespace(ASTNamespace $namespace);
@@ -177,7 +192,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new parameter instance.
      *
-     * @param  \PDepend\Source\AST\ASTParameter $parameter
      * @return void
      */
     public function startVisitParameter(ASTParameter $parameter);
@@ -185,7 +199,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a parameter instance.
      *
-     * @param  \PDepend\Source\AST\ASTParameter $parameter
      * @return void
      */
     public function endVisitParameter(ASTParameter $parameter);
@@ -193,7 +206,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor starts a new property instance.
      *
-     * @param  \PDepend\Source\AST\ASTProperty $property
      * @return void
      */
     public function startVisitProperty(ASTProperty $property);
@@ -201,7 +213,6 @@ interface ASTVisitListener
     /**
      * Is called when the visitor ends with a property instance.
      *
-     * @param  \PDepend\Source\AST\ASTProperty $property
      * @return void
      */
     public function endVisitProperty(ASTProperty $property);

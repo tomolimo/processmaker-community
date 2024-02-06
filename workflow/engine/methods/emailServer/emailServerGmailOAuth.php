@@ -20,7 +20,7 @@ try {
     $googleClient = $gmailOAuth->getGoogleClient();
     $result = $googleClient->authenticate($_GET['code']);
     if (isset($result["error"])) {
-        Cache::put('errorMessageIfNotAuthenticate', G::json_decode($result["error"]), 2);
+        Cache::put('errorMessageIfNotAuthenticate', G::json_decode($result["error"]), 120); //laravel 8.x the time parameter is in seconds.
         G::header($header);
         return;
     }
@@ -34,7 +34,7 @@ try {
      * value in minutes for each session. We use 2 minutes, enough time to retrieve 
      * the error message if there is one.
      */
-    Cache::put('errorMessageIfNotAuthenticate', $e->getMessage(), 2);
+    Cache::put('errorMessageIfNotAuthenticate', $e->getMessage(), 120); //laravel 8.x the time parameter is in seconds.
 }
 
 G::header($header);

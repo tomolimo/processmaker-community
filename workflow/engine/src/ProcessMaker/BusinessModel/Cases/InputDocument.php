@@ -16,10 +16,13 @@ use G;
 use ObjectPermissionPeer;
 use ProcessMaker\BusinessModel\Cases AS BusinessModelCases;
 use ProcessMaker\BusinessModel\ProcessSupervisor;
+use ProcessMaker\Model\Application;
+use ProcessMaker\Model\Delegation;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 use ProcessUserPeer;
 use ResultSet;
+use stdClass;
 use StepPeer;
 use StepSupervisorPeer;
 use Users;
@@ -241,6 +244,7 @@ class InputDocument
 
             $criteria->addSelectColumn(AppDocumentPeer::APP_DOC_UID);
             $criteria->addSelectColumn(AppDocumentPeer::DOC_VERSION);
+            $criteria->addSelectColumn(AppDocumentPeer::APP_DOC_COMMENT);
             $criteria->addSelectColumn(AppDocumentPeer::DOC_UID);
             $criteria->addSelectColumn(AppDocumentPeer::USR_UID);
             $criteria->addSelectColumn(AppDocumentPeer::APP_DOC_TYPE);
@@ -280,12 +284,15 @@ class InputDocument
     public function getAppDocumentDataFromRecord(array $record)
     {
         try {
-            $newArray = array();
+            $newArray = [];
             if (isset($record["APP_DOC_UID"])) {
                 $newArray["app_doc_uid"] = $record["APP_DOC_UID"];
             }
             if (isset($record["APP_DOC_FILENAME"])) {
                 $newArray["app_doc_filename"] = $record["APP_DOC_FILENAME"];
+            }
+            if (isset($record["APP_DOC_COMMENT"])) {
+                $newArray["app_doc_comment"] = $record["APP_DOC_COMMENT"];
             }
             if (isset($record["DOC_UID"])) {
                 $newArray["doc_uid"] = $record["DOC_UID"];
@@ -454,34 +461,32 @@ class InputDocument
     /**
      * Get data of Cases InputDocument
      *
-     * @param string $applicationUid
+     * @param string $appUid
      * @param string $userUid
      * @param string $inputDocumentUid
      *
      * @return array Return an array with data of an InputDocument
      * @throws Exception
      */
-    public function getCasesInputDocument($applicationUid, $userUid, $inputDocumentUid)
+    public function getCasesInputDocument($appUid, $userUid, $inputDocumentUid)
     {
         try {
-            $sApplicationUID = $applicationUid;
-            $sUserUID = $userUid;
-
-            $oCase = new Cases();
-            $fields = $oCase->loadCase( $sApplicationUID );
-            $sProcessUID = $fields['PRO_UID'];
-            $sTaskUID = '';
-            $oCaseRest = new BusinessModelCases();
-            $oCaseRest->getAllUploadedDocumentsCriteria( $sProcessUID, $sApplicationUID, $sTaskUID, $sUserUID );
-            $result = array ();
+            $case = new Cases();
+            $fields = $case->loadCase($appUid);
+            $proUid = $fields['PRO_UID'];
+            $taskUid = '';
+            $caseRest = new BusinessModelCases();
+            $caseRest->getAllUploadedDocumentsCriteria($proUid, $appUid, $taskUid, $userUid);
+            $result = [];
             global $_DBArray;
             $flagInputDocument = false;
 
             foreach ($_DBArray['inputDocuments'] as $key => $row) {
-                if (isset( $row['DOC_VERSION'] )) {
-                    $docrow = array ();
+                if (isset($row['DOC_VERSION'])) {
+                    $docrow = [];
                     $docrow['app_doc_uid'] = $row['APP_DOC_UID'];
                     $docrow['app_doc_filename'] = $row['APP_DOC_FILENAME'];
+                    $docrow['app_doc_comment'] = $row['APP_DOC_COMMENT'];
                     $docrow['doc_uid'] = $row['DOC_UID'];
                     $docrow['app_doc_version'] = $row['DOC_VERSION'];
                     $docrow['app_doc_create_date'] = $row['CREATE_DATE'];
@@ -506,11 +511,10 @@ class InputDocument
             }
 
             if (!$flagInputDocument) {
-                throw new Exception(G::LoadTranslation("ID_CASES_INPUT_DOES_NOT_EXIST", array($inputDocumentUid)));
+                throw new Exception(G::LoadTranslation("ID_CASES_INPUT_DOES_NOT_EXIST", [$inputDocumentUid]));
             }
 
-            $oResponse = json_decode(json_encode($result), false);
-            return $oResponse;
+            return json_decode(json_encode($result), false);
         } catch (Exception $e) {
             throw $e;
         }
@@ -538,6 +542,21 @@ class InputDocument
             $iDocVersion = $oAppDocument->getDocVersion();
             $info = pathinfo($oAppDocument->getAppDocFilename());
 
+            // Plugin Hook PM_REDIRECT to redirect to a custom page
+            $pluginRegistry = PluginRegistry::loadSingleton();
+
+            // If the hook exists try to execute
+            if ($pluginRegistry->existsTrigger(PM_REDIRECT)) {
+                // Build the object to send
+                $data = new stdClass();
+                $data->sApplicationUid = $oAppDocument->getAppUid();
+                $data->appDocUid = $oAppDocument->getAppDocUid();
+                $data->docType = '';
+
+                // Execute hook
+                $pluginRegistry->executeTriggers(PM_REDIRECT, $data);
+            }
+
             $app_uid = G::getPathFromUID($oAppDocument->Fields['APP_UID']);
             $file = G::getPathFromFileUID($oAppDocument->Fields['APP_UID'], $sAppDocUid);
 
@@ -560,7 +579,9 @@ class InputDocument
             header("Content-Description: File Transfer");
 
             if ($fp = fopen($realPath, 'rb')) {
-                ob_end_clean();
+                if (ob_get_contents()) {
+                    ob_end_clean();
+                }
                 while (!feof($fp) and (connection_status() == 0)) {
                     print(fread($fp, 8192));
                     flush();
@@ -766,7 +787,7 @@ class InputDocument
     /**
      * Get data of Cases InputDocument
      *
-     * @param string $applicationUid
+     * @param string $appUid
      * @param string $taskUid
      * @param string $appDocComment
      * @param string $inputDocumentUid
@@ -775,7 +796,7 @@ class InputDocument
      * @return array Return an array with data of an InputDocument
      * @throws Exception
      */
-    public function addCasesInputDocument($applicationUid, $taskUid, $appDocComment, $inputDocumentUid, $userUid, $runningWorkflow = true)
+    public function addCasesInputDocument($appUid, $taskUid, $appDocComment, $inputDocumentUid, $userUid, $runningWorkflow = true)
     {
         try {
             if ((isset( $_FILES['form'] )) && ($_FILES['form']['error'] != 0)) {
@@ -815,64 +836,49 @@ class InputDocument
             $appDocUid = G::generateUniqueID();
             $docVersion = '';
             $appDocType = 'INPUT';
+            $delIndex = AppDelegation::getCurrentIndex($appUid);
             $case = new Cases();
-            $delIndex = AppDelegation::getCurrentIndex($applicationUid);
-
             if ($runningWorkflow) {
-                $case->thisIsTheCurrentUser($applicationUid, $delIndex, $userUid, 'REDIRECT', 'casesListExtJs');
+                $case->thisIsTheCurrentUser($appUid, $delIndex, $userUid, 'REDIRECT', 'casesListExtJs');
             } else {
-                $criteria = new Criteria('workflow');
-
-                $criteria->add(AppDelegationPeer::APP_UID, $applicationUid);
-                $criteria->add(AppDelegationPeer::DEL_INDEX, $delIndex);
-                $criteria->add(AppDelegationPeer::USR_UID, $userUid);
-
-                $rsCriteria = ProcessUserPeer::doSelectRS($criteria);
-
-                if (!$rsCriteria->next()) {
-                    $case2 = new BusinessModelCases();
-
-                    $arrayApplicationData = $case2->getApplicationRecordByPk($applicationUid, [], false);
-
-                    $msg = '';
-
+                $appInfo = Application::getCase($appUid);
+                $proUid = $appInfo['PRO_UID'];
+                $appNumber = $appInfo['APP_NUMBER'];
+                $msg = '';
+                // Check the current user
+                $currentUser = Delegation::getCurrentUser($appNumber, $delIndex);
+                if ($currentUser !== $userUid) {
+                    // Review if is a supervisor
                     $supervisor = new ProcessSupervisor();
-                    $flagps = $supervisor->isUserProcessSupervisor($arrayApplicationData['PRO_UID'], $userUid);
-
-                    if ($flagps == false) {
-                        $msg = G::LoadTranslation('ID_USER_NOT_IT_BELONGS_CASE_OR_NOT_SUPERVISOR');
-                    }
-
-                    if ($msg == '') {
+                    $isSupervisor = $supervisor->isUserProcessSupervisor($proUid, $userUid);
+                    if ($isSupervisor) {
                         $criteria = new Criteria('workflow');
-
-                        $criteria->add(StepSupervisorPeer::PRO_UID, $arrayApplicationData['PRO_UID'], Criteria::EQUAL);
+                        $criteria->add(StepSupervisorPeer::PRO_UID, $proUid, Criteria::EQUAL);
                         $criteria->add(StepSupervisorPeer::STEP_TYPE_OBJ, 'INPUT_DOCUMENT', Criteria::EQUAL);
                         $criteria->add(StepSupervisorPeer::STEP_UID_OBJ, $inputDocumentUid, Criteria::EQUAL);
-
                         $rsCriteria = StepSupervisorPeer::doSelectRS($criteria);
-
                         if (!$rsCriteria->next()) {
                             $msg = G::LoadTranslation('ID_USER_IS_SUPERVISOR_DOES_NOT_ASSOCIATED_INPUT_DOCUMENT');
                         }
+                    } else {
+                        $msg = G::LoadTranslation('ID_USER_NOT_IT_BELONGS_CASE_OR_NOT_SUPERVISOR');
                     }
+                }
+                if (!empty($msg)) {
+                    if ($runningWorkflow) {
+                        G::SendMessageText($msg, 'ERROR');
+                        $backUrlObj = explode('sys' . config("system.workspace"), $_SERVER['HTTP_REFERER']);
 
-                    if ($msg != '') {
-                        if ($runningWorkflow) {
-                            G::SendMessageText($msg, 'ERROR');
-                            $backUrlObj = explode('sys' . config("system.workspace"), $_SERVER['HTTP_REFERER']);
-
-                            G::header('location: ' . '/sys' . config("system.workspace") . $backUrlObj[1]);
-                            exit(0);
-                        } else {
-                            throw new Exception($msg);
-                        }
+                        G::header('location: ' . '/sys' . config("system.workspace") . $backUrlObj[1]);
+                        exit(0);
+                    } else {
+                        throw new Exception($msg);
                     }
                 }
             }
 
             //Load the fields
-            $arrayField = $case->loadCase($applicationUid);
+            $arrayField = $case->loadCase($appUid);
             $arrayField["APP_DATA"] = array_merge($arrayField["APP_DATA"], G::getSystemConstants());
             //Validate Process Uid and Input Document Process Uid
             $inputDocumentInstance = new \InputDocument();
@@ -897,7 +903,7 @@ class InputDocument
                     $appDocType,
                     $appDocComment,
                     '',
-                    $applicationUid,
+                    $appUid,
                     $delIndex,
                     $taskUid,
                     $userUid,
@@ -907,7 +913,7 @@ class InputDocument
                     $_FILES["form"]["tmp_name"]);
             }
             //Trigger - Execute after - Start
-            $arrayField["APP_DATA"] = $case->executeTriggers ($taskUid,
+            $arrayField["APP_DATA"] = $case->executeTriggers($taskUid,
                 "INPUT_DOCUMENT",
                 $inputDocumentUid,
                 "AFTER",
@@ -920,8 +926,8 @@ class InputDocument
             $arrayData["APP_DATA"]  = $arrayField["APP_DATA"];
             $arrayData["DEL_INDEX"] = $delIndex;
             $arrayData["TAS_UID"]   = $taskUid;
-            $case->updateCase($applicationUid, $arrayData);
-            return($this->getCasesInputDocument($applicationUid, $userUid, $appDocUid));
+            $case->updateCase($appUid, $arrayData);
+            return($this->getCasesInputDocument($appUid, $userUid, $appDocUid));
         } catch (Exception $e) {
             throw $e;
         }

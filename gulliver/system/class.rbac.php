@@ -145,9 +145,13 @@ class RBAC
                 'DEL' => ['PM_SETUP'],
                 'LST' => ['PM_SETUP'],
                 'TEST' => ['PM_SETUP'],
-                'createAuthUrl' => ['PM_SETUP']
+                'createAuthUrl' => ['PM_SETUP'],
+                'createAuthUrlOffice365' => ['PM_SETUP']
             ],
             'emailServerGmailOAuth.php' => [
+                'code' => ['PM_SETUP']
+            ],
+            'emailServerOffice365OAuth.php' => [
                 'code' => ['PM_SETUP']
             ],
             'processes_GetFile.php' => [
@@ -181,6 +185,7 @@ class RBAC
                 'historyDynaformGridPreview' => ['PM_CASES'],
             ],
             'usersAjax.php' => [
+                'timeZoneParameters' => ['PM_LOGIN'],
                 'countryList' => ['PM_LOGIN'],
                 'stateList' => ['PM_LOGIN'],
                 'locationList' => ['PM_LOGIN'],
@@ -404,11 +409,7 @@ class RBAC
                 "PER_CODE" => "PM_SETUP_CLEAR_CACHE",
                 "PER_NAME" => "Setup Clear Cache"
             ],
-            [
-                "PER_UID" => "00000000000000000000000000000025",
-                "PER_CODE" => "PM_SETUP_HEART_BEAT",
-                "PER_NAME" => "Setup Heart Beat"
-            ],
+            // The 00000000000000000000000000000025 was deleted related to the heart beat
             [
                 "PER_UID" => "00000000000000000000000000000026",
                 "PER_CODE" => "PM_SETUP_ENVIRONMENT",
@@ -623,6 +624,11 @@ class RBAC
                 'PER_UID' => '00000000000000000000000000000069',
                 'PER_CODE' => 'PM_TASK_SCHEDULER_ADMIN',
                 'PER_NAME' => 'View Task Scheduler'
+            ],
+            [
+                'PER_UID' => '00000000000000000000000000000070',
+                'PER_CODE' => 'TASK_METRICS_VIEW',
+                'PER_NAME' => 'Task Metrics View'
             ]
         ];
 
@@ -801,7 +807,8 @@ class RBAC
         $this->sSystem = $sSystem;
         $fieldsSystem = $this->systemObj->loadByCode($sSystem);
         $fieldsRoles = $this->usersRolesObj->getRolesBySystem($fieldsSystem['SYS_UID'], $sUser);
-        $fieldsPermissions = $this->usersRolesObj->getAllPermissions($fieldsRoles['ROL_UID'], $sUser);
+        $rolUid = isset($fieldsRoles['ROL_UID']) ? $fieldsRoles['ROL_UID'] : null;
+        $fieldsPermissions = $this->usersRolesObj->getAllPermissions($rolUid, $sUser);
         $this->aUserInfo['USER_INFO'] = $this->userObj->load($sUser);
         $this->aUserInfo[$sSystem]['SYS_UID'] = $fieldsSystem['SYS_UID'];
         $this->aUserInfo[$sSystem]['ROLE'] = $fieldsRoles;
@@ -1751,6 +1758,7 @@ class RBAC
         $dataCase['AUTH_SOURCE_PASSWORD'] = G::encrypt(
                 $dataCase['AUTH_SOURCE_PASSWORD'],
                 $dataCase['AUTH_SOURCE_SERVER_NAME']
+                ,false, false
             ) . "_2NnV3ujj3w";
         $this->authSourcesObj->create($dataCase);
     }
@@ -1769,6 +1777,7 @@ class RBAC
         $dataCase['AUTH_SOURCE_PASSWORD'] = G::encrypt(
                 $dataCase['AUTH_SOURCE_PASSWORD'],
                 $dataCase['AUTH_SOURCE_SERVER_NAME']
+                , false, false
             ) . "_2NnV3ujj3w";
         $this->authSourcesObj->update($dataCase);
     }
@@ -2130,5 +2139,17 @@ class RBAC
     public static function isGuestUserUid($usrUid)
     {
         return self::GUEST_USER_UID === $usrUid;
+    }
+
+    /**
+     * Returns true in case the parameter corresponds to the admin user,
+     * otherwise it returns false.
+     *
+     * @param string $usrUid
+     * @return boolean
+     */
+    public static function isAdminUserUid($usrUid)
+    {
+        return self::ADMIN_USER_UID === $usrUid;
     }
 }

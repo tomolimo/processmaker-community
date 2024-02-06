@@ -38,11 +38,13 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.9.20
  */
 
 namespace PDepend\Source\Language\PHP;
 
+use PDepend\Source\Parser\UnexpectedTokenException;
 use PDepend\Source\Tokenizer\Tokens;
 
 /**
@@ -52,16 +54,19 @@ use PDepend\Source\Tokenizer\Tokens;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.9.20
  */
-class PHPParserGeneric extends PHPParserVersion74
+class PHPParserGeneric extends PHPParserVersion82
 {
     /**
      * Tests if the given token type is a reserved keyword in the supported PHP
      * version.
      *
-     * @param  integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
+     *
      * @since  1.1.1
      */
     protected function isKeyword($tokenType)
@@ -75,42 +80,13 @@ class PHPParserGeneric extends PHPParserVersion74
     }
 
     /**
-     * Will return <b>true</b> if the given <b>$tokenType</b> is a valid class
-     * name part.
-     *
-     * @param integer $tokenType The type of a parsed token.
-     *
-     * @return boolean
-     * @since  0.10.6
-     */
-    protected function isClassName($tokenType)
-    {
-        switch ($tokenType) {
-            case Tokens::T_DIR:
-            case Tokens::T_USE:
-            case Tokens::T_GOTO:
-            case Tokens::T_NULL:
-            case Tokens::T_NS_C:
-            case Tokens::T_TRUE:
-            case Tokens::T_CLONE:
-            case Tokens::T_FALSE:
-            case Tokens::T_TRAIT:
-            case Tokens::T_STRING:
-            case Tokens::T_TRAIT_C:
-            case Tokens::T_CALLABLE:
-            case Tokens::T_INSTEADOF:
-            case Tokens::T_NAMESPACE:
-                return true;
-        }
-        return false;
-    }
-
-    /**
      * Tests if the give token is a valid function name in the supported PHP
      * version.
      *
-     * @param integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
+     *
      * @since 2.3
      */
     protected function isFunctionName($tokenType)
@@ -140,11 +116,15 @@ class PHPParserGeneric extends PHPParserVersion74
     /**
      * Parses additional static values that are valid in the supported php version.
      *
-     * @param \PDepend\Source\AST\ASTValue $value
-     * @return \PDepend\Source\AST\ASTValue
-     * @throws \PDepend\Source\Parser\UnexpectedTokenException
+     * @param ASTValue $value
+     *
+     * @throws UnexpectedTokenException
+     *
+     * @return ASTValue
+     *
      * @todo Handle shift left/right expressions in ASTValue
-     */ /*
+     */
+    /*
     protected function parseStaticValueVersionSpecific(ASTValue $value)
     {
         switch ($this->tokenizer->peek()) {

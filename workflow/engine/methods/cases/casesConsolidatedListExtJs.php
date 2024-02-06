@@ -1,13 +1,13 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\Consolidated;
 
 $action = (isset($_REQUEST["action"])) ? $_REQUEST["action"] : "consolidated";
-$arrayTabItem = array();
+$arrayTabItem = [];
 
-$oCriteria = new Criteria("workflow");
-$oCriteria->add(CaseConsolidatedCorePeer::CON_STATUS, 'ACTIVE');
-$activeNumRows = CaseConsolidatedCorePeer::doCount($oCriteria);
+$consolidated =  new Consolidated();
+$activeNumRows = $consolidated->getCounterActive();
 
 $headPublisher = headPublisher::getSingleton();
 $usrUid = $_SESSION["USER_LOGGED"];
@@ -17,8 +17,8 @@ try {
     $confCasesList = $conf->getConfiguration("casesList", $action);
     $generalConfCasesList = $conf->getConfiguration("ENVIRONMENT_SETTINGS", "");
 } catch (Exception $e) {
-    $confCasesList = array();
-    $generalConfCasesList = array();
+    $confCasesList = [];
+    $generalConfCasesList = [];
 }
 
 if (isset($generalConfCasesList["casesListRowNumber"]) && !empty($generalConfCasesList["casesListRowNumber"])) {
@@ -27,33 +27,19 @@ if (isset($generalConfCasesList["casesListRowNumber"]) && !empty($generalConfCas
     $config = getAdditionalFields($action, $confCasesList);
     $pageSize = intval($config["rowsperpage"]);
 }
+// Get a query
+$results = $consolidated->getConsolidated();
 
-$criteria = new Criteria();
-$criteria->addAsColumn('NUMREC', 'COUNT(' . ListInboxPeer::TAS_UID . ')');
-$criteria->addSelectColumn(ListInboxPeer::PRO_UID);
-$criteria->addSelectColumn(ProcessPeer::PRO_TITLE);
-$criteria->addSelectColumn(ListInboxPeer::TAS_UID);
-$criteria->addSelectColumn(TaskPeer::TAS_TITLE);
-$criteria->addSelectColumn(CaseConsolidatedCorePeer::DYN_UID);
-$criteria->addJoin(CaseConsolidatedCorePeer::TAS_UID, ListInboxPeer::TAS_UID, Criteria::LEFT_JOIN);
-$criteria->addJoin(ListInboxPeer::PRO_UID, ProcessPeer::PRO_UID, Criteria::LEFT_JOIN);
-$criteria->addJoin(ListInboxPeer::TAS_UID, TaskPeer::TAS_UID, Criteria::LEFT_JOIN);
-$criteria->add(ListInboxPeer::USR_UID, $usrUid, Criteria::EQUAL);
-$criteria->add(ListInboxPeer::APP_STATUS, 'TO_DO', Criteria::EQUAL);
-$criteria->addGroupByColumn(ListInboxPeer::TAS_UID);
-$rsSql = CaseConsolidatedCorePeer::doSelectRS($criteria);
-$rsSql->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-while ($rsSql->next()) {
-    $row = $rsSql->getRow();
-
+foreach ($results as $row) {
+    $casesPerTask = count($row);
+    $row = head($row);
     $processUid = $row['PRO_UID'];
     $proTitle = $row['PRO_TITLE'];
     $taskUid = $row['TAS_UID'];
     $taskTitle = $row['TAS_TITLE'];
     $dynaformUid = $row['DYN_UID'];
 
-    $tabTitle = $taskTitle . " (" . (($activeNumRows > 0) ? $row["NUMREC"] : 0) . ")";
+    $tabTitle = $taskTitle . " (" . (($activeNumRows > 0) ? $casesPerTask : 0) . ")";
 
     $grdTitle = htmlentities($proTitle . " / " . $tabTitle, ENT_QUOTES, "UTF-8");
     $tabTitle = htmlentities(substr($proTitle, 0, 25) . ((strlen($proTitle) > 25) ? "..." : null) . " / " . $tabTitle, ENT_QUOTES, "UTF-8");
@@ -117,7 +103,7 @@ if (count($arrayTabItem) > 0) {
     $headPublisher->assign("urlProxy", $urlProxy);
     $headPublisher->assign('credentials', $clientToken);
 
-    $oHeadPublisher->assign('isIE', Bootstrap::isIE());
+    $headPublisher->assign('isIE', Bootstrap::isIE());
 
     $headPublisher->addExtJsScript("app/main", true);
     $headPublisher->addExtJsScript("cases/casesListConsolidated", false);   //Adding a JavaScript file .js

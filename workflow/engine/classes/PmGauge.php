@@ -82,7 +82,7 @@ class PmGauge
         $white = ImageColorAllocate($im, 255, 255, 255);
         $gray = ImageColorAllocate($im, 190, 190, 190);
 
-        $fontArial = PATH_THIRDPARTY . 'html2ps_pdf/fonts/arial.ttf';
+        $fontArial = PATH_HTML . 'fonts/dashlets/arial.ttf';
 
         ImageFilledRectangle($im, 0, 0, $width - 1, $height - 1, $white);
         ImageRectangle($im, 0, 0, $width - 1, $height - 1, $gray);
@@ -128,7 +128,7 @@ class PmGauge
         $white = ImageColorAllocate($im, 255, 255, 255);
         $gray = ImageColorAllocate($im, 190, 190, 190);
 
-        $fontArial = PATH_THIRDPARTY . 'html2ps_pdf/fonts/arial.ttf';
+        $fontArial = PATH_HTML . 'fonts/dashlets/arial.ttf';
 
         $dX = intval($diameter * 8 / 7); //for now ratio aspect is 8:7
         $dY = intval($diameter);

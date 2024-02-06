@@ -13,12 +13,12 @@ class RenameStatementTest extends TestCase
      *
      * @dataProvider renameProvider
      */
-    public function testRename($test)
+    public function testRename($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function renameProvider()
+    public function renameProvider(): array
     {
         return [
             ['parser/parseRename'],

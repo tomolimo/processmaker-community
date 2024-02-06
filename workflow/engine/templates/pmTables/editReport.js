@@ -401,21 +401,6 @@ Ext.onReady(function () {
             width: 50,
             align: 'right',
             editor: sizeField
-        }, {
-
-            xtype: 'booleancolumn',
-            header: _('ID_AUTO_INCREMENT'),
-            dataIndex: 'field_autoincrement',
-            align: 'center',
-            width: 100,
-            trueText: _('ID_YES'),
-            falseText: _('ID_NO'),
-            editor: {
-                xtype: 'checkbox',
-                id: 'field_incre',
-                disabled: true,
-                inputValue: 'always'
-            }
         }
     ];
 
@@ -933,14 +918,16 @@ Ext.onReady(function () {
                 } else {
                     loadFieldNormal();
                 }
+            },
+            invalid: function () {
+                PRO_UID = '';
+                Ext.getCmp('assignedGrid').store.removeAll();
+                storeA.removeAll();
             }
         }
     });
 
     var items = new Array();
-    if (PRO_UID === false) {
-        items.push(processComboBox);
-    }
 
     items.push({
         id: 'REP_TAB_NAME',
@@ -957,6 +944,11 @@ Ext.onReady(function () {
             }
         }
     });
+
+    if (PRO_UID === false) {
+        items.push(processComboBox);
+    }
+    
     items.push({
         id: 'REP_TAB_DSC',
         fieldLabel: _("ID_DESCRIPTION"),
@@ -971,14 +963,8 @@ Ext.onReady(function () {
         name: 'REP_TAB_GRID',
         value: 'GridComments-463650787492db06640c904001904930'
     });
-    items.push({
-        xtype: 'compositefield',
-        fieldLabel: _("ID_TYPE"),
-        msgTarget: 'side',
-        anchor: '-20',
-        defaults: {flex: 1},
-        items: [comboReport, comboGridsList]
-    });
+    items.push(comboReport);
+    items.push(comboGridsList);
     items.push(comboDbConnections);
 
 
@@ -1098,6 +1084,19 @@ function createReportTable()
     var tableName = Ext.getCmp('REP_TAB_NAME').getValue().trim();
     var tableDescription = Ext.getCmp('REP_TAB_DSC').getValue().trim();
 
+    PRO_UID = (PRO_UID !== false && PRO_UID !== "") ? PRO_UID : ((Ext.getCmp('PROCESS').getValue().trim() != '') ? Ext.getCmp('PROCESS').getValue().trim() : '');
+    
+    //validate table name and process
+    if (Ext.getCmp('REP_TAB_NAME').getValue().trim() == '' && PRO_UID == '') {
+        Ext.getCmp('PROCESS').focus();
+        Ext.getCmp('REP_TAB_NAME').focus();
+        PMExt.error(_('ID_ERROR'), _('ID_TABLE_AND_PROCESS_NAME_ARE_REQUIRED'), function () {
+            Ext.getCmp('PROCESS').focus();
+            Ext.getCmp('REP_TAB_NAME').focus();
+        });
+        return false;
+    }
+
     //validate table name
     if (Ext.getCmp('REP_TAB_NAME').getValue().trim() == '') {
         Ext.getCmp('REP_TAB_NAME').focus();
@@ -1108,7 +1107,6 @@ function createReportTable()
     }
 
     //validate process
-    PRO_UID = (PRO_UID !== false && PRO_UID !== "") ? PRO_UID : ((Ext.getCmp('PROCESS').getValue().trim() != '') ? Ext.getCmp('PROCESS').getValue().trim() : '');
     if (PRO_UID == '') {
         Ext.getCmp('PROCESS').focus();
         PMExt.error(_('ID_ERROR'), _('ID_PROCESS_IS_REQUIRED'), function () {

@@ -135,6 +135,8 @@ class UsersMapBuilder
 
         $tMap->addColumn('USR_LAST_LOGIN', 'UsrLastLogin', 'int', CreoleTypes::TIMESTAMP, false, null);
 
+        $tMap->addColumn('USR_EXTENDED_ATTRIBUTES_DATA', 'UsrExtendedAttributesData', 'string', CreoleTypes::LONGVARCHAR, false, null);
+
         $tMap->addValidator('USR_STATUS', 'validValues', 'propel.validator.ValidValuesValidator', 'ACTIVE|INACTIVE|VACATION|CLOSED', 'Please select a valid type.');
 
         $tMap->addValidator('USR_STATUS', 'required', 'propel.validator.RequiredValidator', '', 'Type is required.');

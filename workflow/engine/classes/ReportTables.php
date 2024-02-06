@@ -4,6 +4,7 @@ use App\Jobs\GenerateReportTable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\JobsManager;
+use ProcessMaker\Core\System;
 use ProcessMaker\Model\Application;
 
 /**
@@ -39,7 +40,7 @@ class ReportTables
      *
      * @access public
      *
-     * @param string $$sRepTabUid
+     * @param string $sRepTabUid
      *
      * @return void
      */
@@ -206,123 +207,165 @@ class ReportTables
      */
     public function populateTable($tableName, $connectionShortName = 'report', $type = 'NORMAL', $fields = [], $proUid = '', $grid = '')
     {
-        $config = System::getSystemConfiguration();
-        $reportTableBatchRegeneration = $config['report_table_batch_regeneration'];
-
-        $tableName = $this->sPrefix . $tableName;
-        //we have to do the propel connection
-        $database = $this->chooseDB($connectionShortName);
-        $connection = Propel::getConnection($database);
-        if ($type == 'GRID') {
-            $aux = explode('-', $grid);
-            $grid = $aux[0];
-        }
-        $case = new Cases();
         try {
-            $applicationTableName = (new Application())->getTable();
-            $deleteQuery = "TRUNCATE TABLE `{$tableName}` ";
-            DB::delete($deleteQuery);
+            // Initializing variables
+            $tableName = $this->sPrefix . $tableName;
+            if ($type == 'GRID') {
+                $aux = explode('-', $grid);
+                $grid = $aux[0];
+            }
+            $n = Application::count();
 
-            $applications = Application::getByProUid($proUid);
-            $i = 1;
-            $queryValues = "";
-            $numberRecords = $reportTableBatchRegeneration;
-            $n = count($applications);
-            foreach ($applications as $application) {
-                $appData = $case->unserializeData($application->APP_DATA);
-                if ($type == 'NORMAL') {
-                    $query = 'INSERT INTO `' . $tableName . '` (';
-                    $query .= '`APP_UID`,`APP_NUMBER`';
-                    foreach ($fields as $field) {
-                        $query .= ',`' . $field['sFieldName'] . '`';
-                    }
-                    $headQuery = $query . ") VALUES ";
-                    $query = "('" . $application->APP_UID . "'," . $application->APP_NUMBER;
-                    foreach ($fields as $field) {
-                        switch ($field['sType']) {
-                            case 'number':
-                                $query .= ',' . (isset($appData[$field['sFieldName']]) ? (float) str_replace(',', '', $appData[$field['sFieldName']]) : '0');
-                                break;
-                            case 'char':
-                            case 'text':
-                                if (!isset($appData[$field['sFieldName']])) {
-                                    $appData[$field['sFieldName']] = '';
-                                }
-                                $string = $appData[$field['sFieldName']];
-                                if (is_array($string)) {
-                                    $string = implode($string, ",");
-                                }
-                                $query .= ",'" . (isset($appData[$field['sFieldName']]) ? mysqli_real_escape_string($connection->getResource(), $string) : '') . "'";
-                                break;
-                            case 'date':
-                                $value = (isset($appData[$field['sFieldName']]) && trim($appData[$field['sFieldName']])) != '' ? "'" . $appData[$field['sFieldName']] . "'" : 'NULL';
-                                $query .= "," . $value;
-                                break;
-                        }
-                    }
-                    $query .= ')';
-                    $queryValues = $queryValues . $query . ",";
-                    if ($i % $numberRecords === 0 || $i === $n) {
-                        $queryValues = rtrim($queryValues, ",");
-                        $query = $headQuery . $queryValues;
-                        $queryValues = "";
+            // Truncate report table
+            DB::delete("TRUNCATE TABLE `{$tableName}` ");
 
-                        //add to queue
-                        $closure = function() use($query) {
-                            DB::insert($query);
-                        };
-                        JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
-                    }
-                } else {
-                    if (isset($appData[$grid])) {
-                        $query = 'INSERT INTO `' . $tableName . '` (';
-                        $query .= '`APP_UID`,`APP_NUMBER`,`ROW`';
-                        foreach ($fields as $field) {
-                            $query .= ',`' . $field['sFieldName'] . '`';
-                        }
-                        $headQuery = $query . ") VALUES ";
-                        foreach ($appData[$grid] as $indexRow => $gridRow) {
-                            $query = "('" . $application->APP_UID . "'," . (int) $application->APP_NUMBER . ',' . $indexRow;
-                            foreach ($fields as $field) {
-                                switch ($field['sType']) {
-                                    case 'number':
-                                        $query .= ',' . (isset($gridRow[$field['sFieldName']]) ? (float) str_replace(',', '', $gridRow[$field['sFieldName']]) : '0');
-                                        break;
-                                    case 'char':
-                                    case 'text':
-                                        if (!isset($gridRow[$field['sFieldName']])) {
-                                            $gridRow[$field['sFieldName']] = '';
-                                        }
-                                        $stringEscape = mysqli_real_escape_string($connection->getResource(), $gridRow[$field['sFieldName']]);
-                                        $query .= ",'" . (isset($gridRow[$field['sFieldName']]) ? $stringEscape : '') . "'";
-                                        break;
-                                    case 'date':
-                                        $value = (isset($gridRow[$field['sFieldName']]) && trim($gridRow[$field['sFieldName']])) != '' ? "'" . $gridRow[$field['sFieldName']] . "'" : 'NULL';
-                                        $query .= "," . $value;
-                                        break;
-                                }
-                            }
-                            $query .= ')';
-                            $queryValues = $queryValues . $query . ",";
-                        }
-                        if ($i % $numberRecords === 0 || $i === $n) {
-                            $queryValues = rtrim($queryValues, ",");
-                            $query = $headQuery . $queryValues;
-                            $queryValues = "";
+            // Batch process
+            $config = System::getSystemConfiguration();
+            $reportTableBatchRegeneration = $config['report_table_batch_regeneration'];
 
-                            //add to queue
-                            $closure = function() use($query) {
-                                DB::insert($query);
-                            };
-                            JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
-                        }
-                    }
-                }
-                $i = $i + 1;
+            // Initializing more variables
+            $size = $n;
+            $start = 0;
+            $limit = $reportTableBatchRegeneration;
+
+            // Creating jobs
+            for ($i = 1; $start < $size; $i++) {
+                $closure = function () use ($tableName, $connectionShortName, $type, $fields, $proUid, $grid, $start, $limit) {
+                    $this->generateOldReportTable($tableName, $connectionShortName, $type, $fields, $proUid, $grid, $start, $limit);
+                };
+                JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
+                $start = $i * $limit;
             }
         } catch (Exception $oError) {
             throw ($oError);
         }
+    }
+
+    /**
+     * Generate old report table of application.
+     * 
+     * @param string $tableName
+     * @param string $connectionShortName
+     * @param string $type
+     * @param array $fields
+     * @param string $proUid
+     * @param string $grid
+     * @param int $start
+     * @param int $limit
+     */
+    public function generateOldReportTable(string $tableName, string $connectionShortName = 'report', string $type = 'NORMAL', array $fields = [], string $proUid = '', string $grid = '', int $start = 0, int $limit = 0)
+    {
+        //we have to do the propel connection
+        $database = $this->chooseDB($connectionShortName);
+        $connection = Propel::getConnection($database);
+
+        $case = new Cases();
+
+        // Select cases of the related process, ordered by APP_NUMBER
+        $applications = Application::query()
+            ->where('PRO_UID', '=', $proUid)
+            ->where('APP_NUMBER', '>', 0)
+            ->orderBy('APP_NUMBER', 'asc')
+            ->offset($start)
+            ->limit($limit)
+            ->get();
+
+        foreach ($applications as $application) {
+            $appData = $case->unserializeData($application->APP_DATA);
+            if ($type == 'NORMAL') {
+                $fieldsSection = "`APP_UID`, `APP_NUMBER`";
+                $valuesSection = "'{$application->APP_UID}', {$application->APP_NUMBER}";
+                $this->buildAndExecuteQuery($fieldsSection, $valuesSection, $fields, $appData, $connection, $tableName, $application);
+            } else {
+                if (isset($appData[$grid])) {
+                    foreach ($appData[$grid] as $indexRow => $gridRow) {
+                        $fieldsSection = "`APP_UID`, `APP_NUMBER`, `ROW`";
+                        $valuesSection = "'{$application->APP_UID}', {$application->APP_NUMBER}, {$indexRow}";
+                        $this->buildAndExecuteQuery($fieldsSection, $valuesSection, $fields, $gridRow, $connection, $tableName, $application);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Build and execute query.
+     * 
+     * @param string $fieldsSection
+     * @param string $valuesSection
+     * @param array $fields
+     * @param array $appData
+     * @param MySQLiConnection $connection
+     * @param string $tableName
+     * @param Application $application
+     */
+    private function buildAndExecuteQuery(string $fieldsSection, string $valuesSection, array $fields, array $appData, MySQLiConnection $connection, string $tableName, Application $application)
+    {
+        try {
+            $fieldsSection = $this->buildFieldsSection($fieldsSection, $fields);
+            $valuesSection = $this->buildValuesSection($valuesSection, $fields, $appData, $connection);
+            $query = "INSERT INTO `{$tableName}` ({$fieldsSection}) VALUES ({$valuesSection});";
+            DB::insert($query);
+        } catch (Exception $e) {
+            $message = "ReportTables::buildAndExecuteQuery";
+            $context = [
+                "message" => $e->getMessage(),
+                "tableName" => $tableName,
+                "appUid" => $application->APP_UID
+            ];
+            Log::channel(':sqlExecution')->critical($message, Bootstrap::context($context));
+        }
+    }
+
+    /**
+     * Build fields section for query string.
+     * 
+     * @param string $fieldsSection
+     * @param array $fields
+     * @return string
+     */
+    private function buildFieldsSection(string $fieldsSection = "", array $fields = []): string
+    {
+        foreach ($fields as $field) {
+            $fieldsSection = $fieldsSection . ", `{$field['sFieldName']}`";
+        }
+        return $fieldsSection;
+    }
+
+    /**
+     * Build values section for query string.
+     * 
+     * @param string $valuesSection
+     * @param array $fields
+     * @param array $appData
+     * @param MySQLiConnection $connection
+     * @return string
+     */
+    private function buildValuesSection(string $valuesSection = "", array $fields = [], array $appData = [], MySQLiConnection $connection = null): string
+    {
+        foreach ($fields as $field) {
+            switch ($field['sType']) {
+                case 'number':
+                    $valuesSection .= ',' . (isset($appData[$field['sFieldName']]) ? (float) str_replace(',', '', $appData[$field['sFieldName']]) : '0');
+                    break;
+                case 'char':
+                case 'text':
+                    if (!isset($appData[$field['sFieldName']])) {
+                        $appData[$field['sFieldName']] = '';
+                    }
+                    $string = $appData[$field['sFieldName']];
+                    if (is_array($string)) {
+                        $string = implode(",", $string);
+                    }
+                    $valuesSection .= ",'" . (isset($appData[$field['sFieldName']]) ? mysqli_real_escape_string($connection->getResource(), $string) : '') . "'";
+                    break;
+                case 'date':
+                    $value = (isset($appData[$field['sFieldName']]) && trim($appData[$field['sFieldName']])) != '' ? "'" . $appData[$field['sFieldName']] . "'" : 'NULL';
+                    $valuesSection .= "," . $value;
+                    break;
+            }
+        }
+        return $valuesSection;
     }
 
     /**
@@ -384,7 +427,7 @@ class ReportTables
                 $this->dropTable($aFields['REP_TAB_NAME'], $aFields['REP_TAB_CONNECTION']);
                 $oCriteria = new Criteria('workflow');
                 $oCriteria->add(ReportVarPeer::REP_TAB_UID, $sRepTabUid);
-                $oDataset = ReportVarPeer::doDelete($oCriteria);
+                ReportVarPeer::doDelete($oCriteria);
                 $oReportTable->remove($sRepTabUid);
             }
         } catch (Exception $oError) {
@@ -676,7 +719,7 @@ class ReportTables
                 } else {
                     //remove old rows from database
                     $sqlDelete = 'DELETE FROM `' . $aRow['REP_TAB_NAME'] . "` WHERE APP_UID = '" . $sApplicationUid . "'";
-                    $rsDelete = $stmt->executeQuery($sqlDelete);
+                    $stmt->executeQuery($sqlDelete);
 
                     $aAux = explode('-', $aRow['REP_TAB_GRID']);
                     if (isset($aFields[$aAux[0]])) {
@@ -732,10 +775,9 @@ class ReportTables
      * @access public
      * @return boolean
      */
-    public function tableExist()
+    public static function tableExist()
     {
         $bExists = true;
-        $sDataBase = 'database_' . strtolower(DB_ADAPTER);
 
         $oDataBase = new database();
         $bExists = $oDataBase->reportTableExist();

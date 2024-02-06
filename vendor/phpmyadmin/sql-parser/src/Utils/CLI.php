@@ -10,6 +10,7 @@ namespace PhpMyAdmin\SqlParser\Utils;
 use PhpMyAdmin\SqlParser\Context;
 use PhpMyAdmin\SqlParser\Lexer;
 use PhpMyAdmin\SqlParser\Parser;
+
 use function count;
 use function getopt;
 use function implode;
@@ -18,6 +19,7 @@ use function rtrim;
 use function stream_get_contents;
 use function stream_select;
 use function var_export;
+
 use const STDIN;
 
 /**
@@ -25,27 +27,47 @@ use const STDIN;
  */
 class CLI
 {
+    /**
+     * @param string[]|false[] $params
+     * @param string[]         $longopts
+     *
+     * @return void
+     */
     public function mergeLongOpts(&$params, &$longopts)
     {
         foreach ($longopts as $value) {
             $value = rtrim($value, ':');
-            if (isset($params[$value])) {
-                $params[$value[0]] = $params[$value];
+            if (! isset($params[$value])) {
+                continue;
             }
+
+            $params[$value[0]] = $params[$value];
         }
     }
 
+    /**
+     * @return void
+     */
     public function usageHighlight()
     {
         echo "Usage: highlight-query --query SQL [--format html|cli|text] [--ansi]\n";
         echo "       cat file.sql | highlight-query\n";
     }
 
+    /**
+     * @param string $opt
+     * @param array  $long
+     *
+     * @return string[]|false[]|false
+     */
     public function getopt($opt, $long)
     {
         return getopt($opt, $long);
     }
 
+    /**
+     * @return mixed|false
+     */
     public function parseHighlight()
     {
         $longopts = [
@@ -54,10 +76,7 @@ class CLI
             'format:',
             'ansi',
         ];
-        $params = $this->getopt(
-            'hq:f:a',
-            $longopts
-        );
+        $params = $this->getopt('hq:f:a', $longopts);
         if ($params === false) {
             return false;
         }
@@ -76,6 +95,9 @@ class CLI
         return $params;
     }
 
+    /**
+     * @return int
+     */
     public function runHighlight()
     {
         $params = $this->parseHighlight();
@@ -100,6 +122,7 @@ class CLI
         if (isset($params['a'])) {
             Context::setMode('ANSI_QUOTES');
         }
+
         if (isset($params['q'])) {
             echo Formatter::format(
                 $params['q'],
@@ -116,12 +139,18 @@ class CLI
         return 1;
     }
 
+    /**
+     * @return void
+     */
     public function usageLint()
     {
         echo "Usage: lint-query --query SQL [--ansi]\n";
         echo "       cat file.sql | lint-query\n";
     }
 
+    /**
+     * @return mixed
+     */
     public function parseLint()
     {
         $longopts = [
@@ -130,15 +159,15 @@ class CLI
             'context:',
             'ansi',
         ];
-        $params = $this->getopt(
-            'hq:c:a',
-            $longopts
-        );
+        $params = $this->getopt('hq:c:a', $longopts);
         $this->mergeLongOpts($params, $longopts);
 
         return $params;
     }
 
+    /**
+     * @return int
+     */
     public function runLint()
     {
         $params = $this->parseLint();
@@ -163,6 +192,7 @@ class CLI
                 $params['q'] = $stdIn;
             }
         }
+
         if (isset($params['a'])) {
             Context::setMode('ANSI_QUOTES');
         }
@@ -188,12 +218,18 @@ class CLI
         return 1;
     }
 
+    /**
+     * @return void
+     */
     public function usageTokenize()
     {
         echo "Usage: tokenize-query --query SQL [--ansi]\n";
         echo "       cat file.sql | tokenize-query\n";
     }
 
+    /**
+     * @return mixed
+     */
     public function parseTokenize()
     {
         $longopts = [
@@ -201,15 +237,15 @@ class CLI
             'query:',
             'ansi',
         ];
-        $params = $this->getopt(
-            'hq:a',
-            $longopts
-        );
+        $params = $this->getopt('hq:a', $longopts);
         $this->mergeLongOpts($params, $longopts);
 
         return $params;
     }
 
+    /**
+     * @return int
+     */
     public function runTokenize()
     {
         $params = $this->parseTokenize();
@@ -234,6 +270,7 @@ class CLI
         if (isset($params['a'])) {
             Context::setMode('ANSI_QUOTES');
         }
+
         if (isset($params['q'])) {
             $lexer = new Lexer($params['q'], false);
             foreach ($lexer->list->tokens as $idx => $token) {
@@ -258,6 +295,9 @@ class CLI
         return 1;
     }
 
+    /**
+     * @return string|false
+     */
     public function readStdin()
     {
         $read = [STDIN];

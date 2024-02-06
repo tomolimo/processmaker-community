@@ -6,10 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'UpdateHelper\\' => array($vendorDir . '/kylekatarnls/update-helper/src'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'ProcessMaker\\' => array($baseDir . '/workflow/engine/src'),
-    'Parsedown' => array($vendorDir . '/erusev/parsedown'),
     'OAuth2' => array($vendorDir . '/bshaffer/oauth2-server-php/src'),
     'Luracast\\Restler' => array($vendorDir . '/luracast/restler/vendor'),
     'Libchart\\' => array($vendorDir . '/libchart/libchart/libchart'),

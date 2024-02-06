@@ -121,11 +121,11 @@ class PEAR_Autoloader extends PEAR
             $include_file = preg_replace('/[^a-z0-9]/i', '_', $classname);
             include_once $include_file;
         }
-        $obj =& new $classname;
+        $obj = new $classname;
         $methods = get_class_methods($classname);
         foreach ($methods as $method) {
             // don't import priviate methods and constructors
-            if ($method{0} != '_' && $method != $classname) {
+            if ($method[0] != '_' && $method != $classname) {
                 $this->_method_map[$method] = $obj;
             }
         }
@@ -145,7 +145,7 @@ class PEAR_Autoloader extends PEAR
         $ok = false;
         $classname = strtolower($classname);
         reset($this->_method_map);
-        while (list($method, $obj) = each($this->_method_map)) {
+        foreach ($this->_method_map as $method => $obj) {
             if (is_object($obj) && get_class($obj) == $classname) {
                 unset($this->_method_map[$method]);
                 $ok = true;
@@ -168,7 +168,7 @@ class PEAR_Autoloader extends PEAR
      * @return mixed  The return value from the aggregated method, or a PEAR
      *                error if the called method was unknown.
      */
-    function __call($method, $args, &$retval)
+    function __call($method, $args)
     {
         if (empty($this->_method_map[$method]) && isset($this->_autoload_map[$method])) {
             $this->addAggregateObject($this->_autoload_map[$method]);

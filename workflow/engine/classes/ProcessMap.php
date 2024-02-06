@@ -142,22 +142,6 @@ class ProcessMap
                         $aRow2['FINISH'] = '';
                     }
 
-                    /*
-                      if (($aRow2['FINISH'] == null) && ($aRow1['TAS_UID'] == $sTask)) {
-                      $oTask->color = '#FF0000';
-                      } else {
-                      if ($aRow2['CANT'] != 0) {
-                      if ($aRow2['FINISH'] == null) {
-                      //$oTask->color = '#FF9900';
-                      $oTask->color = '#FF0000';
-                      } else {
-                      $oTask->color = '#006633';
-                      }
-                      } else {
-                      $oTask->color = "#939598";
-                      }
-                      }
-                     */
                     if (empty($aRow2["FINISH"]) && $aRow1["TAS_UID"] == $sTask) {
                         $oTask->color = "#FF0000"; //Red
                     } else {
@@ -1365,7 +1349,8 @@ class ProcessMap
              * Task Notifications *
              */
             if ($iForm == 7 || $iForm == 1) {
-                $files = Processes::getProcessFiles($aFields['PRO_UID'], 'mail');
+                $processes = new Processes();
+                $files = $processes->getProcessFiles($aFields['PRO_UID'], 'mail');
 
                 $templates = array();
                 $templates[] = 'dummy';
@@ -6795,7 +6780,7 @@ class ProcessMap
         return $aIDocs;
     }
 
-    public function getMaximunTaskX($processUid)
+    public static function getMaximunTaskX($processUid)
     {
         $criteria = new Criteria('workflow');
         $criteria->addSelectColumn('MAX(TAS_POSX) AS MAX_X');

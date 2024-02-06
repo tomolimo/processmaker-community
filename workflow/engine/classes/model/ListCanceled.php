@@ -2,6 +2,9 @@
 
 require_once 'classes/model/om/BaseListCanceled.php';
 
+/**
+ * @deprecated Class deprecated in Release 3.6.0
+ */
 class ListCanceled extends BaseListCanceled implements ListInterface
 {
     use ListBaseTrait;

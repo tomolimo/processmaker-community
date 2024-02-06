@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class EmailServerModel extends Model
 {
+    use HasFactory;
+
     protected $table = 'EMAIL_SERVER';
     public $timestamps = false;
 

@@ -192,7 +192,7 @@ Ext.onReady(function () {
                 fn: function (dv, nodes) {
                     var l = nodes.length;
                     var s = l != 1 ? 's' : '';
-                    panelLeft.setTitle(_('PHOTO_GALLERY') + '(' + l + ' ' + _('ID_IMAGE') + s + ' ' + _('ID_SELECTED') + ')');
+                    panelLeft.setTitle(_('PHOTO_GALLERY') + ' (' + l + ' ' + _('ID_IMAGE') + s + ' ' + _('ID_SELECTED') + ')');
                     if (nodes.length > 0) {
                         Ext.getCmp('tbarAply').enable();
                         Ext.getCmp('tbarDelete').enable();
@@ -220,7 +220,7 @@ Ext.onReady(function () {
         width: 520,
         autoHeight: true,
         layout: 'auto',
-        title: _('PHOTO_GALLERY') + '(0 ' + _('ID_IMAGES_SELECTED') + ')',
+        title: _('PHOTO_GALLERY') + ' (0 ' + _('ID_IMAGES_SELECTED') + ')',
         items: [tbar, datav]
     });
 

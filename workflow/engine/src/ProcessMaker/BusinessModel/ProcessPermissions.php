@@ -57,10 +57,10 @@ class ProcessPermissions
                     $aFields = $oTask->load($aRow['TAS_UID']);
                     $sTaskTarget = $aFields['TAS_TITLE'];
                 } catch (\Exception $oError) {
-                    $sTaskTarget = 'All Tasks';
+                    $sTaskTarget = G::LoadTranslation('ID_SELECT_ONE_OPTION');
                 }
             } else {
-                $sTaskTarget = G::LoadTranslation('ID_ANY_TASK');
+                $sTaskTarget = G::LoadTranslation('ID_SELECT_ONE_OPTION');
             }
             //Obtain user or group
             if ($aRow['OP_USER_RELATION'] == 1) {
@@ -87,7 +87,7 @@ class ProcessPermissions
                     $aFields = $oTask->load($aRow['OP_TASK_SOURCE']);
                     $sTaskSource = $aFields['TAS_TITLE'];
                 } catch (\Exception $oError) {
-                    $sTaskSource = 'All Tasks';
+                    $sTaskSource = G::LoadTranslation('ID_ANY_TASK');
                 }
             } else {
                 $sTaskSource = G::LoadTranslation('ID_ANY_TASK');

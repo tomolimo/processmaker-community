@@ -1,9 +1,10 @@
 <?php
 
+use ProcessMaker\Exception\RBACException;
+
 /**
  * HttpProxyController
  *
- * @author Erik Amaru Ortiz <erik@colosa.com, aortiz.erik@gmail.com>
  * @package gulliver.system
  * @access private
  */
@@ -39,7 +40,6 @@ class HttpProxyController
      */
     public function __set($name, $value)
     {
-        //echo "Setting '$name' to '$value'\n";
         $this->__data__[$name] = $value;
     }
 
@@ -51,18 +51,9 @@ class HttpProxyController
      */
     public function __get($name)
     {
-        //echo "Getting '$name'\n";
         if (array_key_exists($name, $this->__data__)) {
             return $this->__data__[$name];
         }
-
-        /*$trace = debug_backtrace();
-        trigger_error(
-            'Undefined property via __get(): ' . $name .
-            ' in ' . $trace[0]['file'] .
-            ' on line ' . $trace[0]['line'],
-            E_USER_NOTICE);
-        return null;*/
     }
 
     /**
@@ -72,7 +63,6 @@ class HttpProxyController
      */
     public function __isset($name)
     {
-        //echo "Is '$name' set?\n";
         return isset($this->__data__[$name]);
     }
 
@@ -105,6 +95,9 @@ class HttpProxyController
             if (! $result) {
                 $result = $this->__data__;
             }
+        } catch (RBACException $e) {
+            // If is a RBAC exception bubble up...
+            throw $e;
         } catch (Exception $e) {
             $result->success = false;
             $result->message = $result->msg = $e->getMessage();

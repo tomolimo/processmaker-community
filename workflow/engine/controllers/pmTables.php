@@ -94,10 +94,10 @@ class pmTables extends Controller
             if ($table['ADD_TAB_TYPE'] == 'NORMAL' || $table['ADD_TAB_TYPE'] == 'GRID') {
                 $repTabPluginPermissions = $this->_getSimpleReportPluginDef();
             }
-        }
 
-        if (preg_match("/^PMT_(.*)$/", $table['ADD_TAB_NAME'], $match)) {
-            $table['ADD_TAB_NAME'] = $match[1];
+            if (preg_match("/^PMT_(.*)$/", $table['ADD_TAB_NAME'], $match)) {
+                $table['ADD_TAB_NAME'] = $match[1];
+            }
         }
 
         $this->includeExtJS( 'pmTables/' . $jsFile );

@@ -924,7 +924,7 @@ class Phing {
         // This is a bit of a hack, but works better than previous solution of assuming
         // data_dir is on the include_path.
         $data_dir = '@DATA-DIR@';
-        if ($data_dir{0} != '@') { // if we're using PEAR then the @ DATA-DIR @ token will have been substituted.
+        if ($data_dir[0] != '@') { // if we're using PEAR then the @ DATA-DIR @ token will have been substituted.
             $data_path = $data_dir . DIRECTORY_SEPARATOR . $path;
             if (file_exists($data_path)) {
                    return $data_path;
@@ -1104,13 +1104,9 @@ class Phing {
      * @return void
      */
     private static function setIni() {
-        error_reporting(E_ALL);
         set_time_limit(0);
-        ini_set('magic_quotes_gpc', 'off');
         ini_set('short_open_tag', 'off');
         ini_set('default_charset', 'iso-8859-1');
-        ini_set('register_globals', 'off');
-        ini_set('allow_call_time_pass_reference', 'on');
     }
 
     /**

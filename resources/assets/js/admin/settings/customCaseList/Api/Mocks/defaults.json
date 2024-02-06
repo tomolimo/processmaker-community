@@ -1,0 +1,300 @@
+{
+    "inbox": [
+        {
+            "field": "case_number",
+            "name": "Case #",
+            "type": "integer",
+            "source": "APPLICATION",
+            "typeSearch": "integer range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "case_title",
+            "name": "Case Title",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "process_name",
+            "name": "Process Name",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "task",
+            "name": "Task",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "send_by",
+            "name": "**ID_SEND_BY**",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "due_date",
+            "name": "Due Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "delegation_date",
+            "name": "Delegation Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "priority",
+            "name": "Priority",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "option",
+            "enableFilter": false,
+            "set": true
+        }
+    ],
+    "draft": [
+        {
+            "field": "case_number",
+            "name": "Case #",
+            "type": "integer",
+            "source": "APPLICATION",
+            "typeSearch": "integer range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "case_title",
+            "name": "Case Title",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "process_name",
+            "name": "Process Name",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "task",
+            "name": "Task",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        }
+    ],
+    "paused": [
+        {
+            "field": "case_number",
+            "name": "Case #",
+            "type": "integer",
+            "source": "APPLICATION",
+            "typeSearch": "integer range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "case_title",
+            "name": "Case Title",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "process_name",
+            "name": "Process Name",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "task",
+            "name": "Task",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "send_by",
+            "name": "**ID_SEND_BY**",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "due_date",
+            "name": "Due Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "delegation_date",
+            "name": "Delegation Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "priority",
+            "name": "Priority",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "option",
+            "enableFilter": false,
+            "set": true
+        }
+    ],
+    "inbox": [
+        {
+            "field": "case_number",
+            "name": "Case #",
+            "type": "integer",
+            "source": "APPLICATION",
+            "typeSearch": "integer range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "case_title",
+            "name": "Case Title",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "process_name",
+            "name": "Process Name",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "task",
+            "name": "Task",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "send_by",
+            "name": "**ID_SEND_BY**",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "due_date",
+            "name": "Due Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "delegation_date",
+            "name": "Delegation Date",
+            "type": "date",
+            "source": "APPLICATION",
+            "typeSearch": "date range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "priority",
+            "name": "Priority",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "option",
+            "enableFilter": false,
+            "set": true
+        }
+    ],
+    "unassigned": [
+        {
+            "field": "case_number",
+            "name": "Case #",
+            "type": "integer",
+            "source": "APPLICATION",
+            "typeSearch": "integer range",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "case_title",
+            "name": "Case Title",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "process_name",
+            "name": "Process Name",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        },
+        {
+            "field": "task",
+            "name": "Task",
+            "type": "string",
+            "source": "APPLICATION",
+            "typeSearch": "search text",
+            "enableFilter": false,
+            "set": true
+        }
+    ]
+}

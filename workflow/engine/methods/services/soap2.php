@@ -1,5 +1,6 @@
 <?php
 
+use ProcessMaker\Core\System;
 use ProcessMaker\Util\ParseSoapVariableName;
 use ProcessMaker\Util\DateTime;
 
@@ -9,6 +10,25 @@ define('WEB_SERVICE_VERSION', '2.0');
 
 //$wsdl = PATH_METHODS . "services" . PATH_SEP . "pmos.wsdl";
 $wsdl = PATH_METHODS . "services" . PATH_SEP . "pmos2.wsdl";
+
+/**
+ * Sets the user's timezone in the session variable
+ * 
+ * @param string $userUid
+ * @return void
+ */
+function setUserTimezone($userUid)
+{
+    $user = UsersPeer::retrieveByPK($userUid);
+    if (!is_null($user)) {
+        $userTimeZone = $user->getUsrTimeZone();
+        if (trim($userTimeZone) === '') {
+            $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
+            $userTimeZone = $arraySystemConfiguration['time_zone'];
+        }
+        $_SESSION['USR_TIME_ZONE'] = $userTimeZone;
+    }
+}
 
 function login($params)
 {
@@ -50,6 +70,8 @@ function ProcessList($params)
         $oSessions = new Sessions();
         $session = $oSessions->getSessionUser($params->sessionId);
         $userId = $session['USR_UID'];
+
+        setUserTimezone($userId);
 
         $ws = new WsBase();
         $res = $ws->processListVerified($userId);
@@ -162,6 +184,8 @@ function CaseList($params)
     $oSessions = new Sessions();
     $session = $oSessions->getSessionUser($params->sessionId);
     $userId = $session['USR_UID'];
+    
+    setUserTimezone($userId);
 
     $ws = new WsBase();
     $res = $ws->caseList($userId);
@@ -191,6 +215,8 @@ function UnassignedCaseList($params)
     $oSessions = new Sessions();
     $session = $oSessions->getSessionUser($params->sessionId);
     $userId = $session['USR_UID'];
+
+    setUserTimezone($userId);
 
     $ws = new WsBase();
     $res = $ws->unassignedCaseList($userId);
@@ -284,6 +310,8 @@ function outputDocumentList($params)
     $session = $oSessions->getSessionUser($params->sessionId);
     $userId = $session['USR_UID'];
 
+    setUserTimezone($userId);
+
     $ws = new WsBase();
     $res = $ws->outputDocumentList($params->caseId, $userId);
 
@@ -325,6 +353,8 @@ function inputDocumentList($params)
     $oSessions = new Sessions();
     $session = $oSessions->getSessionUser($params->sessionId);
     $userId = $session['USR_UID'];
+
+    setUserTimezone($userId);
 
     $ws = new WsBase();
     $res = $ws->inputDocumentList($params->caseId, $userId);
@@ -541,6 +571,8 @@ function DerivateCase($params)
     $oStd->stored_system_variables = true;
     $oStd->wsSessionId = $params->sessionId;
 
+    setUserTimezone($user["USR_UID"]);
+
     $ws = new WsBase($oStd);
     $res = $ws->derivateCase($user["USR_UID"], $params->caseId, $params->delIndex, true);
 
@@ -569,6 +601,8 @@ function RouteCase($params)
     $oStd->stored_system_variables = true;
     $oStd->wsSessionId = $params->sessionId;
 
+    setUserTimezone($user["USR_UID"]);
+
     $ws = new WsBase($oStd);
     $res = $ws->derivateCase($user["USR_UID"], $params->caseId, $params->delIndex, true);
 
@@ -591,6 +625,8 @@ function executeTrigger($params)
 
     $oSession = new Sessions();
     $user = $oSession->getSessionUser($params->sessionId);
+
+    setUserTimezone($user["USR_UID"]);
 
     $ws = new WsBase();
     $delIndex = (isset($params->delIndex)) ? $params->delIndex : 1;
@@ -696,6 +732,8 @@ function NewCase($params)
 
     $params->variables = $field;
 
+    setUserTimezone($userId);
+
     $ws = new WsBase();
 
     $res = $ws->newCase($params->processId, $userId, $params->taskId, $params->variables, (isset($params->executeTriggers)) ? (int) ($params->executeTriggers) : 0);
@@ -727,6 +765,8 @@ function AssignUserToGroup($params)
         return new WsResponse(3, 'User not registered in the system');
     }
 
+    setUserTimezone($user["USR_UID"]);
+
     $ws = new WsBase();
     $res = $ws->assignUserToGroup($params->userId, $params->groupId);
 
@@ -753,6 +793,8 @@ function AssignUserToDepartment($params)
     if (!is_array($user)) {
         return new WsResponse(3, G::LoadTranslation('ID_USER_NOT_REGISTERED_SYSTEM'));
     }
+
+    setUserTimezone($user["USR_UID"]);
 
     $ws = new WsBase();
     $res = $ws->AssignUserToDepartment($params->userId, $params->departmentId, $params->manager);
@@ -799,6 +841,8 @@ function updateUser($params)
         return $result;
     }
 
+    setUserTimezone($params->userUid);
+
     $ws = new WsBase();
 
     $result = $ws->updateUser($params->userUid, $params->userName, ((isset($params->firstName)) ? $params->firstName : null), ((isset($params->lastName)) ? $params->lastName : null), ((isset($params->email)) ? $params->email : null), ((isset($params->dueDate)) ? $params->dueDate : null), ((isset($params->status)) ? $params->status : null), ((isset($params->role)) ? $params->role : null), ((isset($params->password)) ? $params->password : null));
@@ -819,6 +863,8 @@ function informationUser($params)
 
         return $result;
     }
+
+    setUserTimezone($params->userUid);
 
     $ws = new WsBase();
     $result = $ws->informationUser($params->userUid);
@@ -890,6 +936,7 @@ function TaskList($params)
     $oSessions = new Sessions();
     $session = $oSessions->getSessionUser($params->sessionId);
     $userId = $session['USR_UID'];
+    setUserTimezone($userId);
     $res = $ws->taskList($userId);
 
     return array("tasks" => $res);
@@ -961,6 +1008,8 @@ function getCaseNotes($params)
         return $vsResult;
     }
 
+    setUserTimezone($params->userUid);
+
     $ws = new WsBase();
     $res = $ws->getCaseNotes($params->applicationID, $params->userUid);
 
@@ -1014,6 +1063,8 @@ function ifPermission($sessionId, $permission)
     $oSession = new Sessions();
     $user = $oSession->getSessionUser($sessionId);
 
+    setUserTimezone($user["USR_UID"]);
+
     $oRBAC = RBAC::getSingleton();
     $oRBAC->loadUserRolePermission($oRBAC->sSystem, $user['USR_UID']);
     $sw = $oRBAC->userCanAccess($permission) === 1 ? 1 : 0;
@@ -1055,6 +1106,8 @@ function cancelCase($params)
         return $result;
     }
 
+    setUserTimezone($params->userUid);
+
     $ws = new WsBase();
     $result = $ws->cancelCase($params->caseUid, $params->delIndex, $params->userUid);
 
@@ -1074,6 +1127,8 @@ function pauseCase($params)
 
         return $result;
     }
+
+    setUserTimezone($params->userUid);
 
     $ws = new WsBase();
 
@@ -1096,6 +1151,8 @@ function unpauseCase($params)
         return $result;
     }
 
+    setUserTimezone($params->userUid);
+
     $ws = new WsBase();
     $result = $ws->unpauseCase($params->caseUid, $params->delIndex, $params->userUid);
 
@@ -1115,6 +1172,8 @@ function addCaseNote($params)
 
         return $result;
     }
+
+    setUserTimezone($params->userUid);
 
     $ws = new WsBase();
     $result = $ws->addCaseNote(
@@ -1139,6 +1198,8 @@ function claimCase($params)
 
     $oSessions = new Sessions();
     $session = $oSessions->getSessionUser($params->sessionId);
+
+    setUserTimezone($session["USR_UID"]);
 
     $ws = new WsBase();
     $res = $ws->claimCase($session['USR_UID'], $params->guid, $params->delIndex);

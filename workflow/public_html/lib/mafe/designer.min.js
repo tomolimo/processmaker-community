@@ -294,6 +294,7 @@ PMDesigner.remoteUrl = "";
 PMDesigner.moddle = new BpmnModdle();
 PMDesigner.bpmnFactory = new BpmnFactory(PMDesigner.moddle);
 PMDesigner.keyCodeF5 = 116;
+PMDesigner.autoSave = true;
 PMDesigner.shapeProperties = function (shape) {
     var typeShape = shape.type;
     switch (typeShape) {
@@ -338,7 +339,7 @@ LANG = (typeof SYS_LANG !== "undefined") ? SYS_LANG : enviromentVariables('LANG'
 WORKSPACE = (typeof SYS_SYS !== "undefined") ? SYS_SYS : enviromentVariables('WORKSPACE');
 SKIN = (typeof SYS_SKIN !== "undefined") ? SYS_SKIN : enviromentVariables('SKIN');
 
-DEFAULT_WINDOW_WIDTH = 943;
+DEFAULT_WINDOW_WIDTH = 1093;
 DEFAULT_WINDOW_HEIGHT = 520;
 ENABLED_FEATURES = [];
 
@@ -614,7 +615,6 @@ jQuery(document).ready(function ($) {
                     startTimerEvent: {}
                 };
                 self.updateIdentifiers(response);
-                PMDesigner.connectValidator.bpmnValidator();
                 //if (PMDesigner.currentMsgFlash) {
                 PMDesigner.msgFlash('The process was saved successfully.'.translate(), document.body, 'success', 3000, 5);
                 PMDesigner.RoutingRuleSetOrder();
@@ -670,6 +670,7 @@ jQuery(document).ready(function ($) {
     PMDesigner.connectValidator = new ConnectValidator();
     for (d = 0; d < PMDesigner.sidebar.length; d += 1) {
         PMDesigner.sidebar[d].activate();
+        PMDesigner.sidebar[d].enableActions();
     }
 
     $('.bpmn_shapes_legend').hide();
@@ -984,7 +985,7 @@ jQuery(document).ready(function ($) {
      ==============================================*/
     PMDesigner.project.setSaveInterval(40000);
     setInterval(function () {
-        if (PMDesigner.project.isDirty() && PMDesigner.project.readOnly === false) {
+        if (PMDesigner.autoSave && PMDesigner.project.isDirty() && PMDesigner.project.readOnly === false) {
             PMDesigner.project.remoteProxy.setUrl(HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + prj_uid);
             PMDesigner.msgFlash('Saving Process'.translate(), document.body, 'success', 5000, 5);
             PMDesigner.project.save(true);
@@ -1391,7 +1392,7 @@ PMDesigner.msgFlash = function (text, container, severity, duration, zorder) {
     msg.setAppendTo(container || document.body);
     msg.setSeverity(severity || "success");
     msg.setDuration(duration || 3000);
-    msg.setZOrder(zorder || 100);
+    msg.setZOrder(zorder || 200);
     msg.show();
     PMDesigner.currentMsgFlash = msg;
 };
@@ -1478,7 +1479,12 @@ PMDesigner.modeReadOnly = function () {
 PMDesigner.reloadDataTable = function () {
     $('.bpmn_validator').css('visibility', 'visible');
 };
-
+/**
+ * Disable the autosave feature
+ */
+PMDesigner.autoSaveValue = function (value) {
+    PMDesigner.autoSave = value;
+};
 /**
  * Escape XML characters method.
  * There are only five:
@@ -5053,9 +5059,10 @@ PMDesigner.sidebar = [];
 
 PMDesigner.sidebar.push(
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'TASK',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-task'
@@ -5064,6 +5071,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'SUB_PROCESS',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-subprocess'
@@ -5073,9 +5081,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'EXCLUSIVE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-exclusive'
@@ -5084,6 +5093,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'PARALLEL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-parallel'
@@ -5092,6 +5102,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INCLUSIVE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-inclusive'
@@ -5101,9 +5112,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'START',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-start'
@@ -5112,6 +5124,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'START_TIMER',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-event-start-timer'
@@ -5120,6 +5133,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INTERMEDIATE_EMAIL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-intermediate-send-mesage'
@@ -5128,6 +5142,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INTERMEDIATE_TIMER',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-event-intermediate-timer'
@@ -5136,6 +5151,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'END',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-end'
@@ -5144,6 +5160,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'END_EMAIL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-end-message'
@@ -5153,9 +5170,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'DATAOBJECT',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-data-object'
@@ -5164,6 +5182,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'DATASTORE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-data-store'
@@ -5173,9 +5192,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'PARTICIPANT',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-blackbox'
@@ -5184,6 +5204,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'POOL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-pool'
@@ -5192,6 +5213,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'LANE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-lane'
@@ -5201,9 +5223,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'GROUP',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-group'
@@ -5212,6 +5235,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'TEXT_ANNOTATION',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-annotation'
@@ -5221,9 +5245,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'LASSO',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-lasso'
@@ -5232,6 +5257,23 @@ PMDesigner.sidebar.push(
             }
 
         ]
+    }),
+    new ToolbarPanel({
+        fields: [
+            {
+                selector: 'enableAutosave',
+                type: 'switch',
+                className: [
+                    'mafe-toolbar-autosave'
+                ],
+                tooltip: "Validate Now".translate(),
+                checked: true,
+                text: "Auto Save".translate(),
+                checkHandler: function (value) {
+                    PMDesigner.autoSaveValue(value);
+                }
+            }
+        ]  
     })
 );
 ListDynaform = function () {
@@ -9599,8 +9641,27 @@ InputDocument.prototype.build = function () {
             gridOutput,
             winMainOutputDocument,
             btnSaveTiny,
-            listOutputDocs;
-
+            listOutputDocs,
+            headerSettings,
+            footerSettings,
+            changeType,
+            setMinValue,
+            getFieldById;
+    
+        /**
+         * Get field by id string, if not found return null.
+         * @param {string} id
+         * @returns {object}
+         */
+        getFieldById = function (id) {
+            var fields = formOutput.getFields();
+            for (var i in fields) {
+                if (fields[i].id === id) {
+                    return fields[i];
+                }
+            }
+            return null;
+        };
 
         setDataRow = function (row) {
             dataOutPutDocument = row.getData();
@@ -9726,11 +9787,14 @@ InputDocument.prototype.build = function () {
             btnCloseWindowOutputDoc.setVisible(true);
             winMainOutputDocument.footer.getItems()[2].setVisible(true);
             password.setVisible(false);
+            headerSettings.setVisible(false);
+            footerSettings.setVisible(false);
+            footerSettings.getField('total_number_page_footer').disable();
+            headerSettings.getField('total_number_page_header').disable();
             winMainOutputDocument.setTitle("Create Output Document".translate());
             winMainOutputDocument.setHeight(520);
             formOutput.panel.style.addProperties({padding: '20px 10px'});
             formOutput.setFocus();
-
         };
 
         openFormForEditInMainWindow = function (outputDocumentData) {
@@ -9750,40 +9814,101 @@ InputDocument.prototype.build = function () {
             }
 
             password.setVisible(false);
+            headerSettings.setVisible(false);
+            footerSettings.setVisible(false);
             if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                 var dataEdit = formOutput.getFields();
-                dataEdit[0].setValue(dataOutPutDocument['out_doc_title']);
-                dataEdit[1].setValue(dataOutPutDocument['out_doc_filename']);
-                dataEdit[2].setValue(dataOutPutDocument['out_doc_description']);
-                dataEdit[3].setValue(dataOutPutDocument['out_doc_report_generator']);
-                dataEdit[4].setValue(dataOutPutDocument['out_doc_media']);
-                dataEdit[5].setValue(dataOutPutDocument['out_doc_landscape']);
-                dataEdit[6].setValue(dataOutPutDocument['out_doc_left_margin']);
-                dataEdit[7].setValue(dataOutPutDocument['out_doc_right_margin']);
-                dataEdit[8].setValue(dataOutPutDocument['out_doc_top_margin']);
-                dataEdit[9].setValue(dataOutPutDocument['out_doc_bottom_margin']);
-                dataEdit[10].setValue(dataOutPutDocument['out_doc_generate']);
+                getFieldById('outputDocTitle').setValue(dataOutPutDocument['out_doc_title']);
+                getFieldById('outputDocFilenameGenerated').setValue(dataOutPutDocument['out_doc_filename']);
+                getFieldById('outputDocDescription').setValue(dataOutPutDocument['out_doc_description']);
+                getFieldById('outputDocReportGenerator').setValue(dataOutPutDocument['out_doc_report_generator']);
+                getFieldById('outputDocMedia').setValue(dataOutPutDocument['out_doc_media']);
+                getFieldById('outputDocOrientation').setValue(dataOutPutDocument['out_doc_landscape']);
+                getFieldById('outputDocMarginLeft').setValue(dataOutPutDocument['out_doc_left_margin']);
+                getFieldById('outputDocMarginRight').setValue(dataOutPutDocument['out_doc_right_margin']);
+                getFieldById('outputDocMarginTop').setValue(dataOutPutDocument['out_doc_top_margin']);
+                getFieldById('outputDocMarginBottom').setValue(dataOutPutDocument['out_doc_bottom_margin']);
+                getFieldById('outputDocToGenerate').setValue(dataOutPutDocument['out_doc_generate']);
 
-                if (dataOutPutDocument["out_doc_generate"] != "DOC") {
-                    dataEdit[11].setVisible(true);
-                } else {
-                    dataEdit[11].setVisible(false);
+                //Set data in header settings
+                if (dataOutPutDocument['out_doc_header'] !== "[]") {
+                    getFieldById('enableHeader').setValue(dataOutPutDocument['out_doc_header'].enableHeader ? '["1"]' : '0');
+                    dataOutPutDocument['out_doc_header'].enableHeader ? headerSettings.setVisible(true) : headerSettings.setVisible(false);
+                    getFieldById('headerTitle').setValue(dataOutPutDocument['out_doc_header'].title);
+                    getFieldById('fontSizeHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontSize);
+                    getFieldById('positionXTitleHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontPositionX);
+                    getFieldById('positionYTitleHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontPositionY);
+                    getFieldById('headerLogo').setValue(dataOutPutDocument['out_doc_header'].logo);
+                    getFieldById('logoWidthHeader').setValue(dataOutPutDocument['out_doc_header'].logoWidth);
+                    getFieldById('positionXLogoHeader').setValue(dataOutPutDocument['out_doc_header'].logoPositionX);
+                    getFieldById('positionYLogoHeader').setValue(dataOutPutDocument['out_doc_header'].logoPositionY);
+                    getFieldById('pageNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumber ? '["1"]' : '0');
+                    getFieldById('paginationTitleHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberTitle);
+                    getFieldById('totalNumberPageHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberTotal ? '["1"]' : '0');
+                    getFieldById('positionXNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberPositionX);
+                    getFieldById('positionYNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberPositionY);
+                    if (getFieldById('pageNumberHeader').getValue() === '["1"]') {
+                        getFieldById('paginationTitleHeader').enable();
+                        getFieldById('totalNumberPageHeader').enable();
+                        getFieldById('positionXNumberHeader').enable();
+                        getFieldById('positionYNumberHeader').enable();
+                    } else {
+                        getFieldById('paginationTitleHeader').disable();
+                        getFieldById('totalNumberPageHeader').disable();
+                        getFieldById('positionXNumberHeader').disable();
+                        getFieldById('positionYNumberHeader').disable();
+                    }
+                }
+                //Set data in footer settings
+                if (dataOutPutDocument['out_doc_header'] !== "[]") {
+                    getFieldById('enableFooter').setValue(dataOutPutDocument['out_doc_footer'].enableFooter ? '["1"]' : '0');
+                    dataOutPutDocument['out_doc_footer'].enableFooter ? footerSettings.setVisible(true) : footerSettings.setVisible(false);
+                    getFieldById('footerTitle').setValue(dataOutPutDocument['out_doc_footer'].title);
+                    getFieldById('fontSizeFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontSize);
+                    getFieldById('positionXTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontPositionX);
+                    getFieldById('positionYTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontPositionY);
+                    getFieldById('footerLogo').setValue(dataOutPutDocument['out_doc_footer'].logo);
+                    getFieldById('logoWidthFooter').setValue(dataOutPutDocument['out_doc_footer'].logoWidth);
+                    getFieldById('positionXLogoFooter').setValue(dataOutPutDocument['out_doc_footer'].logoPositionX);
+                    getFieldById('positionYLogoFooter').setValue(dataOutPutDocument['out_doc_footer'].logoPositionY);
+                    getFieldById('pageNumerFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumber ? '["1"]' : '0');
+                    getFieldById('paginationTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberTitle);
+                    getFieldById('totalNumberPageFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberTotal ? '["1"]' : '0');
+                    getFieldById('positionXNumberFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberPositionX);
+                    getFieldById('positionYNumberFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberPositionY);
+                    if (getFieldById('pageNumerFooter').getValue() === '["1"]') {
+                        getFieldById('paginationTitleFooter').enable();
+                        getFieldById('totalNumberPageFooter').enable();
+                        getFieldById('positionXNumberFooter').enable();
+                        getFieldById('positionYNumberFooter').enable();
+                    } else {
+                        getFieldById('paginationTitleFooter').disable();
+                        getFieldById('totalNumberPageFooter').disable();
+                        getFieldById('positionXNumberFooter').disable();
+                        getFieldById('positionYNumberFooter').disable();
+                    }
                 }
 
-                dataEdit[11].setValue(dataOutPutDocument['out_doc_pdf_security_enabled']);
+                if (dataOutPutDocument["out_doc_generate"] != "DOC") {
+                    getFieldById('outputDocDPFSecurity').setVisible(true);
+                } else {
+                    getFieldById('outputDocDPFSecurity').setVisible(false);
+                }
+
+                getFieldById('outputDocDPFSecurity').setValue(dataOutPutDocument['out_doc_pdf_security_enabled']);
                 if (dataOutPutDocument['out_doc_pdf_security_enabled'] != 0) {
                     password.setVisible(true);
                 }
-                dataEdit[12].setValue(dataOutPutDocument['out_doc_pdf_security_open_password']);
-                dataEdit[13].setValue(dataOutPutDocument['out_doc_pdf_security_owner_password']);
+                getFieldById('outputFormDocPdfSecurityOpen').setValue(dataOutPutDocument['out_doc_pdf_security_open_password']);
+                getFieldById('outputFormDocPdfSecurityOwner').setValue(dataOutPutDocument['out_doc_pdf_security_owner_password']);
 
                 dataOutPutDocument['out_doc_pdf_security_permissions'] = dataOutPutDocument['out_doc_pdf_security_permissions'].split("|");
-                dataEdit[14].setValue(JSON.stringify(dataOutPutDocument['out_doc_pdf_security_permissions']));
+                getFieldById('outputFormDocPdfSecurityPermissions').setValue(JSON.stringify(dataOutPutDocument['out_doc_pdf_security_permissions']));
 
-                dataEdit[15].setValue(dataOutPutDocument['out_doc_versioning']);
-                dataEdit[16].setValue(dataOutPutDocument['out_doc_destination_path']);
-                dataEdit[17].setValue(dataOutPutDocument['out_doc_tags']);
-                dataEdit[18].setValue(dataOutPutDocument["out_doc_open_type"]);
+                getFieldById('outputDocEnableVersioning').setValue(dataOutPutDocument['out_doc_versioning']);
+                getFieldById('outputDocDestinationPath').setValue(dataOutPutDocument['out_doc_destination_path']);
+                getFieldById('outputDocTags').setValue(dataOutPutDocument['out_doc_tags']);
+                getFieldById('outputDocGenerateFileLink').setValue(dataOutPutDocument["out_doc_open_type"]);
             }
             winMainOutputDocument.setHeight(520);
             formOutput.panel.style.addProperties({padding: '20px 10px'});
@@ -9802,8 +9927,8 @@ InputDocument.prototype.build = function () {
             disableAllItems();
             winMainOutputDocument.showFooter();
             tinyEditorField = 13;
-            winMainOutputDocument.getItems()[1].setVisible(true);
-            winMainOutputDocument.getItems()[1].getItems()[tinyEditorField].setVisible(true);
+            formOutput.setVisible(true);
+            formOutput.getItems()[tinyEditorField].setVisible(true);
             formOutput.setWidth(890);
             btnSaveTiny.setVisible(true);
             btnCancelTiny.setVisible(true);
@@ -9818,12 +9943,12 @@ InputDocument.prototype.build = function () {
             winMainOutputDocument.setTitle("Edit Output Document".translate());
             if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                 dataOutPutDocument['out_doc_template'] = (dataOutPutDocument['out_doc_template'] != null) ? dataOutPutDocument['out_doc_template'] : ' ';
-                dataEdit[19].setValue(dataOutPutDocument['out_doc_template']);
-                dataEdit[19].setValueTiny(dataOutPutDocument['out_doc_template']);
-                dataEdit[19].setHeight(425);
+                dataEdit[47].setValue(dataOutPutDocument['out_doc_template']);
+                dataEdit[47].setValueTiny(dataOutPutDocument['out_doc_template']);
+                dataEdit[47].setHeight(425);
 
-                dataEdit[18].setVisible(false);
-                dataEdit[19].setVisible(true);
+                formOutput.getItems()[13].setVisible(false)
+                dataEdit[47].setVisible(true);
             }
             formOutput.panel.style.addProperties({padding: '0px 10px'});
             winMainOutputDocument.setHeight(520);
@@ -9923,10 +10048,20 @@ InputDocument.prototype.build = function () {
             layout: 'hbox',
             legend: "Margin".translate(),
             items: [
-                {
-                    pmType: 'panel',
-                    proportion: 0.7
-                },
+                new PMUI.form.FormPanel({
+                    fieldset: true,
+                    layout: "box",
+                    proportion: 0.6,
+                    padding: "5px 5px",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: true,
+                            height: 200,
+                            width: 170,
+                            borderWidth : "3px",
+                        })
+                    ]
+                }),
                 {
                     pmType: "panel",
                     layout: 'vbox',
@@ -10059,6 +10194,472 @@ InputDocument.prototype.build = function () {
             ],
             layout: "vbox"
         });
+
+        /**
+         * Header Settings
+         */
+        headerSettings = new PMUI.form.FormPanel({
+            fieldset: true,
+            layout: 'vbox',
+            name: "header_settings",
+            legend: "Header Settings".translate(),
+            items: [
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'headerTitle',
+                            pmType: "text",
+                            name: 'header_title',
+                            label: "Header Title".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'fontSizeHeader',
+                            pmType: "text",
+                            label: "Font Size".translate(),
+                            required: false,
+                            value: 8,
+                            name: "font_size_header",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2,
+                            onChange: function (newVal, oldVal) {
+                                if (newVal <= 7 || newVal >= 73) {
+                                    this.setValue(oldVal);
+                                }
+                            }
+                        },
+                        {
+                            id: 'positionXTitleHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_title_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYTitleHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_title_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'headerLogo',
+                            pmType: "text",
+                            name: 'header_logo',
+                            label: "Header Logo".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'logoWidthHeader',
+                            pmType: "text",
+                            label: "Logo Width".translate(),
+                            required: false,
+                            value: 0,
+                            name: "logo_width_header",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2
+                        },
+                        {
+                            id: 'positionXLogoHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_logo_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYLogoHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_logo_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: "hbox",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: false,
+                            layout: 'hbox',
+                            legend: "Header Settings".translate(),
+                            proportion: 3,
+                            fontSize: 10,
+                            padding: 0,
+                            items: [
+                                new SwitchField({
+                                    id: 'pageNumberHeader',
+                                    labelWidth: "50%",
+                                    label: "Page Number".translate(),
+                                    name: "page_number_header",
+                                    value: '1',
+                                    controlsWidth: 54,
+                                    proportion: 0.45,
+                                    controlPositioning: 'vertical',
+                                    options: [
+                                        {
+                                            id: 'pageNumberOptionHeader',
+                                            disabled: false,
+                                            value: '1',
+                                            selected: false
+                                        }
+                                    ],
+                                    onChange: function (newVal, oldVal) {
+                                        if (newVal === '["1"]') {
+                                            headerSettings.getField('pagination_title_header').updateDisabled(false);
+                                            headerSettings.getField('total_number_page_header').enable();
+                                            getFieldById('totalNumberPageHeader').enable();
+                                            getFieldById('positionXNumberHeader').enable();
+                                            getFieldById('positionYNumberHeader').enable();
+                                        } else {
+                                            headerSettings.getField('pagination_title_header').updateDisabled(true);
+                                            headerSettings.getField('total_number_page_header').disable();
+                                            getFieldById('totalNumberPageHeader').disable();
+                                            getFieldById('positionXNumberHeader').disable();
+                                            getFieldById('positionYNumberHeader').disable();
+                                        }
+                                    }
+                                }),
+                                new CriteriaField({
+                                    id: 'paginationTitleHeader',
+                                    pmType: "text",
+                                    name: 'pagination_title_header',
+                                    label: "Pagination Title".translate(),
+                                    labelWidth: '27%',
+                                    controlsWidth: 170,
+                                    required: false,
+                                    disabled: true
+                                }),
+                            ]
+                        }),
+                        new SwitchField({
+                            id: 'totalNumberPageHeader',
+                            labelWidth: "60%",
+                            label: "Total Number of Pages".translate(),
+                            name: "total_number_page_header",
+                            value: '1',
+                            controlPositioning: 'vertical',
+                            controlsWidth: 54,
+                            proportion: 1.2,
+                            options: [
+                                {
+                                    id: 'totalNumberPageOptionHeader',
+                                    disabled: false,
+                                    value: '1',
+                                    selected: false
+                                }
+                            ],
+                            onChange: function (newVal, oldVal) {
+                            }
+                        }),
+                        {
+                            id: 'positionXNumberHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_number_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                        {
+                            id: 'positionYNumberHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_number_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                    ]
+                }
+            ]
+        });
+
+        /**
+         * Footer settings
+         */
+        footerSettings = new PMUI.form.FormPanel({
+            fieldset: true,
+            layout: 'vbox',
+            name: "footer_settings",
+            legend: "Footer Settings".translate(),
+            items: [
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'footerTitle',
+                            pmType: "text",
+                            name: 'footer_title',
+                            label: "Footer Title".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'fontSizeFooter',
+                            pmType: "text",
+                            label: "Font Size".translate(),
+                            required: false,
+                            value: 8,
+                            name: "font_size_footer",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2,
+                            onChange: function (newVal, oldVal) {
+                                if (newVal <= 7 || newVal >= 73) {
+                                    this.setValue(oldVal);
+                                }
+                            }
+                        },
+                        {
+                            id: 'positionXTitleFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_title_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYTitleFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_title_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'footerLogo',
+                            pmType: "text",
+                            name: 'footer_logo',
+                            label: "Footer Logo".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'logoWidthFooter',
+                            pmType: "text",
+                            label: "Logo Width".translate(),
+                            required: false,
+                            value: 0,
+                            name: "logo_width_footer",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2
+                        },
+                        {
+                            id: 'positionXLogoFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_logo_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYLogoFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_logo_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: "hbox",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: false,
+                            layout: 'hbox',
+                            legend: "Footer Settings".translate(),
+                            proportion: 3,
+                            fontSize: 10,
+                            padding: 0,
+                            items: [
+                                new SwitchField({
+                                    id: 'pageNumerFooter',
+                                    labelWidth: "50%",
+                                    label: "Page Number".translate(),
+                                    name: "page_number_footer",
+                                    value: '1',
+                                    controlsWidth: 54,
+                                    proportion: 0.45,
+                                    controlPositioning: 'vertical',
+                                    options: [
+                                        {
+                                            id: 'pageNumberOptionFooter',
+                                            disabled: false,
+                                            value: '1',
+                                            selected: false
+                                        }
+                                    ],
+                                    onChange: function (newVal, oldVal) {
+                                        if (newVal === '["1"]') {
+                                            footerSettings.getField('pagination_title_footer').updateDisabled(false);
+                                            footerSettings.getField('total_number_page_footer').enable();
+                                            getFieldById('totalNumberPageFooter').enable();
+                                            getFieldById('positionXNumberFooter').enable();
+                                            getFieldById('positionYNumberFooter').enable();
+                                        } else {
+                                            footerSettings.getField('pagination_title_footer').updateDisabled(true);
+                                            footerSettings.getField('total_number_page_footer').disable();
+                                            getFieldById('totalNumberPageFooter').disable();
+                                            getFieldById('positionXNumberFooter').disable();
+                                            getFieldById('positionYNumberFooter').disable();
+                                        }
+                                    }
+                                }),
+                                new CriteriaField({
+                                    id: 'paginationTitleFooter',
+                                    pmType: "text",
+                                    name: 'pagination_title_footer',
+                                    label: "Pagination Title".translate(),
+                                    labelWidth: '27%',
+                                    controlsWidth: 170,
+                                    required: false,
+                                    disabled: true
+                                }),
+                            ]
+                        }),
+                        new SwitchField({
+                            id: 'totalNumberPageFooter',
+                            labelWidth: "60%",
+                            label: "Total Number of Pages".translate(),
+                            name: "total_number_page_footer",
+                            value: '1',
+                            controlPositioning: 'vertical',
+                            controlsWidth: 54,
+                            proportion: 1.2,
+                            options: [
+                                {
+                                    id: 'totalNumberPageOptionFooter',
+                                    disabled: false,
+                                    value: '1',
+                                    selected: false
+                                }
+                            ],
+                            onChange: function (newVal, oldVal) {
+                            }
+                        }),
+                        {
+                            id: 'positionXNumberFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_number_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                        {
+                            id: 'positionYNumberFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_number_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                    ]
+                }
+            ]
+        });
+
+        /**
+         * Change the type of control
+         */
+        changeType = function () {
+            headerSettings.getField('font_size_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_title_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_title_header').getControl().getHTML().type = "number";
+            headerSettings.getField('logo_width_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_logo_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_logo_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_number_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_number_header').getControl().getHTML().type = "number";
+            footerSettings.getField('font_size_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_title_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_title_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('logo_width_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_logo_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_logo_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_number_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_number_footer').getControl().getHTML().type = "number";
+        };
+
+        /**
+         * Set a minimum value to avoid entering negative numbers
+         */
+        setMinValue = function () {
+            headerSettings.getField('position_x_title_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_title_header').getControl().getHTML().min = "0";
+            headerSettings.getField('logo_width_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_x_logo_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_logo_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_x_number_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_number_header').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_title_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_title_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('logo_width_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_logo_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_logo_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_number_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_number_footer').getControl().getHTML().min = "0";
+        };
 
         //Field "PDF security"
         outputFormDocPdfSecurityEnabled = new PMUI.field.DropDownListField({
@@ -10206,6 +10807,56 @@ InputDocument.prototype.build = function () {
                     valueType: 'number'
                 },
                 docMargin,
+                new SwitchField({
+                    id: 'enableHeader',
+                    labelWidth: "6%",
+                    label: "Header".translate(),
+                    name: "enableHeader",
+                    value: '0',
+                    controlsWidth: 54,
+                    controlPositioning: 'vertical',
+                    options: [
+                        {
+                            id: 'enableHeader',
+                            disabled: false,
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    onChange: function (newVal, oldVal) {
+                        if (newVal === '["1"]') {
+                            headerSettings.setVisible(true);
+                        } else {
+                            headerSettings.setVisible(false);
+                        }
+                    }
+                }),
+                headerSettings,
+                new SwitchField({
+                    id: 'enableFooter',
+                    labelWidth: "6%",
+                    label: "Footer".translate(),
+                    name: "enableFooter",
+                    value: '0',
+                    controlsWidth: 54,
+                    controlPositioning: 'vertical',
+                    options: [
+                        {
+                            id: 'enableFooter',
+                            disabled: false,
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    onChange: function (newVal, oldVal) {
+                        if (newVal === '["1"]') {
+                            footerSettings.setVisible(true);
+                        } else {
+                            footerSettings.setVisible(false);
+                        }
+                    }
+                }),
+                footerSettings,
                 {
                     id: 'outputDocToGenerate',
                     pmType: "dropdown",
@@ -10230,14 +10881,13 @@ InputDocument.prototype.build = function () {
                     value: "BOTH",
                     onChange: function (newValue, prevValue) {
                         if (newValue == "DOC") {
-                            formOutput.getFields()[11].setVisible(false);
                             outputFormDocPdfSecurityEnabled.setVisible(false);
                             outputFormDocPdfSecurityEnabled.setValue(0);
                             password.setVisible(false);
                             outputFormDocPdfSecurityOpen.setValue("");
                             outputFormDocPdfSecurityOwner.setValue("");
                         } else {
-                            formOutput.getFields()[11].setVisible(true);
+                            outputFormDocPdfSecurityEnabled.setVisible(true);
                         }
                     }
                 },
@@ -10408,17 +11058,97 @@ InputDocument.prototype.build = function () {
             ]
         });
 
+        /**
+         * Filter data of header settings
+         * @param {Array} data
+         * @return {Array}
+         */
+        setDataHeaderSettings = function (data) {
+            var headerData = {
+                "logo": data.header_logo,
+                "logoWidth": data.logo_width_header,
+                "logoPositionX": data.position_x_logo_header,
+                "logoPositionY": data.position_y_logo_header,
+                "title": data.header_title,
+                "titleFontSize": data.font_size_header,
+                "titleFontPositionX": data.position_x_title_header,
+                "titleFontPositionY": data.position_y_title_header,
+                "pageNumber": headerSettings.getField('page_number_header').value === '["1"]',
+                "pageNumberTitle": headerSettings.getField('pagination_title_header').value,
+                "pageNumberTotal": headerSettings.getField('total_number_page_header').value === '["1"]',
+                "pageNumberPositionX": headerSettings.getField('position_x_number_header').value,
+                "pageNumberPositionY": headerSettings.getField('position_y_number_header').value,
+                "enableHeader": data.enableHeader === '["1"]'
+            };
+            //it is necessary to clean the data because it is already in the json
+            delete data.header_logo;
+            delete data.logo_width_header;
+            delete data.position_x_logo_header;
+            delete data.position_y_logo_header;
+            delete data.header_title;
+            delete data.font_size_header;
+            delete data.position_x_title_header;
+            delete data.position_y_title_header;
+            delete data.page_number_header;
+            delete data.pagination_title_header;
+            delete data.total_number_page_header;
+            delete data.position_x_number_header;
+            delete data.position_y_number_header;
+            delete data.enableHeader;
+            return headerData;
+        };
+
+        /**
+         * Filter data of footer settings
+         * @param {Array} data
+         * @return {Array}
+         */
+         setDataFooterSettings = function (data) {
+            var footerData = {
+                "logo": data.footer_logo,
+                "logoWidth": data.logo_width_footer,
+                "logoPositionX": data.position_x_logo_footer,
+                "logoPositionY": data.position_y_logo_footer,
+                "title": data.footer_title,
+                "titleFontSize": data.font_size_footer,
+                "titleFontPositionX": data.position_x_title_footer,
+                "titleFontPositionY": data.position_y_title_footer,
+                "pageNumber": footerSettings.getField('page_number_footer').value === '["1"]',
+                "pageNumberTitle": footerSettings.getField('pagination_title_footer').value,
+                "pageNumberTotal": footerSettings.getField('total_number_page_footer').value === '["1"]',
+                "pageNumberPositionX": footerSettings.getField('position_x_number_footer').value,
+                "pageNumberPositionY": footerSettings.getField('position_y_number_footer').value,
+                "enableFooter": data.enableFooter === '["1"]'
+            };
+            //it is necessary to clean the data because it is already in the json
+            delete data.footer_logo;
+            delete data.logo_width_footer;
+            delete data.position_x_logo_footer;
+            delete data.position_y_logo_footer;
+            delete data.footer_title;
+            delete data.font_size_footer;
+            delete data.position_x_title_footer;
+            delete data.position_y_title_footer;
+            delete data.page_number_footer;
+            delete data.pagination_title_footer;
+            delete data.total_number_page_footer;
+            delete data.position_x_number_footer;
+            delete data.position_y_number_footer;
+            delete data.enableFooter;
+            return footerData;
+        };
+
         btnSaveWindowOutputDoc = new PMUI.ui.Button({
             id: 'btnSaveWindowOutputDoc',
             text: "Save".translate(),
             handler: function () {
-                var dataAux = getData2PMUI(formOutput.html);
-                if (dataAux.out_doc_title != "" && dataAux.out_doc_filename != "") {
-                    if ((navigator.userAgent.indexOf("MSIE") != -1) || (navigator.userAgent.indexOf("Trident") != -1)) {
-                        itemOutPut = getData2PMUI(formOutput.html);
-                    } else {
-                        itemOutPut = formOutput.getData();
-                    }
+                var itemOutPut;
+                if ((navigator.userAgent.indexOf("MSIE") != -1) || (navigator.userAgent.indexOf("Trident") != -1)) {
+                    itemOutPut = getData2PMUI(formOutput.html);
+                } else {
+                    itemOutPut = formOutput.getData();
+                }
+                if (itemOutPut.out_doc_title != "" && itemOutPut.out_doc_filename != "") {
 
                     itemOutPut['out_doc_type'] = "HTML";
 
@@ -10432,7 +11162,8 @@ InputDocument.prototype.build = function () {
                     itemOutPut["out_doc_pdf_security_enabled"] = parseInt(itemOutPut["out_doc_pdf_security_enabled"]);
                     itemOutPut["out_doc_versioning"] = parseInt(itemOutPut["out_doc_versioning"]);
                     itemOutPut["out_doc_open_type"] = parseInt(getData2PMUI(formOutput.html).cboByGeneratedFile);
-
+                    itemOutPut["out_doc_header"] = setDataHeaderSettings(itemOutPut);
+                    itemOutPut["out_doc_footer"] = setDataFooterSettings(itemOutPut);
                     if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                         itemOutPut['out_doc_uid'] = dataOutPutDocument.out_doc_uid;
                         restClient = new PMRestClient({
@@ -10452,7 +11183,7 @@ InputDocument.prototype.build = function () {
                         });
                         restClient.executeRestClient();
                     } else {
-                        if (1 === parseInt(dataAux.out_doc_pdf_security_enabled) && (dataAux.out_doc_pdf_security_open_password.trim() === "" || dataAux.out_doc_pdf_security_owner_password.trim() === "")) {
+                        if (1 === parseInt(itemOutPut.out_doc_pdf_security_enabled) && (itemOutPut.out_doc_pdf_security_open_password.trim() === "" || itemOutPut.out_doc_pdf_security_owner_password.trim() === "")) {
                             password.getItems()[0].getItems()[0].isValid();
                             password.getItems()[0].getItems()[1].isValid();
                             return false;
@@ -10572,6 +11303,8 @@ InputDocument.prototype.build = function () {
         validateKeysField(docMargin.getField('out_doc_right_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
         validateKeysField(docMargin.getField('out_doc_top_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
         validateKeysField(docMargin.getField('out_doc_bottom_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
+        changeType();
+        setMinValue();
 
         if (typeof listOutputDocs !== "undefined") {
             winMainOutputDocument.open();
@@ -14497,7 +15230,7 @@ stepsTask.prototype.notItemConfig = function () {
                         data = response[0].response;
                         cboTargetTask.clearOptions();
                         cboOriginTask.clearOptions();
-                        cboTargetTask.addOption({value: '', label: 'All Tasks'.translate()});
+                        cboTargetTask.addOption({value: '', label: 'Select an option'.translate()});
                         cboOriginTask.addOption({value: '', label: 'All Tasks'.translate()});
                         for (i = 0; i <= data.diagrams[0].activities.length - 1; i += 1) {
                             cboTargetTask.addOption({
@@ -14777,7 +15510,7 @@ stepsTask.prototype.notItemConfig = function () {
                     typeRequest: "get",
                     functionSuccess: function (xhr, response) {
                         var data = response, i;
-                        cboTargetTask.addOption({value: "", label: "All Tasks".translate()});
+                        cboTargetTask.addOption({value: "", label: "Select one option".translate()});
                         cboOriginTask.addOption({value: "", label: "All Tasks".translate()});
                         for (i = 0; i <= data.diagrams[0].activities.length - 1; i += 1) {
                             cboTargetTask.addOption({
@@ -17097,17 +17830,17 @@ PMDesigner.taskProperties = function (activity) {
                                 id: 'tas_not_email_from_format',
                                 name: 'tas_not_email_from_format',
                                 pmType: 'dropdown',
-                                label: 'Email From Format'.translate(),
+                                label: 'Sender Name'.translate(),
                                 controlsWidth: 300,
                                 labelWidth: "27%",
                                 options: [
                                     {
                                         id: 'assignedUser',
-                                        label: 'Assigned User'.translate(),
+                                        label: 'Previous User'.translate(),
                                         value: 0
                                     }, {
                                         id: 'emailAccountSettings',
-                                        label: 'Email Account Settings'.translate(),
+                                        label: 'Email Sender Name'.translate(),
                                         value: 1
                                     }
                                 ]
@@ -17205,17 +17938,17 @@ PMDesigner.taskProperties = function (activity) {
                                 id: 'tas_receive_email_from_format',
                                 name: 'tas_receive_email_from_format',
                                 pmType: 'dropdown',
-                                label: 'Email From Format'.translate(),
+                                label: 'Sender Name'.translate(),
                                 controlsWidth: 300,
                                 labelWidth: "27%",
                                 options: [
                                     {
                                         id: 'assignedUser',
-                                        label: 'Assigned User'.translate(),
+                                        label: 'Previous User'.translate(),
                                         value: 0
                                     }, {
                                         id: 'emailAccountSettings',
-                                        label: 'Email Account Settings'.translate(),
+                                        label: 'Email Sender Name'.translate(),
                                         value: 1
                                     }
                                 ]
@@ -17717,7 +18450,7 @@ PMDesigner.taskProperties = function (activity) {
 
         if (response instanceof Array) {
             for (i = 0; i < response.length; i += 1) {
-                if (response[i].mess_engine === "IMAP") {
+                if (response[i].mess_engine === "IMAP" || response[i].mess_engine === "GMAILAPI" || response[i].mess_engine === "OFFICE365API") {
                     if (accountField !== null) {
                         accountField.addOption({
                             value: response[i].mess_uid,
@@ -17854,6 +18587,8 @@ PMDesigner.taskProperties = function (activity) {
             message,
             i;
 
+        /**Beging validations**/
+        //Validate data inside forms.
         for (i = 0; i < tabItems.length; i += 1) {
             panel = tabItems[i].getPanel();
             if (panel instanceof PMUI.form.Form) {
@@ -17870,6 +18605,8 @@ PMDesigner.taskProperties = function (activity) {
                 return;
             }
         }
+        /**End validations**/
+
 
         tas_transfer_fly = formTimingControl.getField('tas_transfer_fly').getValue() === '["1"]';
         tas_send_last_email = formNotifications.getField('tas_send_last_email').getValue() === '["1"]';
@@ -18062,6 +18799,18 @@ PMDesigner.taskProperties = function (activity) {
     if (consolidated == '1') {
         formConsolidated.getField('consolidated_report_table').setVisible(false);
     }
+
+    /**Builds the forms**/
+    //This is necessary to do because many elements are built dynamically.
+    var tabItems = propertiesTabs.getItems(), i;
+    for (i = 0; i < tabItems.length; i += 1) {
+        tabItems[i].select();
+        setFocusTab(tabItems[i]);
+    }
+    tabItems[0].select();
+    setFocusTab(tabItems[0]);
+    /**End builds the forms**/
+
     function customDOM() {
         $customGrid = $("#customGrid");
         $customGrid.show().appendTo($("#customGridPanel").find("fieldset:eq(0)"));
@@ -18219,7 +18968,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
         ]
     });
     var isDirtyUpload = function () {
-        $("input,select,textarea").blur();
         if (formUpload.isDirty()) {
             var message_window = new PMUI.ui.MessageWindow({
                 id: "cancelMessageTriggers",
@@ -18231,7 +18979,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
                     {
                         text: "No".translate(),
                         handler: function () {
-
                             message_window.close();
                         },
                         buttonType: "error"
@@ -18502,7 +19249,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
         style: {cssClasses: ['mafe-button-upload'], cssProperties: {'margin-right': '5px', 'float': 'none'}},
         handler: function (event) {
             windowUpload.open();
-            formUpload.setFocus();
             applyStyleWindowForm(windowUpload);
 
         }
@@ -28446,7 +29192,7 @@ WebEntry.prototype = {
         this.getWebEntryConfiguration(
             function (webEntryEvent, isNew) {
                 if (isNew) {
-                    webEntryEvent.we_type = 'SINGLE';
+                    webEntryEvent.we_type = 'MULTIPLE';
                     webEntryEvent.we_authentication = 'ANONYMOUS';
                     webEntryEvent.wee_url = '';
                     webEntryEvent.wee_title = '';
@@ -28661,50 +29407,6 @@ WebEntry.prototype = {
             visibleHeader: false,
             items: [
                 {
-                    id: 'singleDynaformRadio',
-                    pmType: 'radio',
-                    labelVisible: false,
-                    value: 'SINGLE',
-                    name: 'options',
-                    required: false,
-                    controlPositioning: 'horizontal',
-                    maxDirectionOptions: 4,
-                    options: [
-                        {
-                            id: 'singleDynaform',
-                            label: 'Single Dynaform'.translate(),
-                            value: 'SINGLE',
-                            selected: true
-                        }
-                    ],
-                    onChange: function (newVal, oldVal) {
-                        that.weeFormModeChange(newVal, oldVal);
-                    },
-                    labelWidth: '0%'
-                },
-                {
-                    id: 'weeSelectDynaform',
-                    name: 'tabFormsDropdownDyanform',
-                    pmType: 'dropdown',
-                    label: 'Dynaform'.translate(),
-                    helper: 'Select Dynaform use in case.'.translate(),
-                    required: true,
-                    controlsWidth: 400,
-                    labelWidth: '25%',
-                    style: {
-                        cssProperties: {
-                            'padding-left': '100px'
-                        }
-                    },
-                    options: [
-                        {
-                            label: 'Select Dynaform'.translate(),
-                            value: ''
-                        }
-                    ]
-
-                },
-                {
                     id: 'multipleStepsRadio',
                     pmType: 'radio',
                     labelVisible: false,
@@ -28720,11 +29422,8 @@ WebEntry.prototype = {
                             value: 'MULTIPLE'
                         }
                     ],
-                    onChange: function (newVal, oldVal) {
-                        that.weeFormModeChange(newVal, oldVal);
-                    },
-                    labelWidth: '0%'
-
+                    labelWidth: '0%',
+                    visible: false
                 }
             ]
         });
@@ -28848,6 +29547,28 @@ WebEntry.prototype = {
                     ],
                     style: {
                         cssProperties: {
+                            'padding-left': '50px'
+                        }
+                    }
+                },
+                {
+                    id: 'tabPropertiesHideActiveSessionWarning',
+                    pmType: 'checkbox',
+                    name: 'tabPropertiesHideActiveSessionWarning',
+                    labelVisible: false,
+                    disabled: true,
+                    helper: "By disabling this option, there's a security vulnerability if any other user has access to your web browser. It might impersonate your current session.".translate(),
+                    options: [
+                        {
+                            id: 'hideActiveSessionWarning',
+                            label: 'Hide Active Session Warning'.translate(),
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    style: {
+                        cssProperties: {
+                            'padding-top': '-10px',
                             'padding-left': '50px'
                         }
                     }
@@ -29305,7 +30026,8 @@ WebEntry.prototype = {
                 function (xhr, response) {
                     that.setLinkText(formLink, '');
                     PMDesigner.msgWinError(response.error.message);
-                }
+                },
+                {generateLink: true}
             );
         }
         return this;
@@ -29564,23 +30286,6 @@ WebEntry.prototype = {
     },
 
     /**
-     * Disable MultipleSteps or Single Dynaform (tabForms)
-     * @returns {disableMultipleSteps}
-     */
-    weeFormModeChange: function (newVal, oldVal) {
-        if (newVal === 'SINGLE') {
-            this.disableMultipleSteps('SINGLE');
-        } else {
-            this.disableSingleDynaform('MULTIPLE');
-            this.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform').hideMessage();
-            this.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform')
-                .getControl(0).style.removeClasses(['error']);
-        }
-        this.setLinkText(this.getTabLinkForm(), '');
-        return this;
-    },
-
-    /**
      * Disable MultipleSteps (tabForms)
      * @param singleMultiple
      * @returns {WebEntry}
@@ -29588,10 +30293,6 @@ WebEntry.prototype = {
     disableMultipleSteps: function (singleMultiple) {
         var singleDyna = this.getTabForms().getItem('singleDynaform');
         singleDyna.getItem('multipleStepsRadio').setValue('');
-        singleDyna.getItem('weeSelectDynaform').enable();
-        singleDyna.getItem('weeSelectDynaform').setRequired(true);
-        singleDyna.getItem('singleDynaformRadio').setValue(singleMultiple);
-        singleDyna.getItem('singleDynaformRadio').getControl(0).select();
         //Hide step panel
         this.getLabelsPanel().setVisible(false);
         this.getTabForms().getItem('stepsMainContainer').setVisible(false);
@@ -29605,9 +30306,6 @@ WebEntry.prototype = {
      */
     disableSingleDynaform: function (singleMultiple) {
         var singleDyna = this.getTabForms().getItem('singleDynaform');
-        singleDyna.getItem('singleDynaformRadio').setValue('');
-        singleDyna.getItem('weeSelectDynaform').disable();
-        singleDyna.getItem('weeSelectDynaform').setRequired(false);
         singleDyna.getItem('multipleStepsRadio').setValue(singleMultiple);
         singleDyna.getItem('multipleStepsRadio').getControl(0).select();
         //Show step panel
@@ -29628,6 +30326,7 @@ WebEntry.prototype = {
             callbackAction = 2;
         propertiesForm.getItem('tabPropertiesRequireUserLogin').setValue('[]');
         propertiesForm.getItem('tabPropertiesHideLoogedInformationBar').disable();
+        propertiesForm.getItem('tabPropertiesHideActiveSessionWarning').disable();
         propertiesForm.getItem('tabPropRadioAuthentication').setRequired(true);
         this.getSuggestField().setRequired(true);
         this.getSuggestField().hideMessageRequired();
@@ -29658,6 +30357,7 @@ WebEntry.prototype = {
         this.getSuggestField().setRequired(false);
         this.getSuggestField().hideMessageRequired();
         propertiesForm.getItem('tabPropertiesHideLoogedInformationBar').enable();
+        propertiesForm.getItem('tabPropertiesHideActiveSessionWarning').enable();
         propertiesForm.getItem('tabPropertiesRadioCallback').enableOption(callbackAction);
         this.callbackActionChange(propertiesForm.getItem('tabPropertiesRadioCallback').getValue(), '');
         this.setLinkText(this.getTabLinkForm(), '');
@@ -29728,7 +30428,7 @@ WebEntry.prototype = {
      * @param successCallback
      * @param failureCallback
      */
-    saveWebEntryConfiguration: function (successCallback, failureCallback) {
+    saveWebEntryConfiguration: function (successCallback, failureCallback, extra) {
         var data,
             //tabs window web entry
             tabProperties = this.getTabPanel().getItem('tabProperties'),
@@ -29740,6 +30440,7 @@ WebEntry.prototype = {
 
         //Prepare Data
         data = this.prepareData(dataTabSingleDyn, dataTabProperties, dataTabLink);
+        data['extra'] = extra || {};
         //Save web Entry configuration
         this.updateWebEntryConfiguration(data, successCallback, failureCallback);
         return this;
@@ -29808,14 +30509,15 @@ WebEntry.prototype = {
         data['act_uid'] = this.getActUid();
         data['evn_uid'] = this.getEvnUid();
         data['wee_title'] = this.getEvnUid();
-        data['we_type'] = (dataTabSingleDyn.getItem('singleDynaformRadio').getValue()) ? 'SINGLE' : 'MULTIPLE';
-        data['dyn_uid'] = (data['we_type'] === 'SINGLE') ? dataTabSingleDyn.getItem('weeSelectDynaform')
-            .getValue() : '';
+        data['we_type'] = 'MULTIPLE';
+        data['dyn_uid'] = '';
         data['we_custom_title'] = dataTabProperties.getItem('tabPropertiesWebEntryTitle').getValue();
         data['we_authentication'] = dataTabProperties.getItem('tabPropRadioAuthentication').getValue() === '[]' ?
             'LOGIN_REQUIRED' : 'ANONYMOUS';
         data['usr_uid'] = this.getSuggestField().value;
         data['we_hide_information_bar'] = dataTabProperties.getItem('tabPropertiesHideLoogedInformationBar')
+            .getValue() === '[]' ? '0' : '1';
+        data['we_hide_active_session_warning'] = dataTabProperties.getItem('tabPropertiesHideActiveSessionWarning')
             .getValue() === '[]' ? '0' : '1';
         data['we_callback'] = dataTabProperties.getItem('tabPropertiesRadioCallback').getValue();
         data['we_callback_url'] = (data['we_callback'] !== 'PROCESSMAKER') ?
@@ -29850,15 +30552,12 @@ WebEntry.prototype = {
             i,
             data,
             options = [],
-            dynaformsControl,
             dynaforms = [];
 
         //execute Rest (get Dynaforms)
         this.getDynaforms(
             function (xhr, response) {
                 dynaforms = response[0].response;
-                //get Controls tab-Forms
-                dynaformsControl = that.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform');
 
                 //Set data Dropdown Single Dynaform
                 for (i = 0; i < dynaforms.length; i += 1) {
@@ -29871,7 +30570,6 @@ WebEntry.prototype = {
                     }
                     options.push(data);
                 }
-                dynaformsControl.setOptions(options);
 
                 //set Disable/Enable single or multiple steps
                 (that.getConfigWebEntry().we_type === 'SINGLE') ?
@@ -29894,6 +30592,7 @@ WebEntry.prototype = {
             radioAuthentication,
             radioRequiredLogin,
             informationBar,
+            activeSessionWarning,
             radioCollback,
             customUrl,
             user,
@@ -29907,6 +30606,7 @@ WebEntry.prototype = {
         radioCollback = this.getTabProperties().getItem('tabPropertiesRadioCallback');
         customUrl = this.getTabProperties().getItem('criteriaFieldCustomUrl');
         informationBar = this.getTabProperties().getItem('tabPropertiesHideLoogedInformationBar');
+        activeSessionWarning = this.getTabProperties().getItem('tabPropertiesHideActiveSessionWarning');
         showInNewCase = this.getTabProperties().getItem('showInNewCase');
 
         //set webentry Title
@@ -29949,6 +30649,15 @@ WebEntry.prototype = {
         } else {
             informationBar.setValue('[]');
             informationBar.getControl(0).deselect();
+        }
+
+        //set Hide Active Session Warning
+        if (this.getConfigWebEntry().we_hide_active_session_warning === '1') {
+            activeSessionWarning.setValue('["1"]');
+            activeSessionWarning.getControl(0).select();
+        } else {
+            activeSessionWarning.setValue('[]');
+            activeSessionWarning.getControl(0).deselect();
         }
 
         //set Callback Action
@@ -32406,6 +33115,16 @@ var MessageEventDefinition = function (bpmnEvent) {
         }
     };
 
+    this.txtCaseTitle = new CriteriaField({
+        id: "txtCaseTitle",
+        name: "txtCaseTitle",
+        valueType: "string",
+        label: "Case Title".translate(),
+        maxLength: 200,
+        value: "",
+        controlsWidth: 380
+    });
+
     this.txtCorrelationValue = new CriteriaField({
         id: "txtCorrelationValue",
         name: "txtCorrelationValue",
@@ -32452,6 +33171,7 @@ var MessageEventDefinition = function (bpmnEvent) {
         width: DEFAULT_WINDOW_WIDTH - 70,
         visibleHeader: false,
         items: [
+            that.txtCaseTitle,
             that.cboMessageType,
             that.txtCorrelationValue,
             {
@@ -32644,6 +33364,7 @@ MessageEventDefinition.prototype.createWindow = function () {
                         msged_correlation: correlationValueAux.txtCorrelationValue
                     };
 
+                    data.case_title = that.txtCaseTitle.value;
                     switch (that.messageEventDefinitionOption) {
                         case "POST":
                             that.messageEventDefintionPostRestProxy(data);
@@ -32746,6 +33467,7 @@ MessageEventDefinition.prototype.load = function () {
 
                 that.gridCurrent.setDataItems(that.getVariablesByObject(arrayMessageEventDefinitionData.msged_variables));
                 that.frmMessageEventDefinition1.getField("txtCorrelationValue").setValue(arrayMessageEventDefinitionData.msged_correlation);
+                that.frmMessageEventDefinition1.getField("txtCaseTitle").setValue(arrayMessageEventDefinitionData.tas_def_title);
             }
         },
         functionFailure: function (xhr, response) {
@@ -33607,11 +34329,6 @@ IntroHelper.prototype.startIntro = function () {
                                 tmrevn_option: "ONE-DATE-TIME",
                                 tmrevn_next_run_date: $("#oneDateTime").find("input:eq(0)").val()
                             };
-                            for (var i in ENABLED_FEATURES) {
-                                if (ENABLED_FEATURES[i] == 'oq3S29xemxEZXJpZEIzN01qenJUaStSekY4cTdJVm5vbWtVM0d4S2lJSS9qUT0=') {
-                                    dataTimer.tmrevn_next_run_date = convertDatetimeToIso8601(dataTimer.tmrevn_next_run_date);
-                                }
-                            }
                             break;
                         case "5": /*every*/
                             dataTimer = {
@@ -33649,6 +34366,7 @@ IntroHelper.prototype.startIntro = function () {
                             };
                             break;
                     }
+                    dataTimer.caseTitle = formData.txtCaseTitle;
                     if (formTimerEvent.getField("tmrevn_uid").getValue() == "") {
                         restClientNewTimerEvent(dataTimer);
                     } else {
@@ -33730,12 +34448,14 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showDailyItems = function () {
@@ -33751,12 +34471,14 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showMonthlyItems = function () {
@@ -33771,12 +34493,14 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setVisible(true);
             formTimerEvent.getField('monthsGroup').setRequired(true);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showOneDateTimeItems = function () {
@@ -33791,12 +34515,14 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(false);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(false);
+            }
         };
 
         showEveryItems = function () {
@@ -33811,12 +34537,14 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
         /*intermediate*/
         showWaitForItems = function () {
@@ -33830,9 +34558,11 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
             formTimerEvent.getField('dateTimeVariablePicker').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[1].items.get(4).getField('dayType').setVisible(true);
+                formTimerEvent.getItems()[1].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[1].items.get(4).getField('minuteType').setVisible(true);
+            }
         };
 
         showWaitUntilItems = function () {
@@ -33846,10 +34576,22 @@ IntroHelper.prototype.startIntro = function () {
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(true);
             formTimerEvent.getField('dateTimeVariablePicker').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[1].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[1].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[1].items.get(4).getField('minuteType').setVisible(false);
+            }
         };
+
+        this.txtCaseTitle = new CriteriaField({
+            id: "txtCaseTitle",
+            name: "txtCaseTitle",
+            valueType: "string",
+            label: "Case Title".translate(),
+            maxLength: 200,
+            value: "",
+            controlsWidth: 500
+        });
 
         radioGroup = new PMUI.field.RadioButtonGroupField({
             id: 'radioGroup',
@@ -34106,6 +34848,7 @@ IntroHelper.prototype.startIntro = function () {
             name: "formTimerEvent",
             title: '',
             items: [
+                this.txtCaseTitle,
                 {
                     id: "panelDetailsCustom",
                     pmType: "panel",
@@ -34248,7 +34991,11 @@ IntroHelper.prototype.startIntro = function () {
                 typeRequest: 'get',
                 functionSuccess: function (xhr, response) {
                     if (typeof response === "object" && JSON.stringify(response).length > 2) {
-                        var opt = response.tmrevn_option.toUpperCase();
+                        var opt = "";
+                        if (typeof response.tmrevn_option !== 'undefined') {
+                            opt = response.tmrevn_option.toUpperCase();
+                        }
+                        formTimerEvent.getField("txtCaseTitle").setValue(response.tas_def_title);
                         switch (opt) {
                             case "HOURLY":
                                 $("#radioGroup").find("input:eq(0)").trigger("click");
@@ -34858,7 +35605,7 @@ IntroHelper.prototype.startIntro = function () {
                                     for (var i = 0; i < response.length; i += 1) {
                                         if (response[i].prf_uid == formEmailEvent.getField('prf_uid').getValue()) {
                                             formEmailEvent.getField('filecontent').setValue(response[i].prf_content);
-                                            if (!$(tinyMCE.activeEditor.getContent()).text().trim().length) {
+                                            if (tinyMCE.activeEditor && !$(tinyMCE.activeEditor.getContent()).text().trim().length) {
                                                 tinyMCE.activeEditor.setContent(response[i].prf_content);
                                             }
                                             break;

@@ -104,13 +104,24 @@ GridByDefaultX = function(){
 	assignedUGrid.store.load();
 };
 
-//edit permissions action
-EditPermissionsAction = function(){
-  availableGrid.show();
-  buttonsPanel.show();
-  editPermissionsButton.disable();
-  //cancelEditPermissionsButton.show();
-  PermissionsPanel.doLayout();
+/**
+ * Edit permissions action
+ * @returns {void}
+ */
+EditPermissionsAction = function () {
+    availableGrid.show();
+    buttonsPanel.show();
+    editPermissionsButton.disable();
+    PermissionsPanel.doLayout();
+
+    //if the role is administrator these buttons must be disabled.
+    if (ROLES.ROL_UID === pm_admin) {
+        Ext.getCmp('removeButtonAll').disable();
+        Ext.getCmp('assignButtonAll').disable();
+    } else {
+        Ext.getCmp('removeButtonAll').enable();
+        Ext.getCmp('assignButtonAll').enable();
+    }
 };
 
 EditPermissionsContentsAction = function(){
@@ -862,22 +873,31 @@ SavePermissionsRole = function(arr_per, function_success, function_failure){
 	});
 };
 
-//REMOVE PERMISSION FROM A ROLE
-DeletePermissionsRole = function(arr_per, function_success, function_failure){
-	var sw_response;
-	viewport.getEl().mask(_('ID_PROCESSING'));
-	Ext.Ajax.request({
-		url: 'roles_Ajax',
-		params: {request: 'deletePermissionToRoleMultiple', ROL_UID: ROLES.ROL_UID, PER_UID: arr_per.join(',')},
-		success: function(){
-			        function_success();
-					viewport.getEl().unmask();
-		},
-		failure: function(){
-					function_failure();
-					viewport.getEl().unmask();
-		}
-	});
+/**
+ * Remove permission from a role.
+ * @param {array} permissions
+ * @param {function} success
+ * @param {function} failure
+ * @returns {void}
+ */
+DeletePermissionsRole = function (permissions, success, failure) {
+    if (permissions.length === 0) {
+        return;
+    }
+    var sw_response;
+    viewport.getEl().mask(_('ID_PROCESSING'));
+    Ext.Ajax.request({
+        url: 'roles_Ajax',
+        params: {request: 'deletePermissionToRoleMultiple', ROL_UID: ROLES.ROL_UID, PER_UID: permissions.join(',')},
+        success: function () {
+            success();
+            viewport.getEl().unmask();
+        },
+        failure: function () {
+            failure();
+            viewport.getEl().unmask();
+        }
+    });
 };
 
 //AssignButton Functionality
@@ -890,15 +910,27 @@ AssignPermissionAction = function(){
 	SavePermissionsRole(arrAux,RefreshPermissions,FailureProcess);
 };
 
-//RemoveButton Functionality
-RemovePermissionAction = function(){
+/**
+ * RemoveButton Functionality
+ * @returns {void}
+ */
+RemovePermissionAction = function () {
     rowsSelected = assignedGrid.getSelectionModel().getSelections();
+    for (var a = 0; a < rowsSelected.length; a++) {
+        if (ROLES.ROL_UID === pm_admin) {
+            if (rowsSelected[a].json.TYPE !== 'CUSTOM') {
+                var message = _('ID_THE_PERMISSION_CAN_NOT_BE_UNASSIGNED_FROM_THIS_ROLE');
+                Ext.Msg.alert(_('ID_INFORMATION'), message);
+                return;
+            }
+        }
+    }
     var arrAux = new Array();
     var sw;
-    for(var a=0; a < rowsSelected.length; a++){
+    for (var a = 0; a < rowsSelected.length; a++) {
         sw = true;
         if (ROLES.ROL_UID == pm_admin) {
-            for (var i=0; i < permissionsAdmin.length; i++)
+            for (var i = 0; i < permissionsAdmin.length; i++)
             {
                 if (permissionsAdmin[i]['PER_UID'] == rowsSelected[a].get('PER_UID')) {
                     sw = false;
@@ -910,7 +942,7 @@ RemovePermissionAction = function(){
             arrAux[a] = rowsSelected[a].get('PER_UID');
         }
     }
-    DeletePermissionsRole(arrAux,RefreshPermissions,FailureProcess);
+    DeletePermissionsRole(arrAux, RefreshPermissions, FailureProcess);
 };
 
 //AssignALLButton Functionality

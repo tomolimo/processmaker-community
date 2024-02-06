@@ -25,7 +25,7 @@ abstract class BaseAppNotesPeer
     const CLASS_DEFAULT = 'classes.model.AppNotes';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 11;
+    const NUM_COLUMNS = 12;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -33,6 +33,9 @@ abstract class BaseAppNotesPeer
 
     /** the column name for the NOTE_ID field */
     const NOTE_ID = 'APP_NOTES.NOTE_ID';
+
+    /** the column name for the APP_NUMBER field */
+    const APP_NUMBER = 'APP_NOTES.APP_NUMBER';
 
     /** the column name for the APP_UID field */
     const APP_UID = 'APP_NOTES.APP_UID';
@@ -75,10 +78,10 @@ abstract class BaseAppNotesPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('NoteId', 'AppUid', 'UsrUid', 'NoteDate', 'NoteContent', 'NoteType', 'NoteAvailability', 'NoteOriginObj', 'NoteAffectedObj1', 'NoteAffectedObj2', 'NoteRecipients', ),
-        BasePeer::TYPE_COLNAME => array (AppNotesPeer::NOTE_ID, AppNotesPeer::APP_UID, AppNotesPeer::USR_UID, AppNotesPeer::NOTE_DATE, AppNotesPeer::NOTE_CONTENT, AppNotesPeer::NOTE_TYPE, AppNotesPeer::NOTE_AVAILABILITY, AppNotesPeer::NOTE_ORIGIN_OBJ, AppNotesPeer::NOTE_AFFECTED_OBJ1, AppNotesPeer::NOTE_AFFECTED_OBJ2, AppNotesPeer::NOTE_RECIPIENTS, ),
-        BasePeer::TYPE_FIELDNAME => array ('NOTE_ID', 'APP_UID', 'USR_UID', 'NOTE_DATE', 'NOTE_CONTENT', 'NOTE_TYPE', 'NOTE_AVAILABILITY', 'NOTE_ORIGIN_OBJ', 'NOTE_AFFECTED_OBJ1', 'NOTE_AFFECTED_OBJ2', 'NOTE_RECIPIENTS', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, )
+        BasePeer::TYPE_PHPNAME => array ('NoteId', 'AppNumber', 'AppUid', 'UsrUid', 'NoteDate', 'NoteContent', 'NoteType', 'NoteAvailability', 'NoteOriginObj', 'NoteAffectedObj1', 'NoteAffectedObj2', 'NoteRecipients', ),
+        BasePeer::TYPE_COLNAME => array (AppNotesPeer::NOTE_ID, AppNotesPeer::APP_NUMBER, AppNotesPeer::APP_UID, AppNotesPeer::USR_UID, AppNotesPeer::NOTE_DATE, AppNotesPeer::NOTE_CONTENT, AppNotesPeer::NOTE_TYPE, AppNotesPeer::NOTE_AVAILABILITY, AppNotesPeer::NOTE_ORIGIN_OBJ, AppNotesPeer::NOTE_AFFECTED_OBJ1, AppNotesPeer::NOTE_AFFECTED_OBJ2, AppNotesPeer::NOTE_RECIPIENTS, ),
+        BasePeer::TYPE_FIELDNAME => array ('NOTE_ID', 'APP_NUMBER', 'APP_UID', 'USR_UID', 'NOTE_DATE', 'NOTE_CONTENT', 'NOTE_TYPE', 'NOTE_AVAILABILITY', 'NOTE_ORIGIN_OBJ', 'NOTE_AFFECTED_OBJ1', 'NOTE_AFFECTED_OBJ2', 'NOTE_RECIPIENTS', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, )
     );
 
     /**
@@ -88,10 +91,10 @@ abstract class BaseAppNotesPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('NoteId' => 0, 'AppUid' => 1, 'UsrUid' => 2, 'NoteDate' => 3, 'NoteContent' => 4, 'NoteType' => 5, 'NoteAvailability' => 6, 'NoteOriginObj' => 7, 'NoteAffectedObj1' => 8, 'NoteAffectedObj2' => 9, 'NoteRecipients' => 10, ),
-        BasePeer::TYPE_COLNAME => array (AppNotesPeer::NOTE_ID => 0, AppNotesPeer::APP_UID => 1, AppNotesPeer::USR_UID => 2, AppNotesPeer::NOTE_DATE => 3, AppNotesPeer::NOTE_CONTENT => 4, AppNotesPeer::NOTE_TYPE => 5, AppNotesPeer::NOTE_AVAILABILITY => 6, AppNotesPeer::NOTE_ORIGIN_OBJ => 7, AppNotesPeer::NOTE_AFFECTED_OBJ1 => 8, AppNotesPeer::NOTE_AFFECTED_OBJ2 => 9, AppNotesPeer::NOTE_RECIPIENTS => 10, ),
-        BasePeer::TYPE_FIELDNAME => array ('NOTE_ID' => 0, 'APP_UID' => 1, 'USR_UID' => 2, 'NOTE_DATE' => 3, 'NOTE_CONTENT' => 4, 'NOTE_TYPE' => 5, 'NOTE_AVAILABILITY' => 6, 'NOTE_ORIGIN_OBJ' => 7, 'NOTE_AFFECTED_OBJ1' => 8, 'NOTE_AFFECTED_OBJ2' => 9, 'NOTE_RECIPIENTS' => 10, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, )
+        BasePeer::TYPE_PHPNAME => array ('NoteId' => 0, 'AppNumber' => 1, 'AppUid' => 2, 'UsrUid' => 3, 'NoteDate' => 4, 'NoteContent' => 5, 'NoteType' => 6, 'NoteAvailability' => 7, 'NoteOriginObj' => 8, 'NoteAffectedObj1' => 9, 'NoteAffectedObj2' => 10, 'NoteRecipients' => 11, ),
+        BasePeer::TYPE_COLNAME => array (AppNotesPeer::NOTE_ID => 0, AppNotesPeer::APP_NUMBER => 1, AppNotesPeer::APP_UID => 2, AppNotesPeer::USR_UID => 3, AppNotesPeer::NOTE_DATE => 4, AppNotesPeer::NOTE_CONTENT => 5, AppNotesPeer::NOTE_TYPE => 6, AppNotesPeer::NOTE_AVAILABILITY => 7, AppNotesPeer::NOTE_ORIGIN_OBJ => 8, AppNotesPeer::NOTE_AFFECTED_OBJ1 => 9, AppNotesPeer::NOTE_AFFECTED_OBJ2 => 10, AppNotesPeer::NOTE_RECIPIENTS => 11, ),
+        BasePeer::TYPE_FIELDNAME => array ('NOTE_ID' => 0, 'APP_NUMBER' => 1, 'APP_UID' => 2, 'USR_UID' => 3, 'NOTE_DATE' => 4, 'NOTE_CONTENT' => 5, 'NOTE_TYPE' => 6, 'NOTE_AVAILABILITY' => 7, 'NOTE_ORIGIN_OBJ' => 8, 'NOTE_AFFECTED_OBJ1' => 9, 'NOTE_AFFECTED_OBJ2' => 10, 'NOTE_RECIPIENTS' => 11, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, )
     );
 
     /**
@@ -193,6 +196,8 @@ abstract class BaseAppNotesPeer
     {
 
         $criteria->addSelectColumn(AppNotesPeer::NOTE_ID);
+
+        $criteria->addSelectColumn(AppNotesPeer::APP_NUMBER);
 
         $criteria->addSelectColumn(AppNotesPeer::APP_UID);
 

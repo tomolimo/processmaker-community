@@ -1,13 +1,36 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
+use AppSequence;
+use Cases;
 use Criteria;
+use G;
+use Illuminate\Support\Facades\DB;
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\Application;
+use ProcessMaker\Model\WebEntry as WebEntryModel;
+use ProcessMaker\Plugins\PluginRegistry;
+use Publisher;
+use RBAC;
 use ResultSet;
+use stdClass;
 use WebEntryPeer;
 
 class WebEntry
 {
+    const UPDATE_QUERY_V1_TO_V2 = "
+        UPDATE
+            `WEB_ENTRY`
+        LEFT JOIN
+            `BPMN_PROCESS`
+        ON
+            (`WEB_ENTRY`.`PRO_UID` = `BPMN_PROCESS`.`PRJ_UID`)
+        SET
+            `WEB_ENTRY`.`DYN_UID` = '', `WEB_ENTRY`.`WE_TYPE` = 'MULTIPLE'
+        WHERE
+            `WE_TYPE` = 'SINGLE' AND `WE_AUTHENTICATION` = 'ANONYMOUS' AND
+            `WE_CALLBACK` = 'PROCESSMAKER' AND `BPMN_PROCESS`.`PRJ_UID` IS NOT NULL";
+
     private $arrayFieldDefinition = array(
         "WE_UID"                   => array("type" => "string", "required" => false, "empty" => false, "defaultValues" => array(),             "fieldNameAux" => "webEntryUid"),
 
@@ -1082,10 +1105,62 @@ class WebEntry
      */
     public function isWebEntryOne($weUid)
     {
+        if ($this->verifyCurrentSession($weUid)) {
+            global $G_PUBLISH;
+            $G_PUBLISH = new Publisher();
+            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/checkContinueOrCloseSession', '', [], SYS_URI . 'login/checkContinueOrCloseSession');
+            G::RenderPage('publish', 'blank');
+            exit();
+        }
+        unset($_SESSION['__WEBENTRYCONTINUE__']);
+
         $webEntry = WebEntryPeer::retrieveByPK($weUid);
         return $webEntry->getWeType() === 'SINGLE'
             && $webEntry->getWeAuthentication() === 'ANONYMOUS'
             && $webEntry->getWeCallback() === 'PROCESSMAKER';
+    }
+
+    /**
+     * Verify the current sessión exist for display webentry message confirmation.
+     * @param string $weUid
+     * @return bool
+     */
+    private function verifyCurrentSession(string $weUid): bool
+    {
+        //verify normal flow
+        $rule1 = !empty($_SESSION['USER_LOGGED']) && empty($_SESSION['__WEBENTRYCONTINUE__']);
+
+        //verify guest user
+        $rule2 = !empty($_SESSION['USER_LOGGED']);
+        if ($rule2) {
+            //verify is guest user uid.
+            $rule2 = !RBAC::isGuestUserUid($_SESSION['USER_LOGGED']);
+        }
+
+        //verify saml session
+        $rule3 = !(!empty($_SESSION['samlNameId']) && !empty($_SESSION['samlSessionIndex']));
+        
+        //verify current session only for required user login
+        $rule4 = $this->verifyHideActiveSessionWarningOption($weUid);
+
+        return $rule1 && $rule2 && $rule3 && $rule4;
+    }
+
+    /**
+     * Return false if 'hide active session' is enabled only for 'require user login'.
+     * @param string $weUid
+     * @return bool
+     */
+    public function verifyHideActiveSessionWarningOption(string $weUid): bool
+    {
+        $result = true;
+        $webentry = WebEntryModel::select('WE_HIDE_ACTIVE_SESSION_WARNING', 'WE_AUTHENTICATION')
+            ->where('WE_UID', '=', $weUid)
+            ->first();
+        if ($webentry->WE_AUTHENTICATION === 'LOGIN_REQUIRED') {
+            $result = intval($webentry->WE_HIDE_ACTIVE_SESSION_WARNING) === 0;
+        }
+        return $result;
     }
 
     /**
@@ -1125,5 +1200,94 @@ class WebEntry
         }
         return $message;
     }
-}
 
+    /**
+     * Swap temporary web entry application number to a normal application number
+     *
+     * @param string $appUid
+     * @return int
+     */
+    public function swapTemporaryAppNumber($appUid)
+    {
+        // Get the application
+        $application = Application::query()->select(['PRO_UID', 'APP_NUMBER'])->where('APP_UID', '=', $appUid)->first()->toArray();
+
+        // If application exists, swap the number
+        if (!empty($application)) {
+            // Get a normal sequence number
+            $appSequence = new AppSequence();
+            $appNumber = $appSequence->sequenceNumber(AppSequence::APP_TYPE_NORMAL);
+
+            // Update case with the new application number
+            $cases = new Cases();
+            $casesData = $cases->loadCase($appUid);
+            $casesData['APP_NUMBER'] = $casesData['APP_DATA']['APP_NUMBER'] = $appNumber;
+            $cases->updateCase($appUid, $casesData);
+
+            // Build the query to update related tables and fields
+            $query = "UPDATE `APPLICATION` SET `APP_TITLE` = '#{$appNumber}' WHERE `APP_UID` = '{$appUid}';";
+            $query .= "UPDATE `APP_DATA_CHANGE_LOG` SET `APP_NUMBER` = {$appNumber} WHERE `APP_NUMBER` = {$application['APP_NUMBER']};";
+            $query .= "UPDATE `APP_DELEGATION` SET `APP_NUMBER` = {$appNumber} WHERE `APP_UID` = '{$appUid}';";
+            $query .= "UPDATE `LIST_INBOX` SET `APP_NUMBER` = {$appNumber}, `APP_TITLE` = '#{$appNumber}' WHERE `APP_UID` = '{$appUid}';";
+            $query .= "UPDATE `LIST_PARTICIPATED_HISTORY` SET `APP_NUMBER` = {$appNumber}, `APP_TITLE` = '#{$appNumber}' WHERE `APP_UID` = '{$appUid}';";
+            $query .= "UPDATE `LIST_PARTICIPATED_LAST` SET `APP_NUMBER` = {$appNumber}, `APP_TITLE` = '#{$appNumber}' WHERE `APP_UID` = '{$appUid}';";
+
+            // Execute the query
+            DB::connection('workflow')->unprepared($query);
+
+            // Plugin Hook PM_SWAP_TEMPORARY_APP_NUMBER for upload document
+            $pluginRegistry = PluginRegistry::loadSingleton();
+
+            // If the hook exists try to execute
+            if ($pluginRegistry->existsTrigger(PM_SWAP_TEMPORARY_APP_NUMBER)) {
+                // Build the object to send
+                $data = new stdClass();
+                $data->sProcessUid = $application['PRO_UID'];
+                $data->appUid = $appUid;
+                $data->appNumber = $appNumber;
+
+                // Execute hook
+                $pluginRegistry->executeTriggers(PM_SWAP_TEMPORARY_APP_NUMBER, $data);
+            }
+
+            // Return new application number
+            return $appNumber;
+        }
+    }
+
+    /**
+     * Convert Web Entries v1.0 to v2.0
+     */
+    public static function convertFromV1ToV2()
+    {
+        // Execute query
+        DB::connection('workflow')->statement(self::UPDATE_QUERY_V1_TO_V2);
+    }
+
+    /**
+     * Delete web entries created one week ago or more
+     */
+    public static function deleteOldWebEntries()
+    {
+        // Define some values for PM tables classes
+        if (!defined('PATH_WORKSPACE')) {
+            define('PATH_WORKSPACE', PATH_DB . config('system.workspace') . PATH_SEP);
+        }
+        set_include_path(get_include_path() . PATH_SEPARATOR . PATH_WORKSPACE);
+
+        // Calculate date, one week ago from today
+        $date = now()->subWeek()->format('Y-m-d H:i:s');
+
+        // Build query
+        $query = "SELECT `APP_UID` FROM `APPLICATION` WHERE `APP_NUMBER` < 0 AND `APP_CREATE_DATE` < '{$date}'";
+
+        // Execute query
+        $cases = DB::connection('workflow')->select($query);
+
+        // Delete cases, one by one with all related records
+        $casesInstance = new Cases();
+        foreach ($cases as $case) {
+            $casesInstance->removeCase($case->APP_UID);
+        }
+    }
+}

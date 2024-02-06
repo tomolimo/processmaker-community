@@ -329,6 +329,12 @@ button.x-btn-text:focus,
   background-image: url(/skins/neoclassic/images/icons_silk/sprites.png);
   height: 18px;
 }
+#FOLDER_PATH{
+  border: none;
+  background-image: none;
+  background-color: #f1f1f1;
+  cursor: default;
+}
 .ICON_FOLDERS {
   /*.ss_folder_explore*/
 

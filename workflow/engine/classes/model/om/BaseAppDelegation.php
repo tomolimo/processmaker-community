@@ -202,6 +202,18 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     protected $tas_id = 0;
 
     /**
+     * The value for the del_title field.
+     * @var        string
+     */
+    protected $del_title;
+
+    /**
+     * The value for the del_thread_status_id field.
+     * @var        int
+     */
+    protected $del_thread_status_id = 0;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -637,6 +649,28 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     {
 
         return $this->tas_id;
+    }
+
+    /**
+     * Get the [del_title] column value.
+     * 
+     * @return     string
+     */
+    public function getDelTitle()
+    {
+
+        return $this->del_title;
+    }
+
+    /**
+     * Get the [del_thread_status_id] column value.
+     * 
+     * @return     int
+     */
+    public function getDelThreadStatusId()
+    {
+
+        return $this->del_thread_status_id;
     }
 
     /**
@@ -1289,6 +1323,50 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
     } // setTasId()
 
     /**
+     * Set the value of [del_title] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setDelTitle($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->del_title !== $v) {
+            $this->del_title = $v;
+            $this->modifiedColumns[] = AppDelegationPeer::DEL_TITLE;
+        }
+
+    } // setDelTitle()
+
+    /**
+     * Set the value of [del_thread_status_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setDelThreadStatusId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->del_thread_status_id !== $v || $v === 0) {
+            $this->del_thread_status_id = $v;
+            $this->modifiedColumns[] = AppDelegationPeer::DEL_THREAD_STATUS_ID;
+        }
+
+    } // setDelThreadStatusId()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -1363,12 +1441,16 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
 
             $this->tas_id = $rs->getInt($startcol + 28);
 
+            $this->del_title = $rs->getString($startcol + 29);
+
+            $this->del_thread_status_id = $rs->getInt($startcol + 30);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 29; // 29 = AppDelegationPeer::NUM_COLUMNS - AppDelegationPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 31; // 31 = AppDelegationPeer::NUM_COLUMNS - AppDelegationPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating AppDelegation object", $e);
@@ -1659,6 +1741,12 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
             case 28:
                 return $this->getTasId();
                 break;
+            case 29:
+                return $this->getDelTitle();
+                break;
+            case 30:
+                return $this->getDelThreadStatusId();
+                break;
             default:
                 return null;
                 break;
@@ -1708,6 +1796,8 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
             $keys[26] => $this->getUsrId(),
             $keys[27] => $this->getProId(),
             $keys[28] => $this->getTasId(),
+            $keys[29] => $this->getDelTitle(),
+            $keys[30] => $this->getDelThreadStatusId(),
         );
         return $result;
     }
@@ -1825,6 +1915,12 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
                 break;
             case 28:
                 $this->setTasId($value);
+                break;
+            case 29:
+                $this->setDelTitle($value);
+                break;
+            case 30:
+                $this->setDelThreadStatusId($value);
                 break;
         } // switch()
     }
@@ -1965,6 +2061,14 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
             $this->setTasId($arr[$keys[28]]);
         }
 
+        if (array_key_exists($keys[29], $arr)) {
+            $this->setDelTitle($arr[$keys[29]]);
+        }
+
+        if (array_key_exists($keys[30], $arr)) {
+            $this->setDelThreadStatusId($arr[$keys[30]]);
+        }
+
     }
 
     /**
@@ -2092,6 +2196,14 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
             $criteria->add(AppDelegationPeer::TAS_ID, $this->tas_id);
         }
 
+        if ($this->isColumnModified(AppDelegationPeer::DEL_TITLE)) {
+            $criteria->add(AppDelegationPeer::DEL_TITLE, $this->del_title);
+        }
+
+        if ($this->isColumnModified(AppDelegationPeer::DEL_THREAD_STATUS_ID)) {
+            $criteria->add(AppDelegationPeer::DEL_THREAD_STATUS_ID, $this->del_thread_status_id);
+        }
+
 
         return $criteria;
     }
@@ -2211,6 +2323,10 @@ abstract class BaseAppDelegation extends BaseObject implements Persistent
         $copyObj->setProId($this->pro_id);
 
         $copyObj->setTasId($this->tas_id);
+
+        $copyObj->setDelTitle($this->del_title);
+
+        $copyObj->setDelThreadStatusId($this->del_thread_status_id);
 
 
         $copyObj->setNew(true);

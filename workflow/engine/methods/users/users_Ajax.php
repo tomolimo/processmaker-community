@@ -1,6 +1,12 @@
 <?php
 
+use ProcessMaker\BusinessModel\Cases\Draft;
+use ProcessMaker\BusinessModel\Cases\Inbox;
+use ProcessMaker\BusinessModel\Cases\Participated;
+use ProcessMaker\BusinessModel\Cases\Paused;
+use ProcessMaker\BusinessModel\Cases\Unassigned;
 use ProcessMaker\Model\Process;
+use ProcessMaker\Model\User;
 
 try {
     global $RBAC;
@@ -336,43 +342,81 @@ try {
             echo '{success: true}';
             break;
         case 'summaryUserData':
-            //Get all information for the summary
-            $oUser = new Users();
-            $data = $oUser->loadDetailed($_REQUEST['USR_UID']);
-            $data['USR_STATUS'] = G::LoadTranslation('ID_' . $data['USR_STATUS']);
-            $oAppCache = new AppCacheView();
-            $aTypes = Array();
-            $aTypes['to_do'] = 'CASES_INBOX';
-            $aTypes['draft'] = 'CASES_DRAFT';
-            $aTypes['cancelled'] = 'CASES_CANCELLED';
-            $aTypes['sent'] = 'CASES_SENT';
-            $aTypes['paused'] = 'CASES_PAUSED';
-            $aTypes['completed'] = 'CASES_COMPLETED';
-            $aTypes['selfservice'] = 'CASES_SELFSERVICE';
-            $aCount = $oAppCache->getAllCounters(array_keys($aTypes), $_REQUEST['USR_UID']);
-            $dep = new Department();
-            if ($dep->existsDepartment($data['DEP_UID'])) {
-                $dep->Load($data['DEP_UID']);
-                $dep_name = $dep->getDepTitle();
-            } else {
-                $dep_name = '';
+            // Get all information for the summary
+            $result = [];
+            $usrUid = $_REQUEST['USR_UID'];
+            $usrId = User::getId($usrUid);
+            $data = User::getAllInformation($usrId);
+            $data = head($data);
+            $result['userdata'] = $data;
+            // Add additional user information
+            $isoCountry = IsoCountry::findById($data['USR_COUNTRY']);
+            $isoSubdivision = IsoSubdivision::findById($data['USR_COUNTRY'], $data['USR_CITY']);
+            $isoLocation = IsoLocation::findById($data['USR_COUNTRY'], $data['USR_CITY'], $data['USR_LOCATION']);
+            $result['userdata']['USR_COUNTRY_NAME'] = !empty($isoCountry["IC_NAME"]) ? $isoCountry["IC_NAME"] : '';
+            $result['userdata']['USR_CITY_NAME'] = !empty($isoSubdivision["IC_NAME"]) ? $isoSubdivision["IC_NAME"] : '';
+            $result['userdata']['USR_LOCATION_NAME'] = !empty($isoLocation["IC_NAME"]) ? $isoLocation["IC_NAME"] : '';
+            // Get the role name
+            $roles = new Roles();
+            $role = $roles->loadByCode($data['USR_ROLE']);
+            $result['userdata']['USR_ROLE_NAME'] = $role['ROL_NAME'];
+            // Get the language name
+            $translations = new Language();
+            $translation = $translations->loadByCode($data['USR_DEFAULT_LANG']);
+            $result['userdata']['USR_DEFAULT_LANG_NAME'] = $translation['LANGUAGE_NAME'];
+            // Get the full name
+            $conf = new Configurations();
+            $confSetting = $conf->getFormats();
+            $result['userdata']['USR_FULLNAME'] = G::getFormatUserList($confSetting['format'], $data);
+            // Get the cases counters
+            $types = [];
+            // For inbox
+            $inbox = new Inbox();
+            $inbox->setUserUid($usrUid);
+            $inbox->setUserId($usrId);
+            $types['to_do'] = $inbox->getCounter();
+            // For draft
+            $draft = new Draft();
+            $draft->setUserUid($usrUid);
+            $draft->setUserId($usrId);
+            $types['draft'] = $draft->getCounter();
+            // For Paused
+            $paused = new Paused();
+            $paused->setUserUid($usrUid);
+            $paused->setUserId($usrId);
+            $types['paused'] = $paused->getCounter();
+            // For Unassigned
+            $unassigned = new Unassigned();
+            $unassigned->setUserUid($usrUid);
+            $unassigned->setUserId($usrId);
+            $types['selfservice'] = $unassigned->getCounter();
+            // For started by me
+            $participated = new Participated();
+            $participated->setParticipatedStatus('STARTED');
+            $participated->setUserUid($usrUid);
+            $participated->setUserId($usrId);
+            $types['sent'] = $participated->getCounter();
+            $types['cancelled'] = 0;
+            $result['cases'] = $types;
+            // Get department name
+            $result['misc'] = [];
+            $dept = new Department();
+            $department = '';
+            if ($dept->existsDepartment($data['DEP_UID'])) {
+                $dept->Load($data['DEP_UID']);
+                $department = $dept->getDepTitle();
             }
-            if ($data['USR_REPLACED_BY'] != '') {
-                $user = new Users();
-                $u = $user->load($data['USR_REPLACED_BY']);
-                $c = new Configurations();
-                $arrayConfFormat = $c->getFormats();
-
-                $replaced_by = G::getFormatUserList($arrayConfFormat['format'], $u);
-            } else {
-                $replaced_by = '';
+            $result['misc']['DEP_TITLE'] = $department;
+            // Get the user full name who will replace the current user
+            $replacedBy = '';
+            if (!empty($data['USR_REPLACED_BY'])) {
+                $usrId = User::getId($data['USR_REPLACED_BY']);
+                $dataUser = User::getAllInformation($usrId);
+                $replacedBy = G::getFormatUserList($confSetting['format'], head($dataUser));
             }
-            $misc = Array();
-            $misc['DEP_TITLE'] = $dep_name;
-            $misc['REPLACED_NAME'] = $replaced_by;
-            echo '{success: true, userdata: ' . G::json_encode($data) . ', cases: ' . G::json_encode($aCount) . ', misc: ' . G::json_encode($misc) . '}';
+            $result['misc']['REPLACED_NAME'] = $replacedBy;
+            echo G::json_encode($result);
             break;
-
         case "verifyIfUserAssignedAsSupervisor":
             //Before delete we check if is supervisor
             $supervisor = new \ProcessMaker\BusinessModel\ProcessSupervisor();

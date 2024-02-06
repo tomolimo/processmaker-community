@@ -311,7 +311,7 @@ class Ajax
     {
         switch ($param['type']) {
             case 'process':
-                $oProcessMap = new ProcessMap(new DBConnection());
+                $oProcessMap = new ProcessMap();
                 $process = $oProcessMap->editProcessNew($param['UID']);
                 $category = ProcessCategoryPeer::retrieveByPk($process['PRO_CATEGORY']);
                 $categoryName = is_object($category) ? $category->getCategoryName() : '';
@@ -447,7 +447,7 @@ class Ajax
 
     public function getPMVariables($param)
     {
-        $oProcessMap = new ProcessMap(new DBConnection());
+        $oProcessMap = new ProcessMap();
         $response->rows = getDynaformsVars($param['PRO_UID']);
         foreach ($response->rows as $i => $var) {
             $response->rows[$i]['sName'] = "@@{$var['sName']}";

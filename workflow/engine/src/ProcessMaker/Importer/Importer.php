@@ -191,6 +191,7 @@ abstract class Importer
                             $name = $name . ' ' . date('Y-m-d H:i:s');
                         }
                     }
+                    $this->importData["tables"]["workflow"]["process"][0]["PRO_CREATE_DATE"] = $obj->getProCreateDate();
                 }
                 //Shouldn't generate new UID for all objects
                     try {
@@ -344,7 +345,14 @@ abstract class Importer
         $project->setDisabled();
     }
 
-    public function removeProject($onlyDiagram = false)
+    /**
+     * Remove the project
+     * 
+     * @param bool $onlyDiagram
+     * @param array $objectsToImport
+     * @return void
+     */
+    public function removeProject($onlyDiagram = false, $objectsToImport = [])
     {
         /* @var $process \Process */
         $processes = new \Processes();
@@ -355,7 +363,7 @@ abstract class Importer
         $process->load($this->metadata["uid"]);
         $this->currentProcessTitle = $process->getProTitle();
         $project = \ProcessMaker\Project\Adapter\BpmnWorkflow::load($this->metadata["uid"]);
-        $project->remove(true, false, $onlyDiagram);
+        $project->remove(true, false, $onlyDiagram, $objectsToImport);
     }
 
     /**

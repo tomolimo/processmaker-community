@@ -195,6 +195,10 @@ class UsersProperties extends BaseUsersProperties
                 $changePassword = 1;
             }
         }
+        //Spaces not supported at the end of passwords
+        if (substr($password, -1) === " ") {
+            $listErrors[] = 'ID_PPP_SPACES_NOT_SUPPORTED_AT_THE_END_OF_PASSWORD';
+        }
 
         if ($changePassword == 1) {
             $listErrors[] = 'ID_PPP_CHANGE_PASSWORD_AFTER_NEXT_LOGIN';

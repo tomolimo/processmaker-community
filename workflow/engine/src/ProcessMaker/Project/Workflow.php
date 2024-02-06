@@ -2,19 +2,21 @@
 namespace ProcessMaker\Project;
 
 use Criteria;
-use ProcessMaker\Plugins\PluginRegistry;
-use ResultSet;
-
+use ObjectPermissionPeer;
 use Process as ClassesProcess;
-use Tasks;
-use Task as ClassesTask;
+use ProcessMaker\Exception;
+use ProcessMaker\Model\ProcessCategory;
+use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Util;
+use ProcessMaker\Util\Common;
+use ProcessUserPeer;
+use ReportTables;
+use ResultSet;
 use Route;
 use RoutePeer;
-
-use ProcessMaker\Util\Common;
-use ProcessMaker\Exception;
-use ProcessMaker\Util;
-use ReportTables;
+use StepSupervisorPeer;
+use Tasks;
+use Task as ClassesTask;
 
 /**
  * Class Workflow
@@ -62,6 +64,8 @@ class Workflow extends Handler
         $data['USR_UID'] = array_key_exists('PRO_CREATE_USER', $data) ? $data['PRO_CREATE_USER'] : null;
         $data['PRO_TITLE'] = array_key_exists('PRO_TITLE', $data) ? trim($data['PRO_TITLE']) : "";
         $data['PRO_CATEGORY'] = array_key_exists('PRO_CATEGORY', $data) ? $data['PRO_CATEGORY'] : "";
+        $categoryId = ProcessCategory::getCategoryId($data['PRO_CATEGORY']);
+        $data['CATEGORY_ID'] = !is_null($categoryId) ? $categoryId : 0;
 
         try {
 
@@ -112,11 +116,20 @@ class Workflow extends Handler
         $process->update($data);
     }
 
-    public function remove($flagRemoveCases = true, $onlyDiagram = false)
+    /**
+     * Remove project
+     * 
+     * @param bool $flagRemoveCases
+     * @param bool $onlyDiagram
+     * @param array $objectsToImport
+     * @return void
+     * @throws \Exception
+     */
+    public function remove($flagRemoveCases = true, $onlyDiagram = false, $objectsToImport = [])
     {
         try {
             self::log("Remove Process with uid: {$this->proUid}");
-            $this->deleteProcess($this->proUid, $flagRemoveCases, $onlyDiagram);
+            $this->deleteProcess($this->proUid, $flagRemoveCases, $onlyDiagram, $objectsToImport);
             self::log("Remove Process Success!");
         } catch (\Exception $e) {
             self::log("Exception: ", $e->getMessage(), "Trace: ", $e->getTraceAsString());
@@ -576,7 +589,17 @@ class Workflow extends Handler
         }
     }
 
-    public function deleteProcess($sProcessUID, $flagRemoveCases = true, $onlyDiagram = false)
+    /**
+     * Delete process
+     * 
+     * @param string $sProcessUID
+     * @param bool $flagRemoveCases
+     * @param bool $onlyDiagram
+     * @param array $objectsToImport
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteProcess($sProcessUID, $flagRemoveCases = true, $onlyDiagram = false, $objectsToImport = [])
     {
         try {
 
@@ -758,18 +781,24 @@ class Workflow extends Handler
                     $oDataset->next();
                 }
             }
-            //Delete the supervisors
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(\ProcessUserPeer::PRO_UID, $sProcessUID);
-            \ProcessUserPeer::doDelete($oCriteria);
-            //Delete the object permissions
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(\ObjectPermissionPeer::PRO_UID, $sProcessUID);
-            \ObjectPermissionPeer::doDelete($oCriteria);
-            //Delete the step supervisors
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(\StepSupervisorPeer::PRO_UID, $sProcessUID);
-            \StepSupervisorPeer::doDelete($oCriteria);
+            if (array_search('SUPERVISORS', array_column($objectsToImport, 'id')) !== false || empty($objectsToImport)) {
+                //Delete the supervisors
+                $oCriteria = new Criteria('workflow');
+                $oCriteria->add(ProcessUserPeer::PRO_UID, $sProcessUID);
+                ProcessUserPeer::doDelete($oCriteria);
+            }
+            if (array_search('PERMISSIONS', array_column($objectsToImport, 'id')) !== false || empty($objectsToImport)) {
+                //Delete the object permissions
+                $oCriteria = new Criteria('workflow');
+                $oCriteria->add(ObjectPermissionPeer::PRO_UID, $sProcessUID);
+                ObjectPermissionPeer::doDelete($oCriteria);
+            }
+            if (array_search('SUPERVISORSOBJECTS', array_column($objectsToImport, 'id')) !== false || empty($objectsToImport)) {
+                //Delete the step supervisors
+                $oCriteria = new Criteria('workflow');
+                $oCriteria->add(StepSupervisorPeer::PRO_UID, $sProcessUID);
+                StepSupervisorPeer::doDelete($oCriteria);
+            }
             //Delete the report tables
             $oCriteria = new Criteria('workflow');
             $oCriteria->add(\ReportTablePeer::PRO_UID, $sProcessUID);

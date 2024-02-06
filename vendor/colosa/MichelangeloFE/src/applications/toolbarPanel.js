@@ -2,9 +2,10 @@ PMDesigner.sidebar = [];
 
 PMDesigner.sidebar.push(
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'TASK',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-task'
@@ -13,6 +14,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'SUB_PROCESS',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-subprocess'
@@ -22,9 +24,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'EXCLUSIVE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-exclusive'
@@ -33,6 +36,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'PARALLEL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-parallel'
@@ -41,6 +45,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INCLUSIVE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-gateway-inclusive'
@@ -50,9 +55,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'START',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-start'
@@ -61,6 +67,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'START_TIMER',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-event-start-timer'
@@ -69,6 +76,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INTERMEDIATE_EMAIL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-intermediate-send-mesage'
@@ -77,6 +85,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'INTERMEDIATE_TIMER',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-event-intermediate-timer'
@@ -85,6 +94,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'END',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-end'
@@ -93,6 +103,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'END_EMAIL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-end-message'
@@ -102,9 +113,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'DATAOBJECT',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-data-object'
@@ -113,6 +125,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'DATASTORE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-data-store'
@@ -122,9 +135,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'PARTICIPANT',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-blackbox'
@@ -133,6 +147,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'POOL',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-pool'
@@ -141,6 +156,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'LANE',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-lane'
@@ -150,9 +166,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'GROUP',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-group'
@@ -161,6 +178,7 @@ PMDesigner.sidebar.push(
             },
             {
                 selector: 'TEXT_ANNOTATION',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-annotation'
@@ -170,9 +188,10 @@ PMDesigner.sidebar.push(
         ]
     }),
     new ToolbarPanel({
-        buttons: [
+        fields: [
             {
                 selector: 'LASSO',
+                type: 'button',
                 className: [
                     'mafe-designer-icon',
                     'mafe-toolbar-lasso'
@@ -181,5 +200,22 @@ PMDesigner.sidebar.push(
             }
 
         ]
+    }),
+    new ToolbarPanel({
+        fields: [
+            {
+                selector: 'enableAutosave',
+                type: 'switch',
+                className: [
+                    'mafe-toolbar-autosave'
+                ],
+                tooltip: "Validate Now".translate(),
+                checked: true,
+                text: "Auto Save".translate(),
+                checkHandler: function (value) {
+                    PMDesigner.autoSaveValue(value);
+                }
+            }
+        ]  
     })
 );

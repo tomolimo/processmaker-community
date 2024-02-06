@@ -13,12 +13,12 @@ class UpdateStatementTest extends TestCase
      *
      * @dataProvider updateProvider
      */
-    public function testUpdate($test)
+    public function testUpdate($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function updateProvider()
+    public function updateProvider(): array
     {
         return [
             ['parser/parseUpdate'],

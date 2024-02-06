@@ -1,33 +1,29 @@
 <?php
 namespace ProcessMaker\Services\Api\Project;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\Table;
+use ProcessMaker\Services\Api;
 
 /**
  * Project\ReportTable Api Controller
- *
- * @author Brayan Pereyra <brayan@colosa.com>
- * @copyright Colosa - Bolivia
- *
  * @protected
  */
 class ReportTable extends Api
 {
     /**
-     * @param string $prj_uid {@min 1} {@max 32}
-     *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
+     * Get list of the report tables by project.
+     * @url GET /:proUid/report-tables
+     * @param string $proUid {@min 1} {@max 32}
+     * @param string $search
      * @return array
-     *
-     * @url GET /:prj_uid/report-tables
+     * @throws RestException
      */
-    public function doGetReportTables($prj_uid)
+    public function doGetReportTables(string $proUid, string $search = '')
     {
         try {
-            $oReportTable = new \ProcessMaker\BusinessModel\Table();
-            $response = $oReportTable->getTables($prj_uid, true);
+            $reportTable = new Table();
+            $response = $reportTable->getTables($proUid, true, false, $search);
             return $response;
         } catch (\Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -38,9 +34,6 @@ class ReportTable extends Api
      * @param string $prj_uid {@min 1} {@max 32}
      * @param string $rep_uid {@min 1} {@max 32}
      * @return array
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
      * @url GET /:prj_uid/report-table/:rep_uid
      */
     public function doGetReportTable($prj_uid, $rep_uid)
@@ -58,9 +51,6 @@ class ReportTable extends Api
      * @param string $prj_uid {@min 1} {@max 32}
      * @param string $rep_uid {@min 1} {@max 32}
      * @return array
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
      * @url GET /:prj_uid/report-table/:rep_uid/populate
      */
     public function doGetPopulateReportTable($prj_uid, $rep_uid)
@@ -78,9 +68,6 @@ class ReportTable extends Api
      * @param string $prj_uid {@min 1} {@max 32}
      * @param string $rep_uid {@min 1} {@max 32}
      * @return array
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
      * @url GET /:prj_uid/report-table/:rep_uid/data
      */
     public function doGetReportTableData($prj_uid, $rep_uid)

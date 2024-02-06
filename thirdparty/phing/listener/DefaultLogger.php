@@ -29,7 +29,7 @@ include_once 'phing/BuildEvent.php';
  *  any messages that get logged.
  *
  *  @author    Andreas Aderhold <andi@binarycloud.com>
- *  @copyright © 2001,2002 THYRELL. All rights reserved
+ *  @copyright Â© 2001,2002 THYRELL. All rights reserved
  *  @version   $Revision: 1.11 $ $Date: 2005/08/25 19:33:43 $
  *  @see       BuildEvent
  *  @package   phing.listener
@@ -214,7 +214,7 @@ class DefaultLogger implements BuildListener {
                                     $minutes, ($minutes === 1 ? " " : "s "),
                                     $seconds - floor($seconds/60) * 60, ($seconds%60 === 1 ? "" : "s"));
         } else {
-            return sprintf("%0.4f second%s", $seconds, ($seconds%60 === 1 ? "" : "s"));
+            return sprintf("%0.4f second%s", $seconds, ((int) $seconds % 60 === 1 ? "" : "s"));
         }
     }
     

@@ -22,7 +22,7 @@ userMain.application = {
                         id: "nodeInfo",
                         text: "Personal Information",
                         leaf: true,
-                        url: "../users/usersInit"
+                        url: "../users/usersInit?userInterface=" + userInterface
 
                     }
                 ]

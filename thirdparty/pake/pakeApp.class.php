@@ -386,7 +386,7 @@ class pakeApp
       $files = preg_replace('/^'.preg_quote(realpath($target_dir), '/').'/', '', $files);
 
       // remove leading /
-      $files = array_map(create_function('$f', 'return 0 === strpos($f, DIRECTORY_SEPARATOR) ? substr($f, 1) : $f;'), $files);
+      $files = array_map(function($f){return 0 === strpos($f, DIRECTORY_SEPARATOR) ? substr($f, 1) : $f;}, $files);
     }
 
     return $files;

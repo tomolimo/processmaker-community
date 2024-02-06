@@ -124,6 +124,12 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
     protected $we_hide_information_bar = '1';
 
     /**
+     * The value for the we_hide_active_session_warning field.
+     * @var        string
+     */
+    protected $we_hide_active_session_warning = '1';
+
+    /**
      * The value for the we_callback field.
      * @var        string
      */
@@ -395,6 +401,17 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
     {
 
         return $this->we_hide_information_bar;
+    }
+
+    /**
+     * Get the [we_hide_active_session_warning] column value.
+     * 
+     * @return     string
+     */
+    public function getWeHideActiveSessionWarning()
+    {
+
+        return $this->we_hide_active_session_warning;
     }
 
     /**
@@ -841,6 +858,28 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
     } // setWeHideInformationBar()
 
     /**
+     * Set the value of [we_hide_active_session_warning] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setWeHideActiveSessionWarning($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->we_hide_active_session_warning !== $v || $v === '1') {
+            $this->we_hide_active_session_warning = $v;
+            $this->modifiedColumns[] = WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING;
+        }
+
+    } // setWeHideActiveSessionWarning()
+
+    /**
      * Set the value of [we_callback] column.
      * 
      * @param      string $v new value
@@ -1043,26 +1082,28 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
 
             $this->we_hide_information_bar = $rs->getString($startcol + 15);
 
-            $this->we_callback = $rs->getString($startcol + 16);
+            $this->we_hide_active_session_warning = $rs->getString($startcol + 16);
 
-            $this->we_callback_url = $rs->getString($startcol + 17);
+            $this->we_callback = $rs->getString($startcol + 17);
 
-            $this->we_link_generation = $rs->getString($startcol + 18);
+            $this->we_callback_url = $rs->getString($startcol + 18);
 
-            $this->we_link_skin = $rs->getString($startcol + 19);
+            $this->we_link_generation = $rs->getString($startcol + 19);
 
-            $this->we_link_language = $rs->getString($startcol + 20);
+            $this->we_link_skin = $rs->getString($startcol + 20);
 
-            $this->we_link_domain = $rs->getString($startcol + 21);
+            $this->we_link_language = $rs->getString($startcol + 21);
 
-            $this->we_show_in_new_case = $rs->getString($startcol + 22);
+            $this->we_link_domain = $rs->getString($startcol + 22);
+
+            $this->we_show_in_new_case = $rs->getString($startcol + 23);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 23; // 23 = WebEntryPeer::NUM_COLUMNS - WebEntryPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 24; // 24 = WebEntryPeer::NUM_COLUMNS - WebEntryPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating WebEntry object", $e);
@@ -1315,24 +1356,27 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
                 return $this->getWeHideInformationBar();
                 break;
             case 16:
-                return $this->getWeCallback();
+                return $this->getWeHideActiveSessionWarning();
                 break;
             case 17:
-                return $this->getWeCallbackUrl();
+                return $this->getWeCallback();
                 break;
             case 18:
-                return $this->getWeLinkGeneration();
+                return $this->getWeCallbackUrl();
                 break;
             case 19:
-                return $this->getWeLinkSkin();
+                return $this->getWeLinkGeneration();
                 break;
             case 20:
-                return $this->getWeLinkLanguage();
+                return $this->getWeLinkSkin();
                 break;
             case 21:
-                return $this->getWeLinkDomain();
+                return $this->getWeLinkLanguage();
                 break;
             case 22:
+                return $this->getWeLinkDomain();
+                break;
+            case 23:
                 return $this->getWeShowInNewCase();
                 break;
             default:
@@ -1371,13 +1415,14 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
             $keys[13] => $this->getWeCustomTitle(),
             $keys[14] => $this->getWeAuthentication(),
             $keys[15] => $this->getWeHideInformationBar(),
-            $keys[16] => $this->getWeCallback(),
-            $keys[17] => $this->getWeCallbackUrl(),
-            $keys[18] => $this->getWeLinkGeneration(),
-            $keys[19] => $this->getWeLinkSkin(),
-            $keys[20] => $this->getWeLinkLanguage(),
-            $keys[21] => $this->getWeLinkDomain(),
-            $keys[22] => $this->getWeShowInNewCase(),
+            $keys[16] => $this->getWeHideActiveSessionWarning(),
+            $keys[17] => $this->getWeCallback(),
+            $keys[18] => $this->getWeCallbackUrl(),
+            $keys[19] => $this->getWeLinkGeneration(),
+            $keys[20] => $this->getWeLinkSkin(),
+            $keys[21] => $this->getWeLinkLanguage(),
+            $keys[22] => $this->getWeLinkDomain(),
+            $keys[23] => $this->getWeShowInNewCase(),
         );
         return $result;
     }
@@ -1458,24 +1503,27 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
                 $this->setWeHideInformationBar($value);
                 break;
             case 16:
-                $this->setWeCallback($value);
+                $this->setWeHideActiveSessionWarning($value);
                 break;
             case 17:
-                $this->setWeCallbackUrl($value);
+                $this->setWeCallback($value);
                 break;
             case 18:
-                $this->setWeLinkGeneration($value);
+                $this->setWeCallbackUrl($value);
                 break;
             case 19:
-                $this->setWeLinkSkin($value);
+                $this->setWeLinkGeneration($value);
                 break;
             case 20:
-                $this->setWeLinkLanguage($value);
+                $this->setWeLinkSkin($value);
                 break;
             case 21:
-                $this->setWeLinkDomain($value);
+                $this->setWeLinkLanguage($value);
                 break;
             case 22:
+                $this->setWeLinkDomain($value);
+                break;
+            case 23:
                 $this->setWeShowInNewCase($value);
                 break;
         } // switch()
@@ -1566,31 +1614,35 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[16], $arr)) {
-            $this->setWeCallback($arr[$keys[16]]);
+            $this->setWeHideActiveSessionWarning($arr[$keys[16]]);
         }
 
         if (array_key_exists($keys[17], $arr)) {
-            $this->setWeCallbackUrl($arr[$keys[17]]);
+            $this->setWeCallback($arr[$keys[17]]);
         }
 
         if (array_key_exists($keys[18], $arr)) {
-            $this->setWeLinkGeneration($arr[$keys[18]]);
+            $this->setWeCallbackUrl($arr[$keys[18]]);
         }
 
         if (array_key_exists($keys[19], $arr)) {
-            $this->setWeLinkSkin($arr[$keys[19]]);
+            $this->setWeLinkGeneration($arr[$keys[19]]);
         }
 
         if (array_key_exists($keys[20], $arr)) {
-            $this->setWeLinkLanguage($arr[$keys[20]]);
+            $this->setWeLinkSkin($arr[$keys[20]]);
         }
 
         if (array_key_exists($keys[21], $arr)) {
-            $this->setWeLinkDomain($arr[$keys[21]]);
+            $this->setWeLinkLanguage($arr[$keys[21]]);
         }
 
         if (array_key_exists($keys[22], $arr)) {
-            $this->setWeShowInNewCase($arr[$keys[22]]);
+            $this->setWeLinkDomain($arr[$keys[22]]);
+        }
+
+        if (array_key_exists($keys[23], $arr)) {
+            $this->setWeShowInNewCase($arr[$keys[23]]);
         }
 
     }
@@ -1666,6 +1718,10 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
 
         if ($this->isColumnModified(WebEntryPeer::WE_HIDE_INFORMATION_BAR)) {
             $criteria->add(WebEntryPeer::WE_HIDE_INFORMATION_BAR, $this->we_hide_information_bar);
+        }
+
+        if ($this->isColumnModified(WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING)) {
+            $criteria->add(WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING, $this->we_hide_active_session_warning);
         }
 
         if ($this->isColumnModified(WebEntryPeer::WE_CALLBACK)) {
@@ -1779,6 +1835,8 @@ abstract class BaseWebEntry extends BaseObject implements Persistent
         $copyObj->setWeAuthentication($this->we_authentication);
 
         $copyObj->setWeHideInformationBar($this->we_hide_information_bar);
+
+        $copyObj->setWeHideActiveSessionWarning($this->we_hide_active_session_warning);
 
         $copyObj->setWeCallback($this->we_callback);
 

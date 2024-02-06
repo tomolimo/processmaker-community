@@ -17,9 +17,9 @@ if (isset($_GET['ux'])) {
 if (isset($_GET['ux'])) {
     echo 'if (typeof window.parent.ux_env != \'undefined\') {';
 }
-echo "  window.parent.location.href = '$url';";
+echo '  parent.parent.postMessage("redirect=todo","*");';
 if (isset($_GET['ux'])) {
-        echo '} else { window.parent.location.href = \'casesListExtJs\'; }';
+            echo '} else { parent.parent.postMessage("redirect=todo","*"); }';
 }
 echo "try {parent.parent.updateCasesTree();parent.parent.highlightCasesTree();} catch(e) {}";
 ?>

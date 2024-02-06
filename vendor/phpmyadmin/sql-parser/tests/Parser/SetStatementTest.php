@@ -13,12 +13,12 @@ class SetStatementTest extends TestCase
      *
      * @dataProvider setProvider
      */
-    public function testSet($test)
+    public function testSet($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function setProvider()
+    public function setProvider(): array
     {
         return [
             ['parser/parseSetCharset'],

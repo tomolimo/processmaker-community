@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This service is to start PM with the anonymous user.
  */
@@ -19,6 +20,12 @@ try {
     }
 
     $userUid = $webEntry->getUsrUid();
+
+    if (!empty($_SESSION['__WEBENTRYCONTINUE_USER_LOGGED__'])) {
+        $userUid = $_SESSION['__WEBENTRYCONTINUE_USER_LOGGED__'];
+        unset($_SESSION['__WEBENTRYCONTINUE_USER_LOGGED__']);
+    }
+
     $userInfo = UsersPeer::retrieveByPK($userUid);
     if (empty($userInfo)) {
         throw new Exception('WebEntry User not found');
@@ -33,7 +40,7 @@ try {
         'firstName' => $userInfo->getUsrFirstName(),
         'lastName' => $userInfo->getUsrLastName(),
         'mail' => $userInfo->getUsrEmail(),
-        'image' => '../users/users_ViewPhoto?t='.microtime(true),
+        'image' => '../users/users_ViewPhoto?t=' . microtime(true),
     ];
 } catch (Exception $e) {
     $result = [

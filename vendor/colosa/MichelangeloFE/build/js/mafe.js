@@ -9804,7 +9804,7 @@ function getSerializableProperties(element) {
             return false;
         }
 
-        return p.isMany ? value.length : true;
+        return p.isMany ? value ? value.length : true : true;
     });
 }
 
@@ -19178,15 +19178,15 @@ ToolbarPanel.prototype.type = "ToolbarPanel";
 
 ToolbarPanel.prototype.init = function (options) {
     var defaults = {
-        buttons: [],
+        fields: [],
         tooltip: "",
         width: "96%"
     };
     jQuery.extend(true, defaults, options);
     PMUI.core.Panel.call(this, defaults);
-    this.buttons = [];
+    this.fields = [];
     this.setTooltip(defaults.tooltip);
-    this.setButtons(defaults.buttons);
+    this.setFields(defaults.fields);
 };
 ToolbarPanel.prototype.setTooltip = function (message) {
     if (typeof message === "string") {
@@ -19195,17 +19195,18 @@ ToolbarPanel.prototype.setTooltip = function (message) {
     return this;
 };
 
-ToolbarPanel.prototype.setButtons = function (buttons) {
-    var that = this;
-    jQuery.each(buttons, function (index, button) {
-        that.buttons.push(button);
-    });
+ToolbarPanel.prototype.setFields = function (fields) {
+    this.fields = fields;
     return this;
 };
-ToolbarPanel.prototype.createHTMLButton = function (button) {
+/**
+ * Creates html structure for a button
+ * @param {*} button
+ */
+ToolbarPanel.prototype.createButtonHTML = function (button) {
     var i,
-        li = PMUI.createHTMLElement('li'),
-        a = PMUI.createHTMLElement('a');
+        li = PMUI.createHTMLElement("li"),
+        a = PMUI.createHTMLElement("a");
 
     li.id = button.selector;
     li.className = "mafe-toolbarpanel-btn";
@@ -19215,7 +19216,9 @@ ToolbarPanel.prototype.createHTMLButton = function (button) {
         content: button.tooltip,
         tooltipClass: "mafe-action-tooltip",
         position: {
-            my: "left top", at: "left bottom", collision: "flipfit"
+            my: "left top",
+            at: "left bottom",
+            collision: "flipfit"
         }
     });
 
@@ -19227,13 +19230,54 @@ ToolbarPanel.prototype.createHTMLButton = function (button) {
     return li;
 };
 
+/**
+ * Creates html structure for a switch tongle component
+ * @param {*} element
+ * @returns {String}
+ */
+ToolbarPanel.prototype.createSwitchHTML = function (element) {
+    var li = PMUI.createHTMLElement("li"),
+        input = PMUI.createHTMLElement("input"),
+        label = PMUI.createHTMLElement("label"),
+        labelDescription = PMUI.createHTMLElement("label");
+    labelDescription.innerHTML = element.text || '';
+    labelDescription.className = "tgl-label";
+    input.type = "checkbox";
+    li.className = "mafe-toolbarpanel-switch";
+    input.type = "checkbox";
+    input.id = element.selector;
+    input.className = "tgl tgl-light";
+    input.checked = element.checked || false;
+    label.htmlFor = element.selector;
+    label.className = "tgl-btn";
+    input.addEventListener( 'change', function() {
+        if (element.checkHandler) {
+            if(this.checked) {
+                element.checkHandler(true);
+            } else {
+                element.checkHandler(false);
+            }
+        }
+    });
+    li.appendChild(labelDescription);
+    li.appendChild(input);
+    li.appendChild(label);
+    return li;
+};
+
 ToolbarPanel.prototype.createHTML = function () {
-    var that = this, ul;
+    var that = this,
+        ul,
+        html;
     PMUI.core.Panel.prototype.setElementTag.call(this, "ul");
     PMUI.core.Panel.prototype.createHTML.call(this);
     this.html.style.overflow = "visible";
-    jQuery.each(this.buttons, function (i, button) {
-        var html = that.createHTMLButton(button);
+    jQuery.each(this.fields, function (i, button) {
+        if (button.type === "button") {
+            html = that.createButtonHTML(button);
+        } else if (button.type === "switch") {
+            html = that.createSwitchHTML(button);
+        }
         that.html.appendChild(html);
         button.html = html;
     });
@@ -19242,23 +19286,42 @@ ToolbarPanel.prototype.createHTML = function () {
 
 ToolbarPanel.prototype.activate = function () {
     var that = this;
-    jQuery.each(this.buttons, function (i, b) {
-        jQuery(b.html).draggable({
-            opacity: 0.7,
-            helper: "clone",
-            cursor: "hand"
-        });
+    jQuery.each(this.fields, function (i, b) {
+        if (b.type === "button") {
+            jQuery(b.html).draggable({
+                opacity: 0.7,
+                helper: "clone",
+                cursor: "hand"
+            });
+        }
+    });
+    return this;
+};
+/**
+ * Enable the actions if the toolbar button has an action and is a button
+ * @chainable
+ */
+ToolbarPanel.prototype.enableActions = function () {
+    jQuery.each(this.fields, function (i, b) {
+        if (b.type === "button") {
+            if (b.actions) {
+                new PMAction(b.actions);
+            }
+        }
+        
     });
     return this;
 };
 
 ToolbarPanel.prototype.getSelectors = function () {
-    var selectors = [], that = this;
-    jQuery.each(this.buttons, function (i, button) {
-        selectors.push('#' + button.selector);
+    var selectors = [],
+        that = this;
+    jQuery.each(this.fields, function (i, button) {
+        selectors.push("#" + button.selector);
     });
     return selectors;
 };
+
 var PMProject;
 PMProject = function (options) {
     this.diagrams = new PMUI.util.ArrayList();
@@ -19886,7 +19949,12 @@ PMProject.prototype.addElement = function (element) {
     }
     if (!this.loadingProcess) {
         this.setDirty(true);
-        PMDesigner.connectValidator.bpmnValidator();
+        if(element.type === "Connection") {
+            PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject.destPort.parent);
+            PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject.srcPort.parent);
+        }
+        
+        PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject);
         //Call to Create callBack
         this.listeners.create(this, element);
     }
@@ -19927,16 +19995,17 @@ PMProject.prototype.updateElement = function (updateElement) {
         }
     }
     //run the process validator only when the project has been loaded
-    if(!this.loadingProcess){
+    if (!this.loadingProcess) {
         this.setDirty(true);
-        PMDesigner.connectValidator.bpmnValidator();
+        PMDesigner.connectValidator.bpmnValidateOnUpdate(updateElement);
         //Call to Update callBack
         this.listeners.update(this, updateElement);
     }
 };
 
 
-PMProject.prototype.removeElement = function (updateElement) {
+
+PMProject.prototype.removeElement = function (updatedElements) {
     var object,
         dirtyEmptyCounter,
         element,
@@ -19946,9 +20015,9 @@ PMProject.prototype.removeElement = function (updateElement) {
         emptyObject = {},
         currentItem;
 
-    for (i = 0; i < updateElement.length; i += 1) {
-        element = updateElement[i];
-        currentItem = PMUI.getActiveCanvas().items.find("id", updateElement[i].id);
+    for (i = 0; i < updatedElements.length; i += 1) {
+        element = updatedElements[i];
+        currentItem = PMUI.getActiveCanvas().items.find("id", updatedElements[i].id);
         PMUI.getActiveCanvas().items.remove(currentItem);
 
         list = this.getUpdateList(element.type);
@@ -19988,8 +20057,16 @@ PMProject.prototype.removeElement = function (updateElement) {
     }
     this.setDirty(true);
     //Call to Remove callBack
-    this.listeners.remove(this, updateElement);
-    PMDesigner.connectValidator.bpmnValidator();
+    this.listeners.remove(this, updatedElements);
+
+    //validate bpmn rules on remove
+    for (i = 0; i < updatedElements.length; i += 1) {
+        if(updatedElements[i].type === "Connection") {
+            PMDesigner.connectValidator.bpmnValidatorShape(updatedElements[i].destPort.parent);
+            PMDesigner.connectValidator.bpmnValidatorShape(updatedElements[i].srcPort.parent);
+        }
+        
+    }
 };
 
 PMProject.prototype.formatProperty = function (type, property) {
@@ -21903,7 +21980,6 @@ PMCanvas.prototype.addConnection = function (conn) {
     if (shapeElement instanceof PMGateway) {
         shapeElement.evaluateGatewayDirection();
     }
-    PMDesigner.project.updateElement([]);
 };
 /**
  * This method hide all flows into a container (shape);
@@ -25692,8 +25768,6 @@ PMUI.ui.Window.prototype.open = function () {
         if (!$.stackModal) {
             $.stackModal = [];
         }
-        $(the_window).find(":tabbable:eq(0)").focus(1);
-        $(the_window).find(":tabbable:eq(1)").focus(1);
         $.stackModal.push(the_window);
         $(the_window).on("keydown", function (event) {
             if (event.keyCode !== $.ui.keyCode.TAB) {
@@ -25703,10 +25777,14 @@ PMUI.ui.Window.prototype.open = function () {
                 first = tabbables.filter(':first'),
                 last = tabbables.filter(':last');
             if (event.target === last[0] && !event.shiftKey) {
-                first.focus(1);
+                if (first && first.focus) {
+                    first.focus(1);
+                }
                 return false;
             } else if (event.target === first[0] && event.shiftKey) {
-                last.focus(1);
+                if (last && last.focus) {
+                    last.focus(1);
+                }
                 return false;
             }
             if (event.which === PMDesigner.keyCodeF5) {
@@ -27756,6 +27834,7 @@ var CriteriaField = function (options) {
     this.workspace = null;
     this.buttonHTML = null;
     this.rows = options.rows;
+    this.options = options;
     CriteriaField.prototype.init.call(this, options);
 };
 
@@ -27799,6 +27878,15 @@ CriteriaField.prototype.setControls = function () {
         this.controls.push(new PMUI.control.TextAreaControl({style: {cssProperties: {resize: 'vertical'}}}));
     }
     return this;
+};
+
+/**
+ * Update the property disable
+ * @param {boolean} value 
+ */
+CriteriaField.prototype.updateDisabled = function (value) {
+    this.setDisabled(value);
+    this.buttonHTML.setDisabled(value);
 };
 
 CriteriaField.prototype.createCallBack = function () {
@@ -27851,6 +27939,9 @@ CriteriaField.prototype.createHTML = function () {
     $(this.helper.html).before(button.getHTML());
     this.buttonHTML.style.addProperties({"margin-left": "10px"});
     this.buttonHTML.html.tabIndex = -1;
+    if (typeof this.options.disabled === 'boolean') {
+        this.buttonHTML.setDisabled(this.options.disabled);
+    }
 
     if (this.rows != null)
         this.controls[0].setHeight(this.rows);
@@ -27864,6 +27955,114 @@ PMUI.form.FormItemFactory.prototype.init = function () {
     var defaults = {
         products: {
             "criteria": CriteriaField,
+            "field": PMUI.form.Field,
+            "panel": PMUI.form.FormPanel,
+            "text": PMUI.field.TextField,
+            "password": PMUI.field.PasswordField,
+            "dropdown": PMUI.field.DropDownListField,
+            "radio": PMUI.field.RadioButtonGroupField,
+            "checkbox": PMUI.field.CheckBoxGroupField,
+            "textarea": PMUI.field.TextAreaField,
+            "datetime": PMUI.field.DateTimeField,
+            "optionsSelector": PMUI.field.OptionsSelectorField,
+            "buttonField": PMUI.field.ButtonField,
+            "annotation": PMUI.field.TextAnnotationField
+        },
+        defaultProduct: "panel"
+    };
+    this.setProducts(defaults.products)
+        .setDefaultProduct(defaults.defaultProduct);
+};
+
+var SwitchField = function (options) {
+    this.renderType = (options && options.renderType) || "text";
+    PMUI.field.CheckBoxGroupField.call(this, options);
+    this.process = null;
+    this.workspace = null;
+    this.rows = options.rows;
+    this.options = options;
+    SwitchField.prototype.init.call(this, options);
+};
+
+SwitchField.prototype = new PMUI.field.CheckBoxGroupField();
+
+SwitchField.prototype.setProcess = function (process) {
+    this.process = process;
+    return this;
+};
+
+SwitchField.prototype.setWorkspace = function (workspace) {
+    this.workspace = workspace;
+    return this;
+};
+
+SwitchField.prototype.init = function (options) {
+    var defaults = {
+        process: PMDesigner.project.projectId,
+        workspace: WORKSPACE
+    };
+    jQuery.extend(true, defaults, options);
+    this.setProcess(defaults.process)
+        .setWorkspace(defaults.workspace);
+};
+
+SwitchField.prototype.createCallBack = function () {
+    var that = this,
+        newValue,
+        init = 0,
+        index = 0;
+    return {
+        success: function (variable) {
+            var prevText,
+                lastText,
+                htmlControl = that.controls[index].html;
+            init = htmlControl.selectionStart;
+            prevText = htmlControl.value.substr(index, init);
+            lastText = htmlControl.value.substr(htmlControl.selectionEnd, htmlControl.value.length);
+            newValue = prevText + variable + lastText;
+            that.setValue(newValue);
+            that.isValid();
+            htmlControl.selectionEnd = init + variable.length;
+        }
+    };
+};
+
+SwitchField.prototype.setPlaceholder = function (placeholder) {}
+
+SwitchField.prototype.setMaxLength = function (placeholder) {}
+
+SwitchField.prototype.setReadOnly = function (placeholder) {}
+
+SwitchField.prototype.createHTML = function () {
+    PMUI.field.CheckBoxGroupField.prototype.createHTML.call(this);
+    this.setSwitchStyle();
+    return this.html;
+};
+
+/**
+ * Set style type switch to checkbox
+ */
+SwitchField.prototype.setSwitchStyle = function () {
+    var table,
+        span,
+        label;
+    if (this.html) {
+        table = this.html.getElementsByTagName("table")[0];
+        table.setAttribute('style', 'padding: 0px; border:0px');
+        table.setAttribute('class', '');
+        span = table.getElementsByTagName("span")[0];
+        span.setAttribute('class', 'slider round');
+        label = table.getElementsByTagName("label")[0];
+        label.setAttribute('class', 'switch');
+    }
+};
+
+// Overwrite original init function for FormItemFactory
+PMUI.form.FormItemFactory.prototype.init = function () {
+    var defaults = {
+        products: {
+            "criteria": CriteriaField,
+            "switch": SwitchField,
             "field": PMUI.form.Field,
             "panel": PMUI.form.FormPanel,
             "text": PMUI.field.TextField,
@@ -29380,12 +29579,32 @@ ConnectValidator.prototype.bpmnValidator = function () {
     return this;
 };
 /**
+ * Validate un update a bpmn element
+ * @param {*} updatedElement 
+ */
+ConnectValidator.prototype.bpmnValidateOnUpdate = function (updatedElement) {
+    for (i = 0; i < updatedElement.length; i += 1) {
+        if(updatedElement[i].type === "Connection") {
+            if (updatedElement[i].relatedObject.type === "Port") {
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.parent);
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.oldParent);
+            } else {
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.destPort.parent);
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.srcPort.parent);
+            }
+            
+        }
+    }
+    return this;
+};
+
+/**
  * Validate Shape
  * @param shape
  * @returns {ConnectValidator}
  */
 ConnectValidator.prototype.bpmnValidatorShape = function (shape) {
-    if (shape.validatorMarker) {
+    if (shape && shape.validatorMarker) {
         this.bpmnFlowValidator(shape);
         shape.validatorMarker.hide();
         if (shape.getNumErrors() > 0 && shape.validatorMarker) {
@@ -31574,8 +31793,10 @@ PMPool.prototype.updateAllLaneDimension = function(avoidWeight) {
             dx: 0,
             dy: lane.y - laneOldY
         };
-        lane.fixConnectionsOnResize(lane.resizing, true);
-        lane.laneRefreshConnections(delta);
+        if (delta.dx > 0 || delta.dy >0){
+            lane.fixConnectionsOnResize(lane.resizing, true);
+            lane.laneRefreshConnections(delta);
+        }
     }
     newWidth = newWidth && !avoidWeight ? newWidth + this.headLineCoord + 2.1: this.getWidth();
     this.setDimension(newWidth, parentHeight);
@@ -37742,6 +37963,13 @@ FormDesigner.leftPad = function (string, length, fill) {
                 {value: "MB", label: "MB".translate()}
             ]
         };
+        this.maxFileNumber = {
+            label: "Max file number".translate(),
+            value: "0",
+            type: "text",
+            regExpNumber: /^\d*$/,
+            regExpString: /^[@][@%=]+[a-zA-Z\_]{1}\w+$/
+        };
         this.enableVersioning = {
             label: "versioning".translate(),
             value: false,
@@ -38117,7 +38345,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.multipleFile) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex", "ariaLabel",
                 "inputDocument", "required", "requiredFieldErrorMessage", "dnd", "extensions", "size", "sizeUnity",
-                'enableVersioning', "mode", "multiple", "inp_doc_uid"];
+                "maxFileNumber", "enableVersioning", "mode", "multiple", "inp_doc_uid"];
             this.name.type = "hidden";
             this.label.type = "text";
             if (this.owner instanceof FormDesigner.main.GridItem) {
@@ -38957,8 +39185,11 @@ FormDesigner.leftPad = function (string, length, fill) {
                 regExp,
                 type,
                 existRegExp,
-                dateLimit,
                 messageDialog,
+                messageMaxFile = 'Invalid Configuration: the "Max File number" value should be integer.'.translate(),
+                showMessage = false,
+                dateLimit,
+                regExp,
                 validateValue;
             switch (prop) {
                 case "name":
@@ -39264,11 +39495,21 @@ FormDesigner.leftPad = function (string, length, fill) {
                     );
                     break;
                 case "tabIndex":
-                    validateValue = !isNaN(value) || value === "";
+                    regExp = /^-{0,1}\d+$/;
+                    validateValue = (!isNaN(parseInt(value)) && Number.isInteger(parseInt(value)) && regExp.test(value)) || value === "";
+                    if (this.dirty === null && !validateValue) { // First Time set tab index
+                        validateValue = true;
+                        value = "";
+                    }    
                     if (!validateValue) {
                         messageDialog = 'The value provided for the tab index property of the field "{0}" is invalid'.translate([target.properties.id.value]);
+                        dialogMessage = new FormDesigner.main.DialogInvalid(null, prop, "invalid");
                         dialogMessage.onClose = function () {
                             oldValue = target.properties[prop].oldValue;
+                            if(!(!isNaN(parseInt(oldValue)) && Number.isInteger(parseInt(oldValue)) && regExp.test(oldValue)) || oldValue === ""){
+                                oldValue = "";
+                            }
+                            
                             object = target.properties.set(prop, oldValue);
                             if (object.node) {
                                 object.node.value = oldValue;
@@ -39279,6 +39520,21 @@ FormDesigner.leftPad = function (string, length, fill) {
                         };
                     } else {
                         target.properties[prop].value = value;
+                    }
+                    break;
+                case "maxFileNumber":
+                    if (!target.properties[prop].regExpNumber.test(value)) {
+                        showMessage = (target.variable && target.variable.var_field_type === "grid") || target instanceof FormDesigner.main.GridItem? true : !target.properties[prop].regExpString.test(value);
+                    }
+                    if (showMessage || value === '') {
+                        dialogMessage = new FormDesigner.main.DialogMessage(null, "warning", messageMaxFile);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
                     }
                     break;
             }
@@ -39355,11 +39611,8 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
-        for (var i = 0; i < a.length; i++) {
-            if (!($(a[i]).hasClass("ui-datepicker") || $(a[i]).hasClass("ui-autocomplete"))) {
-                $(a[i]).show();
-            }
-        }
+        for (var i = 0; i < a.length; i++)
+            $(a[i]).show();
         $(this.container).remove();
         this._disposeAuxForm();
         $(".loader").hide();
@@ -41300,39 +41553,52 @@ FormDesigner.leftPad = function (string, length, fill) {
                 cellValue[0].style.paddingRight = n + "px";
             }
             if (propertiesGot[property].type === "datepicker") {
-                // init jQuery datepicker
-                that.datepicker = that.dateComponentFactory(cellValue, {
-                    minDate: minDate,
-                    maxDate: maxDate,
-                    onSelect: function (dateText, inst) {
-                        properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
-                    },
-                    onClose: function (dateText, inst) {
-                        $("#ui-datepicker-div").hide();
-                    },
-                    beforeShow: function () {
-                        var params = null;
-                        switch (property) {
-                            case "maxDate":
-                                params = {
-                                    minDate: that.getDateByParam(cellValue, "minDate")
-                                }
-                                break;
-                            case "minDate":
-                                params = {
-                                    maxDate: that.getDateByParam(cellValue, "maxDate")
-                                }
-                                break;
-                            case "defaultDate":
-                                params = {
-                                    maxDate: that.getDateByParam(cellValue, "maxDate"),
-                                    minDate: that.getDateByParam(cellValue, "minDate")
-                                }
-                                break;
-                        }
-                        return params;
+                button = $("<img src='" + $.imgUrl + "fd-calendar.png' style='cursor:pointer;position:absolute;top:0;right:" + n + "px;' title='" + "datepicker".translate() + "'>");
+                button.on("click", function (e) {
+                    e.stopPropagation();
+                    if ($(e.target).data("disabled") === true) {
+                        return;
                     }
+                    if ($(e.target).data("disabledTodayOption") === true) {
+                        return;
+                    }
+                    // init jQyery datepicker
+                    that.datepicker = that.dateComponentFactory(cellValue, {
+                        minDate: minDate,
+                        maxDate: maxDate,
+                        onSelect: function (dateText, inst) {
+                            properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
+                        },
+                        onClose: function (dateText, inst) {
+                            that.datepicker.datepicker("destroy");
+                            $("#ui-datepicker-div").remove();
+                        },
+                        beforeShow: function () {
+                            var params = null;
+                            switch (property) {
+                                case "maxDate":
+                                    params = {
+                                        minDate: that.getDateByParam(cellValue, "minDate")
+                                    }
+                                    break;
+                                case "minDate":
+                                    params = {
+                                        maxDate: that.getDateByParam(cellValue, "maxDate")
+                                    }
+                                    break;
+                                case "defaultDate":
+                                    params = {
+                                        maxDate: that.getDateByParam(cellValue, "maxDate"),
+                                        minDate: that.getDateByParam(cellValue, "minDate")
+                                    }
+                                    break;
+                            }
+                            return params;
+                        }
+                    });
+                    cellValue.find(".ui-datepicker-trigger").hide();
                 });
+                cellValue.append(button);
                 n = n + 16;
                 cellValue[0].style.paddingRight = n + "px";
                 // init jQuery autocomplete
@@ -41403,6 +41669,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                     return;
                 }
                 cellValue.find("input[type='text']").datepicker('hide');
+                $("#ui-datepicker-div").remove();
                 if (cachekey in that.cache) {
                     response(that.cache[cachekey]);
                     return;
@@ -41479,6 +41746,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 onClose: defaults.onClose,
                 beforeShow: defaults.beforeShow
             }).next(".ui-datepicker-trigger").addClass("datetime-gadget-class");
+        datePicker.datepicker("show");
         return datePicker;
     };
     /**
@@ -43745,7 +44013,7 @@ FormDesigner.leftPad = function (string, length, fill) {
 
         this.message = this.message.replace(/[,\s]+$/, "");
         this.dialog.append("<div style='font-size:14px;margin:20px;height:85px;overflow-y:auto;'>" +
-            "The imported dynaform include new variables and existing variables that require changes.".translate() + " " +
+            "The imported dynaform includes new variables and existing variables that require changes.".translate() + " " +
             "The changed variables have been added with the suffix “_1”.".translate() + " " +
             "Please take note of the changes to update your process logic.".translate() + " " +
             "The following variables have been created:<br>".translate() + this.message +
@@ -43933,7 +44201,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             width: 500,
             height: 195,
             resizable: false,
-            position: ["center", 50],
+            position: { my: "center top+50", at: "center top", of: window },
             close: function (event, ui) {
                 that.onClose(event, ui);
                 that.dialog.remove();

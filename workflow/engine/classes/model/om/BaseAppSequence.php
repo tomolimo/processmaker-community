@@ -34,6 +34,12 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
     protected $id;
 
     /**
+     * The value for the app_type field.
+     * @var        string
+     */
+    protected $app_type = 'NORMAL';
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -59,6 +65,17 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
     }
 
     /**
+     * Get the [app_type] column value.
+     * 
+     * @return     string
+     */
+    public function getAppType()
+    {
+
+        return $this->app_type;
+    }
+
+    /**
      * Set the value of [id] column.
      * 
      * @param      int $v new value
@@ -81,6 +98,28 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
     } // setId()
 
     /**
+     * Set the value of [app_type] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setAppType($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->app_type !== $v || $v === 'NORMAL') {
+            $this->app_type = $v;
+            $this->modifiedColumns[] = AppSequencePeer::APP_TYPE;
+        }
+
+    } // setAppType()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -99,12 +138,14 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
 
             $this->id = $rs->getInt($startcol + 0);
 
+            $this->app_type = $rs->getString($startcol + 1);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 1; // 1 = AppSequencePeer::NUM_COLUMNS - AppSequencePeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 2; // 2 = AppSequencePeer::NUM_COLUMNS - AppSequencePeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating AppSequence object", $e);
@@ -311,6 +352,9 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
             case 0:
                 return $this->getId();
                 break;
+            case 1:
+                return $this->getAppType();
+                break;
             default:
                 return null;
                 break;
@@ -332,6 +376,7 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
         $keys = AppSequencePeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getId(),
+            $keys[1] => $this->getAppType(),
         );
         return $result;
     }
@@ -366,6 +411,9 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
             case 0:
                 $this->setId($value);
                 break;
+            case 1:
+                $this->setAppType($value);
+                break;
         } // switch()
     }
 
@@ -393,6 +441,10 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
             $this->setId($arr[$keys[0]]);
         }
 
+        if (array_key_exists($keys[1], $arr)) {
+            $this->setAppType($arr[$keys[1]]);
+        }
+
     }
 
     /**
@@ -406,6 +458,10 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
 
         if ($this->isColumnModified(AppSequencePeer::ID)) {
             $criteria->add(AppSequencePeer::ID, $this->id);
+        }
+
+        if ($this->isColumnModified(AppSequencePeer::APP_TYPE)) {
+            $criteria->add(AppSequencePeer::APP_TYPE, $this->app_type);
         }
 
 
@@ -424,30 +480,33 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
     {
         $criteria = new Criteria(AppSequencePeer::DATABASE_NAME);
 
-        $criteria->add(AppSequencePeer::ID, $this->id);
 
         return $criteria;
     }
 
     /**
-     * Returns the primary key for this object (row).
-     * @return     int
+     * Returns NULL since this table doesn't have a primary key.
+     * This method exists only for BC and is deprecated!
+     * @return     null
      */
     public function getPrimaryKey()
     {
-        return $this->getId();
+        return null;
     }
 
     /**
-     * Generic method to set the primary key (id column).
+     * Dummy primary key setter.
      *
-     * @param      int $key Primary key.
-     * @return     void
+     * This function only exists to preserve backwards compatibility.  It is no longer
+     * needed or required by the Persistent interface.  It will be removed in next BC-breaking
+     * release of Propel.
+     *
+     * @deprecated
      */
-    public function setPrimaryKey($key)
-    {
-        $this->setId($key);
-    }
+     public function setPrimaryKey($pk)
+     {
+         // do nothing, because this object doesn't have any primary keys
+     }
 
     /**
      * Sets contents of passed object to values from current object.
@@ -462,10 +521,12 @@ abstract class BaseAppSequence extends BaseObject implements Persistent
     public function copyInto($copyObj, $deepCopy = false)
     {
 
+        $copyObj->setId($this->id);
+
+        $copyObj->setAppType($this->app_type);
+
 
         $copyObj->setNew(true);
-
-        $copyObj->setId(NULL); // this is a pkey column, so set to default value
 
     }
 

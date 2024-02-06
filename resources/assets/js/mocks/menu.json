@@ -1,0 +1,153 @@
+[
+  {
+    "header": true,
+    "title": "Home",
+    "hiddenOnCollapse": true
+  },
+  {
+    "href": "/",
+    "title": "My Cases",
+    "icon": "fas fa-sliders-h"
+  },
+  {
+    "href": "/advanced-search",
+    "page": "advanced-search",
+    "title": "Advanced Search",
+    "icon": "fas fa-search",
+    "child": []
+  },
+  {
+    "header": true,
+    "title": "Tasks",
+    "hiddenOnCollapse": true
+  },
+  {
+    "href": "/todo",
+    "title": "Todo",
+    "icon": "far fa-check-circle",
+    "badge": {
+      "text": "23",
+      "class": "badge-custom"
+    },
+    "id": "todo",
+    "page": "todo"
+  },
+  {
+    "href": "/draft",
+    "title": "Draft",
+    "icon": "far fa-edit",
+    "badge": {
+      "text": "1",
+      "class": "badge-custom"
+    },
+    "id": "draft",
+    "page": "draft"
+  },
+  {
+    "href": "/paused",
+    "title": "Paused",
+    "icon": "far fa-pause-circle",
+    "badge": {
+      "text": "7",
+      "class": "badge-custom"
+    },
+    "id": "paused",
+    "page": "paused"
+  },
+  {
+    "href": "/unassigned",
+    "title": "Unassigned",
+    "icon": "fas fa-crosshairs",
+    "badge": {
+      "text": "99+",
+      "class": "badge-custom"
+    },
+    "id": "unassigned",
+    "page": "unassigned"
+  },
+  {
+    "header": true,
+    "title": "Supervisor Tasks",
+    "hiddenOnCollapse": true
+  },
+  {
+    "href": "/batch-routing",
+    "title": "Batch Routing",
+    "id": "batch-routing",
+    "page": "batch-routing",
+    "icon": "fas fa-bars",
+    "disabled": false
+  },
+  {
+    "href": "/my-documents",
+    "title": "My Documents",
+    "id": "my-documents",
+    "page": "my-documents",
+    "icon": "fas fa-bars",
+    "disabled": false
+  },
+  {
+    "href": "/task-Reassignments",
+    "title": "Task Reassignments",
+    "icon": "fas fa-arrows-alt",
+    "id": "task-reassignments",
+    "page": "task-reassignments"
+    
+  },
+  {
+    "href": "/page",
+    "title": "Dropdown Page",
+    "icon": "fa fa-list-ul",
+    "child": [
+      {
+        "href": "/page/sub-page-1",
+        "title": "Sub Page 01",
+        "icon": "fa fa-file-alt"
+      },
+      {
+        "href": "/page/sub-page-2",
+        "title": "Sub Page 02",
+        "icon": "fa fa-file-alt"
+      }
+    ]
+  },
+  {
+    "title": "Multiple Level",
+    "icon": "fa fa-list-alt",
+    "child": [
+      {
+        "title": "page"
+      },
+      {
+        "title": "Level 2 ",
+        "child": [
+          {
+            "title": "page"
+          },
+          {
+            "title": "Page"
+          }
+        ]
+      },
+      {
+        "title": "Page"
+      },
+      {
+        "title": "Another Level 2",
+        "child": [
+          {
+            "title": "Level 3",
+            "child": [
+              {
+                "title": "Page"
+              },
+              {
+                "title": "Page"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

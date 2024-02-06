@@ -24,6 +24,14 @@ use ListParticipatedLast;
 use OauthClients;
 use PMmemcached;
 use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
+use ProcessMaker\Model\DashletInstance;
+use ProcessMaker\Model\GroupUser;
+use ProcessMaker\Model\ObjectPermission;
+use ProcessMaker\Model\Process as ModelProcess;
+use ProcessMaker\Model\ProcessUser as ModelProcessUser;
+use ProcessMaker\Model\RbacUsers as ModelRbacUsers;
+use ProcessMaker\Model\TaskUser;
+use ProcessMaker\Model\User as ModelUser;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Util\DateTime;
 use ProcessMaker\Util\System;
@@ -45,6 +53,7 @@ use UsersRolesPeer;
 
 class User
 {
+    const DELETED_USER = 'unknown';
     private $arrayFieldDefinition = array(
         "USR_UID" => array(
             "type" => "string",
@@ -380,17 +389,15 @@ class User
      * Verify if exists the Name of a User
      *
      * @param string $userName              Name
-     * @param string $fieldNameForException Field name for the exception
      * @param string $userUidToExclude      Unique id of User to exclude
      *
      * @throws Exception if exists the title of a User
      */
-    public function throwExceptionIfExistsName($userName, $fieldNameForException, $userUidToExclude = "")
+    public function throwExceptionIfExistsName($userName, $userUidToExclude = "")
     {
         try {
             if ($this->existsName($userName, $userUidToExclude)) {
-                throw new Exception(G::LoadTranslation("ID_USER_NAME_ALREADY_EXISTS",
-                    array($fieldNameForException, $userName)));
+                throw new Exception(G::LoadTranslation("ID_USER_NAME_ALREADY_EXISTS", [$userName]));
             }
         } catch (Exception $e) {
             throw $e;
@@ -430,7 +437,7 @@ class User
     {
         try {
             //Set variables
-            $arrayUserData = ($userUid == "") ? array() : $this->getUser($userUid, true);
+            $arrayUserData = ($userUid == "") ? [] : $this->getUser($userUid, true);
             $flagInsert = ($userUid == "") ? true : false;
 
             $arrayFinalData = array_merge($arrayUserData, $arrayData);
@@ -443,8 +450,7 @@ class User
 
             //Verify data
             if (isset($arrayData["USR_USERNAME"])) {
-                $this->throwExceptionIfExistsName($arrayData["USR_USERNAME"],
-                    $this->arrayFieldNameForException["usrUsername"], $userUid);
+                $this->throwExceptionIfExistsName($arrayData["USR_USERNAME"], $userUid);
             }
 
             if (isset($arrayData["USR_EMAIL"])) {
@@ -738,8 +744,6 @@ class User
     public function create(array $arrayData)
     {
         try {
-
-
             //Verify data
             $validator = new Validator();
 
@@ -1173,11 +1177,11 @@ class User
      * @access public
      *
      * @param array  $userData
-     * @param string $sRolCode
+     * @param string $rolCode
      *
      * @return void
      */
-    public function updateUser($userData = array(), $sRolCode = '')
+    public function updateUser($userData = [], $rolCode = '')
     {
         $this->userObj = new RbacUsers();
         if (isset($userData['USR_STATUS'])) {
@@ -1186,9 +1190,9 @@ class User
             }
         }
         $this->userObj->update($userData);
-        if ($sRolCode != '') {
+        if (!empty($rolCode)) {
             $this->removeRolesFromUser($userData['USR_UID']);
-            $this->assignRoleToUser($userData['USR_UID'], $sRolCode);
+            $this->assignRoleToUser($userData['USR_UID'], $rolCode);
         }
     }
 
@@ -1248,29 +1252,31 @@ class User
     public function delete($usrUid)
     {
         try {
-            //Verify data
+            // Verify data
             $this->throwExceptionIfNotExistsUser($usrUid, $this->arrayFieldNameForException["usrUid"]);
-
+            // Check user admin
+            if (RBAC::isAdminUserUid($usrUid)) {
+                throw new Exception(G::LoadTranslation("ID_MSG_CANNOT_DELETE_USER", [$usrUid]));
+            }
+            // Check user guest
+            if (RBAC::isGuestUserUid($usrUid)) {
+                throw new Exception(G::LoadTranslation("ID_MSG_CANNOT_DELETE_USER", [$usrUid]));
+            }
+            // Check if the user has cases
             $oProcessMap = new ClassesCases();
-            $USR_UID = $usrUid;
             $total = 0;
             $history = 0;
-            $c = $oProcessMap->getCriteriaUsersCases('TO_DO', $USR_UID);
+            $c = $oProcessMap->getCriteriaUsersCases('TO_DO', $usrUid);
             $total += ApplicationPeer::doCount($c);
-            $c = $oProcessMap->getCriteriaUsersCases('DRAFT', $USR_UID);
+            $c = $oProcessMap->getCriteriaUsersCases('DRAFT', $usrUid);
             $total += ApplicationPeer::doCount($c);
-            $c = $oProcessMap->getCriteriaUsersCases('COMPLETED', $USR_UID);
+            $c = $oProcessMap->getCriteriaUsersCases('COMPLETED', $usrUid);
             $history += ApplicationPeer::doCount($c);
-            $c = $oProcessMap->getCriteriaUsersCases('CANCELLED', $USR_UID);
+            $c = $oProcessMap->getCriteriaUsersCases('CANCELLED', $usrUid);
             $history += ApplicationPeer::doCount($c);
-            
-            //check user guest
-            if (RBAC::isGuestUserUid($usrUid)) {
-                throw new Exception(G::LoadTranslation("ID_MSG_CANNOT_DELETE_USER", array($USR_UID)));
-            }
 
             if ($total > 0) {
-                throw new Exception(G::LoadTranslation("ID_USER_CAN_NOT_BE_DELETED", array($USR_UID)));
+                throw new Exception(G::LoadTranslation("ID_USER_CAN_NOT_BE_DELETED", [$usrUid]));
             } else {
                 $UID = $usrUid;
                 $oTasks = new Tasks();
@@ -1279,23 +1285,89 @@ class User
                 $oGroups->removeUserOfAllGroups($UID);
                 $this->changeUserStatus($UID, 'CLOSED');
                 $_GET['USR_USERNAME'] = '';
-                $this->updateUser(array('USR_UID' => $UID, 'USR_USERNAME' => $_GET['USR_USERNAME']), '');
+                $this->updateUser(['USR_UID' => $UID, 'USR_USERNAME' => $_GET['USR_USERNAME']], '');
                 require_once(PATH_TRUNK . "workflow" . PATH_SEP . "engine" . PATH_SEP . "classes" . PATH_SEP . "model" . PATH_SEP . "Users.php");
                 $oUser = new Users();
                 $aFields = $oUser->load($UID);
                 $aFields['USR_STATUS'] = 'CLOSED';
                 $aFields['USR_USERNAME'] = '';
                 $oUser->update($aFields);
-                //Delete Dashboard
+                // Delete Dashboard
                 require_once(PATH_TRUNK . "workflow" . PATH_SEP . "engine" . PATH_SEP . "classes" . PATH_SEP . "model" . PATH_SEP . "DashletInstance.php");
                 $criteria = new Criteria('workflow');
                 $criteria->add(DashletInstancePeer::DAS_INS_OWNER_UID, $UID);
                 $criteria->add(DashletInstancePeer::DAS_INS_OWNER_TYPE, 'USER');
                 DashletInstancePeer::doDelete($criteria);
-                //Destroy session after delete user
+                // Destroy session after delete user
                 RBAC::destroySessionUser($usrUid);
                 (new OauthClients())->removeByUser($usrUid);
             }
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete User
+     *
+     * @param string $usrUid Unique id of User
+     *
+     * @throws Exception
+     */
+    public function deleteGdpr($usrUid)
+    {
+        try {
+            // Verify data
+            $this->throwExceptionIfNotExistsUser($usrUid, $this->arrayFieldNameForException["usrUid"]);
+            // Check user admin or guest
+            if (RBAC::isAdminUserUid($usrUid) || RBAC::isGuestUserUid($usrUid)) {
+                throw new Exception(G::LoadTranslation("ID_MSG_CANNOT_DELETE_USER", [$usrUid]));
+            }
+            // Remove the user from groups
+            GroupUser::where('USR_UID', $usrUid)->delete();
+            // Remove the user from tasks assigment
+            TaskUser::where('USR_UID', $usrUid)->where('TU_RELATION', 1)->delete();
+            // Remove the user from process owner and assign to admin
+            ModelProcess::where('PRO_CREATE_USER', $usrUid)
+            ->update(['PRO_CREATE_USER' => RBAC::ADMIN_USER_UID]);
+            // Remove the user from process permission
+            ObjectPermission::where('USR_UID', $usrUid)->where('OP_USER_RELATION', 1)->delete();
+            // Remove the user from process supervisor
+            ModelProcessUser::where('USR_UID', $usrUid)->where('PU_TYPE', 'SUPERVISOR')->delete();
+            // Mark the user with the deleted status
+            $fields = [
+                'USR_STATUS' => 'CLOSED',
+                'USR_USERNAME' => '',
+                'USR_FIRSTNAME' => self::DELETED_USER,
+                'USR_LASTNAME' => self::DELETED_USER,
+                'USR_EMAIL' => '',
+                'USR_DUE_DATE' => '0000-00-00',
+                'USR_CREATE_DATE' => '0000-00-00',
+                'USR_UPDATE_DATE' => '0000-00-00',
+            ];
+            ModelRbacUsers::where('USR_UID', $usrUid)->update($fields);
+            $fields = array_merge(
+                $fields, [
+                'USR_STATUS_ID' => 0,
+                'USR_COUNTRY' => '',
+                'USR_CITY' => '',
+                'USR_LOCATION' => '',
+                'USR_ADDRESS' => '',
+                'USR_PHONE' => '',
+                'USR_FAX' => '',
+                'USR_CELLULAR' => '',
+                'USR_ZIP_CODE' => '',
+                'USR_BIRTHDAY' => '0000-00-00',
+                'USR_TIME_ZONE' => '',
+                'USR_EXTENDED_ATTRIBUTES_DATA' => '{}',
+                ]
+            );
+            ModelUser::where('USR_UID', $usrUid)->update($fields);
+            // Delete Dashboard
+            DashletInstance::where('DAS_INS_OWNER_UID', $usrUid)->where('DAS_INS_OWNER_TYPE', 'USER')->delete();
+            // Destroy session after delete user
+            RBAC::destroySessionUser($usrUid);
+            (new OauthClients())->removeByUser($usrUid);
         } catch (Exception $e) {
             throw $e;
         }
@@ -1540,7 +1612,7 @@ class User
      * @return User
      * @throws Exception
      */
-    public function checkPermissionForEdit($userUid, $arrayPermission = array(), $form)
+    public function checkPermissionForEdit($userUid, $arrayPermission = [], $form = [])
     {
         try {
             foreach ($arrayPermission as $key => $value) {

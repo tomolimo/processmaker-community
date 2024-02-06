@@ -62,16 +62,21 @@ if (is_file( $imagen )) {
     //cpyMoreLogos($dir,$newDir);
     $newDir .= PATH_SEP . $idDecode64;
     $dir .= PATH_SEP . $idDecode64;
-    copy( $dir, $newDir );
-    showLogo( $newDir );
+    if (file_exists($dir)) {
+        copy($dir, $newDir);
+        showLogo( $newDir );
+    }
     die();
 
 }
 
 function showLogo ($imagen)
 {
-    $info = @getimagesize( $imagen );
-    $fp = fopen( $imagen, "rb" );
+    $fp = null;
+    if (file_exists($imagen)) {
+        $fp = fopen($imagen, "rb");
+        $info = @getimagesize($imagen);
+    }
     if ($info && $fp) {
         header( "Content-type: {$info['mime']}" );
         fpassthru( $fp );

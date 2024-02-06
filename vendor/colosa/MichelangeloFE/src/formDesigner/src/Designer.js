@@ -630,8 +630,11 @@
                 regExp,
                 type,
                 existRegExp,
-                dateLimit,
                 messageDialog,
+                messageMaxFile = 'Invalid Configuration: the "Max File number" value should be integer.'.translate(),
+                showMessage = false,
+                dateLimit,
+                regExp,
                 validateValue;
             switch (prop) {
                 case "name":
@@ -937,11 +940,21 @@
                     );
                     break;
                 case "tabIndex":
-                    validateValue = !isNaN(value) || value === "";
+                    regExp = /^-{0,1}\d+$/;
+                    validateValue = (!isNaN(parseInt(value)) && Number.isInteger(parseInt(value)) && regExp.test(value)) || value === "";
+                    if (this.dirty === null && !validateValue) { // First Time set tab index
+                        validateValue = true;
+                        value = "";
+                    }    
                     if (!validateValue) {
                         messageDialog = 'The value provided for the tab index property of the field "{0}" is invalid'.translate([target.properties.id.value]);
+                        dialogMessage = new FormDesigner.main.DialogInvalid(null, prop, "invalid");
                         dialogMessage.onClose = function () {
                             oldValue = target.properties[prop].oldValue;
+                            if(!(!isNaN(parseInt(oldValue)) && Number.isInteger(parseInt(oldValue)) && regExp.test(oldValue)) || oldValue === ""){
+                                oldValue = "";
+                            }
+                            
                             object = target.properties.set(prop, oldValue);
                             if (object.node) {
                                 object.node.value = oldValue;
@@ -952,6 +965,21 @@
                         };
                     } else {
                         target.properties[prop].value = value;
+                    }
+                    break;
+                case "maxFileNumber":
+                    if (!target.properties[prop].regExpNumber.test(value)) {
+                        showMessage = (target.variable && target.variable.var_field_type === "grid") || target instanceof FormDesigner.main.GridItem? true : !target.properties[prop].regExpString.test(value);
+                    }
+                    if (showMessage || value === '') {
+                        dialogMessage = new FormDesigner.main.DialogMessage(null, "warning", messageMaxFile);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
                     }
                     break;
             }
@@ -1028,11 +1056,8 @@
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
-        for (var i = 0; i < a.length; i++) {
-            if (!($(a[i]).hasClass("ui-datepicker") || $(a[i]).hasClass("ui-autocomplete"))) {
-                $(a[i]).show();
-            }
-        }
+        for (var i = 0; i < a.length; i++)
+            $(a[i]).show();
         $(this.container).remove();
         this._disposeAuxForm();
         $(".loader").hide();

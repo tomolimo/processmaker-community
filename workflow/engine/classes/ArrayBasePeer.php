@@ -312,7 +312,7 @@ abstract class ArrayBasePeer
      * @throws PropelException Any exceptions caught during processing will be
      * rethrown wrapped into a PropelException.
      */
-    private function createSelectSql($criteria, $tableName, &$params)
+    private static function createSelectSql($criteria, $tableName, &$params)
     {
         $db = Propel::getDB($criteria->getDbName());
 

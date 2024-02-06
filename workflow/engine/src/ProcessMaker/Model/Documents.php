@@ -2,10 +2,15 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
+use folderData;
 use Illuminate\Database\Eloquent\Model;
+use ProcessMaker\Plugins\PluginRegistry;
 
 class Documents extends Model
 {
+    use HasFactory;
+
     // Set our table name
     protected $table = 'APP_DOCUMENT';
     // No timestamps
@@ -128,18 +133,47 @@ class Documents extends Model
      * Return the documents related to the specific DOC_ID
      *
      * @param int $docId
+     * @param string $appUid
      *
      * @return array
      */
-    public static function getFiles(int $docId)
+    public static function getFiles(int $docId, string $appUid)
     {
+        // Initializing variables
+        $elements = null;
+
+        // Plugin Hook PM_CASE_DOCUMENT_LIST to get the files uploaded in the case notes
+        $pluginRegistry = PluginRegistry::loadSingleton();
+
+        // If the hook exists try to execute
+        if ($pluginRegistry->existsTrigger(PM_CASE_DOCUMENT_LIST) && class_exists('folderData')) {
+            // Build the required object
+            $folderData = new folderData(null, null, $appUid, null, null);
+            $folderData->PMType = self::DOC_TYPE_CASE_NOTE;
+            $folderData->returnList = true;
+
+            // Get elements
+            $elements = $pluginRegistry->executeTriggers(PM_CASE_DOCUMENT_LIST, $folderData);
+        }
+
         $query = Documents::query()->select(['APP_DOC_UID', 'APP_DOC_FILENAME', 'DOC_VERSION']);
         $query->docId($docId);
         $results = $query->get();
         $documentList = [];
-        $results->each(function ($item, $key) use (&$documentList) {
+        $results->each(function ($item, $key) use (&$documentList, $elements) {
             $row = $item->toArray();
             $row['LINK'] = "../cases/casesShowCaseNotes?a=" . $row["APP_DOC_UID"] . "&v=" . $row["DOC_VERSION"];
+
+            // If an element match, replace the link and exit from the loop
+            if (!empty($elements) && is_array($elements)) {
+                foreach ($elements as $element) {
+                    if ($element->filename === $row['APP_DOC_UID']) {
+                        $row['LINK'] = $element->downloadScript;
+                        continue;
+                    }
+                }
+            }
+
             $documentList[] = $row;
         });
 

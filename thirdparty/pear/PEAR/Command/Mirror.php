@@ -55,7 +55,7 @@ class PEAR_Command_Mirror extends PEAR_Command_Common
      * @param object PEAR_Frontend a reference to an frontend
      * @param object PEAR_Config a reference to the configuration data
      */
-    function PEAR_Command_Mirror(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
         parent::PEAR_Command_Common($ui, $config);
     }
@@ -77,7 +77,7 @@ class PEAR_Command_Mirror extends PEAR_Command_Common
     function doDownloadAll($command, $options, $params)
     {
 	$this->config->set("php_dir", "."); 
-	$remote = &new PEAR_Remote($this->config);
+	$remote = new PEAR_Remote($this->config);
 	$remoteInfo = $remote->call("package.listAll");
 	if(PEAR::isError($remoteInfo)) {
 		return $remoteInfo;

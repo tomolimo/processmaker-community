@@ -331,6 +331,7 @@ define('LOGS_LOCATION', $config['logs_location']);
 define('LOGGING_LEVEL', $config['logging_level']);
 define('EXT_AJAX_TIMEOUT', $config['ext_ajax_timeout']);
 define('TIME_ZONE', ini_get('date.timezone'));
+define('DISABLE_TASK_MANAGER_ROUTING_ASYNC', $config['disable_task_manager_routing_async'] === "1");
 
 // IIS Compatibility, SERVER_ADDR doesn't exist on that env, so we need to define it.
 $_SERVER['SERVER_ADDR'] = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : $_SERVER['SERVER_NAME'];
@@ -366,7 +367,6 @@ $virtualURITable['/(sys*)'] = false;
 $virtualURITable["/errors/(*)"] = ($skinPathErrors != "") ? $skinPathErrors : PATH_GULLIVER_HOME . "methods" . PATH_SEP . "errors" . PATH_SEP;
 $virtualURITable['/gulliver/(*)'] = PATH_GULLIVER_HOME . 'methods/';
 $virtualURITable['/controls/(*)'] = PATH_GULLIVER_HOME . 'methods/controls/';
-$virtualURITable['/html2ps_pdf/(*)'] = PATH_THIRDPARTY . 'html2ps_pdf/';
 //$virtualURITable['/images/'] = 'errorFile';
 //$virtualURITable['/skins/'] = 'errorFile';
 //$virtualURITable['/files/'] = 'errorFile';
@@ -449,7 +449,7 @@ if (Bootstrap::virtualURI($_SERVER['REQUEST_URI'], $virtualURITable, $realPath))
             die();
             break;
         case 'errorFile':
-            header('Status: 404');
+            ob_start();
             header("location: /errors/error404.php?url=" . urlencode($_SERVER['REQUEST_URI']));
             if (DEBUG_TIME_LOG) {
                 Bootstrap::logTimeByPage();
@@ -475,14 +475,13 @@ $arrayFriendlyUri['cases/opencase'] = '/^[\w\-]{32}$/';
 Bootstrap::parseURI(getenv('REQUEST_URI'), $arrayFriendlyUri);
 
 if (SYS_TARGET === false) {
-    header('Status: 404');
     header('Location: /errors/error404.php?url=' . urlencode($_SERVER['REQUEST_URI']));
     exit(0);
 }
 
 // Bootstrap::mylog("sys_temp: ".SYS_TEMP);
 $arrayUpdating = Bootstrap::isPMUnderUpdating();
-if ($arrayUpdating['action']) {
+if (isset($arrayUpdating['action']) && $arrayUpdating['action']) {
     if ($arrayUpdating['workspace'] == "true" || $arrayUpdating['workspace'] == SYS_TEMP) {
         header("location: /update/updating.php");
         if (DEBUG_TIME_LOG) {
@@ -538,7 +537,7 @@ if (!defined('PATH_DATA') || !file_exists(PATH_DATA)) {
     $controllerAction = ($controllerAction != '' && $controllerAction != 'login') ? $controllerAction : 'index';
 
     // create the installer controller and call its method
-    if (is_callable([InstallerModule::class, $controllerAction])) {
+    if (method_exists(InstallerModule::class, $controllerAction)) {
         $installer = new $controller();
         $installer->setHttpRequestData($_REQUEST);
         //NewRelic Snippet - By JHL
@@ -547,7 +546,6 @@ if (!defined('PATH_DATA') || !file_exists(PATH_DATA)) {
         $installer->call($controllerAction);
     } else {
         $_SESSION['phpFileNotFound'] = $_SERVER['REQUEST_URI'];
-        header('Status: 404');
         header("location: /errors/error404.php?url=" . urlencode($_SERVER['REQUEST_URI']));
     }
     die();
@@ -601,7 +599,6 @@ if (defined('SYS_TEMP') && SYS_TEMP != '') {
             Bootstrap::SendTemporalMessage('ID_NOT_WORKSPACE', "error");
             Bootstrap::header('location: /sys/' . SYS_LANG . '/' . SYS_SKIN . '/main/sysLogin?errno=2');
         } else {
-            header('Status: 404');
             header('location: /errors/error404.php?url=' . urlencode($_SERVER['REQUEST_URI']));
         }
         die();
@@ -625,10 +622,10 @@ if (defined('SYS_TEMP') && SYS_TEMP != '') {
                 $controllerClass = 'Main';
                 $controllerAction = SYS_TARGET == 'sysLoginVerify' ? SYS_TARGET : 'sysLogin';
                 //if the method exists
-                if (is_callable(array(
+                if (method_exists(
                     $controllerClass,
                     $controllerAction
-                ))) {
+                )) {
                     $controller = new $controllerClass();
                     $controller->setHttpRequestData($_REQUEST);
                     $controller->call($controllerAction);
@@ -843,7 +840,7 @@ if (substr(SYS_COLLECTION, 0, 8) === 'gulliver') {
         //if the method name is empty set default to index method
         $controllerAction = SYS_TARGET != '' ? SYS_TARGET : 'index';
         //if the method exists
-        if (is_callable(array($controllerClass, $controllerAction))) {
+        if (method_exists($controllerClass, $controllerAction)) {
             $isControllerCall = true;
         }
 
@@ -881,14 +878,13 @@ if (substr(SYS_COLLECTION, 0, 8) === 'gulliver') {
         }
 
         //if the method exists
-        if (is_callable(array($controllerClass, $controllerAction))) {
+        if (method_exists($controllerClass, $controllerAction)) {
             $isControllerCall = true;
         }
     }
 
     if (!$isControllerCall && !file_exists($phpFile)) {
         $_SESSION['phpFileNotFound'] = $_SERVER['REQUEST_URI'];
-        header('Status: 404');
         header("location: /errors/error404.php?url=" . urlencode($_SERVER['REQUEST_URI']));
         die();
     }
@@ -927,11 +923,8 @@ if (!defined('EXECUTE_BY_CRON')) {
             (!(preg_match("/safari/i", $_SERVER ['HTTP_USER_AGENT']) == 1 && preg_match("/chrome/i",
                         $_SERVER ['HTTP_USER_AGENT']) == 0) ||
                 $config['safari_cookie_lifetime'] == 1)) {
-            if (PHP_VERSION < 5.2) {
-                setcookie(session_name(), session_id(), time() + $timelife, '/', '; HttpOnly');
-            } else {
-                setcookie(session_name(), session_id(), time() + $timelife, '/', null, G::is_https(), true);
-            }
+                $cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + $timelife, 'httponly' => true]);
+                setcookie(session_name(), session_id(), $cookieOptions);
         }
         $RBAC->initRBAC();
         //using optimization with memcache, the user data will be in memcache 8 hours, or until session id goes invalid
@@ -1007,11 +1000,8 @@ if (!defined('EXECUTE_BY_CRON')) {
                         (!(preg_match("/safari/i", $_SERVER ['HTTP_USER_AGENT']) == 1 && preg_match("/chrome/i",
                                     $_SERVER ['HTTP_USER_AGENT']) == 0) ||
                             $config['safari_cookie_lifetime'] == 1)) {
-                        if (PHP_VERSION < 5.2) {
-                            setcookie(session_name(), session_id(), time() + $timelife, '/', '; HttpOnly');
-                        } else {
-                            setcookie(session_name(), session_id(), time() + $timelife, '/', null, G::is_https(), true);
-                        }
+                        $cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + $timelife, 'httponly' => true]);
+                        setcookie(session_name(), session_id(), $cookieOptions);
                     }
                     $RBAC->initRBAC();
                     $RBAC->loadUserRolePermission($RBAC->sSystem, $_SESSION['USER_LOGGED']);
@@ -1081,7 +1071,7 @@ if (!defined('EXECUTE_BY_CRON')) {
         header('Pragma: ');
     }
 
-    ob_end_flush();
+    @ob_end_flush();
     if (DEBUG_TIME_LOG) {
         bootstrap::logTimeByPage(); //log this page
     }

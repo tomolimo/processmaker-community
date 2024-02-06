@@ -7,6 +7,7 @@ use ProcessMaker\Services\Api\Project\Variable;
 
 class ActionsByEmailCoreClass extends PMPlugin
 {
+    //The %0d and %0a are URL-encoded forms of CR and LF
     const BODY_REPLY_LF = '%0D%0A';
     private $abeRequest = [];
     private $appNumber = null;
@@ -716,38 +717,60 @@ class ActionsByEmailCoreClass extends PMPlugin
         $customGrid = unserialize($this->getItemAbeProperties('ABE_CUSTOM_GRID'));
         $field = new stdClass();
         $field->label = '';
-        $html = '<div style="width: 100%"></div><strong>' . $field->label . '</strong><table align="left" border="0"><tr>';
-        $html .= '<td><table align="left" cellpadding="2"><tr>';
+
+        $html = ''
+                . "<div style='width: 100%; display: inline-block;'>\n"
+                . "<strong>{$field->label}</strong>\n"
+                . "<table align='left' border='0'>\n"
+                . "<tr>\n"
+                . "<td>\n"
+                . "<table align='left' cellpadding='2'>\n"
+                . "<tr>\n";
+
         $index = 1;
         foreach ($customGrid as $key => $value) {
-            // Get the subject
             $emailSubject = $this->getSubjectByResponse($value['abe_custom_label']);
             $emailBody = $this->getBodyByResponse($value['abe_custom_value']);
-            // Define the html for the actions
-            $html .= '<td align="center"><a style="' . $value['abe_custom_format'] . '" ';
-            $html .= 'href="mailto:' . $noReply . '?subject=' . $emailSubject . '&body=' . $emailBody . '" target="_blank" >';
-            $html .= $value['abe_custom_label'];
-            $html .= '</a></td>' . (($index % 5 == 0) ? '</tr><tr>' : '  ');
+
+            $emailSubject = rawurlencode($emailSubject);
+            $emailBody = rawurlencode($emailBody);
+
+            $href = "mailto:{$noReply}?subject={$emailSubject}&body={$emailBody}";
+
+            $html = $html
+                    . "<td align='center'>\n"
+                    . "<a style=\"{$value['abe_custom_format']}\" href=\"{$href}\" target='_blank' >{$value['abe_custom_label']}</a>\n"
+                    . "</td>\n";
+            //this is left for compatibility with template customizations
+            if ($index % 5 === 0) {
+                $html = $html
+                        . "</tr>\n"
+                        . "<tr>\n";
+            }
             $index++;
         }
-        $html .= '</tr></table></div>';
+        $html = $html
+                . "</tr>\n"
+                . "</table>\n"
+                . "</td>\n"
+                . "</tr>\n"
+                . "</table>\n"
+                . "</div>\n";
 
         return $html;
     }
 
     /**
-     * Get the subject for response the action by email
-     *
+     * Get the subject for response the action by email.
+     * 
      * @param string $fieldLabel
-     *
      * @return string
      */
-    private function getSubjectByResponse($fieldLabel)
+    private function getSubjectByResponse(string $fieldLabel): string
     {
         $subject = G::LoadTranslation('ID_CASE') . ' ' . $this->getCasePropertiesKey('APP_TITLE');
         $subject .= $this->delimiter . ' ' . $fieldLabel;
-
-        return urlencode($subject);
+        return $subject;
     }
 
     /**
@@ -769,10 +792,11 @@ class ActionsByEmailCoreClass extends PMPlugin
         ];
         $bodyToCrypt = G::json_encode($bodyToCrypt);
 
-        $body = str_repeat(self::BODY_REPLY_LF, 4);
-        $body .= '/' . str_repeat("=", 24) . self::BODY_REPLY_LF;
-        $body .= G::LoadTranslation('ID_ABE_EMAIL_RESPONSE_BODY_NOTE') . self::BODY_REPLY_LF;
-        $body .= '{' . Crypt::encryptString($bodyToCrypt) . '}' . self::BODY_REPLY_LF;
+        $CR_LF = "\r\n";
+        $body = str_repeat($CR_LF, 4);
+        $body .= '/' . str_repeat("=", 24) . $CR_LF;
+        $body .= G::LoadTranslation('ID_ABE_EMAIL_RESPONSE_BODY_NOTE') . $CR_LF;
+        $body .= '{' . Crypt::encryptString($bodyToCrypt) . '}' . $CR_LF;
         $body .= str_repeat("=", 24) . '/';
         return $body;
     }

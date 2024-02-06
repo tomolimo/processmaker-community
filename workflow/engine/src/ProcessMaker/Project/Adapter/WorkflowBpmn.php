@@ -87,9 +87,15 @@ class WorkflowBpmn extends Project\Workflow
         return parent::getList($start, $limit, $filter, $changeCaseTo);
     }
 
-    public function remove($flagRemoveCases = true, $onlyDiagram = false)
+    /**
+     * Remove project bpmn.
+     * @param bool $flagRemoveCases
+     * @param bool $onlyDiagram
+     * @param array $objectsToImport
+     */
+    public function remove($flagRemoveCases = true, $onlyDiagram = false, $objectsToImport = [])
     {
-        parent::remove($flagRemoveCases, $onlyDiagram);
+        parent::remove($flagRemoveCases, $onlyDiagram, $objectsToImport);
         $this->bp->remove();
     }
 

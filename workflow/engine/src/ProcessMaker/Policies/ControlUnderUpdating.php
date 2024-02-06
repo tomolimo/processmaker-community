@@ -48,7 +48,7 @@ class ControlUnderUpdating implements iAuthenticate
     public static function verifyUnderUpgrading()
     {
         $underUpdating = \Bootstrap::isPMUnderUpdating();
-        if ($underUpdating['action']) {
+        if (isset($underUpdating['action']) && $underUpdating['action']) {
             $sysTemp = true;
             if (defined('SYS_TEMP')) {
                 $sysTemp = $underUpdating['workspace'] == SYS_TEMP;

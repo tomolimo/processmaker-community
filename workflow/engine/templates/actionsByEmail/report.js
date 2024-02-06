@@ -70,7 +70,7 @@ store = new Ext.data.GroupingStore( {
         {header: _("DATE_LABEL"), width: 100, dataIndex: "ABE_REQ_DATE", sortable: true},
         {header: _("ID_CASE_NUMBER_CAPITALIZED"), width: 70, dataIndex: "APP_NUMBER", sortable: true},
         {header: _("ID_SUBJECT"), width: 150, dataIndex: "ABE_REQ_SUBJECT", sortable: true},
-        {header: _("ID_FROM"), width: 110, dataIndex: "USER", sortable: true},
+        {header: _("ID_SENDER"), width: 110, dataIndex: "USER", sortable: true},
         {header: _("ID_TO"), width:  110, dataIndex: "ABE_REQ_SENT_TO", sortable: true},
         {header: _("ID_STATUS"), width: 40, dataIndex: "ABE_REQ_STATUS", sortable: true},
         {header: _("ID_ANSWERED"), width:  60, dataIndex: "ABE_REQ_ANSWERED"},

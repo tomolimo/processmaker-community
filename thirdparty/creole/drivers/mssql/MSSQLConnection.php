@@ -84,7 +84,9 @@ class MSSQLConnection extends ConnectionCommon implements Connection
                 'UID' => $user,
                 'PWD' => $pw,
                 'Database' => $dsninfo['database'],
-                'CharacterSet' => 'UTF-8'
+                'CharacterSet' => 'UTF-8',
+                'Encrypt' => true,
+                'TrustServerCertificate' => true
             ];
             // SQLSrv is persistent always
             $conn = sqlsrv_connect($dbhost, $opt);

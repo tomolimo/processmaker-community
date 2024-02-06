@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use ProcessMaker\Model\EmailServerModel;
 
 class EmailEvent extends Model
 {
+    use HasFactory;
+
     protected $table = 'EMAIL_EVENT';
     public $timestamps = false;
 

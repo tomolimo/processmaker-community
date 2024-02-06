@@ -3,14 +3,17 @@
 namespace ProcessMaker\BusinessModel;
 
 use BasePeer;
+use Bootstrap;
 use BpmnFlowPeer;
 use Content;
 use Criteria;
 use Exception;
 use G;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\Process as BusinessModelProcess;
 use ProcessMaker\BusinessModel\Validator as BusinessModelValidator;
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\Step as StepModel;
 use ProcessMaker\Project\Workflow;
 use ProcessMaker\Util\Common;
 use ProcessPeer;
@@ -554,20 +557,22 @@ class WebEntryEvent
 
                 if (!isset($arrayData['WE_TYPE']) || $arrayData['WE_TYPE'] === 'SINGLE') {
                     //Task - Step
+                    $stepModel = StepModel::getByProcessTaskAndStepType($projectUid, $this->webEntryEventWebEntryTaskUid, 'DYNAFORM', $dynaFormUid);
                     $step = new Step();
-
-                    $stepUid = $step->create(array(
-                        "PRO_UID" => $projectUid,
-                        "TAS_UID" => $this->webEntryEventWebEntryTaskUid
-                    ));
-                    if (!empty($dynaFormUid)) {
-                        $result = $step->update(array(
-                            "STEP_UID" => $stepUid,
-                            "STEP_TYPE_OBJ" => "DYNAFORM",
-                            "STEP_UID_OBJ" => $dynaFormUid,
-                            "STEP_POSITION" => 1,
-                            "STEP_MODE" => "EDIT"
+                    if (empty($stepModel)) {
+                        $stepUid = $step->create(array(
+                            "PRO_UID" => $projectUid,
+                            "TAS_UID" => $this->webEntryEventWebEntryTaskUid
                         ));
+                        if (!empty($dynaFormUid)) {
+                            $result = $step->update(array(
+                                "STEP_UID" => $stepUid,
+                                "STEP_TYPE_OBJ" => "DYNAFORM",
+                                "STEP_UID_OBJ" => $dynaFormUid,
+                                "STEP_POSITION" => 1,
+                                "STEP_MODE" => "EDIT"
+                            ));
+                        }
                     }
                 }
 
@@ -595,6 +600,7 @@ class WebEntryEvent
                     'WE_CUSTOM_TITLE',
                     'WE_AUTHENTICATION',
                     'WE_HIDE_INFORMATION_BAR',
+                    'WE_HIDE_ACTIVE_SESSION_WARNING',
                     'WE_CALLBACK',
                     'WE_CALLBACK_URL',
                     'WE_LINK_GENERATION',
@@ -944,6 +950,7 @@ class WebEntryEvent
                         'WE_CUSTOM_TITLE' => 'WE_CUSTOM_TITLE',
                         'WE_AUTHENTICATION' => 'WE_AUTHENTICATION',
                         'WE_HIDE_INFORMATION_BAR' => 'WE_HIDE_INFORMATION_BAR',
+                        'WE_HIDE_ACTIVE_SESSION_WARNING' => 'WE_HIDE_ACTIVE_SESSION_WARNING',
                         'WE_CALLBACK' => 'WE_CALLBACK',
                         'WE_CALLBACK_URL' => 'WE_CALLBACK_URL',
                         'WE_LINK_GENERATION' => 'WE_LINK_GENERATION',
@@ -979,6 +986,16 @@ class WebEntryEvent
                     $result = $webEntryEvent->save();
 
                     $cnn->commit();
+                    
+                    //log register
+                    $onlyGenerateLink = isset($arrayData['EXTRA']) && isset($arrayData['EXTRA']['generateLink']);
+                    if ($arrayData['WE_HIDE_ACTIVE_SESSION_WARNING'] === '1' &&
+                        $arrayData['WE_AUTHENTICATION'] === 'LOGIN_REQUIRED' &&
+                        !$onlyGenerateLink
+                    ) {
+                        $context = Bootstrap::context(['usrUid' => $userUidUpdater]);
+                        Log::channel(':webEntry')->info('Hide Active Session Warning', $context);
+                    }
 
                     //Set WEE_TITLE
                     if (isset($arrayData["WEE_TITLE"])) {
@@ -1083,6 +1100,7 @@ class WebEntryEvent
             $criteria->addSelectColumn(WebEntryPeer::WE_TYPE);
             $criteria->addSelectColumn(WebEntryPeer::WE_AUTHENTICATION);
             $criteria->addSelectColumn(WebEntryPeer::WE_HIDE_INFORMATION_BAR);
+            $criteria->addSelectColumn(WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING);
             $criteria->addSelectColumn(WebEntryPeer::WE_CALLBACK);
             $criteria->addSelectColumn(WebEntryPeer::WE_CALLBACK_URL);
             $criteria->addSelectColumn(WebEntryPeer::WE_LINK_GENERATION);
@@ -1133,6 +1151,7 @@ class WebEntryEvent
                 $this->getFieldNameByFormatFieldName("WE_CUSTOM_TITLE") => $record["WE_CUSTOM_TITLE"],
                 $this->getFieldNameByFormatFieldName("WE_AUTHENTICATION") => $record["WE_AUTHENTICATION"],
                 $this->getFieldNameByFormatFieldName("WE_HIDE_INFORMATION_BAR") => $record["WE_HIDE_INFORMATION_BAR"],
+                $this->getFieldNameByFormatFieldName("WE_HIDE_ACTIVE_SESSION_WARNING") => $record["WE_HIDE_ACTIVE_SESSION_WARNING"],
                 $this->getFieldNameByFormatFieldName("WE_CALLBACK") => $record["WE_CALLBACK"],
                 $this->getFieldNameByFormatFieldName("WE_CALLBACK_URL") => $record["WE_CALLBACK_URL"],
                 $this->getFieldNameByFormatFieldName("WE_LINK_GENERATION") => $record["WE_LINK_GENERATION"],

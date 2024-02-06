@@ -784,17 +784,17 @@ class HTMLPurifier_Config
      * @param array $array $_GET or $_POST array to import
      * @param string|bool $index Index/name that the config variables are in
      * @param array|bool $allowed List of allowed namespaces/directives
-     * @param bool $mq_fix Boolean whether or not to enable magic quotes fix
+     * @param bool $mq_fix Boolean whether or not to enable magic quotes fix (DEPRECATED, now is always in false)
      * @param HTMLPurifier_ConfigSchema $schema Schema to use, if not global copy
      *
      * @return array
      */
-    public static function prepareArrayFromForm($array, $index = false, $allowed = true, $mq_fix = true, $schema = null)
+    public static function prepareArrayFromForm($array, $index = false, $allowed = true, $mq_fix = false, $schema = null)
     {
         if ($index !== false) {
             $array = (isset($array[$index]) && is_array($array[$index])) ? $array[$index] : array();
         }
-        $mq = $mq_fix && function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc();
+        $mq = $mq_fix;
 
         $allowed = HTMLPurifier_Config::getAllowedDirectivesForForm($allowed, $schema);
         $ret = array();

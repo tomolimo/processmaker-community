@@ -260,7 +260,8 @@ class ValidationUploadedFiles
                      * If the size of post data is greater than post_max_size, the $_POST and $_FILES
                      * superglobals are empty.
                      */
-                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
+                    $notAppJson = isset($_SERVER['CONTENT_TYPE']) && strtolower($_SERVER['CONTENT_TYPE']) !== 'application/json';
+                    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0 && $notAppJson) {
                         return true;
                     }
                     return false;

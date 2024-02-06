@@ -7,6 +7,7 @@ namespace PhpMyAdmin\SqlParser\Tests\Lexer;
 use PhpMyAdmin\SqlParser\Exceptions\LexerException;
 use PhpMyAdmin\SqlParser\Lexer;
 use PhpMyAdmin\SqlParser\Tests\TestCase;
+
 use function sprintf;
 
 class LexerTest extends TestCase
@@ -15,7 +16,7 @@ class LexerTest extends TestCase
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
-    public function testError()
+    public function testError(): void
     {
         $lexer = new Lexer('');
 
@@ -36,7 +37,7 @@ class LexerTest extends TestCase
         );
     }
 
-    public function testErrorStrict()
+    public function testErrorStrict(): void
     {
         $this->expectExceptionCode(4);
         $this->expectExceptionMessage('strict error');
@@ -48,16 +49,14 @@ class LexerTest extends TestCase
     }
 
     /**
-     * @param mixed $test
-     *
      * @dataProvider lexProvider
      */
-    public function testLex($test)
+    public function testLex(string $test): void
     {
         $this->runParserTest($test);
     }
 
-    public function lexProvider()
+    public function lexProvider(): array
     {
         return [
             ['lexer/lex'],

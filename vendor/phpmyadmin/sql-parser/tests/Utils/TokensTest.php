@@ -18,12 +18,12 @@ class TokensTest extends TestCase
      *
      * @dataProvider replaceTokensProvider
      */
-    public function testReplaceTokens($list, $find, $replace, $expected)
+    public function testReplaceTokens($list, $find, $replace, $expected): void
     {
         $this->assertEquals($expected, Tokens::replaceTokens($list, $find, $replace));
     }
 
-    public function replaceTokensProvider()
+    public function replaceTokensProvider(): array
     {
         return [
             [
@@ -48,12 +48,12 @@ class TokensTest extends TestCase
      *
      * @dataProvider matchProvider
      */
-    public function testMatch($token, $pattern, $expected)
+    public function testMatch($token, $pattern, $expected): void
     {
         $this->assertEquals($expected, Tokens::match($token, $pattern));
     }
 
-    public function matchProvider()
+    public function matchProvider(): array
     {
         return [
             [

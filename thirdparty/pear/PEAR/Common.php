@@ -133,7 +133,7 @@ class PEAR_Common extends PEAR
      *
      * @access public
      */
-    function PEAR_Common()
+    function __construct()
     {
         parent::PEAR();
         $this->config = &PEAR_Config::singleton();
@@ -503,7 +503,7 @@ class PEAR_Common extends PEAR
                 switch ($this->prev_element) {
                     case 'package':
                         // XXX should we check the package name here?
-                        $this->pkginfo['package'] = ereg_replace('[^a-zA-Z0-9._]', '_', $data);
+                        $this->pkginfo['package'] = preg_replace('/[^a-zA-Z0-9._]/', '_', $data);
                         break;
                     case 'maintainer':
                         $this->current_maintainer['name'] = $data;
@@ -527,7 +527,7 @@ class PEAR_Common extends PEAR
                 $this->current_maintainer['role'] = $data;
                 break;
             case 'version':
-                $data = ereg_replace ('[^a-zA-Z0-9._\-]', '_', $data);
+                $data = preg_replace ('/[^a-zA-Z0-9._\-]/', '_', $data);
                 if ($this->in_changelog) {
                     $this->current_release['version'] = $data;
                 } else {
@@ -680,7 +680,7 @@ class PEAR_Common extends PEAR
             if ($name == 'package.xml') {
                 $xml = $name;
                 break;
-            } elseif (ereg('package.xml$', $name, $match)) {
+            } elseif (preg_match('/package.xml$/', $name, $match)) {
                 $xml = $match[0];
                 break;
             }
@@ -1187,7 +1187,7 @@ class PEAR_Common extends PEAR
             foreach ($methods as $method) {
                 $function = "$class::$method";
                 $key = "function;$function";
-                if ($method{0} == '_' || !strcasecmp($method, $class) ||
+                if ($method[0] == '_' || !strcasecmp($method, $class) ||
                     isset($this->pkginfo['provides'][$key])) {
                     continue;
                 }
@@ -1197,7 +1197,7 @@ class PEAR_Common extends PEAR
         }
         foreach ($srcinfo['declared_functions'] as $function) {
             $key = "function;$function";
-            if ($function{0} == '_' || isset($this->pkginfo['provides'][$key])) {
+            if ($function[0] == '_' || isset($this->pkginfo['provides'][$key])) {
                 continue;
             }
             $this->pkginfo['provides'][$key] =
@@ -1661,7 +1661,9 @@ class PEAR_Common extends PEAR
         if (!$wp = @fopen($dest_file, 'wb')) {
             fclose($fp);
             if ($callback) {
-                call_user_func($callback, 'writefailed', array($dest_file, $php_errormsg));
+                $lastError = error_get_last();
+                $errorMessage = $lastError['message'] ?? 'Error writing the file.';
+                call_user_func($callback, 'writefailed', array($dest_file, $errorMessage));
             }
             return PEAR::raiseError("could not open $dest_file for writing");
         }
@@ -1682,7 +1684,9 @@ class PEAR_Common extends PEAR
             if (!@fwrite($wp, $data)) {
                 fclose($fp);
                 if ($callback) {
-                    call_user_func($callback, 'writefailed', array($dest_file, $php_errormsg));
+                    $lastError = error_get_last();
+                    $errorMessage = $lastError['message'] ?? 'Error writing the file.';
+                    call_user_func($callback, 'writefailed', array($dest_file, $errorMessage));
                 }
                 return PEAR::raiseError("$dest_file: write failed ($php_errormsg)");
             }

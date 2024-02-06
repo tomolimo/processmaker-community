@@ -78,8 +78,7 @@ if (
 
     // Get the label of previous task
     if (!empty($fieldsDelegation['TAS_ID'])) {
-        $taskInstance = new ModelTask();
-        $fieldsCase['PREVIOUS_TASK'] = $taskInstance->title($fieldsDelegation['TAS_ID']);
+        $fieldsCase['PREVIOUS_TASK'] = ModelTask::title($fieldsDelegation['TAS_ID'])['title'];
     }
 
     // To enable information (dynaforms, steps) before claim a case

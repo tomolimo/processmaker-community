@@ -184,6 +184,18 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
     protected $out_doc_open_type = 1;
 
     /**
+     * The value for the out_doc_header field.
+     * @var        string
+     */
+    protected $out_doc_header;
+
+    /**
+     * The value for the out_doc_footer field.
+     * @var        string
+     */
+    protected $out_doc_footer;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -481,6 +493,28 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
     {
 
         return $this->out_doc_open_type;
+    }
+
+    /**
+     * Get the [out_doc_header] column value.
+     * 
+     * @return     string
+     */
+    public function getOutDocHeader()
+    {
+
+        return $this->out_doc_header;
+    }
+
+    /**
+     * Get the [out_doc_footer] column value.
+     * 
+     * @return     string
+     */
+    public function getOutDocFooter()
+    {
+
+        return $this->out_doc_footer;
     }
 
     /**
@@ -1056,6 +1090,50 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
     } // setOutDocOpenType()
 
     /**
+     * Set the value of [out_doc_header] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setOutDocHeader($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->out_doc_header !== $v) {
+            $this->out_doc_header = $v;
+            $this->modifiedColumns[] = OutputDocumentPeer::OUT_DOC_HEADER;
+        }
+
+    } // setOutDocHeader()
+
+    /**
+     * Set the value of [out_doc_footer] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setOutDocFooter($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->out_doc_footer !== $v) {
+            $this->out_doc_footer = $v;
+            $this->modifiedColumns[] = OutputDocumentPeer::OUT_DOC_FOOTER;
+        }
+
+    } // setOutDocFooter()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -1124,12 +1202,16 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
 
             $this->out_doc_open_type = $rs->getInt($startcol + 25);
 
+            $this->out_doc_header = $rs->getString($startcol + 26);
+
+            $this->out_doc_footer = $rs->getString($startcol + 27);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 26; // 26 = OutputDocumentPeer::NUM_COLUMNS - OutputDocumentPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 28; // 28 = OutputDocumentPeer::NUM_COLUMNS - OutputDocumentPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating OutputDocument object", $e);
@@ -1411,6 +1493,12 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
             case 25:
                 return $this->getOutDocOpenType();
                 break;
+            case 26:
+                return $this->getOutDocHeader();
+                break;
+            case 27:
+                return $this->getOutDocFooter();
+                break;
             default:
                 return null;
                 break;
@@ -1457,6 +1545,8 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
             $keys[23] => $this->getOutDocPdfSecurityOwnerPassword(),
             $keys[24] => $this->getOutDocPdfSecurityPermissions(),
             $keys[25] => $this->getOutDocOpenType(),
+            $keys[26] => $this->getOutDocHeader(),
+            $keys[27] => $this->getOutDocFooter(),
         );
         return $result;
     }
@@ -1565,6 +1655,12 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
                 break;
             case 25:
                 $this->setOutDocOpenType($value);
+                break;
+            case 26:
+                $this->setOutDocHeader($value);
+                break;
+            case 27:
+                $this->setOutDocFooter($value);
                 break;
         } // switch()
     }
@@ -1693,6 +1789,14 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
             $this->setOutDocOpenType($arr[$keys[25]]);
         }
 
+        if (array_key_exists($keys[26], $arr)) {
+            $this->setOutDocHeader($arr[$keys[26]]);
+        }
+
+        if (array_key_exists($keys[27], $arr)) {
+            $this->setOutDocFooter($arr[$keys[27]]);
+        }
+
     }
 
     /**
@@ -1808,6 +1912,14 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
             $criteria->add(OutputDocumentPeer::OUT_DOC_OPEN_TYPE, $this->out_doc_open_type);
         }
 
+        if ($this->isColumnModified(OutputDocumentPeer::OUT_DOC_HEADER)) {
+            $criteria->add(OutputDocumentPeer::OUT_DOC_HEADER, $this->out_doc_header);
+        }
+
+        if ($this->isColumnModified(OutputDocumentPeer::OUT_DOC_FOOTER)) {
+            $criteria->add(OutputDocumentPeer::OUT_DOC_FOOTER, $this->out_doc_footer);
+        }
+
 
         return $criteria;
     }
@@ -1911,6 +2023,10 @@ abstract class BaseOutputDocument extends BaseObject implements Persistent
         $copyObj->setOutDocPdfSecurityPermissions($this->out_doc_pdf_security_permissions);
 
         $copyObj->setOutDocOpenType($this->out_doc_open_type);
+
+        $copyObj->setOutDocHeader($this->out_doc_header);
+
+        $copyObj->setOutDocFooter($this->out_doc_footer);
 
 
         $copyObj->setNew(true);

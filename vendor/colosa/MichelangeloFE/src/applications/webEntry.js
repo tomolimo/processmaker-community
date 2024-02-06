@@ -710,7 +710,7 @@ WebEntry.prototype = {
         this.getWebEntryConfiguration(
             function (webEntryEvent, isNew) {
                 if (isNew) {
-                    webEntryEvent.we_type = 'SINGLE';
+                    webEntryEvent.we_type = 'MULTIPLE';
                     webEntryEvent.we_authentication = 'ANONYMOUS';
                     webEntryEvent.wee_url = '';
                     webEntryEvent.wee_title = '';
@@ -925,50 +925,6 @@ WebEntry.prototype = {
             visibleHeader: false,
             items: [
                 {
-                    id: 'singleDynaformRadio',
-                    pmType: 'radio',
-                    labelVisible: false,
-                    value: 'SINGLE',
-                    name: 'options',
-                    required: false,
-                    controlPositioning: 'horizontal',
-                    maxDirectionOptions: 4,
-                    options: [
-                        {
-                            id: 'singleDynaform',
-                            label: 'Single Dynaform'.translate(),
-                            value: 'SINGLE',
-                            selected: true
-                        }
-                    ],
-                    onChange: function (newVal, oldVal) {
-                        that.weeFormModeChange(newVal, oldVal);
-                    },
-                    labelWidth: '0%'
-                },
-                {
-                    id: 'weeSelectDynaform',
-                    name: 'tabFormsDropdownDyanform',
-                    pmType: 'dropdown',
-                    label: 'Dynaform'.translate(),
-                    helper: 'Select Dynaform use in case.'.translate(),
-                    required: true,
-                    controlsWidth: 400,
-                    labelWidth: '25%',
-                    style: {
-                        cssProperties: {
-                            'padding-left': '100px'
-                        }
-                    },
-                    options: [
-                        {
-                            label: 'Select Dynaform'.translate(),
-                            value: ''
-                        }
-                    ]
-
-                },
-                {
                     id: 'multipleStepsRadio',
                     pmType: 'radio',
                     labelVisible: false,
@@ -984,11 +940,8 @@ WebEntry.prototype = {
                             value: 'MULTIPLE'
                         }
                     ],
-                    onChange: function (newVal, oldVal) {
-                        that.weeFormModeChange(newVal, oldVal);
-                    },
-                    labelWidth: '0%'
-
+                    labelWidth: '0%',
+                    visible: false
                 }
             ]
         });
@@ -1112,6 +1065,28 @@ WebEntry.prototype = {
                     ],
                     style: {
                         cssProperties: {
+                            'padding-left': '50px'
+                        }
+                    }
+                },
+                {
+                    id: 'tabPropertiesHideActiveSessionWarning',
+                    pmType: 'checkbox',
+                    name: 'tabPropertiesHideActiveSessionWarning',
+                    labelVisible: false,
+                    disabled: true,
+                    helper: "By disabling this option, there's a security vulnerability if any other user has access to your web browser. It might impersonate your current session.".translate(),
+                    options: [
+                        {
+                            id: 'hideActiveSessionWarning',
+                            label: 'Hide Active Session Warning'.translate(),
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    style: {
+                        cssProperties: {
+                            'padding-top': '-10px',
                             'padding-left': '50px'
                         }
                     }
@@ -1569,7 +1544,8 @@ WebEntry.prototype = {
                 function (xhr, response) {
                     that.setLinkText(formLink, '');
                     PMDesigner.msgWinError(response.error.message);
-                }
+                },
+                {generateLink: true}
             );
         }
         return this;
@@ -1828,23 +1804,6 @@ WebEntry.prototype = {
     },
 
     /**
-     * Disable MultipleSteps or Single Dynaform (tabForms)
-     * @returns {disableMultipleSteps}
-     */
-    weeFormModeChange: function (newVal, oldVal) {
-        if (newVal === 'SINGLE') {
-            this.disableMultipleSteps('SINGLE');
-        } else {
-            this.disableSingleDynaform('MULTIPLE');
-            this.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform').hideMessage();
-            this.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform')
-                .getControl(0).style.removeClasses(['error']);
-        }
-        this.setLinkText(this.getTabLinkForm(), '');
-        return this;
-    },
-
-    /**
      * Disable MultipleSteps (tabForms)
      * @param singleMultiple
      * @returns {WebEntry}
@@ -1852,10 +1811,6 @@ WebEntry.prototype = {
     disableMultipleSteps: function (singleMultiple) {
         var singleDyna = this.getTabForms().getItem('singleDynaform');
         singleDyna.getItem('multipleStepsRadio').setValue('');
-        singleDyna.getItem('weeSelectDynaform').enable();
-        singleDyna.getItem('weeSelectDynaform').setRequired(true);
-        singleDyna.getItem('singleDynaformRadio').setValue(singleMultiple);
-        singleDyna.getItem('singleDynaformRadio').getControl(0).select();
         //Hide step panel
         this.getLabelsPanel().setVisible(false);
         this.getTabForms().getItem('stepsMainContainer').setVisible(false);
@@ -1869,9 +1824,6 @@ WebEntry.prototype = {
      */
     disableSingleDynaform: function (singleMultiple) {
         var singleDyna = this.getTabForms().getItem('singleDynaform');
-        singleDyna.getItem('singleDynaformRadio').setValue('');
-        singleDyna.getItem('weeSelectDynaform').disable();
-        singleDyna.getItem('weeSelectDynaform').setRequired(false);
         singleDyna.getItem('multipleStepsRadio').setValue(singleMultiple);
         singleDyna.getItem('multipleStepsRadio').getControl(0).select();
         //Show step panel
@@ -1892,6 +1844,7 @@ WebEntry.prototype = {
             callbackAction = 2;
         propertiesForm.getItem('tabPropertiesRequireUserLogin').setValue('[]');
         propertiesForm.getItem('tabPropertiesHideLoogedInformationBar').disable();
+        propertiesForm.getItem('tabPropertiesHideActiveSessionWarning').disable();
         propertiesForm.getItem('tabPropRadioAuthentication').setRequired(true);
         this.getSuggestField().setRequired(true);
         this.getSuggestField().hideMessageRequired();
@@ -1922,6 +1875,7 @@ WebEntry.prototype = {
         this.getSuggestField().setRequired(false);
         this.getSuggestField().hideMessageRequired();
         propertiesForm.getItem('tabPropertiesHideLoogedInformationBar').enable();
+        propertiesForm.getItem('tabPropertiesHideActiveSessionWarning').enable();
         propertiesForm.getItem('tabPropertiesRadioCallback').enableOption(callbackAction);
         this.callbackActionChange(propertiesForm.getItem('tabPropertiesRadioCallback').getValue(), '');
         this.setLinkText(this.getTabLinkForm(), '');
@@ -1992,7 +1946,7 @@ WebEntry.prototype = {
      * @param successCallback
      * @param failureCallback
      */
-    saveWebEntryConfiguration: function (successCallback, failureCallback) {
+    saveWebEntryConfiguration: function (successCallback, failureCallback, extra) {
         var data,
             //tabs window web entry
             tabProperties = this.getTabPanel().getItem('tabProperties'),
@@ -2004,6 +1958,7 @@ WebEntry.prototype = {
 
         //Prepare Data
         data = this.prepareData(dataTabSingleDyn, dataTabProperties, dataTabLink);
+        data['extra'] = extra || {};
         //Save web Entry configuration
         this.updateWebEntryConfiguration(data, successCallback, failureCallback);
         return this;
@@ -2072,14 +2027,15 @@ WebEntry.prototype = {
         data['act_uid'] = this.getActUid();
         data['evn_uid'] = this.getEvnUid();
         data['wee_title'] = this.getEvnUid();
-        data['we_type'] = (dataTabSingleDyn.getItem('singleDynaformRadio').getValue()) ? 'SINGLE' : 'MULTIPLE';
-        data['dyn_uid'] = (data['we_type'] === 'SINGLE') ? dataTabSingleDyn.getItem('weeSelectDynaform')
-            .getValue() : '';
+        data['we_type'] = 'MULTIPLE';
+        data['dyn_uid'] = '';
         data['we_custom_title'] = dataTabProperties.getItem('tabPropertiesWebEntryTitle').getValue();
         data['we_authentication'] = dataTabProperties.getItem('tabPropRadioAuthentication').getValue() === '[]' ?
             'LOGIN_REQUIRED' : 'ANONYMOUS';
         data['usr_uid'] = this.getSuggestField().value;
         data['we_hide_information_bar'] = dataTabProperties.getItem('tabPropertiesHideLoogedInformationBar')
+            .getValue() === '[]' ? '0' : '1';
+        data['we_hide_active_session_warning'] = dataTabProperties.getItem('tabPropertiesHideActiveSessionWarning')
             .getValue() === '[]' ? '0' : '1';
         data['we_callback'] = dataTabProperties.getItem('tabPropertiesRadioCallback').getValue();
         data['we_callback_url'] = (data['we_callback'] !== 'PROCESSMAKER') ?
@@ -2114,15 +2070,12 @@ WebEntry.prototype = {
             i,
             data,
             options = [],
-            dynaformsControl,
             dynaforms = [];
 
         //execute Rest (get Dynaforms)
         this.getDynaforms(
             function (xhr, response) {
                 dynaforms = response[0].response;
-                //get Controls tab-Forms
-                dynaformsControl = that.getTabForms().getItem('singleDynaform').getItem('weeSelectDynaform');
 
                 //Set data Dropdown Single Dynaform
                 for (i = 0; i < dynaforms.length; i += 1) {
@@ -2135,7 +2088,6 @@ WebEntry.prototype = {
                     }
                     options.push(data);
                 }
-                dynaformsControl.setOptions(options);
 
                 //set Disable/Enable single or multiple steps
                 (that.getConfigWebEntry().we_type === 'SINGLE') ?
@@ -2158,6 +2110,7 @@ WebEntry.prototype = {
             radioAuthentication,
             radioRequiredLogin,
             informationBar,
+            activeSessionWarning,
             radioCollback,
             customUrl,
             user,
@@ -2171,6 +2124,7 @@ WebEntry.prototype = {
         radioCollback = this.getTabProperties().getItem('tabPropertiesRadioCallback');
         customUrl = this.getTabProperties().getItem('criteriaFieldCustomUrl');
         informationBar = this.getTabProperties().getItem('tabPropertiesHideLoogedInformationBar');
+        activeSessionWarning = this.getTabProperties().getItem('tabPropertiesHideActiveSessionWarning');
         showInNewCase = this.getTabProperties().getItem('showInNewCase');
 
         //set webentry Title
@@ -2213,6 +2167,15 @@ WebEntry.prototype = {
         } else {
             informationBar.setValue('[]');
             informationBar.getControl(0).deselect();
+        }
+
+        //set Hide Active Session Warning
+        if (this.getConfigWebEntry().we_hide_active_session_warning === '1') {
+            activeSessionWarning.setValue('["1"]');
+            activeSessionWarning.getControl(0).select();
+        } else {
+            activeSessionWarning.setValue('[]');
+            activeSessionWarning.getControl(0).deselect();
         }
 
         //set Callback Action

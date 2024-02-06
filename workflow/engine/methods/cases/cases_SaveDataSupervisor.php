@@ -1,29 +1,7 @@
 <?php
-/**
- * cases_SaveData.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
-//validate the data post
 
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 
 $dynaForm = DynaformPeer::retrieveByPK($_GET["UID"]);
 
@@ -210,6 +188,21 @@ if (isset( $_FILES["form"]["name"] ) && count( $_FILES["form"]["name"] ) > 0) {
 //Define the STEP_POSITION
 $ex = isset($_GET['ex']) ? $_GET['ex'] : 0;
 //go to the next step
-$aNextStep = $oCase->getNextSupervisorStep( $_SESSION['PROCESS'], $_SESSION['STEP_POSITION'] );
-G::header( 'Location: cases_StepToRevise?type=DYNAFORM&ex=' . $ex . '&PRO_UID=' . $_SESSION['PROCESS'] . '&DYN_UID=' . $aNextStep['UID'] . '&APP_UID=' . $_SESSION['APPLICATION'] . '&position=' . $aNextStep['POSITION'] . '&DEL_INDEX=' . $_SESSION['INDEX'] );
+$nextSteps = $oCase->getNextSupervisorStep($_SESSION['PROCESS'], $_SESSION['STEP_POSITION']);
+$url = '';
+$steps = (new BusinessModelCases())->getAllUrlStepsToRevise($_SESSION['APPLICATION'], $_SESSION['INDEX']);
+$n = count($steps);
+foreach ($steps as $key => $step) {
+    if ($step['uid'] === $nextSteps['UID'] && $key + 1 < $n) {
+        $nextUrl = $steps[$key + 1]['url'];
+        $url = $nextUrl;
+        break;
+    }
+}
+if (empty($url)) {
+    die('<script type="text/javascript">'
+            . 'if(window.parent && window.parent.parent){window.parent.parent.postMessage("redirect=MyCases","*");}'
+            . '</script>');
+}
+G::header('Location:' . $url);
 die();

@@ -6,6 +6,7 @@ use Luracast\Restler\RestException;
 use \ProcessMaker\BusinessModel\Migrator\GranularExporter;
 use \ProcessMaker\BusinessModel\Migrator\ExportObjects;
 use \ProcessMaker\BusinessModel\Validator;
+use ProcessMaker\Model\ProcessCategory;
 use \ProcessMaker\Project\Adapter;
 use ProcessMaker\Project\Adapter\BpmnWorkflow;
 use ProcessMaker\Project\Bpmn;
@@ -203,7 +204,7 @@ class Project extends Api
         \G::auditLog('ExportProcess','Export process "' . $granularExporter->getProjectName() . '"');
 
         $httpStream->loadFromFile($outputFilename);
-        $httpStream->setHeader("Content-Type", "application/xml; charset=UTF-8");
+        $httpStream->setHeader("Content-Type", "application/$fileExtension");
         $httpStream->send();
     }
 
@@ -231,7 +232,7 @@ class Project extends Api
         \G::auditLog('ExportProcess','Export process "' . $exporter->getProjectName() . '"');
 
         $httpStream->loadFromFile($outputFilename);
-        $httpStream->setHeader("Content-Type", "application/xml; charset=UTF-8");
+        $httpStream->setHeader("Content-Type", "application/$fileExtension");
         $httpStream->send();
     }
 
@@ -326,6 +327,9 @@ class Project extends Api
             $process->setFormatFieldNameInUppercase(false);
             $process->setArrayFieldNameForException(array("processUid" => "prj_uid"));
 
+            $processCategory = new ProcessCategory();
+            $categoryId = $processCategory->getCategoryId($request_data['pro_category']);
+            $request_data['category_id'] = $categoryId;
             $arrayData = $process->update($prj_uid, DateTime::convertDataToUtc($request_data, $this->arrayFieldIso8601));
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));

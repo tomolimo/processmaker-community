@@ -13,12 +13,12 @@ class PurgeStatementTest extends TestCase
      *
      * @dataProvider purgeProvider
      */
-    public function testPurge($test)
+    public function testPurge($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function purgeProvider()
+    public function purgeProvider(): array
     {
         return [
             ['parser/parsePurge'],

@@ -625,7 +625,12 @@ PMProject.prototype.addElement = function (element) {
     }
     if (!this.loadingProcess) {
         this.setDirty(true);
-        PMDesigner.connectValidator.bpmnValidator();
+        if(element.type === "Connection") {
+            PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject.destPort.parent);
+            PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject.srcPort.parent);
+        }
+        
+        PMDesigner.connectValidator.bpmnValidatorShape(element.relatedObject);
         //Call to Create callBack
         this.listeners.create(this, element);
     }
@@ -666,16 +671,17 @@ PMProject.prototype.updateElement = function (updateElement) {
         }
     }
     //run the process validator only when the project has been loaded
-    if(!this.loadingProcess){
+    if (!this.loadingProcess) {
         this.setDirty(true);
-        PMDesigner.connectValidator.bpmnValidator();
+        PMDesigner.connectValidator.bpmnValidateOnUpdate(updateElement);
         //Call to Update callBack
         this.listeners.update(this, updateElement);
     }
 };
 
 
-PMProject.prototype.removeElement = function (updateElement) {
+
+PMProject.prototype.removeElement = function (updatedElements) {
     var object,
         dirtyEmptyCounter,
         element,
@@ -685,9 +691,9 @@ PMProject.prototype.removeElement = function (updateElement) {
         emptyObject = {},
         currentItem;
 
-    for (i = 0; i < updateElement.length; i += 1) {
-        element = updateElement[i];
-        currentItem = PMUI.getActiveCanvas().items.find("id", updateElement[i].id);
+    for (i = 0; i < updatedElements.length; i += 1) {
+        element = updatedElements[i];
+        currentItem = PMUI.getActiveCanvas().items.find("id", updatedElements[i].id);
         PMUI.getActiveCanvas().items.remove(currentItem);
 
         list = this.getUpdateList(element.type);
@@ -727,8 +733,16 @@ PMProject.prototype.removeElement = function (updateElement) {
     }
     this.setDirty(true);
     //Call to Remove callBack
-    this.listeners.remove(this, updateElement);
-    PMDesigner.connectValidator.bpmnValidator();
+    this.listeners.remove(this, updatedElements);
+
+    //validate bpmn rules on remove
+    for (i = 0; i < updatedElements.length; i += 1) {
+        if(updatedElements[i].type === "Connection") {
+            PMDesigner.connectValidator.bpmnValidatorShape(updatedElements[i].destPort.parent);
+            PMDesigner.connectValidator.bpmnValidatorShape(updatedElements[i].srcPort.parent);
+        }
+        
+    }
 };
 
 PMProject.prototype.formatProperty = function (type, property) {

@@ -11,7 +11,7 @@
   <USR_PASSWORD type="hidden" size="30" maxlength="32" autocomplete="0">
     <en><![CDATA[Password]]></en>
   </USR_PASSWORD>
-  <USR_PASSWORD_MASK type="password" size="30" maxlength="32" autocomplete="0">
+  <USR_PASSWORD_MASK type="password" size="30" maxlength="100" autocomplete="0">
     <en><![CDATA[Password]]></en>
   </USR_PASSWORD_MASK>
   <USER_ENV type="text" size="30" maxlength="50" autocomplete="0">

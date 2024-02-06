@@ -260,12 +260,19 @@
       }
     );
 
-    Ext.onReady(function(){
+    Ext.onReady(function() {
+      var i;
       Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
       Ext.QuickTips.init();
-
       uploadDocumentGrid();
-
+      if (document.getElementsByTagName('input')) {
+        document.getElementsByTagName('input')[0].ariaLabel = "pagination";
+      }
+      if (document.getElementsByTagName('button')) {
+        for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+          document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].getAttribute('id');
+        }
+      }
     });
 
 
@@ -325,7 +332,7 @@
               {name : 'DOC_VERSION'},
               {name : 'ORIGIN'},
               {name : 'CREATED_BY'},
-              {name : 'CREATE_DATE'}
+              {name : 'CREATE_DATE_LABEL'}
             ]
           }
         )
@@ -408,7 +415,7 @@
             {header: _("ID_VERSION"), dataIndex: 'DOC_VERSION', width: 70},
             {header: _("ID_ORIGIN_TASK"), dataIndex: 'ORIGIN', width: 70},
             {header: _("ID_CREATED_BY"), dataIndex: 'CREATED_BY', width: 70},
-            {header: _("ID_CREATE_DATE"), dataIndex: 'CREATE_DATE', width: 70,renderer:startDateRender}
+            {header: _("ID_CREATE_DATE"), dataIndex: 'CREATE_DATE_LABEL', width: 70}
 
           ]
         }),

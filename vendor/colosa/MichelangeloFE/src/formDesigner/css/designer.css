@@ -731,3 +731,22 @@ ul.CodeMirror-hints {
 .datetime-gadget-class {
     position: absolute;
 }
+.ui-widget {
+    font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+    font-size: 11px;
+}
+
+.ui-widget-overlay {
+    opacity: .73 !important;
+    background: #343131 !important;
+}
+
+.ui-accordion .ui-accordion-header {
+    display: block;
+    cursor: pointer;
+    position: relative;
+    margin: 2px 0 0 0;
+    padding: 0.5em 0.5em 0.5em 0.7em;
+    font-size: 12px;
+    font-weight: bold;
+}

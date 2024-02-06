@@ -217,11 +217,18 @@ var ActionTabFrameGlobal = '';
     );
 
     Ext.onReady(function(){
+      var i;
       Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
       Ext.QuickTips.init();
-
       messageHistoryGridList();
-
+      if (document.getElementsByTagName('input')) {
+        document.getElementsByTagName('input')[0].ariaLabel = "pagination";
+      }
+      if (document.getElementsByTagName('button')) {
+        for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+          document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].getAttribute('id');
+        } 
+      }
     });
 
     //!historyGridList|
@@ -325,7 +332,7 @@ function caseMessageHistory_RSP (response, id) {
               fields: [
                   {name: 'ID_MESSAGE'},
                   {name: 'APP_MSG_TYPE'},
-                  {name: 'APP_MSG_DATE'},
+                  {name: 'APP_MSG_DATE_LABEL'},
                   {name: 'APP_MSG_SUBJECT'},
                   {name: 'APP_MSG_FROM'},
                   {name: 'APP_MSG_TO'},
@@ -404,7 +411,7 @@ function caseMessageHistory_RSP (response, id) {
           columns: [
             {id:'ID_MESSAGE', dataIndex: 'ID_MESSAGE', hidden:true, hideable:false},
             {header: _("ID_TYPE"), dataIndex: 'APP_MSG_TYPE', width: 70},
-            {header: _("ID_DATE_LABEL"), dataIndex: 'APP_MSG_DATE', width: 60, renderer: startDateRender},
+            {header: _("ID_DATE_LABEL"), dataIndex: 'APP_MSG_DATE_LABEL', width: 60},
             {header: _("ID_SUBJECT"), dataIndex: 'APP_MSG_SUBJECT', width: 60},
             {header: _("ID_FROM"), dataIndex: 'APP_MSG_FROM', width: 60, renderer: escapeHtml},
             {header: _("ID_TO"), dataIndex: 'APP_MSG_TO', width: 60, renderer: escapeHtml},

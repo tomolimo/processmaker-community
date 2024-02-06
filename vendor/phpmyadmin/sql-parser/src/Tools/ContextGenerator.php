@@ -27,6 +27,7 @@ use function strstr;
 use function strtoupper;
 use function substr;
 use function trim;
+
 use const FILE_IGNORE_NEW_LINES;
 use const FILE_SKIP_EMPTY_LINES;
 use const SORT_STRING;
@@ -60,10 +61,13 @@ class ContextGenerator
         'MySql50600' => 'https://dev.mysql.com/doc/refman/5.6/en/keywords.html',
         'MySql50700' => 'https://dev.mysql.com/doc/refman/5.7/en/keywords.html',
         'MySql80000' => 'https://dev.mysql.com/doc/refman/8.0/en/keywords.html',
-        'MariaDb100000' => 'https://mariadb.com/kb/en/the-mariadb-library/reserved-words/',
-        'MariaDb100100' => 'https://mariadb.com/kb/en/the-mariadb-library/reserved-words/',
-        'MariaDb100200' => 'https://mariadb.com/kb/en/the-mariadb-library/reserved-words/',
-        'MariaDb100300' => 'https://mariadb.com/kb/en/the-mariadb-library/reserved-words/',
+        'MariaDb100000' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100100' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100200' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100300' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100400' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100500' => 'https://mariadb.com/kb/en/reserved-words/',
+        'MariaDb100600' => 'https://mariadb.com/kb/en/reserved-words/',
     ];
 
     /**
@@ -104,7 +108,8 @@ class %2$s extends Context
      *      Token::FLAG_KEYWORD_DATA_TYPE Token::FLAG_KEYWORD_KEY
      *      Token::FLAG_KEYWORD_FUNCTION
      *
-     * @var array
+     * @var array<string,int>
+     * @phpstan-var non-empty-array<non-empty-string,Token::FLAG_KEYWORD_*|int>
      */
     public static $KEYWORDS = [
 %4$s    ];
@@ -154,10 +159,12 @@ PHP;
 
             // Reserved, data types, keys, functions, etc. keywords.
             foreach (static::$LABELS_FLAGS as $label => $flags) {
-                if (strstr($value, $label) !== false) {
-                    $type |= $flags;
-                    $value = trim(str_replace($label, '', $value));
+                if (strstr($value, $label) === false) {
+                    continue;
                 }
+
+                $type |= $flags;
+                $value = trim(str_replace($label, '', $value));
             }
 
             // Composed keyword.
@@ -222,20 +229,26 @@ PHP;
                     }
 
                     $ret .= sprintf('\'%s\' => %s, ', $word, $type);
-                    if (++$i === $count || ++$i > $count) {
-                        $ret .= "\n";
-                        $i = 0;
+                    if (++$i !== $count && ++$i <= $count) {
+                        continue;
                     }
-                }
 
-                if ($i !== 0) {
                     $ret .= "\n";
+                    $i = 0;
                 }
-            }
 
-            if (++$j < $typesCount) {
+                if ($i === 0) {
+                    continue;
+                }
+
                 $ret .= "\n";
             }
+
+            if (++$j >= $typesCount) {
+                continue;
+            }
+
+            $ret .= "\n";
         }
 
         // Trim trailing spaces and return.
@@ -255,13 +268,7 @@ PHP;
             $options['keywords'] = static::printWords($options['keywords']);
         }
 
-        return sprintf(
-            self::TEMPLATE,
-            $options['name'],
-            $options['class'],
-            $options['link'],
-            $options['keywords']
-        );
+        return sprintf(self::TEMPLATE, $options['name'], $options['class'], $options['link'], $options['keywords']);
     }
 
     /**
@@ -291,12 +298,12 @@ PHP;
         }
 
         /* Parse version to array */
-        $ver_str = $parts[2];
-        if (strlen($ver_str) % 2 === 1) {
-            $ver_str = '0' . $ver_str;
+        $versionString = $parts[2];
+        if (strlen($versionString) % 2 === 1) {
+            $versionString = '0' . $versionString;
         }
 
-        $version = array_map('intval', str_split($ver_str, 2));
+        $version = array_map('intval', str_split($versionString, 2));
         /* Remove trailing zero */
         if ($version[count($version) - 1] === 0) {
             $version = array_slice($version, 0, count($version) - 1);

@@ -474,7 +474,9 @@ class ReportTable
 
             $buildResult = ob_get_contents();
 
-            ob_end_clean();
+            if (ob_get_contents()) {
+                ob_end_clean();
+            }
 
             //Updating additional table struture information
             $addTabData = [
@@ -572,7 +574,9 @@ class ReportTable
         } catch (Exception $e) {
             $buildResult = ob_get_contents();
 
-            ob_end_clean();
+            if (ob_get_contents()) {
+                ob_end_clean();
+            }
 
             $result->success = false;
 
@@ -833,7 +837,9 @@ class ReportTable
                 ob_start();
                 $pmTable->buildModelFor($dbsUid, $tables);
                 $buildResult = ob_get_contents();
-                ob_end_clean();
+                if (ob_get_contents()) {
+                    ob_end_clean();
+                }
 
                 $errors .= $pmTable->upgradeDatabaseFor($pmTable->getDataSource(), $tables);
             }

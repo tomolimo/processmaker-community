@@ -83,8 +83,10 @@ class DbConnections
 
                 $result->next();
             }
-            if (! in_array($row[2], $types)) {
-                $types[] = $row[2];
+            if (isset($row[2])) {
+                if (!in_array($row[2], $types)) {
+                    $types[] = $row[2];
+                }
             }
             $this->connections = $connections;
             return $connections;
@@ -480,7 +482,7 @@ class DbConnections
             if ($row[2] != '') {
                 $aPass = explode('_', $row[2]);
                 if (count($aPass) == 1) {
-                    $passEncrypt = G::encrypt($row[2], $row[1]);
+                    $passEncrypt = G::encrypt($row[2], $row[1], false, false);
                     $passEncrypt .= "_2NnV3ujj3w";
                     $c2 = new Criteria('workflow');
                     $c2->add(DbSourcePeer::DBS_PASSWORD, $passEncrypt);

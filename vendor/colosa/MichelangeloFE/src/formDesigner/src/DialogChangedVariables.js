@@ -31,7 +31,7 @@
 
         this.message = this.message.replace(/[,\s]+$/, "");
         this.dialog.append("<div style='font-size:14px;margin:20px;height:85px;overflow-y:auto;'>" +
-            "The imported dynaform include new variables and existing variables that require changes.".translate() + " " +
+            "The imported dynaform includes new variables and existing variables that require changes.".translate() + " " +
             "The changed variables have been added with the suffix “_1”.".translate() + " " +
             "Please take note of the changes to update your process logic.".translate() + " " +
             "The following variables have been created:<br>".translate() + this.message +

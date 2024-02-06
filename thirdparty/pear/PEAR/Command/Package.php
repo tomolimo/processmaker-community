@@ -209,7 +209,7 @@ Wrote: /usr/src/redhat/RPMS/i386/PEAR::Net_Socket-1.0-1.i386.rpm
      *
      * @access public
      */
-    function PEAR_Command_Package(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
         parent::PEAR_Command_Common($ui, $config);
     }
@@ -243,7 +243,7 @@ Wrote: /usr/src/redhat/RPMS/i386/PEAR::Net_Socket-1.0-1.i386.rpm
         $this->output = '';
         include_once 'PEAR/Packager.php';
         $pkginfofile = isset($params[0]) ? $params[0] : 'package.xml';
-        $packager =& new PEAR_Packager($this->config->get('php_dir'),
+        $packager = new PEAR_Packager($this->config->get('php_dir'),
                                        $this->config->get('ext_dir'),
                                        $this->config->get('doc_dir'));
         $packager->debug = $this->config->get('verbose');
@@ -322,7 +322,7 @@ Wrote: /usr/src/redhat/RPMS/i386/PEAR::Net_Socket-1.0-1.i386.rpm
         $obj->validatePackageInfo($info, $err, $warn);
         if (!$this->_displayValidationResults($err, $warn, true)) {
             $this->ui->outputData($this->output, $command);
-            break;
+            return;
         }
         $version = $info['version'];
         $cvsversion = preg_replace('/[^a-z0-9]/i', '_', $version);
@@ -635,7 +635,7 @@ Wrote: /usr/src/redhat/RPMS/i386/PEAR::Net_Socket-1.0-1.i386.rpm
         if (!$fp) {
             return $this->raiseError("could not open RPM spec file template $spec_template: $php_errormsg");
         }
-        $spec_contents = preg_replace('/@([a-z0-9_-]+)@/e', '$info["\1"]', fread($fp, filesize($spec_template)));
+        $spec_contents = preg_replace_callback('/@([a-z0-9_-]+)@/', function($matches) use ($info) {return $info[$matches[1]];}, fread($fp, filesize($spec_template)));
         fclose($fp);
         $spec_file = "$info[rpm_package]-$info[version].spec";
         $wp = fopen($spec_file, "w");

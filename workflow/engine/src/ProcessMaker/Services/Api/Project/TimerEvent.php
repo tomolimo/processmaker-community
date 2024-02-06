@@ -1,8 +1,9 @@
 <?php
 namespace ProcessMaker\Services\Api\Project;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Luracast\Restler\RestException;
+use ProcessMaker\Model\Task;
+use ProcessMaker\Services\Api;
 
 /**
  * Project\TimerEvent Api Controller
@@ -14,7 +15,6 @@ class TimerEvent extends Api
     private $timerEvent;
 
     private $arrayFieldIso8601 = [
-        'tmrevn_next_run_date',
         'tmrevn_last_run_date',
         'tmrevn_last_execution_date'
     ];
@@ -78,7 +78,7 @@ class TimerEvent extends Api
     {
         try {
             $response = $this->timerEvent->getTimerEventByEvent($prj_uid, $evn_uid);
-
+            $response["tas_def_title"] =Task::getTaskDefTitle($evn_uid);
             return \ProcessMaker\Util\DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (\Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());

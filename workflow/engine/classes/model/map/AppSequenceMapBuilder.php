@@ -65,7 +65,9 @@ class AppSequenceMapBuilder
 
         $tMap->setUseIdGenerator(false);
 
-        $tMap->addPrimaryKey('ID', 'Id', 'int', CreoleTypes::INTEGER, true, null);
+        $tMap->addColumn('ID', 'Id', 'int', CreoleTypes::INTEGER, true, null);
+
+        $tMap->addColumn('APP_TYPE', 'AppType', 'string', CreoleTypes::VARCHAR, true, 20);
 
     } // doBuild()
 

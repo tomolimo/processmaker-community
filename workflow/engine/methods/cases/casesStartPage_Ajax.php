@@ -6,6 +6,7 @@
  * This page define some functions used in the start new case
  *
  * @link https://wiki.processmaker.com/3.1/Cases#New_Case
+ * @link https://wiki.processmaker.com/3.2/Web_Entry
 */
 use ProcessMaker\Plugins\PluginRegistry;
 
@@ -179,61 +180,68 @@ function lookinginforContentProcess ($sproUid)
 
 }
 
-function startCase ()
+/**
+ * Start a case and get the next step
+ */
+function startCase()
 {
     $filter = new InputFilter();
     $_POST = $filter->xssFilterHard($_POST);
     $_REQUEST = $filter->xssFilterHard($_REQUEST);
 
-    /* GET , POST & $_SESSION Vars */
-    /* unset any variable, because we are starting a new case */
-    if (isset( $_SESSION['APPLICATION'] )) {
-        unset( $_SESSION['APPLICATION'] );
+    // Unset any variable, because we are starting a new case
+    if (isset($_SESSION['APPLICATION'])) {
+        unset($_SESSION['APPLICATION']);
     }
-    if (isset( $_SESSION['PROCESS'] )) {
-        unset( $_SESSION['PROCESS'] );
+    if (isset($_SESSION['PROCESS'])) {
+        unset($_SESSION['PROCESS']);
     }
-    if (isset( $_SESSION['TASK'] )) {
-        unset( $_SESSION['TASK'] );
+    if (isset($_SESSION['TASK'])) {
+        unset($_SESSION['TASK']);
     }
-    if (isset( $_SESSION['INDEX'] )) {
-        unset( $_SESSION['INDEX'] );
+    if (isset($_SESSION['INDEX'])) {
+        unset($_SESSION['INDEX']);
     }
-    if (isset( $_SESSION['STEP_POSITION'] )) {
-        unset( $_SESSION['STEP_POSITION'] );
+    if (isset($_SESSION['STEP_POSITION'])) {
+        unset($_SESSION['STEP_POSITION']);
     }
 
-        /* Process */
     try {
-        $oCase = new Cases();
+        // Initializing variables
+        $sequenceType = (!empty($_REQUEST['actionFrom']) && $_REQUEST['actionFrom'] === 'webEntry') ? AppSequence::APP_TYPE_WEB_ENTRY : AppSequence::APP_TYPE_NORMAL;
 
-        lookinginforContentProcess( $_POST['processId'] );
+        // Update CONTENT table
+        lookinginforContentProcess($_POST['processId']);
 
-        $aData = $oCase->startCase( $_REQUEST['taskId'], $_SESSION['USER_LOGGED'] );
-        $aData = $filter->xssFilterHard($aData);
+        // Create the new case
+        $casesInstance = new Cases();
+        $newCase = $casesInstance->startCase($_REQUEST['taskId'], $_SESSION['USER_LOGGED'], false, [], false, $sequenceType);
 
-        $_SESSION['APPLICATION'] = $aData['APPLICATION'];
-        $_SESSION['INDEX'] = $aData['INDEX'];
-        $_SESSION['PROCESS'] = $aData['PROCESS'];
+        // Set session variables
+        $_SESSION['APPLICATION'] = $newCase['APPLICATION'];
+        $_SESSION['INDEX'] = $newCase['INDEX'];
+        $_SESSION['PROCESS'] = $newCase['PROCESS'];
         $_SESSION['TASK'] = $_REQUEST['taskId'];
         $_SESSION['STEP_POSITION'] = 0;
-
         $_SESSION['CASES_REFRESH'] = true;
 
-        $oCase = new Cases();
-        $aNextStep = $oCase->getNextStep( $_SESSION['PROCESS'], $_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['STEP_POSITION'] );
+        // Get the first step for the new case
+        $casesInstance = new Cases();
+        $nextStep = $casesInstance->getNextStep($_SESSION['PROCESS'], $_SESSION['APPLICATION'], $_SESSION['INDEX'],
+            $_SESSION['STEP_POSITION']);
+        $nextStep['PAGE'] = 'open?APP_UID=' . $newCase['APPLICATION'] . '&DEL_INDEX=' . $newCase['INDEX'] . '&action=draft';
+        $_SESSION['BREAKSTEP']['NEXT_STEP'] = $nextStep;
 
-        $aNextStep['PAGE'] = 'open?APP_UID=' . $aData['APPLICATION'] . '&DEL_INDEX=' . $aData['INDEX'] . '&action=draft';
+        // Complete required information
+        $newCase['openCase'] = $nextStep;
+        $newCase['status'] = 'success';
 
-        $_SESSION['BREAKSTEP']['NEXT_STEP'] = $aNextStep;
-        $aData['openCase'] = $aNextStep;
-
-        $aData['status'] = 'success';
-        print (G::json_encode( $aData )) ;
+        // Print JSON response
+        print (G::json_encode($newCase));
     } catch (Exception $e) {
-        $aData['status'] = 'failure';
-        $aData['message'] = $e->getMessage();
-        print_r( G::json_encode( $aData ) );
+        $newCase['status'] = 'failure';
+        $newCase['message'] = $e->getMessage();
+        print_r(G::json_encode($newCase));
     }
 }
 

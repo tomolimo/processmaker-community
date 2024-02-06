@@ -215,7 +215,7 @@ class StepTrigger extends BaseStepTrigger
             $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
             $oDataset->next();
             $aRow = $oDataset->getRow();
-            if ((int)$aRow['ST_POSITION'] > 1 ) {
+            if (is_array($aRow) && (int) $aRow['ST_POSITION'] > 1) {
                 $rowNro = 1;
                 while ($aRow = $oDataset->getRow()) {
                     $oStep = StepTriggerPeer::retrieveByPK( $aRow['STEP_UID'], $aRow['TAS_UID'], $aRow['TRI_UID'], $aRow['ST_TYPE'] );

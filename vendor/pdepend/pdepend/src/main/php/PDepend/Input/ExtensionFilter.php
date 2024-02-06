@@ -61,7 +61,7 @@ class ExtensionFilter implements Filter
      * Constructs a new file extension filter instance with the given list of
      *  allowed file <b>$extensions</b>.
      *
-     * @param array $extensions List of allowed extension.
+     * @param array<string> $extensions List of allowed extension.
      */
     public function __construct(array $extensions)
     {
@@ -71,9 +71,10 @@ class ExtensionFilter implements Filter
     /**
      * Returns <b>true</b> if this filter accepts the given paths.
      *
-     * @param  string $relative The relative path to the specified root.
-     * @param  string $absolute The absolute path to a source file.
-     * @return boolean
+     * @param string $relative The relative path to the specified root.
+     * @param string $absolute The absolute path to a source file.
+     *
+     * @return bool
      */
     public function accept($relative, $absolute)
     {

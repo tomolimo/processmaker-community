@@ -140,15 +140,14 @@ class Capsule {
             }
         }
                 
-        @ini_set('track_errors', true);
         include $__template;
-        @ini_restore('track_errors');
         
         // restore the include path
         ini_set('include_path', $__old_inc_path);
         
-        if (!empty($php_errormsg)) {
-            throw new Exception("Unable to parse template " . $__template . ": " . $php_errormsg);
+        $lastError = error_get_last();
+        if (!empty($lastError['message'])) {
+            throw new Exception("Unable to parse template " . $__template . ": " . $lastError['message']);
         }
     }
     
@@ -200,9 +199,9 @@ class Capsule {
      * @return string "Best guess" path for this file.
      */
     protected function resolvePath($file, $basepath) {
-        if ( !($file{0} == DIRECTORY_SEPARATOR || $file{0} == '/') 
+        if ( !($file[0] == DIRECTORY_SEPARATOR || $file[0] == '/') 
             // also account for C:\ style path
-                && !($file{1} == ':' && ($file{2} ==  DIRECTORY_SEPARATOR || $file{2} == '/'))) { 
+                && !($file[1] == ':' && ($file[2] ==  DIRECTORY_SEPARATOR || $file[2] == '/'))) { 
             if ($basepath != null) {
                 $file = $basepath . DIRECTORY_SEPARATOR . $file;
             }

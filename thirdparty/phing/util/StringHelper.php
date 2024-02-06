@@ -60,7 +60,7 @@ class StringHelper {
         $ret=array();
         $len=strlen($str);
         for ($i=0; $i < $len; $i++) {
-            $ret[] = $str{$i};
+            $ret[] = $str[$i];
         }
         return $ret;
     }
@@ -167,7 +167,7 @@ class StringHelper {
      * a natural way of getting a subtring, php's circular string buffer and strange
      * return values suck if you want to program strict as of C or friends 
      */
-    public static function substring($string, $startpos, $endpos = -1) {
+    public static function substring(string $string, $startpos, $endpos = -1) {
         $len    = strlen($string);
         $endpos = (int) (($endpos === -1) ? $len-1 : $endpos);
         if ($startpos > $len-1 || $startpos < 0) {
@@ -177,7 +177,7 @@ class StringHelper {
             trigger_error("substring(), Endindex out of bounds must be $startpos<n<".($len-1), E_USER_ERROR);
         }
         if ($startpos === $endpos) {
-            return (string) $string{$startpos};
+            return (string) $string[$startpos];
         } else {
             $len = $endpos-$startpos;
         }

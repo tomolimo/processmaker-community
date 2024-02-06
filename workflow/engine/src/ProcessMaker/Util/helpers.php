@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,7 +25,7 @@ function postNote($httpData)
     @ob_flush();
     @flush();
     @ob_end_flush();
-    ob_implicit_flush(1);
+    ob_implicit_flush(true);
 
     //send notification in background
     $noteRecipientsList = array();
@@ -603,6 +602,64 @@ function getMysqlVersion()
 }
 
 /**
+ * Get the version of the mysql
+ *
+ * @param string $date in the format <Y-m-d H:m:d>
+ * @param string $mask
+ * @param bool $caseListSetting
+ *
+ * @return string
+ */
+function applyMaskDateEnvironment($date, $mask = '', $caseListSetting = true)
+{
+    $result = '';
+    if (empty($mask)) {
+        $systemConf = new Configurations();
+        $systemConf->loadConfig($obj, 'ENVIRONMENT_SETTINGS', '');
+        if ($caseListSetting) {
+            // Format defined in Cases list: Date Format
+            $mask = isset($systemConf->aConfig['casesListDateFormat']) ? $systemConf->aConfig['casesListDateFormat'] : '';
+        } else {
+            // Format defined in Regional Settings: Global Date Format
+            $mask = isset($systemConf->aConfig['dateFormat']) ? $systemConf->aConfig['dateFormat'] : '';
+        }
+    }
+    if (!empty($date) && !empty($mask)) {
+        $date = new DateTime($date);
+        $result = $date->format($mask);
+    } else {
+        $result = $date;
+    }
+
+    return $result;
+}
+
+/**
+ * Get the difference between two dates
+ *
+ * @param string $startDate
+ * @param string $endDate
+ *
+ * @return string
+ */
+function getDiffBetweenDates(string $startDate, string $endDate)
+{
+    $result = '';
+    if (!empty($startDate) && !empty($endDate)) {
+        $initDate = new DateTime($startDate);
+        $finishDate = new DateTime($endDate);
+        $diff = $initDate->diff($finishDate);
+        $format = ' %a ' . G::LoadTranslation('ID_DAY_DAYS');
+        $format .= ' %H ' . G::LoadTranslation('ID_HOUR_ABBREVIATE');
+        $format .= ' %I ' . G::LoadTranslation('ID_MINUTE_ABBREVIATE');
+        $format .= ' %S ' . G::LoadTranslation('ID_SECOND_ABBREVIATE');
+        $result = $diff->format($format);
+    }
+
+    return $result;
+}
+
+/**
  * Move the uploaded file to the documents folder
  * 
  * @param array $file
@@ -619,24 +676,65 @@ function saveAppDocument($file, $appUid, $appDocUid, $version = 1, $upload = tru
         $info = pathinfo($file["name"]);
         $extension = ((isset($info["extension"])) ? $info["extension"] : "");
         $fileName = $appDocUid . "_" . $version . "." . $extension;
-
         $pathCase = PATH_DATA_SITE . 'files' . PATH_SEP . G::getPathFromUID($appUid) . PATH_SEP;
+        $pathFile = $pathCase . $fileName;
 
-        $response = false;
         if ($upload) {
             G::uploadFile(
                 $file["tmp_name"],
                 $pathCase,
                 $fileName
             );
-            $response = true;
         } else {
             G::verifyPath($pathCase, true);
-            $response = copy($file["tmp_name"], $pathCase . $fileName);
+            if (!copy($file["tmp_name"], $pathCase . $fileName)) {
+                $pathFile = '';
+            }
         }
 
-        return $response;
+        return $pathFile;
     } catch (Exception $e) {
         throw $e;
     }
+}
+
+/**
+ * Add a specific date minutes, hours or days
+ *
+ * @param string $iniDate
+ * @param string $timeUnit
+ * @param int $time
+ *
+ * @return string
+ *
+ * @link https://www.php.net/manual/en/datetime.modify.php
+ */
+function calculateDate($iniDate, $timeUnit, $time)
+{
+
+    $datetime = new DateTime($iniDate);
+    switch ($timeUnit) {
+        case 'DAYS':
+            $datetime->modify('+' . $time . ' day');
+            break;
+        case 'HOURS':
+            $datetime->modify('+' . $time . ' hour');
+            break;
+        case 'MINUTES':
+            $datetime->modify('+' . $time . ' minutes');
+            break;
+    }
+
+    return $datetime->format('Y-m-d H:i:s');
+}
+
+/**
+ * Get the constant value.
+ * @param string $name
+ * @param mixed $default
+ * @return mixed
+ */
+function getConstant(string $name, $default = '')
+{
+    return defined($name) === true ? constant($name) : $default;
 }

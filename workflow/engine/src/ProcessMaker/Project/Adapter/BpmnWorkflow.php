@@ -1241,10 +1241,19 @@ class BpmnWorkflow extends Project\Bpmn
         }
     }
 
-    public function remove($flagForceRemoveProject = false, $flagRemoveCases = true, $onlyDiagram = false)
+    /**
+     * Remove Project
+     * 
+     * @param bool $flagForceRemoveProject
+     * @param bool $flagRemoveCases
+     * @param bool $onlyDiagram
+     * @param array $objectsToImport
+     * @return void
+     */
+    public function remove($flagForceRemoveProject = false, $flagRemoveCases = true, $onlyDiagram = false, $objectsToImport = [])
     {
         parent::remove($flagForceRemoveProject);
-        $this->wp->remove($flagRemoveCases, $onlyDiagram);
+        $this->wp->remove($flagRemoveCases, $onlyDiagram, $objectsToImport);
     }
 
     public static function createFromStruct(array $projectData, $generateUid = true, $allData = null)
@@ -1309,7 +1318,7 @@ class BpmnWorkflow extends Project\Bpmn
             $diagramData = array_change_key_case($projectData["diagrams"][0], CASE_UPPER);
 
             if ($generateUid) {
-                $result[1]["old_uid"] = $diagramData["DIA_UID"];
+                $result[1]["old_uid"] = isset($diagramData["DIA_UID"]) ? $diagramData["DIA_UID"] : '';
                 $diagramData["DIA_UID"] = Util\Common::generateUID();
                 $result[1]["new_uid"] = $diagramData["DIA_UID"];
                 $result[1]["object"] = "diagram";
@@ -1401,13 +1410,15 @@ class BpmnWorkflow extends Project\Bpmn
         try {
             unset($arrayObjectData["BOU_UID"]);
 
-            if ($arrayObjectData["BOU_CONTAINER"] == "bpmnPool" ||
+            if (isset($arrayObjectData["BOU_CONTAINER"])) {
+                if ($arrayObjectData["BOU_CONTAINER"] == "bpmnPool" ||
                 $arrayObjectData["BOU_CONTAINER"] == "bpmnLane" ||
                 $arrayObjectData["BOU_CONTAINER"] == "bpmnActivity"
-            ) {
-                foreach ($arrayUid as $value) {
-                    if ($arrayObjectData["BOU_ELEMENT"] == $value["old_uid"]) {
-                        $arrayObjectData["BOU_ELEMENT"] = $value["new_uid"];
+                ) {
+                    foreach ($arrayUid as $value) {
+                        if ($arrayObjectData["BOU_ELEMENT"] == $value["old_uid"]) {
+                            $arrayObjectData["BOU_ELEMENT"] = $value["new_uid"];
+                        }
                     }
                 }
             }
@@ -1608,13 +1619,13 @@ class BpmnWorkflow extends Project\Bpmn
             unset($activityData["_EXTENDED"], $activityData["BOU_ELEMENT_ID"]);
             $activityData = Util\ArrayUtil::boolToIntValues($activityData);
 
-            $activity = $bwp->getActivity($activityData["ACT_UID"]);
+            $activity = $bwp->getActivity(isset($activityData["ACT_UID"]) ? $activityData["ACT_UID"] : '');
             if ($forceInsert || is_null($activity)) {
                 if ($generateUid) {
                     //Generate and update UID
                     $activityData = $bwp->updateBoundByArrayUid($activityData, $result);
 
-                    $uidOld = $activityData["ACT_UID"];
+                    $uidOld = isset($activityData["ACT_UID"]) ? $activityData["ACT_UID"] : '';
                     $activityData["ACT_UID"] = Util\Common::generateUID();
 
                     $result[] = array(

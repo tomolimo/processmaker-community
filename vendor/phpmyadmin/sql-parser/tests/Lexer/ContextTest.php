@@ -7,11 +7,12 @@ namespace PhpMyAdmin\SqlParser\Tests\Lexer;
 use PhpMyAdmin\SqlParser\Context;
 use PhpMyAdmin\SqlParser\Tests\TestCase;
 use Throwable;
+
 use function class_exists;
 
 class ContextTest extends TestCase
 {
-    public function testLoad()
+    public function testLoad(): void
     {
         // Default context is 5.7.0.
         $this->assertEquals('\\PhpMyAdmin\\SqlParser\\Contexts\\ContextMySql50700', Context::$loadedContext);
@@ -28,9 +29,9 @@ class ContextTest extends TestCase
     /**
      * Test for loading closest SQL context
      *
-     * @dataProvider contextLoading
+     * @dataProvider contextLoadingProvider
      */
-    public function testLoadClosest($context, $expected)
+    public function testLoadClosest(string $context, ?string $expected): void
     {
         $this->assertEquals($expected, Context::loadClosest($context));
         if ($expected !== null) {
@@ -42,7 +43,7 @@ class ContextTest extends TestCase
         Context::load('');
     }
 
-    public function contextLoading()
+    public function contextLoadingProvider(): array
     {
         return [
             'MySQL match' => [
@@ -77,11 +78,9 @@ class ContextTest extends TestCase
     }
 
     /**
-     * @param mixed $context
-     *
-     * @dataProvider contextNames
+     * @dataProvider contextNamesProvider
      */
-    public function testLoadAll($context)
+    public function testLoadAll(string $context): void
     {
         Context::load($context);
         $this->assertEquals('\\PhpMyAdmin\\SqlParser\\Contexts\\Context' . $context, Context::$loadedContext);
@@ -90,7 +89,7 @@ class ContextTest extends TestCase
         Context::load('');
     }
 
-    public function contextNames()
+    public function contextNamesProvider(): array
     {
         return [
             ['MySql50000'],
@@ -106,7 +105,7 @@ class ContextTest extends TestCase
         ];
     }
 
-    public function testLoadError()
+    public function testLoadError(): void
     {
         $this->expectExceptionMessage(
             'Specified context ("\PhpMyAdmin\SqlParser\Contexts\ContextFoo") does not exist.'
@@ -115,7 +114,7 @@ class ContextTest extends TestCase
         Context::load('Foo');
     }
 
-    public function testMode()
+    public function testMode(): void
     {
         Context::setMode('REAL_AS_FLOAT,ANSI_QUOTES,IGNORE_SPACE');
         $this->assertEquals(
@@ -123,15 +122,12 @@ class ContextTest extends TestCase
             Context::$MODE
         );
         Context::setMode('TRADITIONAL');
-        $this->assertEquals(
-            Context::SQL_MODE_TRADITIONAL,
-            Context::$MODE
-        );
+        $this->assertEquals(Context::SQL_MODE_TRADITIONAL, Context::$MODE);
         Context::setMode();
         $this->assertEquals(0, Context::$MODE);
     }
 
-    public function testEscape()
+    public function testEscape(): void
     {
         Context::setMode('NO_ENCLOSING_QUOTES');
         $this->assertEquals('test', Context::escape('test'));

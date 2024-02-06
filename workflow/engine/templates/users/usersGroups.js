@@ -413,7 +413,7 @@ Ext.onReady(function(){
         {
             text: _("ID_EDIT"),
             handler: function () {
-                location.href = "usersEdit?USR_UID=" + USERS.USR_UID + "&USR_AUTH_SOURCE=" + USERS.USR_AUTH_SOURCE + "&MODE=edit";
+                location.href = "usersEdit?USR_UID=" + USERS.USR_UID + "&USR_AUTH_SOURCE=" + USERS.USR_AUTH_SOURCE + "&MODE=edit&userInterface=v2";
             }
         }
     ]

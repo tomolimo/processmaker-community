@@ -13,12 +13,12 @@ class CallStatementTest extends TestCase
      *
      * @dataProvider callProvider
      */
-    public function testCall($test)
+    public function testCall($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function callProvider()
+    public function callProvider(): array
     {
         return [
             ['parser/parseCall'],

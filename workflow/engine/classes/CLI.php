@@ -206,8 +206,10 @@ EOT;
         $args = $argv;
         $cliname = array_shift( $args );
         $taskName = array_shift( $args );
-        while ($taskName{0} == '-') {
-            $taskName = array_shift( $args );
+        if (isset($taskName[0])) {
+            while ($taskName[0] == '-') {
+                $taskName = array_shift( $args );
+            }
         }
         if (! $taskName) {
             echo self::error( "Specify a task from the list below." ) . "\n\n";

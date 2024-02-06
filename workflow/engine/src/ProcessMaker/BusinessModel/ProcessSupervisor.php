@@ -1275,6 +1275,8 @@ class ProcessSupervisor
             $finPos = $prStepPos-1;
         }
         $range = range($iniPos, $finPos);
+        $stepChangePos = [];
+        $stepChangeIds = [];
         foreach ($aSteps as $dataStep) {
             if ($dataStep['obj_type'] == 'DYNAFORM') {
                 if ((in_array($dataStep['pud_position'], $range)) && ($dataStep['pud_uid'] != $step_uid)) {

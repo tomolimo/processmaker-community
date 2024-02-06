@@ -50,6 +50,7 @@ use PDepend\Source\AST\ASTArtifact;
 use PDepend\Source\AST\ASTFunction;
 use PDepend\Source\AST\ASTInterface;
 use PDepend\Source\AST\ASTMethod;
+use PDepend\Source\AST\ASTNamespace;
 
 /**
  * This class calculates the Halstead Complexity Measures for the project,
@@ -66,39 +67,53 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
     const M_MAINTAINABILITY_INDEX = 'mi';
 
     /**
-     * @var AbstractCachingAnalyzer[]
+     * @var CyclomaticComplexityAnalyzer
      */
-    private $analyzers = array();
+    private $analyzersCCN;
+
+    /**
+     * @var HalsteadAnalyzer
+     */
+    private $analyzersHalstead;
+
+    /**
+     * @var NodeLocAnalyzer
+     */
+    private $analyzersLOC;
 
     /**
      * Maintainability index is a combination of cyclomatic complexity,
      * halstead volume & lines of code, all of which we already have analyzers
      * for.
      *
-     * @param array $options
+     * @param array<string, mixed> $options
      */
     public function __construct(array $options = array())
     {
         parent::__construct($options);
 
-        $this->analyzers['ccn'] = new CyclomaticComplexityAnalyzer();
-        $this->analyzers['halstead'] = new HalsteadAnalyzer();
-        $this->analyzers['loc'] = new NodeLocAnalyzer();
+        $this->analyzersCCN = new CyclomaticComplexityAnalyzer();
+        $this->analyzersHalstead = new HalsteadAnalyzer();
+        $this->analyzersLOC = new NodeLocAnalyzer();
     }
 
     /**
-     * Processes all {@link \PDepend\Source\AST\ASTNamespace} code nodes.
+     * Processes all {@link ASTNamespace} code nodes.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespaces
+     * @param ASTNamespace[] $namespaces
+     *
      * @return void
      */
     public function analyze($namespaces)
     {
-        // Run CCN, Halstead & LOC analyzers first
-        foreach ($this->analyzers as $analyzer) {
-            $analyzer->setCache($this->getCache());
-            $analyzer->analyze($namespaces);
-        }
+        $this->analyzersCCN->setCache($this->getCache());
+        $this->analyzersCCN->analyze($namespaces);
+
+        $this->analyzersHalstead->setCache($this->getCache());
+        $this->analyzersHalstead->analyze($namespaces);
+
+        $this->analyzersLOC->setCache($this->getCache());
+        $this->analyzersLOC->analyze($namespaces);
 
         if ($this->metrics === null) {
             $this->loadCache();
@@ -121,8 +136,7 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
      * for the given <b>$node</b>. If there are no metrics for the requested
      * node, this method will return an empty <b>array</b>.
      *
-     * @param \PDepend\Source\AST\ASTArtifact $artifact
-     * @return array
+     * @return array<string, float>
      */
     public function getNodeMetrics(ASTArtifact $artifact)
     {
@@ -136,7 +150,6 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
     /**
      * Visits a function node.
      *
-     * @param  \PDepend\Source\AST\ASTFunction $function
      * @return void
      */
     public function visitFunction(ASTFunction $function)
@@ -153,7 +166,6 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
     /**
      * Visits a code interface object.
      *
-     * @param  \PDepend\Source\AST\ASTInterface $interface
      * @return void
      */
     public function visitInterface(ASTInterface $interface)
@@ -164,7 +176,6 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
     /**
      * Visits a method node.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     public function visitMethod(ASTMethod $method)
@@ -181,17 +192,16 @@ class MaintainabilityIndexAnalyzer extends AbstractCachingAnalyzer implements An
     /**
      * @see http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx
      *
-     * @param  \PDepend\Source\AST\AbstractASTCallable $callable
      * @return void
      */
     public function calculateMaintainabilityIndex(AbstractASTCallable $callable)
     {
-        $cyclomaticComplexity = $this->analyzers['ccn']->getCcn2($callable);
+        $cyclomaticComplexity = $this->analyzersCCN->getCcn2($callable);
 
-        $halstead = $this->analyzers['halstead']->getNodeMetrics($callable);
+        $halstead = $this->analyzersHalstead->getNodeMetrics($callable);
         $halsteadVolume = $halstead[HalsteadAnalyzer::M_HALSTEAD_VOLUME];
 
-        $loc = $this->analyzers['loc']->getNodeMetrics($callable);
+        $loc = $this->analyzersLOC->getNodeMetrics($callable);
         $eloc = $loc[NodeLocAnalyzer::M_EXECUTABLE_LINES_OF_CODE];
 
         $maintainabilityIndex = 171 - 5.2 * log($halsteadVolume) - 0.23 * $cyclomaticComplexity - 16.2 * log($eloc);

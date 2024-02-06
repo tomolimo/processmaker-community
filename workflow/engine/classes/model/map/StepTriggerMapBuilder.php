@@ -73,7 +73,7 @@ class StepTriggerMapBuilder
 
         $tMap->addPrimaryKey('ST_TYPE', 'StType', 'string', CreoleTypes::VARCHAR, true, 20);
 
-        $tMap->addColumn('ST_CONDITION', 'StCondition', 'string', CreoleTypes::VARCHAR, true, 255);
+        $tMap->addColumn('ST_CONDITION', 'StCondition', 'string', CreoleTypes::LONGVARCHAR, true, null);
 
         $tMap->addColumn('ST_POSITION', 'StPosition', 'int', CreoleTypes::INTEGER, true, null);
 

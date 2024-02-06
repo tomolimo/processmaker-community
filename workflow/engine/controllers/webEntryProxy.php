@@ -218,7 +218,7 @@ class webEntryProxy extends HttpProxyController
 
     public function load ($params)
     {
-        $oProcessMap = new ProcessMap( new DBConnection() );
+        $oProcessMap = new ProcessMap();
         $PRO_UID = $params->PRO_UID;
         $EVN_UID = $params->EVN_UID;
         $sOutput = $oProcessMap->listNewWebEntry( $PRO_UID, $EVN_UID );

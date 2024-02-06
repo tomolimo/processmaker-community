@@ -54,32 +54,25 @@ switch ($_POST['action']) {
         $start = isset($_REQUEST['start']) ? $_REQUEST['start'] : 0;
         $limit = isset($_REQUEST['limit']) ? $_REQUEST['limit'] : $limit_size;
         $filter = isset($_REQUEST['textFilter']) ? $_REQUEST['textFilter'] : '';
-
         $sortField = isset($_REQUEST["sort"]) ? $_REQUEST["sort"] : "";
         $sortDir = isset($_REQUEST["dir"]) ? $_REQUEST["dir"] : "";
 
         global $RBAC;
-
         $tasks = new TaskUser();
-        $aTask = $tasks->getCountAllTaksByGroups();
+        $task = $tasks->getCountAllTaksByGroups();
 
         require_once PATH_CONTROLLERS . 'adminProxy.php';
         $uxList = adminProxy::getUxTypesList();
-
         $data = $groupWf->getAllGroup($start, $limit, $filter, $sortField, $sortDir, true);
         $result = $data['rows'];
-
         $totalRows = 0;
-        $arrData = array();
+        $arrData = [];
         foreach ($result as $results) {
             $totalRows++;
-            $results['CON_VALUE'] = str_replace(array("<", ">"
-            ), array("&lt;", "&gt;"
-            ), $results['GRP_TITLE']);
-            $results['GRP_TASKS'] = isset($aTask[$results['GRP_UID']]) ? $aTask[$results['GRP_UID']] : 0;
+            $results['CON_VALUE'] = str_replace(["<", ">"], ["&lt;", "&gt;"], $results['GRP_TITLE']);
+            $results['GRP_TASKS'] = isset($task[$results['GRP_UID']]) ? $task[$results['GRP_UID']] : 0;
             $arrData[] = $results;
         }
-
         $result = new StdClass();
         $result->success = true;
         $result->groups = $arrData;

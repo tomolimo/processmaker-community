@@ -1,0 +1,51 @@
+{
+  "name": "authenticationSources",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build --dest ../../../public_html/lib/authenticationSources",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@panter/vue-i18next": "^0.15.2",
+    "@vue/cli": "^4.4.6",
+    "axios": "^0.19.2",
+    "bootstrap": "^4.5.0",
+    "bootstrap-vue": "^2.20.1",
+    "core-js": "^3.8.1",
+    "lodash": "^4.17.19",
+    "save": "^2.4.0",
+    "vue": "^2.6.11",
+    "vue-tables-2": "^2.1.61",
+    "vuelidate": "^0.7.5"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^4.5.9",
+    "@vue/cli-plugin-eslint": "^4.5.9",
+    "@vue/cli-service": "^4.5.9",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

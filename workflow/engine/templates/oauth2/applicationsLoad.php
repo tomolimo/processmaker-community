@@ -4,7 +4,7 @@
         overflow-y: hidden;
     }
 </style>
-<iframe name="adminFrame" id="adminFrame" src ="clientSetup" width="99%" height="768" frameborder="0">
+<iframe title="adminFrame" name="adminFrame" id="adminFrame" src ="clientSetup" width="99%" height="768" frameborder="0">
     <p>Your browser does not support iframes.</p>
 </iframe>
 </body>

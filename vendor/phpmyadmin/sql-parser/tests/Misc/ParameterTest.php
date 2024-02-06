@@ -13,12 +13,12 @@ class ParameterTest extends TestCase
      *
      * @dataProvider parameterProvider
      */
-    public function testParameter($test)
+    public function testParameter($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function parameterProvider()
+    public function parameterProvider(): array
     {
         return [
             ['misc/parseParameter'],

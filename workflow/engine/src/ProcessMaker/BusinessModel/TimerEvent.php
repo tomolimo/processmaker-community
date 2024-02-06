@@ -4,6 +4,7 @@ namespace ProcessMaker\BusinessModel;
 
 use Bootstrap;
 use Illuminate\Support\Facades\Log;
+use ProcessMaker\Model\Task;
 
 class TimerEvent
 {
@@ -606,6 +607,10 @@ class TimerEvent
             //Create
             $cnn = \Propel::getConnection("workflow");
 
+            $evnUid = $arrayData['EVN_UID'];
+            $caseTitle = $arrayData['CASETITLE'];
+            Task::setTaskDefTitle($evnUid, $caseTitle);
+
             $arrayData = $this->unsetFields($arrayData);
 
             try {
@@ -748,6 +753,10 @@ class TimerEvent
             //Update
             $cnn = \Propel::getConnection("workflow");
 
+            $evnUid = $arrayData['EVN_UID'];
+            $caseTitle = $arrayData['CASETITLE'];
+            Task::setTaskDefTitle($evnUid, $caseTitle);
+            
             $arrayData = $this->unsetFields($arrayData);
 
             try {
@@ -851,6 +860,7 @@ class TimerEvent
 
                     throw new \Exception(\G::LoadTranslation("ID_REGISTRY_CANNOT_BE_UPDATED") . (($msg != "")? "\n" . $msg : ""));
                 }
+
             } catch (\Exception $e) {
                 $cnn->rollback();
 
@@ -1438,16 +1448,16 @@ class TimerEvent
             }
             
             if (!$flagRecord) {
-                $common->frontEndShow("TEXT", "Not exists any record to start a new case, on date \"$datetime (UTC +00:00)\"");
+                $common->frontEndShow("TEXT", "There are no records to start new cases, on date \"$datetime (UTC +00:00)\"");
                 $action = "NO-RECORDS";
-                $this->log($action, "Not exists any record to start a new case");
+                $this->log($action, "There are no records to start new cases");
                 $aInfo = array(
                     'ip'        => \G::getIpAddress()
                     ,'action'   => $action
                     ,'timeZone' => $datetime
                     ,'workspace'=> $sysSys
                 );
-                $message = 'Not exists any record to start a new case';
+                $message = 'There are no records to start new cases';
                 $context = $aInfo;
                 Log::channel(':TimerEventCron')->info($message, Bootstrap::context($context));
             }
@@ -1456,14 +1466,14 @@ class TimerEvent
 
             //Intermediate Catch Timer-Event (continue the case) ///////////////////////////////////////////////////////
             $action = "START-CONTINUE-CASES";
-            $this->log($action, "Start continue the cases");
+            $this->log($action, "Start continuing the cases");
             $aInfo = array(
                 'ip'        => \G::getIpAddress()
                 ,'action'   => $action
                 ,'timeZone' => $datetime
                 ,'workspace'=> $sysSys
             );
-            $message = 'Start continue the cases';
+            $message = 'Start continuing the cases';
             $context = $aInfo;
             Log::channel(':TimerEventCron')->info($message, Bootstrap::context($context));
 
@@ -1709,16 +1719,16 @@ class TimerEvent
             } while ($flagNextRecord);
 
             if (!$flagRecord) {
-                $common->frontEndShow("TEXT", "No existing records to continue a case, on date \"$datetime (UTC +00:00)\"");
+                $common->frontEndShow("TEXT", "There are no records to continue cases, on date \"$datetime (UTC +00:00)\"");
 
-                $this->log("NO-RECORDS", "No existing records to continue a case");
+                $this->log("NO-RECORDS", "There are no records to continue cases");
                 $aInfo = array(
                     'ip'        => \G::getIpAddress()
                     ,'action'   => $action
                     ,'timeZone' => $datetime
                     ,'workspace'=> $sysSys
                 );
-                $message = 'No existing records to continue a case';
+                $message = 'There are no records to continue cases';
                 $context = $aInfo;
                 Log::channel(':TimerEventCron')->info($message, Bootstrap::context($context));
             }

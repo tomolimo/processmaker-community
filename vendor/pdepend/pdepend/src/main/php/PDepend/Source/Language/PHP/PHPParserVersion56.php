@@ -38,12 +38,16 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
 namespace PDepend\Source\Language\PHP;
 
 use PDepend\Source\AST\ASTArguments;
+use PDepend\Source\AST\ASTConstant;
+use PDepend\Source\AST\ASTNamedArgument;
+use PDepend\Source\AST\ASTNode;
 use PDepend\Source\AST\ASTValue;
 use PDepend\Source\Parser\UnexpectedTokenException;
 use PDepend\Source\Tokenizer\FullTokenizer;
@@ -55,6 +59,7 @@ use PDepend\Source\Tokenizer\Tokens;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 abstract class PHPParserVersion56 extends PHPParserVersion55
@@ -62,9 +67,9 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
     /**
      * Parses additional static values that are valid in the supported php version.
      *
-     * @param  \PDepend\Source\AST\ASTValue $value
-     * @return \PDepend\Source\AST\ASTValue|null
-     * @throws \PDepend\Source\Parser\UnexpectedTokenException
+     * @throws UnexpectedTokenException
+     *
+     * @return ASTValue|null
      */
     protected function parseStaticValueVersionSpecific(ASTValue $value)
     {
@@ -136,6 +141,7 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
                     break;
                 case Tokens::T_ELLIPSIS:
                     $this->checkEllipsisInExpressionSupport();
+                    // no break
                 case Tokens::T_STRING_VARNAME: // TODO: Implement this
                 case Tokens::T_PLUS: // TODO: Make this a arithmetic expression
                 case Tokens::T_MINUS:
@@ -286,8 +292,10 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
      * in the base version. In this method you can implement version specific
      * expressions.
      *
-     * @return \PDepend\Source\AST\ASTNode
-     * @throws \PDepend\Source\Parser\UnexpectedTokenException
+     * @throws UnexpectedTokenException
+     *
+     * @return ASTNode
+     *
      * @since 2.2
      */
     protected function parseOptionalExpressionForVersion()
@@ -301,7 +309,8 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
     /**
      * In this method we implement parsing of PHP 5.6 specific expressions.
      *
-     * @return \PDepend\Source\AST\ASTNode
+     * @return ASTNode|null
+     *
      * @since 2.3
      */
     protected function parseExpressionVersion56()
@@ -323,49 +332,59 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
 
                 return $expr;
         }
+
+        return null;
     }
 
     /**
-     * @param \PDepend\Source\AST\ASTArguments $arguments
-     * @return \PDepend\Source\AST\ASTArguments
+     * @return ASTConstant|ASTNamedArgument
+     */
+    protected function parseConstantArgument(ASTConstant $constant, ASTArguments $arguments)
+    {
+        return $constant;
+    }
+
+    /**
+     * @return ASTArguments
      */
     protected function parseArgumentList(ASTArguments $arguments)
     {
         while (true) {
             $this->consumeComments();
+
             if (Tokens::T_ELLIPSIS === $this->tokenizer->peek()) {
                 $this->consumeToken(Tokens::T_ELLIPSIS);
             }
 
-            $this->consumeComments();
-            if (null === ($expr = $this->parseOptionalExpression())) {
-                break;
+            $expr = $this->parseArgumentExpression();
+
+            if ($expr instanceof ASTConstant) {
+                $expr = $this->parseConstantArgument($expr, $arguments);
             }
 
-            $arguments->addChild($expr);
-
-            $this->consumeComments();
-            if (Tokens::T_COMMA === $this->tokenizer->peek()) {
-                $this->consumeToken(Tokens::T_COMMA);
-                $this->consumeComments();
-
-                continue;
+            if (!$expr || !$this->addChildToList($arguments, $expr)) {
+                break;
             }
         }
 
         return $arguments;
     }
 
+    protected function parseArgumentExpression()
+    {
+        return $this->parseOptionalExpression();
+    }
+
     /**
      * Parses the value of a php constant. By default this can be only static
      * values that were allowed in the oldest supported PHP version.
      *
-     * @return \PDepend\Source\AST\ASTValue
+     * @return ASTValue
      */
     protected function parseConstantDeclaratorValue()
     {
         if ($this->isFollowedByStaticValueOrStaticArray()) {
-            return $this->parseStaticValueOrStaticArray();
+            return $this->parseVariableDefaultValue();
         }
 
         // Else it would be provided as ASTLiteral or expressions object.
@@ -387,7 +406,7 @@ abstract class PHPParserVersion56 extends PHPParserVersion55
             return false;
         }
 
-        for($i = 0; $type = $this->tokenizer->peekAt($i); $i++) {
+        for ($i = 0; $type = $this->tokenizer->peekAt($i); $i++) {
             switch ($type) {
                 case Tokens::T_COMMENT:
                 case Tokens::T_DOC_COMMENT:

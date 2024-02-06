@@ -42,7 +42,7 @@ $appDelegation = new AppDelegation();
 $delegation = $appDelegation->load($appUid, $delIndex);
 
 // if there are no user in the delegation row, this case is still in selfservice
-if (empty($delegation['USR_UID'])) {
+if ($delegation['USR_UID'] == "") {
     $case->setCatchUser($_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['USER_LOGGED']);
     //changing email labels if the claim comes from gmail
     if (array_key_exists('gmail', $_SESSION) && $_SESSION['gmail'] == 1) {
@@ -51,7 +51,13 @@ if (empty($delegation['USR_UID'])) {
         </script>');
     }
 } else {
-    G::SendMessageText(G::LoadTranslation('ID_CASE_ALREADY_DERIVATED'), 'error');
+    $hideMessage = false;
+    if (isset($_REQUEST['hideMessage'])) {
+        $hideMessage = $_REQUEST['hideMessage'] === 'true' ? true : false;
+    }
+    if ($hideMessage === false) {
+        G::SendMessageText(G::LoadTranslation('ID_CASE_ALREADY_DERIVATED'), 'error');
+    }
 }
 
 $validation = (SYS_SKIN != 'uxs') ? 'true' : 'false';

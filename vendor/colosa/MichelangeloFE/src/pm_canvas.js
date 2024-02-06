@@ -1458,7 +1458,6 @@ PMCanvas.prototype.addConnection = function (conn) {
     if (shapeElement instanceof PMGateway) {
         shapeElement.evaluateGatewayDirection();
     }
-    PMDesigner.project.updateElement([]);
 };
 /**
  * This method hide all flows into a container (shape);

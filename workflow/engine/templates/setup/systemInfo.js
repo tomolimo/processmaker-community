@@ -137,12 +137,6 @@ systemInfo.application = {
                 },
                 {
                     xtype: "displayfield",
-                    id: "mcrypt ",
-                    fieldLabel: _("ID_MCRYPT_SUPPORT"),
-                    value: eval("fieldFormatValue(" + SYSINFO_MCRYPT + ");")
-                },
-                {
-                    xtype: "displayfield",
                     id: "ldap",
                     fieldLabel: _("ID_PROCESSMAKER_REQUIREMENTS_LDAP"),
                     value: eval("fieldFormatValue(" + SYSINFO_LDAP + ");")

@@ -2,6 +2,7 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Dynaform extends Model
 {
+    use HasFactory;
+
     protected $table = 'DYNAFORM';
     protected $primaryKey = "DYN_ID";
     public $timestamps = false;

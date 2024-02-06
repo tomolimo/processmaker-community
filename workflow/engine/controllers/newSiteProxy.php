@@ -44,8 +44,8 @@ class newSiteProxy extends HttpProxyController
             //$json = new Services_JSON();
             //G::pr($result['result']['database']);G::pr($action);
             $dbWf = $result['result']['database']['ao']['ao_db_wf']['status'];
-            $dbRb = $result['result']['database']['ao']['ao_db_rb']['status'];
-            $dbRp = $result['result']['database']['ao']['ao_db_rp']['status'];
+            $dbRb = isset($result['result']['database']['ao']['ao_db_rb']['status']) ? $result['result']['database']['ao']['ao_db_rb']['status'] : null;
+            $dbRp = isset($result['result']['database']['ao']['ao_db_rp']['status']) ? $result['result']['database']['ao']['ao_db_rp']['status'] : null;
             $wsAction = ($action != '') ? 1 : 0;
             if ($dbWf && $action) {
                 $this->success = true;

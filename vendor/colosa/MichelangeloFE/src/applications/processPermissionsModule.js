@@ -69,7 +69,7 @@
                         data = response[0].response;
                         cboTargetTask.clearOptions();
                         cboOriginTask.clearOptions();
-                        cboTargetTask.addOption({value: '', label: 'All Tasks'.translate()});
+                        cboTargetTask.addOption({value: '', label: 'Select an option'.translate()});
                         cboOriginTask.addOption({value: '', label: 'All Tasks'.translate()});
                         for (i = 0; i <= data.diagrams[0].activities.length - 1; i += 1) {
                             cboTargetTask.addOption({
@@ -349,7 +349,7 @@
                     typeRequest: "get",
                     functionSuccess: function (xhr, response) {
                         var data = response, i;
-                        cboTargetTask.addOption({value: "", label: "All Tasks".translate()});
+                        cboTargetTask.addOption({value: "", label: "Select one option".translate()});
                         cboOriginTask.addOption({value: "", label: "All Tasks".translate()});
                         for (i = 0; i <= data.diagrams[0].activities.length - 1; i += 1) {
                             cboTargetTask.addOption({

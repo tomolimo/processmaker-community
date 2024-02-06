@@ -26,10 +26,19 @@
     <en><![CDATA[Next step]]></en>
   </NEXT_STEP>
   <JS type="javascript"><![CDATA[
-var nextStep = function(oForm)
-{
-  oForm.action = 'cases_NextStep';
-  oForm.submit();
-};
+    var i,
+      span,
+      nextStep = function(oForm) {
+        oForm.action = 'cases_NextStep';
+        oForm.submit();
+      };
+    label1 = document.getElementsByTagName('label')[0];
+    label2 = document.getElementsByTagName('label')[1];
+    span1 = document.createElement('span');
+    span1.innerHTML = label1.innerHTML;
+    span2 = document.createElement('span');
+    span2.innerHTML = label2.innerHTML;
+    label1.parentNode.replaceChild(span1, label1);
+    label2.parentNode.replaceChild(span2, label2);
 ]]></JS>
 </dynaForm>

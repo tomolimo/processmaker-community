@@ -1,54 +1,60 @@
 <?php
+
 namespace ProcessMaker\Services\Api;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Exception;
+use Luracast\Restler\RestException;
+use PMLicensedFeatures;
+use ProcessMaker\BusinessModel\Cases\CasesList;
+use ProcessMaker\BusinessModel\DataBaseConnection;
+use ProcessMaker\BusinessModel\Language;
+use ProcessMaker\BusinessModel\Skins;
+use ProcessMaker\Services\Api;
 
 /**
- * Pmtable Api Controller
- *
+ * System class
  */
 class System extends Api
 {
     /**
+     * @url GET /db-engines
+     * @status 200
+     *
      * @return array
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
-     * @url GET /db-engines
      * @protected
      */
     public function doGetDataBaseEngines()
     {
         try {
-            $oDBConnection = new \ProcessMaker\BusinessModel\DataBaseConnection();
-            $response = $oDBConnection->getDbEngines();
+            $dbConnection = new DataBaseConnection();
+            $response = $dbConnection->getDbEngines();
+
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
-     * Get count for all lists
+     * Get counter for all lists
+     *
+     * @url GET /counters-lists
+     * @status 200
      *
      * @return array
      *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
-     * @url GET /counters-lists
      * @protected
      */
     public function doGetCountersLists()
     {
         try {
-            $userId   = $this->getUserId();
-            $lists    = new \ProcessMaker\BusinessModel\Lists();
-            $response = $lists->getCounters($userId);
-            return $response;
-        } catch (\Exception $e) {
+            $usrUid = $this->getUserId();
+            $count = new CasesList();
+            $result = $count->getAllCounters($usrUid, true);
+
+            return $result;
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
@@ -56,37 +62,42 @@ class System extends Api
     /**
      * Get a list of the installed languages.
      *
-     * @category HOR-3209,PROD-181
-     * @return array
      * @url GET /languages
+     * @status 200
+     *
+     * @return array
+     *
      * @public
+     * @category HOR-3209,PROD-181
      */
     public function doGetLanguages()
     {
         try {
-            $language = new \ProcessMaker\BusinessModel\Language;
+            $language = new Language;
             $list = $language->getLanguageList();
+
             return ["data" => $list];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
 
     /**
-     * @return array
-     *
-     * @author Gustavo Cruz <gustavo.cruz@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @url GET /enabled-features
+     * @status 200
+     *
+     * @return array
+     *
      * @protected
      */
     public function doGetEnabledFeatures()
     {
         try {
-            $enabledFeatures = array();
+            $enabledFeatures = [];
+
             return $enabledFeatures;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
@@ -95,6 +106,8 @@ class System extends Api
      * Get the list of installed skins.
      *
      * @url GET /skins
+     * @status 200
+     *
      * @return array
      * @access protected
      * @class  AccessControl {@permission PM_FACTORY}
@@ -103,12 +116,12 @@ class System extends Api
     public function doGetSkins()
     {
         try {
-            $model = new \ProcessMaker\BusinessModel\Skins();
+            $model = new Skins();
             $response = $model->getSkins();
+
             return ["data" => $response];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }
-
 }

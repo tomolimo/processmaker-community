@@ -6,7 +6,7 @@ Ext.onReady(function () {
         layout: 'border',
         items: [
             new Ext.grid.GridPanel({
-                region: 'center',
+                "region": 'center',
                 "width": "100%",
                 "height": 300,
                 "stateful": true,
@@ -56,13 +56,18 @@ Ext.onReady(function () {
                             header: _('ID_FIELD_NAME'),
                             width: 120,
                             sortable: false,
-                            dataIndex: 'field'
+                            dataIndex: 'field',
+                            menuDisabled: true,
+                            renderer: function (value, metaData, record, rowIndex, colIndex, store) {
+                                return "<b>"+value+"</b>";
+                            }
                         },
                         {
                             header: _('ID_PREV_VALUES'),
                             flex: 1,
                             sortable: false,
                             dataIndex: 'previousValue',
+                            menuDisabled: true,
                             renderer: function (value, p, record) {
                                 return value;
                             }
@@ -72,6 +77,7 @@ Ext.onReady(function () {
                             flex: 1,
                             sortable: false,
                             dataIndex: 'currentValue',
+                            menuDisabled: true,
                             renderer: function (value, p, record) {
                                 return value;
                             }

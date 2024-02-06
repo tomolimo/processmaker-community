@@ -233,11 +233,15 @@ emailServer.application = {
 
         function emailServerSetEmailEngine(cboEmailEngine)
         {
+            Ext.getCmp("txtServer").setValue("");
+            Ext.getCmp("txtPort").setValue("");
+
             Ext.getCmp("frmEmailServer").getForm().clearInvalid();
 
             Ext.getCmp("textClientId").setVisible(false);
             Ext.getCmp("textClientSecret").setVisible(false);
             Ext.getCmp("buttonContinue").setVisible(false);
+            Ext.getCmp("button2Continue").setVisible(false);
             Ext.getCmp("btnTest").setVisible(true);
             Ext.getCmp("btnSave").setVisible(true);
             if (cboEmailEngine === "PHPMAILER") {
@@ -271,8 +275,12 @@ emailServer.application = {
                 Ext.getCmp("textClientSecret").allowBlank = true;
             } else if (cboEmailEngine === "IMAP") {
             } else if (cboEmailEngine === "GMAILAPI") {
-                Ext.getCmp("txtServer").setVisible(false);
-                Ext.getCmp("txtPort").setVisible(false);
+                Ext.getCmp("txtServer").setVisible(true);
+                Ext.getCmp("txtServer").setValue("smtp.gmail.com");
+                Ext.getCmp("txtServer").label.update(_("ID_SERVER_API"));
+                Ext.getCmp("txtPort").setVisible(true);
+                Ext.getCmp("txtPort").setValue("587");
+                Ext.getCmp("txtPort").label.update(_("ID_EMAIL_SERVER_PORT"));
                 Ext.getCmp("txtIncomingServer").setVisible(false);
                 Ext.getCmp("txtIncomingPort").setVisible(false);
                 Ext.getCmp("chkReqAuthentication").setVisible(false);
@@ -284,6 +292,35 @@ emailServer.application = {
                 Ext.getCmp("textClientId").setVisible(true);
                 Ext.getCmp("textClientSecret").setVisible(true);
                 Ext.getCmp("buttonContinue").setVisible(true);
+
+                emailServerSetPassword(false);
+
+                Ext.getCmp("txtServer").allowBlank = true;
+                Ext.getCmp("txtPort").allowBlank = true;
+                Ext.getCmp("txtIncomingServer").allowBlank = true;
+                Ext.getCmp("txtIncomingPort").allowBlank = true;
+                Ext.getCmp("txtAccountFrom").allowBlank = false;
+                Ext.getCmp("txtPassword").allowBlank = true;
+                Ext.getCmp("textClientId").allowBlank = false;
+                Ext.getCmp("textClientSecret").allowBlank = false;
+            } else if (cboEmailEngine === "OFFICE365API") {
+                Ext.getCmp("txtServer").setVisible(true);
+                Ext.getCmp("txtServer").setValue("smtp.office365.com");
+                Ext.getCmp("txtServer").label.update(_("ID_SERVER_API"));
+                Ext.getCmp("txtPort").setVisible(true);
+                Ext.getCmp("txtPort").setValue("587");
+                Ext.getCmp("txtPort").label.update(_("ID_EMAIL_SERVER_PORT"));
+                Ext.getCmp("txtIncomingServer").setVisible(false);
+                Ext.getCmp("txtIncomingPort").setVisible(false);
+                Ext.getCmp("chkReqAuthentication").setVisible(false);
+                Ext.getCmp("rdoGrpSmtpSecure").setVisible(false);
+                Ext.getCmp("btnTest").setVisible(false);
+                Ext.getCmp("btnSave").setVisible(false);
+
+                Ext.getCmp("txtAccountFrom").setVisible(true);
+                Ext.getCmp("textClientId").setVisible(true);
+                Ext.getCmp("textClientSecret").setVisible(true);
+                Ext.getCmp("button2Continue").setVisible(true);
 
                 emailServerSetPassword(false);
 
@@ -323,7 +360,9 @@ emailServer.application = {
 
         function emailServerSetPassword(flagPassChecked)
         {
-            if (flagPassChecked && Ext.getCmp("cboEmailEngine").getValue() !== 'GMAILAPI') {
+            if (flagPassChecked
+                    && Ext.getCmp("cboEmailEngine").getValue() !== 'GMAILAPI'
+                    && Ext.getCmp("cboEmailEngine").getValue() !== 'OFFICE365API') {
                 Ext.getCmp("txtPassword").setVisible(true);
                 Ext.getCmp("txtPassword").allowBlank = false;
             } else {
@@ -518,7 +557,8 @@ emailServer.application = {
             data: [
                 ["PHPMAILER", "SMTP (PHPMailer)"],
                 ["MAIL", "Mail (PHP)"],
-                ["GMAILAPI", "GMAIL API (PHPMailer)"]
+                ["GMAILAPI", "GMAIL API SMTP-IMAP"],
+                ["OFFICE365API", "OFFICE 365 API SMTP-IMAP"]
             ]
         });
 
@@ -559,11 +599,9 @@ emailServer.application = {
         var txtPort = new Ext.form.NumberField({
             id: "txtPort",
             name: "txtPort",
-
             fieldLabel: _("PORT_DEFAULT"), //Port (default 25)
-
-            anchor: "36%",
-            maxLength: 3,
+            anchor: "40%",
+            maxLength: 4,
             emptyText: null
         });
 
@@ -577,11 +615,9 @@ emailServer.application = {
         var txtIncomingPort = new Ext.form.NumberField({
             id: "txtIncomingPort",
             name: "txtIncomingPort",
-
             fieldLabel: _("INCOMING_PORT_DEFAULT"), //Port (default 993)
-
-            anchor: "36%",
-            maxLength: 3,
+            anchor: "40%",
+            maxLength: 4,
             emptyText: null
         });
 
@@ -748,10 +784,12 @@ emailServer.application = {
                 frmEmailServer = Ext.getCmp("frmEmailServer");
                 if (frmEmailServer.getForm().isValid()) {
                     winData.setDisabled(true);
-                    
+
                     parameters = {
                         option: 'createAuthUrl',
                         emailEngine: Ext.getCmp("cboEmailEngine").getValue(),
+                        server: Ext.getCmp("txtServer").getValue(),
+                        port: Ext.getCmp("txtPort").getValue(),
                         clientID: Ext.getCmp("textClientId").getValue(),
                         clientSecret: Ext.getCmp("textClientSecret").getValue(),
                         fromAccount: Ext.getCmp("txtAccountFrom").getValue(),
@@ -761,11 +799,79 @@ emailServer.application = {
                         mailTo: Ext.getCmp("txtMailTo").getValue(),
                         setDefaultConfiguration: Ext.getCmp("chkEmailServerDefault").checked ? 1 : 0
                     };
-                    
+
                     if (EMAILSERVEROPTION === "UPD") {
                         parameters.emailServerUid = Ext.getCmp("emailServerUid").getValue();
                     }
-                    
+
+                    Ext.Ajax.request({
+                        url: "emailServerAjax",
+                        method: "POST",
+                        params: parameters,
+                        success: function (response) {
+                            winData.setDisabled(false);
+                            var dataResponse = Ext.util.JSON.decode(response.responseText);
+                            if (dataResponse.status === 200) {
+                                if (window.parent.parent) {
+                                    window.parent.parent.location = dataResponse.data;
+                                } else if (window.parent) {
+                                    window.parent.location = dataResponse.data;
+                                } else {
+                                    window.location = dataResponse.data;
+                                }
+                            } else {
+                                Ext.MessageBox.show({
+                                    title: _("ID_ERROR"),
+                                    icon: Ext.MessageBox.ERROR,
+                                    msg: dataResponse.message,
+                                    buttons: {ok: _("ID_ACCEPT")}
+                                });
+                            }
+                        },
+                        failure: function () {
+                            winData.setDisabled(false);
+                            Ext.MessageBox.show({
+                                title: _("ID_ERROR"),
+                                icon: Ext.MessageBox.ERROR,
+                                msg: "",
+                                buttons: {ok: _("ID_ACCEPT")}
+                            });
+                        }
+                    });
+                } else {
+                    Ext.MessageBox.alert(_("ID_INVALID_DATA"), _("ID_CHECK_FIELDS_MARK_RED"));
+                }
+            }
+        });
+        var button2Continue = new Ext.Action({
+            id: 'button2Continue',
+            text: _("ID_CONTINUE"),
+            width: 85,
+            handler: function () {
+                var frmEmailServer, parameters;
+                frmEmailServer = Ext.getCmp("frmEmailServer");
+                if (frmEmailServer.getForm().isValid()) {
+                    winData.setDisabled(true);
+
+                    parameters = {
+                        option: 'createAuthUrlOffice365',
+                        emailEngine: Ext.getCmp("cboEmailEngine").getValue(),
+                        server: Ext.getCmp("txtServer").getValue(),
+                        port: Ext.getCmp("txtPort").getValue(),
+                        clientID: Ext.getCmp("textClientId").getValue(),
+                        clientSecret: Ext.getCmp("textClientSecret").getValue(),
+                        fromAccount: Ext.getCmp("txtAccountFrom").getValue(),
+                        senderEmail: Ext.getCmp("txtFromMail").getValue(),
+                        senderName: Ext.getCmp("txtFromName").getValue(),
+                        sendTestMail: (Ext.getCmp("chkSendTestMail").checked) ? 1 : 0,
+                        mailTo: Ext.getCmp("txtMailTo").getValue(),
+                        setDefaultConfiguration: Ext.getCmp("chkEmailServerDefault").checked ? 1 : 0
+                    };
+
+                    if (EMAILSERVEROPTION === "UPD") {
+                        parameters.emailServerUid = Ext.getCmp("emailServerUid").getValue();
+                    }
+
                     Ext.Ajax.request({
                         url: "emailServerAjax",
                         method: "POST",
@@ -848,7 +954,7 @@ emailServer.application = {
             resizable: false,
             closeAction: "hide",
             items: [frmEmailServer],
-            buttons: [buttonContinue, btnTest, btnSave, btnCancel]
+            buttons: [buttonContinue, button2Continue, btnTest, btnSave, btnCancel]
         });
         winData.show();
         winData.hide();
@@ -917,10 +1023,8 @@ emailServer.application = {
 
         var btnNew = new Ext.Action({
             id: "btnNew",
-
             text: _("ID_NEW"),
-            iconCls: "button_menu_ext ss_sprite ss_add",
-
+            icon: '/images/add_18.png',
             handler: function ()
             {
                 EMAILSERVEROPTION = "INS";
@@ -934,10 +1038,8 @@ emailServer.application = {
 
         var btnEdit = new Ext.Action({
             id: "btnEdit",
-
             text: _("ID_EDIT"),
-            iconCls: "button_menu_ext ss_sprite ss_pencil",
-
+            icon: '/images/pencil.png',
             handler: function ()
             {
                 var record = grdpnlMain.getSelectionModel().getSelected();
@@ -955,10 +1057,8 @@ emailServer.application = {
 
         var btnDelete = new Ext.Action({
             id: "btnDelete",
-
             text: _("ID_DELETE"),
-            iconCls: "button_menu_ext ss_sprite ss_cross",
-
+            icon: '/images/delete-16x16.gif',
             handler: function ()
             {
                 var record = grdpnlMain.getSelectionModel().getSelected();

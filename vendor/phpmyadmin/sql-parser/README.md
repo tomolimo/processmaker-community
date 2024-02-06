@@ -4,13 +4,15 @@ A validating SQL lexer and parser with a focus on MySQL dialect.
 
 ## Code status
 
-[![Build Status](https://travis-ci.org/phpmyadmin/sql-parser.svg?branch=master)](https://travis-ci.org/phpmyadmin/sql-parser)
+![Tests](https://github.com/phpmyadmin/sql-parser/workflows/Run%20tests/badge.svg?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/phpmyadmin/sql-parser/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/phpmyadmin/sql-parser/?branch=master)
 [![codecov.io](https://codecov.io/github/phpmyadmin/sql-parser/coverage.svg?branch=master)](https://codecov.io/github/phpmyadmin/sql-parser?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/phpmyadmin/sql-parser/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/phpmyadmin/sql-parser/?branch=master)
 [![Translation status](https://hosted.weblate.org/widgets/phpmyadmin/-/svg-badge.svg)](https://hosted.weblate.org/engage/phpmyadmin/?utm_source=widget)
 [![Packagist](https://img.shields.io/packagist/dt/phpmyadmin/sql-parser.svg)](https://packagist.org/packages/phpmyadmin/sql-parser)
 [![Open Source Helpers](https://www.codetriage.com/phpmyadmin/sql-parser/badges/users.svg)](https://www.codetriage.com/phpmyadmin/sql-parser)
+[![Type coverage](https://shepherd.dev/github/phpmyadmin/sql-parser/coverage.svg)](https://shepherd.dev/github/phpmyadmin/sql-parser)
+[![Infection MSI](https://badge.stryker-mutator.io/github.com/phpmyadmin/sql-parser/master)](https://infection.github.io)
 
 ## Installation
 

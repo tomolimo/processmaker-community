@@ -131,7 +131,7 @@ class Menu
                 $this->Types[$c] = $G_TMP_MENU->Types[$i];
                 $this->Enabled[$c] = $G_TMP_MENU->Enabled[$i];
                 $this->Id[$c] = $G_TMP_MENU->Id[$i];
-                $this->Classes[$c] = $G_TMP_MENU->Classes[$i];
+                $this->Classes[$c] = isset($G_TMP_MENU->Classes[$i]) ? $G_TMP_MENU->Classes[$i] : null;
                 $this->ElementClass[$c] = (isset($G_TMP_MENU->ElementClass[$i]))? $G_TMP_MENU->ElementClass[$i] : "";
                 $c++;
             } else {

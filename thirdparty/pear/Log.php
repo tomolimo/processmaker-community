@@ -100,6 +100,12 @@ class Log
                             '%{function}'   => '%7$s',
                             '%\{'           => '%%{');
 
+    /**
+     * Constructor of the class.
+     */
+    public function __construct()
+    {
+    }
 
     /**
      * Attempts to return a concrete Log instance of type $handler.

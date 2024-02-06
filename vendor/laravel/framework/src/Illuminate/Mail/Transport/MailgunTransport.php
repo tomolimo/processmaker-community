@@ -2,8 +2,10 @@
 
 namespace Illuminate\Mail\Transport;
 
-use Swift_Mime_SimpleMessage;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use Swift_Mime_SimpleMessage;
+use Swift_TransportException;
 
 class MailgunTransport extends Transport
 {
@@ -29,7 +31,7 @@ class MailgunTransport extends Transport
     protected $domain;
 
     /**
-     * The Mailgun API end-point.
+     * The Mailgun API endpoint.
      *
      * @var string
      */
@@ -55,6 +57,8 @@ class MailgunTransport extends Transport
 
     /**
      * {@inheritdoc}
+     *
+     * @return int
      */
     public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
@@ -62,13 +66,26 @@ class MailgunTransport extends Transport
 
         $to = $this->getTo($message);
 
+        $bcc = $message->getBcc();
+
         $message->setBcc([]);
 
-        $this->client->request(
-            'POST',
-            "https://{$this->endpoint}/v3/{$this->domain}/messages.mime",
-            $this->payload($message, $to)
-        );
+        try {
+            $response = $this->client->request(
+                'POST',
+                "https://{$this->endpoint}/v3/{$this->domain}/messages.mime",
+                $this->payload($message, $to)
+            );
+        } catch (GuzzleException $e) {
+            throw new Swift_TransportException('Request to Mailgun API failed.', $e->getCode(), $e);
+        }
+
+        $messageId = $this->getMessageId($response);
+
+        $message->getHeaders()->addTextHeader('X-Message-ID', $messageId);
+        $message->getHeaders()->addTextHeader('X-Mailgun-Message-ID', $messageId);
+
+        $message->setBcc($bcc);
 
         $this->sendPerformed($message);
 
@@ -130,6 +147,19 @@ class MailgunTransport extends Transport
     }
 
     /**
+     * Get the message ID from the response.
+     *
+     * @param  \Psr\Http\Message\ResponseInterface  $response
+     * @return string
+     */
+    protected function getMessageId($response)
+    {
+        return object_get(
+            json_decode($response->getBody()->getContents()), 'id'
+        );
+    }
+
+    /**
      * Get the API key being used by the transport.
      *
      * @return string
@@ -169,5 +199,26 @@ class MailgunTransport extends Transport
     public function setDomain($domain)
     {
         return $this->domain = $domain;
+    }
+
+    /**
+     * Get the API endpoint being used by the transport.
+     *
+     * @return string
+     */
+    public function getEndpoint()
+    {
+        return $this->endpoint;
+    }
+
+    /**
+     * Set the API endpoint being used by the transport.
+     *
+     * @param  string  $endpoint
+     * @return string
+     */
+    public function setEndpoint($endpoint)
+    {
+        return $this->endpoint = $endpoint;
     }
 }

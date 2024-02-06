@@ -1,70 +1,76 @@
 <?php
-/**
- * Model factory for a process
- */
+
+namespace Database\Factories;
+
+use App\Factories\Factory;
+use G;
 use Faker\Generator as Faker;
+use Illuminate\Support\Str;
 
-$factory->define(\ProcessMaker\Model\Process::class, function(Faker $faker) {
-    // Return with default values
-    //The incremental fields of the tables must not be specified in the creation list.
-    return [
-        'PRO_UID' => G::generateUniqueID(),
-        'PRO_TITLE' => $faker->sentence(3),
-        'PRO_DESCRIPTION' => $faker->paragraph(3),
-        'PRO_CREATE_USER' => '00000000000000000000000000000001',
-        'PRO_DYNAFORMS' => '',
-        'PRO_ITEE' => 1,
-        'PRO_STATUS' => 'ACTIVE',
-        'PRO_STATUS_ID' => 1,
-        'PRO_TYPE_PROCESS' => 'PUBLIC',
-        'PRO_UPDATE_DATE' => $faker->dateTime(),
-        'PRO_CREATE_DATE' => $faker->dateTime(),
-        'PRO_CATEGORY' => function() {
-            return factory(\ProcessMaker\Model\ProcessCategory::class)->create()->CATEGORY_UID;
-        },
-    ];
-});
+class ProcessFactory extends Factory
+{
 
-// Create a process with the foreign keys
-$factory->state(\ProcessMaker\Model\Process::class, 'foreign_keys', function (Faker $faker) {
-    $user = factory(\ProcessMaker\Model\User::class)->create();
-    return [
-        'PRO_UID' => G::generateUniqueID(),
-        'PRO_TITLE' => $faker->sentence(3),
-        'PRO_DESCRIPTION' => $faker->paragraph(3),
-        'PRO_CREATE_USER' => $user->USR_UID,
-        'PRO_DYNAFORMS' => '',
-        'PRO_ITEE' => 1,
-        'PRO_STATUS' => 'ACTIVE',
-        'PRO_STATUS_ID' => 1,
-        'PRO_TYPE_PROCESS' => 'PUBLIC',
-        'PRO_UPDATE_DATE' => $faker->dateTime(),
-        'PRO_CREATE_DATE' => $faker->dateTime(),
-        'PRO_CATEGORY' => '',
-    ];
-});
+    public function definition(): array
+    {
+        $category = \ProcessMaker\Model\ProcessCategory::factory()->create();
+        return [
+            'PRO_UID' => G::generateUniqueID(),
+            'PRO_ID' => $this->faker->unique()->numberBetween(2000),
+            'PRO_TITLE' => $this->faker->sentence(3),
+            'PRO_DESCRIPTION' => $this->faker->paragraph(3),
+            'PRO_PARENT' => G::generateUniqueID(),
+            'PRO_STATUS' => 'ACTIVE',
+            'PRO_STATUS_ID' => 1,
+            'PRO_TYPE' => 'NORMAL',
+            'PRO_ASSIGNMENT' => 'FALSE',
+            'PRO_TYPE_PROCESS' => 'PUBLIC',
+            'PRO_UPDATE_DATE' => $this->faker->dateTime(),
+            'PRO_CREATE_DATE' => $this->faker->dateTime(),
+            'PRO_CREATE_USER' => '00000000000000000000000000000001',
+            'PRO_DEBUG' => 0,
+            'PRO_DYNAFORMS' => serialize([]),
+            'PRO_ITEE' => 1,
+            'PRO_ACTION_DONE' => serialize([]),
+            'PRO_SUBPROCESS' => 0,
+            'PRO_CATEGORY' => $category->CATEGORY_UID,
+            'CATEGORY_ID' => $category->CATEGORY_ID
+        ];
+    }
 
-// Create a process related to the flow designer
-$factory->state(\ProcessMaker\Model\Process::class, 'flow', function (Faker $faker) {
-    // Create values in the foreign key relations
-    $user = factory(\ProcessMaker\Model\User::class)->create();
-    $process = [
-        'PRO_UID' => G::generateUniqueID(),
-        'PRO_TITLE' => $faker->sentence(3),
-        'PRO_DESCRIPTION' => $faker->paragraph(3),
-        'PRO_CREATE_USER' => $user->USR_UID,
-        'PRO_DYNAFORMS' => '',
-        'PRO_ITEE' => 1,
-        'PRO_STATUS' => 'ACTIVE',
-        'PRO_STATUS_ID' => 1,
-        'PRO_TYPE_PROCESS' => 'PUBLIC',
-        'PRO_UPDATE_DATE' => $faker->dateTime(),
-        'PRO_CREATE_DATE' => $faker->dateTime(),
-        'PRO_CATEGORY' => '',
-    ];
-    // Create a task related to this process
-    $task = factory(\ProcessMaker\Model\Task::class)->create([
-        'PRO_UID' => $process->PRO_UID,
-        'PRO_ID' => $process->PRO_ID,
-    ]);
-});
+    /**
+     * Create a process with the foreign keys
+     * @return type
+     */
+    public function foreign_keys()
+    {
+        $state = function (array $attributes) {
+            // Create user
+            $user = \ProcessMaker\Model\User::factory()->create();
+
+            return [
+            'PRO_UID' => G::generateUniqueID(),
+            'PRO_ID' => $this->faker->unique()->numberBetween(1000),
+            'PRO_TITLE' => $this->faker->sentence(3),
+            'PRO_DESCRIPTION' => $this->faker->paragraph(3),
+            'PRO_PARENT' => G::generateUniqueID(),
+            'PRO_STATUS' => 'ACTIVE',
+            'PRO_STATUS_ID' => 1,
+            'PRO_TYPE' => 'NORMAL',
+            'PRO_ASSIGNMENT' => 'FALSE',
+            'PRO_TYPE_PROCESS' => 'PUBLIC',
+            'PRO_UPDATE_DATE' => $this->faker->dateTime(),
+            'PRO_CREATE_DATE' => $this->faker->dateTime(),
+            'PRO_CREATE_USER' => $user->USR_UID,
+            'PRO_DEBUG' => 0,
+            'PRO_DYNAFORMS' => serialize([]),
+            'PRO_ITEE' => 1,
+            'PRO_ACTION_DONE' => serialize([]),
+            'PRO_SUBPROCESS' => 0,
+            'PRO_CATEGORY' => function () {
+                return \ProcessMaker\Model\ProcessCategory::factory()->create()->CATEGORY_UID;
+            },
+            ];
+        };
+        return $this->state($state);
+    }
+}

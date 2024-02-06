@@ -39,6 +39,7 @@
             "src/codeMirror.js",
             "src/codeMirrorField.js",
             "src/criteriafield.js",
+            "src/switchField.js",
             "src/tooltipMessage.js",
             "src/variablepicker.js",
             "src/action.js",
@@ -153,7 +154,7 @@
         "target_dir": "build/css/",
         "files": [
             "lib/jQueryLayout/LayoutPanel.css",
-            "lib/jQueryUI/jquery-ui-1.10.3.custom.min.css",
+            "lib/jQueryUI/jquery-ui.min.css",
             "lib/introjs/introjs.css",
             "lib/datatables/jquery.dataTables.min.css",
             "compass/css/mafe.css",

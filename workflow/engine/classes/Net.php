@@ -263,7 +263,10 @@ class Net
                     $opt = [
                         'UID' => $this->db_user,
                         'PWD' => $this->db_passwd,
-                        'Database' => $this->db_sourcename
+                        'Database' => $this->db_sourcename,
+                        'CharacterSet' => 'UTF-8',
+                        'Encrypt' => true,
+                        'TrustServerCertificate' => true
                     ];
                     $link = @sqlsrv_connect($server, $opt);
 
@@ -399,7 +402,10 @@ class Net
                     $opt = [
                         'UID' => $this->db_user,
                         'PWD' => $this->db_passwd,
-                        'Database' => $this->db_sourcename
+                        'Database' => $this->db_sourcename,
+                        'CharacterSet' => 'UTF-8',
+                        'Encrypt' => true,
+                        'TrustServerCertificate' => true
                     ];
                     $link = $db = @sqlsrv_connect($server, $opt);
                     if ($link) {

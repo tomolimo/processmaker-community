@@ -2,10 +2,17 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
+use Exception;
+use G;
 use Illuminate\Database\Eloquent\Model;
+use ProcessMaker\Model\Groupwf;
+use ProcessMaker\Model\RbacUsers;
 
 class GroupUser extends Model
 {
+    use HasFactory;
+
     protected $table = 'GROUP_USER';
     // We do not have create/update timestamps for this table
     public $timestamps = false;
@@ -57,5 +64,57 @@ class GroupUser extends Model
 
         return $groups;
     }
-}
 
+    /**
+     * Verify if a user is already assigned to a group
+     * 
+     * @param int $usrId
+     * @param int $grpId
+     * 
+     * @return boolean
+     */
+    public static function verifyUserIsInGroup($usrId, $grpId)
+    {
+        $query = GroupUser::select()->where('GRP_ID', $grpId)->where('USR_ID', $usrId);
+        if (empty($query->get()->values()->toArray())) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Assign user to group
+     * 
+     * @param string $usrUid
+     * @param int $usrId
+     * @param string $grpUid
+     * @param int $grpId
+     * 
+     * @return void
+     * @throws Exception
+     */
+    public static function assignUserToGroup($usrUid, $usrId, $grpUid, $grpId)
+    {
+        if (!RbacUsers::verifyUserExists($usrUid)) {
+            return ['message' => G::loadTranslation('ID_USER_NOT_REGISTERED_SYSTEM')];
+        }
+        if (!Groupwf::verifyGroupExists($grpUid)) {
+            return ['message' => G::loadTranslation('ID_GROUP_NOT_REGISTERED_SYSTEM')];
+        }
+        if (GroupUser::verifyUserIsInGroup($usrId, $grpId)) {
+            return ['message' => G::loadTranslation('ID_USER_ALREADY_EXISTS_GROUP')];
+        }
+
+        try {
+            $data = [
+                'GRP_UID' => $grpUid,
+                'GRP_ID' => $grpId,
+                'USR_UID' => $usrUid,
+                'USR_ID' => $usrId,
+            ];
+            GroupUser::insert($data);
+        } catch (Exception $e) {
+            throw new Exception("Error: {$e->getMessage()}.");
+        }
+    }
+}

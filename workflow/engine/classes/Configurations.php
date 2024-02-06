@@ -68,7 +68,14 @@ class Configurations // extends Configuration
         }
 
         foreach ($from as $k => $v) {
-            if (isset($v) && array_key_exists($k, $object)) {
+            $existKeyInObject = false;
+            if (is_object($object)) {
+                $existKeyInObject = property_exists($object, $k);
+            }
+            if (is_array($object)) {
+                $existKeyInObject = array_key_exists($k, $object);
+            }
+            if (isset($v) && $existKeyInObject) {
                 if (is_object($v)) {
                     throw new Exception('Object is not permited inside configuration array.');
                 }
@@ -465,7 +472,7 @@ class Configurations // extends Configuration
         }
     }
 
-    public function getDateFormats()
+    public static function getDateFormats()
     {
         $arrayFormat = array();
 
@@ -491,7 +498,7 @@ class Configurations // extends Configuration
         return $arrayFormat;
     }
 
-    public function getUserNameFormats()
+    public static function getUserNameFormats()
     {
         $formats[] = array('id' => '@firstName @lastName', //the id , don't translate
             'name' => G::loadTranslation('ID_USERNAME_FORMAT_1')  //label displayed, can be translated

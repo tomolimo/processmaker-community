@@ -8,6 +8,7 @@ use Criteria;
 use DateTime;
 use Exception;
 use G;
+use Illuminate\Support\Facades\DB;
 use ProcessMaker\Util\Common;
 use ResultSet;
 use Roles as ModelRoles;
@@ -663,6 +664,31 @@ class Role
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Get all active roles.
+     * @return array
+     */
+    public static function getAllRoles()
+    {
+        $lang = defined('SYS_LANG') ? SYS_LANG : 'en';
+        $roles = DB::table('CONTENT')
+            ->join('RBAC_ROLES', 'CONTENT.CON_ID', '=', 'RBAC_ROLES.ROL_UID')
+            ->where('CONTENT.CON_CATEGORY', '=', 'ROL_NAME')
+            ->where('CONTENT.CON_LANG', '=', $lang)
+            ->where('RBAC_ROLES.ROL_CODE', '<>', 'RBAC_ADMIN')
+            ->where('RBAC_ROLES.ROL_CODE', '<>', 'PROCESSMAKER_GUEST')
+            ->where('RBAC_ROLES.ROL_STATUS', '=', '1')
+            ->select([
+                'RBAC_ROLES.ROL_UID',
+                'RBAC_ROLES.ROL_CODE',
+                'CONTENT.CON_VALUE AS ROL_NAME',
+                'CONTENT.CON_LANG AS LANG'
+            ])
+            ->get()
+            ->toArray();
+        return $roles;
     }
 }
 

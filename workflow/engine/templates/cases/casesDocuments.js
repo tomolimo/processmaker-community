@@ -2092,11 +2092,11 @@ var documentsTab = {
 
 };
 Ext.onReady(function() {
-
-  var viewport = new Ext.Viewport({
-    layout : 'border',
-    items: [treepanelmain, documentsTab]
-  });
+  var i,
+    viewport = new Ext.Viewport({
+      layout : 'border',
+      items: [treepanelmain, documentsTab]
+    });
 
   // console.info("viewport -end");
 
@@ -2108,5 +2108,16 @@ Ext.onReady(function() {
     parent.Ext.getCmp('debugPanel').hide();
     parent.Ext.getCmp('debugPanel').ownerCt.doLayout();
   }
-
+  if (document.getElementsByTagName('input')) {
+    document.getElementsByTagName('input')[0].ariaLabel = "filterField";
+  }
+  if (document.getElementsByTagName('input')) {
+    document.getElementsByTagName('input')[1].ariaLabel = "pagination";
+  }
+  if (document.getElementsByTagName('button')) {
+    for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+      document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].id;
+    }
+  }
+  
 });

@@ -44,6 +44,8 @@
         <column name="APP_DELAY_DURATION" type="DOUBLE" default="0"/>
         <column name="APP_DRIVE_FOLDER_UID" type="VARCHAR" size="128" default="" required="false"/>
         <column name="APP_ROUTING_DATA" type="LONGVARCHAR"/>
+        <column name="PRO_ID" type="INTEGER" required="true" default="0"/>
+        <column name="APP_INIT_USER_ID" type="INTEGER" required="true" default="0"/>
         <validator column="APP_STATUS">
             <rule name="validValues" value="DRAFT|TO_DO|PAUSED|COMPLETED|CANCELLED"
                   message="Please select a valid status."/>
@@ -103,6 +105,15 @@
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
         </index>
+        <index name="indexAppInitUserId">
+            <index-column name="APP_INIT_USER_ID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APPLICATION"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexAppInitUserId"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
         <fulltext name="indexAppTitle">
             <index-column name="APP_TITLE"/>
             <vendor type="mysql">
@@ -117,7 +128,8 @@
         </unique>
     </table>
     <table name="APP_SEQUENCE" idMethod="native">
-        <column name="ID" type="INTEGER" required="true" primaryKey="true"/>
+        <column name="ID" type="INTEGER" required="true"/>
+        <column name="APP_TYPE" type="VARCHAR" size="20" required="true" default="NORMAL"/>
     </table>
     <table name="APP_DELEGATION" idMethod="native">
         <vendor type="mysql">
@@ -169,6 +181,8 @@
         <column name="USR_ID" type="INTEGER" required="false" default="0"/>
         <column name="PRO_ID" type="INTEGER" required="false" default="0"/>
         <column name="TAS_ID" type="INTEGER" required="false" default="0"/>
+        <column name="DEL_TITLE" type="VARCHAR" size="999" required="true"/>
+        <column name="DEL_THREAD_STATUS_ID" type="INTEGER" required="true" default="0"/>
         <unique name="DELEGATION_ID">
             <unique-column name="DELEGATION_ID"/>
         </unique>
@@ -200,6 +214,15 @@
             <index-column name="DEL_THREAD_STATUS"/>
             <index-column name="APP_NUMBER"/>
         </index>
+        <fulltext name="indexDelTitle">
+            <index-column name="DEL_TITLE"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APP_DELEGATION"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexDelTitle"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </fulltext>
     </table>
     <table name="APP_DOCUMENT">
         <vendor type="mysql">
@@ -323,6 +346,9 @@
         <index name="indexAppUid">
             <index-column name="APP_UID"/>
         </index>
+        <index name="indexDocId">
+            <index-column name="DOC_ID"/>
+        </index>
         <index name="indexAppUidDocUidDocVersionDocType">
             <index-column name="APP_UID"/>
             <index-column name="DOC_UID"/>
@@ -355,6 +381,7 @@
             <parameter name="Create_options" value=""/>
             <parameter name="Comment" value="Messages in an Application"/>
         </vendor>
+        <column name="APP_MSG_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="APP_MSG_UID" type="VARCHAR" size="32" required="true" primaryKey="true"/>
         <column name="MSG_UID" type="VARCHAR" size="32"/>
         <column name="APP_UID" type="VARCHAR" size="32" required="true" default=""/>
@@ -378,6 +405,12 @@
         <column name="PRO_ID" type="INTEGER" required="false" default="0"/>
         <column name="TAS_ID" type="INTEGER" required="false" default="0"/>
         <column name="APP_NUMBER" type="INTEGER" required="false" default="0"/>
+        <unique name="APP_MSG_ID">
+            <unique-column name="APP_MSG_ID"/>
+        </unique>
+        <index name="indexAppMsgId">
+            <index-column name="APP_MSG_ID"/>
+        </index>
         <index name="indexForAppUid">
             <index-column name="APP_UID"/>
         </index>
@@ -394,7 +427,7 @@
             <index-column name="APP_NUMBER"/>
         </index>
         <index name="INDEX_APP_MSG_TYPE_ID">
-            <index-column name="APP_MSG_STATUS_ID"/>
+            <index-column name="APP_MSG_TYPE_ID"/>
         </index>
         <index name="INDEX_APP_MSG_STATUS_ID">
             <index-column name="APP_MSG_STATUS_ID"/>
@@ -402,6 +435,9 @@
         <index name="indexAppUidSendDate">
             <index-column name="APP_UID"/>
             <index-column name="APP_MSG_SEND_DATE"/>
+        </index>
+        <index name="indexAppMsgDate">
+            <index-column name="APP_MSG_DATE"/>
         </index>
     </table>
     <table name="APP_OWNER">
@@ -448,7 +484,7 @@
             <parameter name="Collation" value="utf8_general_ci"/>
             <parameter name="Checksum" value=""/>
             <parameter name="Create_options" value=""/>
-            <parameter name="Comment" value="Stores the users, processes and/or applications configuratio"/>
+            <parameter name="Comment" value="Stores the users, processes and/or applications configuration"/>
         </vendor>
         <column name="CFG_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="OBJ_UID" type="VARCHAR" size="128" required="true" primaryKey="true" default=""/>
@@ -456,6 +492,12 @@
         <column name="PRO_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="APP_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
+        <index name="INDEX_CFG_UID">
+            <index-column name="CFG_UID"/>
+        </index>
+        <index name="INDEX_USR_UID">
+            <index-column name="USR_UID"/>
+        </index>
     </table>
     <table name="CONTENT">
         <vendor type="mysql">
@@ -972,6 +1014,8 @@
         <column name="OUT_DOC_PDF_SECURITY_OWNER_PASSWORD" type="VARCHAR" size="32" required="false" default=""/>
         <column name="OUT_DOC_PDF_SECURITY_PERMISSIONS" type="VARCHAR" size="150" required="false" default=""/>
         <column name="OUT_DOC_OPEN_TYPE" type="INTEGER" default="1"/>
+        <column name="OUT_DOC_HEADER" type="LONGVARCHAR" required="false"/>
+        <column name="OUT_DOC_FOOTER" type="LONGVARCHAR" required="false"/>
         <unique name="INDEX_OUT_DOC_ID">
             <unique-column name="OUT_DOC_ID"/>
         </unique>
@@ -1058,6 +1102,24 @@
         <unique name="INDEX_PRO_ID">
             <unique-column name="PRO_ID"/>
         </unique>
+        <index name="indexProId">
+            <index-column name="PRO_ID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="PROCESS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexProId"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <index name="indexProUid">
+            <index-column name="PRO_UID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="PROCESS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexProUid"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
         <index name="indexProStatus">
             <index-column name="PRO_STATUS"/>
             <vendor type="mysql">
@@ -1355,7 +1417,7 @@
         <column name="TAS_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="TRI_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="ST_TYPE" type="VARCHAR" size="20" required="true" primaryKey="true" default=""/>
-        <column name="ST_CONDITION" type="VARCHAR" size="255" required="true" default=""/>
+        <column name="ST_CONDITION" type="LONGVARCHAR" required="true"/>
         <column name="ST_POSITION" type="INTEGER" required="true" default="0"/>
         <validator column="ST_TYPE">
             <rule name="validValues" value="BEFORE|AFTER"
@@ -1772,6 +1834,7 @@
         <column name="USR_TIME_ZONE" type="VARCHAR" size="100" default=""/>
         <column name="USR_DEFAULT_LANG" type="VARCHAR" size="10" default=""/>
         <column name="USR_LAST_LOGIN" type="TIMESTAMP" required="false"/>
+        <column name="USR_EXTENDED_ATTRIBUTES_DATA" type="LONGVARCHAR" required="false"/>
         <unique name="INDEX_USR_ID">
             <unique-column name="USR_ID"/>
         </unique>
@@ -3314,6 +3377,7 @@
             <parameter name="Comment" value="Application Notes"/>
         </vendor>
         <column name="NOTE_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
+        <column name="APP_NUMBER" type="INTEGER" required="false" default="0"/>
         <column name="APP_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="NOTE_DATE" type="TIMESTAMP" required="true"/>
@@ -3346,6 +3410,9 @@
                 <parameter name="Key_name" value="indexAppNotesUser"/>
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
+        </index>
+        <index name="indexAppNumber">
+            <index-column name="APP_NUMBER"/>
         </index>
     </table>
     <table name="DASHLET">
@@ -3544,6 +3611,7 @@
         <column name="WE_CUSTOM_TITLE" type="LONGVARCHAR"/>
         <column name="WE_AUTHENTICATION" type="VARCHAR" size="14" required="true" default="ANONYMOUS"/>
         <column name="WE_HIDE_INFORMATION_BAR" type="CHAR" size="1" default="1"/>
+        <column name="WE_HIDE_ACTIVE_SESSION_WARNING" type="CHAR" size="1" default="1"/>
         <column name="WE_CALLBACK" type="VARCHAR" size="13" required="true" default="PROCESSMAKER"/>
         <column name="WE_CALLBACK_URL" type="LONGVARCHAR"/>
         <column name="WE_LINK_GENERATION" type="VARCHAR" size="8" required="true" default="DEFAULT"/>
@@ -3780,7 +3848,7 @@
         <column name="ACT_INSTANTIATE" type="TINYINT" required="false" default="0"/>
         <column name="ACT_SCRIPT_TYPE" type="VARCHAR" size="255" required="false"/>
         <column name="ACT_SCRIPT" type="LONGVARCHAR" required="false"/>
-        <column name="ACT_LOOP_TYPE" type="VARCHAR" size="20" required="true" default="NONE"/>
+        <column name="ACT_LOOP_TYPE" type="VARCHAR" size="20" required="true" default="EMPTY"/>
         <column name="ACT_TEST_BEFORE" type="TINYINT" required="false" default="0"/>
         <column name="ACT_LOOP_MAXIMUM" type="INTEGER" required="false" default="0"/>
         <column name="ACT_LOOP_CONDITION" type="VARCHAR" size="100" required="false"/>
@@ -4268,6 +4336,10 @@
     </table>
 
     <table name="PROCESS_VARIABLES" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8_general_ci"/>
+        </vendor>
         <column name="VAR_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="VAR_UID" type="VARCHAR" size="32" required="true" primaryKey="true"/>
         <column name="PRJ_UID" type="VARCHAR" size="32" required="true"/>
@@ -4279,7 +4351,7 @@
         <column name="VAR_LABEL" type="VARCHAR" size="255" default=""/>
         <column name="VAR_DBCONNECTION" type="VARCHAR" size="32"/>
         <column name="VAR_SQL" type="LONGVARCHAR"/>
-        <column name="VAR_NULL" type="TINYINT" size="32" default="0"/>
+        <column name="VAR_NULL" type="TINYINT" default="0"/>
         <column name="VAR_DEFAULT" type="VARCHAR" size="32" default=""/>
         <column name="VAR_ACCEPTED_VALUES" type="LONGVARCHAR"/>
         <column name="INP_DOC_UID" type="VARCHAR" size="32" default=""/>
@@ -4303,7 +4375,7 @@
 
     <table name="APP_TIMEOUT_ACTION_EXECUTED">
         <column name="APP_UID" type="VARCHAR" size="32" required="true" default="" primaryKey="true"/>
-        <column name="DEL_INDEX" type="INTEGER" required="true" default="0"/>
+        <column name="DEL_INDEX" type="INTEGER" required="true" default="0" primaryKey="true"/>
         <column name="EXECUTION_DATE" type="TIMESTAMP" required="false"/>
     </table>
 
@@ -5041,7 +5113,7 @@
         <column name="MESS_DEFAULT" type="INTEGER" required="true" default="0"/>
         <column name="OAUTH_CLIENT_ID" type="VARCHAR" size="512" required="true" default=""/>
         <column name="OAUTH_CLIENT_SECRET" type="VARCHAR" size="512" required="true" default=""/>
-        <column name="OAUTH_REFRESH_TOKEN" type="VARCHAR" size="512" required="true" default=""/>
+        <column name="OAUTH_REFRESH_TOKEN" type="LONGVARCHAR" required="false"/>
     </table>
 
     <table name="WEB_ENTRY_EVENT">
@@ -6014,10 +6086,10 @@
         <column name="id" type="BIGINT" size="20" required="true" autoIncrement="true" primaryKey="true"/>
         <column name="queue" type="VARCHAR" size="255" required="true"/>
         <column name="payload" type="LONGVARCHAR" required="true"/>
-        <column name="attempts" type="TINYINT" size="3" required="true"/>
-        <column name="reserved_at" type="BIGINT" size="10" required="false"/>
-        <column name="available_at" type="BIGINT" size="10" required="true"/>
-        <column name="created_at" type="BIGINT" size="10" required="true"/>
+        <column name="attempts" type="TINYINT" required="true"/>
+        <column name="reserved_at" type="BIGINT" size="20" required="false"/>
+        <column name="available_at" type="BIGINT" size="20" required="true"/>
+        <column name="created_at" type="BIGINT" size="20" required="true"/>
         <index name="jobs_queue_index">
             <index-column name="queue"/>
         </index>
@@ -6051,10 +6123,53 @@
         <column name="body" type="VARCHAR"  size="255" required="false"/>
         <column name="type" type="VARCHAR"  size="255" required="false"/>
         <column name="category" type="VARCHAR"  size="255" required="false"/>
-        <column name="system" type="TINYINT"  size="3" required="false"/>
+        <column name="system" type="TINYINT" required="false"/>
         <column name="timezone" type="VARCHAR"  size="255" required="false"/>
-        <column name="enable" type="TINYINT"  size="3" required="false"/>
+        <column name="enable" type="TINYINT" required="false"/>
         <column name="creation_date" type="TIMESTAMP" required="false"/>
         <column name="last_update" type="TIMESTAMP" required="false"/>
+    </table>
+    <table name="USER_EXTENDED_ATTRIBUTES" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="UEA_ID" type="BIGINT" size="20" required="true" autoIncrement="true" primaryKey="true"/>
+        <column name="UEA_NAME" type="VARCHAR" size="255" required="false"/>
+        <column name="UEA_ATTRIBUTE_ID" type="VARCHAR" size="255" required="false"/>
+        <column name="UEA_HIDDEN" type="INTEGER" required="false"/>
+        <column name="UEA_REQUIRED" type="INTEGER" required="false"/>
+        <column name="UEA_PASSWORD" type="INTEGER" required="false"/>
+        <column name="UEA_OPTION" type="VARCHAR" size="255" required="false"/>
+        <column name="UEA_ROLES" type="LONGVARCHAR" required="false"/>
+        <column name="UEA_OWNER" type="BIGINT" size="20" required="false"/>
+        <column name="UEA_DATE_CREATE" type="TIMESTAMP" required="false"/>
+    </table>
+    <table name="USER_CONFIG" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="USR_ID" type="BIGINT" size="20" required="true" primaryKey="true"/>
+        <column name="USC_NAME" type="VARCHAR" size="255" required="true" primaryKey="true"/>
+        <column name="USC_SETTING" type="LONGVARCHAR" required="true"/>
+    </table>
+    <table name="CASE_LIST" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="CAL_ID" type="INTEGER" required="true" autoIncrement="true" primaryKey="true"/>
+        <column name="CAL_TYPE" type="VARCHAR" size="255" required="true"/>
+        <column name="CAL_NAME" type="VARCHAR" size="255" required="true"/>
+        <column name="CAL_DESCRIPTION" type="LONGVARCHAR"/>
+        <column name="ADD_TAB_UID" type="VARCHAR" size="32" required="true"/>
+        <column name="CAL_COLUMNS" type="LONGVARCHAR"/>
+        <column name="USR_ID" type="BIGINT" size="20" required="true"/>
+        <column name="CAL_ICON_LIST" type="LONGVARCHAR"/>
+        <column name="CAL_ICON_COLOR" type="VARCHAR" size="255"/>
+        <column name="CAL_ICON_COLOR_SCREEN" type="VARCHAR" size="255"/>
+        <column name="CAL_CREATE_DATE" type="TIMESTAMP" required="true"/>
+        <column name="CAL_UPDATE_DATE" type="TIMESTAMP" required="true"/>
     </table>
 </database>

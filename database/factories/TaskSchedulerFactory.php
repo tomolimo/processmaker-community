@@ -1,27 +1,38 @@
 <?php
 
-/**
- * Model factory for a task scheduler
- */
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(\ProcessMaker\Model\TaskScheduler::class, function (Faker $faker) {
-    return [
-        'id' => G::generateUniqueID(),
-        'title' => $faker->title,
-        'startingTime' => $faker->dateTime(),
-        'endingTime' => $faker->dateTime(),
-        'everyOn' => "",
-        'interval' => "",
-        'description' => "",
-        'expression' => "",
-        'body' => "",
-        'type' => "",
-        'category' => "emails_notifications", //emails_notifications, case_actions, plugins, processmaker_sync
-        'system' => "",
-        'timezone' => "",
-        'enable' => "",
-        'creation_date' => $faker->dateTime(),
-        'last_update' => $faker->dateTime()
-    ];
-});
+use App\Factories\Factory;
+use Illuminate\Support\Str;
+
+class TaskSchedulerFactory extends Factory
+{
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        return [
+            'id' => $this->faker->unique()->numberBetween(5000),
+            'title' => $this->faker->title,
+            'startingTime' => $this->faker->dateTime(),
+            'endingTime' => $this->faker->dateTime(),
+            'everyOn' => "",
+            'interval' => "",
+            'description' => "",
+            'expression' => "",
+            'body' => "",
+            'type' => "",
+            'category' => "emails_notifications", //emails_notifications, case_actions, plugins, processmaker_sync
+            'system' => "",
+            'timezone' => "",
+            'enable' => "",
+            'creation_date' => $this->faker->dateTime(),
+            'last_update' => $this->faker->dateTime()
+        ];
+    }
+
+}

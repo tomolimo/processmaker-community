@@ -26,6 +26,10 @@
         <script type="text/javascript" src="/lib/pmdynaform/libs/html5/html5.js"></script>
         <script type="text/javascript" src="/lib/pmdynaform/libs/respondjs/respond.min.js"></script>
         <script type="text/javascript" src="/lib/pmdynaform/libs/bootstrap-notify-3.1.3/bootstrap-notify.min.js"></script>
+        <script type="text/javascript" src="/lib/pmdynaform/libs/decimal/decimal.js"></script>
+        <script type="module">
+            import Decimal from '/lib/pmdynaform/libs/decimal/decimal_m.js';
+        </script>
     </head>
     <body style="height:100%">
         <div id="container" style="height:100%;display:none;"></div>
@@ -121,6 +125,8 @@
 				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
 						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}else{%>
+						<span class="pmdynaform-spaceHint"></span>
 					<%}%>
 				<% } %>
 				<span class="content-print"></span>
@@ -205,11 +211,13 @@
                     <%}%>
                     ><%-value%></textarea>
 
-				<% if (group === "form") { %>
-					<%if (hint !== "" && hint !== null){%>
-						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
-					<%}%>
-				<% } %>
+					<% if (group === "form") { %>
+						<%if (hint !== "" && hint !== null){%>
+							<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+						<%}else{%>
+							<span class="pmdynaform-spaceHint"></span>
+						<%}%>
+					<% } %>
 				<input type="hidden"
 					<% if  ( group === "grid") { %>
 						id = "form<%-id%>_label"
@@ -288,6 +296,8 @@
 					<% if (group === "form") { %>
 						<%if (hint !== "" && hint !== null){%>
 							<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+						<%}else{%>
+							<span class="pmdynaform-spaceHint"></span>
 						<%}%>
 					<% } %>
 				</div>
@@ -364,9 +374,11 @@
 			<% } %>
 		</div>
 		<% if (group === "form") { %>
-		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
-		<%}%>
+			<%if (hint !== "" && hint !== null){%>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+			<%}else{%>
+				<span class="pmdynaform-spaceHint"></span>
+			<%}%>
 		<% } %>
 	</div>
 	<input type="hidden"
@@ -465,9 +477,11 @@
 					<%}%>
 				>
 				<% if (group === "form") { %>
-				<%if (hint !== "" && hint !== null){%>
-				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
-				<%}%>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}else{%>
+						<span class="pmdynaform-spaceHint"></span>
+					<%}%>
 				<% } %>
 			</div>
 			<span class="content-print"></span>
@@ -526,7 +540,9 @@
 				</select>
 				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
-						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="top" title="<%-hint%>"></span>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}else{%>
+						<span class="pmdynaform-spaceHint"></span>
 					<%}%>
 				<% } %>
 				<input type="hidden" value="<%-data['label']%>"
@@ -616,11 +632,13 @@
 				<% if(disabled === true){%>disabled<%}%>
 				<% if(multiple === true){%>multiple<%}%>
 			>
-				<%if (group === "form"){%>
+				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
 						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}else{%>
+						<span class="pmdynaform-spaceHint"></span>
 					<%}%>
-				<%}%>
+				<% } %>
 				<input type="hidden"
 					<% if (group === "grid") { %>
 						id = "form<%-id%>_label"
@@ -660,7 +678,7 @@
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%>  <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
         <% if(group === "form") {%>
         	<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
-	            <label for="form[<%-id%>]" class="control-label pmdynaform-label">
+	            <label class="control-label pmdynaform-label">
 	            	<span class="textlabel"><%=label%></span>
 		            <%if(required){%>
 			  			<span class="pmdynaform-field-required">*</span>
@@ -698,6 +716,8 @@
 			<% if (group === "form") { %>
 				<%if (hint !== "" && hint !== null){%>
 					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+				<%}else{%>
+					<span class="pmdynaform-spaceHint"></span>
 				<%}%>
 			<% } %>
 		</div>
@@ -804,9 +824,11 @@
 			>
 		</div>
 		<% if (group === "form") { %>
-		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
-		<%}%>
+			<%if (hint !== "" && hint !== null){%>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+			<%}else{%>
+				<span class="pmdynaform-spaceHint"></span>
+			<%}%>
 		<% } %>
 	</div>
 	</div>
@@ -871,9 +893,11 @@
 			>
 		</div>
 		<% if (group === "form") { %>
-		<%if (hint !== "" && hint !== null){%>
-		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
-		<%}%>
+			<%if (hint !== "" && hint !== null){%>
+				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+			<%}else{%>
+				<span class="pmdynaform-spaceHint"></span>
+			<%}%>
 		<% } %>
 	</div>
 	</div>
@@ -921,9 +945,11 @@
         		<span class="pmdynaform-image-comment text-primary"><%-comment%></span>
         	</p>
 			<% if (group === "form") { %>
-			<%if (hint !== "" && hint !== null){%>
-			<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
-			<%}%>
+				<%if (hint !== "" && hint !== null){%>
+					<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+				<%}else{%>
+					<span class="pmdynaform-spaceHint"></span>
+				<%}%>
 			<% } %>
 		</div>
 	</div>
@@ -1025,9 +1051,11 @@
 							</span>
 						</div>
 					</div>
-					<% if (group === 'form') { %>
+					<% if (group === "form") { %>
 						<%if (hint !== "" && hint !== null){%>
-							<span class='glyphicon glyphicon-info-sign' data-toggle='tooltip' data-placement='bottom' title='<%-hint%>'></span>
+							<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+						<%}else{%>
+							<span class="pmdynaform-spaceHint"></span>
 						<%}%>
 					<% } %>
 			</div>
@@ -1167,8 +1195,9 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				</select>
 				<% if (group === "form") { %>
 					<%if (hint !== "" && hint !== null){%>
-						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom"
-						title="<%-hint%>"></span>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
+					<%}else{%>
+						<span class="pmdynaform-spaceHint"></span>
 					<%}%>
 				<% } %>
 				<span class="content-print"></span>
@@ -1865,7 +1894,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
          class="<%-namespace%>-field-<%-type%> <%-namespace%>-<%-mode%>-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%>  pmdynaform-field<%}%>">
         <div class="row">
             <div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
-                <label for="<%-name%>" class="control-label pmdynaform-label">
+                <label class="control-label pmdynaform-label">
                     <span data-toggle="tooltip" data-container="body" data-placement="bottom" class="textlabel"><%= label %></span>
                     <%if(required){%>
                     <span class="pmdynaform-field-required">*</span>
@@ -1988,7 +2017,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <h4 class="modal-title">&nbsp; </h4>
+                    <span class="modal-title-upload-modal">&nbsp; </span>
                 </div>
                 <div class="modal-body">
                     <div class="row">

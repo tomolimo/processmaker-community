@@ -584,12 +584,14 @@ Ext.onReady(function () {
     }
 
     if (_nodeId != '') {
-        treePanel1 = parent.Ext.getCmp('tree-panel');
-        if (treePanel1) {
-            node = treePanel1.getNodeById(_nodeId);
-        }
-        if (node) {
-            node.select();
+        if (parent.Ext) {
+            treePanel1 = parent.Ext.getCmp('tree-panel');
+            if (treePanel1) {
+                node = treePanel1.getNodeById(_nodeId);
+            }
+            if (node) {
+                node.select();
+            }
         }
     }
 

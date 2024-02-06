@@ -1,63 +1,78 @@
 <?php
 
+/**
+ * processesList.php
+ *
+ * Get an overview information about the all the processes
+ *
+ * @link https://wiki.processmaker.com/3.2/Processes
+ */
+
+use ProcessMaker\Exception\RBACException;
+use ProcessMaker\Model\Process;
+use ProcessMaker\Util\DateTime;
+
+// Include global object RBAC
+global $RBAC;
+
+// Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+if ($RBAC->userCanAccess('PM_FACTORY') !== 1) {
+    throw new RBACException('ID_ACCESS_DENIED', 403);
+}
+
 require_once 'classes/model/Process.php';
 
 $start = isset($_POST['start']) ? $_POST['start'] : 0;
-$limit = isset($_POST['limit']) ? $_POST['limit'] : '';
+$limit = isset($_POST['limit']) ? $_POST['limit'] : 25;
 $dir = isset($_POST['dir']) ? $_POST['dir'] : 'ASC';
-$sort = isset($_POST['sort']) ? $_POST['sort'] : '';
-
-$oProcess = new Process();
-$oProcess->dir = $dir;
-$oProcess->sort = $sort;
-
-$memkey = 'no memcache';
-$memcacheUsed = 'not used';
-$totalCount = 0;
-if (isset($_POST['category']) && $_POST['category'] !== '<reset>') {
-    if (isset($_POST['processName'])) {
-        $proData = $oProcess->getAllProcesses($start, $limit, $_POST['category'], $_POST['processName'], true, false, $_SESSION["USER_LOGGED"]);
-    } else {
-        $proData = $oProcess->getAllProcesses($start, $limit, $_POST['category'], null, true, false, $_SESSION["USER_LOGGED"]);
-    }
-} else {
-    if (isset($_POST['processName'])) {
-        $memkey = 'processList-' . $start . '-' . $limit . '-' . $_POST['processName'];
-        $memcacheUsed = 'yes';
-        $proData = $memcache->get($memkey);
-        if ($proData === false) {
-            $proData = $oProcess->getAllProcesses($start, $limit, null, $_POST['processName'], true, false, $_SESSION["USER_LOGGED"]);
-            $memcache->set($memkey, $proData, PMmemcached::ONE_HOUR);
-            $totalCount = count($proData);
-            $proData = array_splice($proData, $start, $limit);
-            $memcacheUsed = 'no';
-        } else {
-            $proData = $oProcess->orderMemcache($proData, $start, $limit);
-            $totalCount = $proData->totalCount;
-            $proData = $proData->dataMemcache;
-        }
-    } else {
-        $memkey = 'processList-allProcesses-' . $start . '-' . $limit;
-        $memkeyTotal = $memkey . '-total';
-        $memcacheUsed = 'yes';
-        if (($proData = $memcache->get($memkey)) === false || ($totalCount = $memcache->get($memkeyTotal)) === false) {
-            $proData = $oProcess->getAllProcesses($start, $limit, null, null, true, false, $_SESSION["USER_LOGGED"]);
-            $totalCount = count($proData);
-            $proData = array_splice($proData, $start, $limit);
-            $memcache->set($memkey, $proData, PMmemcached::ONE_HOUR);
-            $memcache->set($memkeyTotal, $totalCount, PMmemcached::ONE_HOUR);
-            $memcacheUsed = 'no';
-        } else {
-            $proData = $oProcess->orderMemcache($proData, $start, $limit);
-            $totalCount = $proData->totalCount;
-            $proData = $proData->dataMemcache;
-        }
-    }
+$sort = isset($_POST['sort']) ? $_POST['sort'] : 'PRO_CREATE_DATE';
+switch ($sort) {
+    case 'PRO_DEBUG_LABEL':
+        $sort = 'PRO_DEBUG';
+        break;
+    case 'PRO_CREATE_USER_LABEL':
+        $sort = 'USR_UID';
+        break;
+    case 'PRO_STATUS_LABEL':
+        $sort = 'PRO_STATUS';
+        break;
+    case 'PROJECT_TYPE':
+        $sort = 'PRO_TYPE';
+        break;
+    case 'PRO_CATEGORY_LABEL':
+        $sort = 'PRO_CATEGORY';
+        break;
+    case 'PRO_CREATE_DATE_LABEL':
+        $sort = 'PRO_CREATE_DATE';
+        break;
+    case 'PRO_UPDATE_DATE_LABEL':
+        $sort = 'PRO_UPDATE_DATE';
+        break;
+    default:
+        // keep the sort value
 }
-$r = new stdclass();
-$r->memkey = htmlspecialchars($memkey);
-$r->memcache = $memcacheUsed;
-$r->data = \ProcessMaker\Util\DateTime::convertUtcToTimeZone($proData);
-$r->totalCount = $totalCount;
+$totalCount = 0;
 
-echo G::json_encode($r);
+// Get the category uid to search
+$catUid = !empty($_POST['category']) ? $_POST['category'] : null;
+
+// Get the process name to search
+$process = !empty($_POST['processName']) ? $_POST['processName'] : null;
+$usrUid = $_SESSION["USER_LOGGED"];
+$proData = Process::getProcessesFilter(
+    $catUid,
+    null,
+    $process,
+    $usrUid,
+    $start,
+    $limit,
+    $dir,
+    $sort
+);
+
+$response = new stdclass();
+$response->data = DateTime::convertUtcToTimeZone($proData);
+$response->totalCount = Process::getCounter($usrUid);
+
+echo G::json_encode($response);
+

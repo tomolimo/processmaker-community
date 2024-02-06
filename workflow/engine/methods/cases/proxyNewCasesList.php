@@ -7,18 +7,22 @@ if (!isset($_SESSION['USER_LOGGED'])) {
     $responseObject->error = G::LoadTranslation('ID_LOGIN_AGAIN');
     $responseObject->success = true;
     $responseObject->lostSession = true;
-    print G::json_encode($responseObject);
+    print(G::json_encode($responseObject));
     die();
 }
 
 try {
     $userUid = $_SESSION['USER_LOGGED'];
-
+    // This filter will search in the case title and this can be used '&'
+    $filters['search'] = isset($_REQUEST["search"]) ? htmlspecialchars($_REQUEST["search"]) : "";
+    // Sanitize the filters
+    $filter = new InputFilter();
+    $_REQUEST = $filter->xssFilterHard($_REQUEST);
+    // Prepare filters
     $filters['paged'] = isset($_REQUEST["paged"]) ? $_REQUEST["paged"] : true;
     $filters['count'] = isset($_REQUEST['count']) ? $_REQUEST["count"] : true;
     $filters['category'] = isset($_REQUEST["category"]) ? $_REQUEST["category"] : "";
     $filters['process'] = isset($_REQUEST["process"]) ? $_REQUEST["process"] : "";
-    $filters['search'] = isset($_REQUEST["search"]) ? $_REQUEST["search"] : "";
     $filters['filter'] = isset($_REQUEST["filter"]) ? $_REQUEST["filter"] : "";
     $filters['dateFrom'] = (!empty($_REQUEST["dateFrom"])) ? substr($_REQUEST["dateFrom"], 0, 10) : "";
     $filters['dateTo'] = (!empty($_REQUEST["dateTo"])) ? substr($_REQUEST["dateTo"], 0, 10) : "";

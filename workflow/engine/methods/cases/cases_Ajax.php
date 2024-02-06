@@ -252,7 +252,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
     case 'showUsers':
         $_POST['TAS_ASSIGN_TYPE'] = $filter->xssFilterHard($_POST['TAS_ASSIGN_TYPE']);
         switch ($_POST['TAS_ASSIGN_TYPE']) {
-            // switch verify $_POST['TAS_ASSIGN_TYPE']
+                // switch verify $_POST['TAS_ASSIGN_TYPE']
             case 'BALANCED':
                 $USR_UID = $filter->xssFilterHard($_POST['USR_UID']);
                 $oUser = new User(new DBConnection());
@@ -513,7 +513,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
             $Fields['CREATOR'] = '***';
         }
         switch ($Fields['INP_DOC_FORM_NEEDED']) {
-            // switch verify $Fields['INP_DOC_FORM_NEEDED']
+                // switch verify $Fields['INP_DOC_FORM_NEEDED']
             case 'REAL':
                 $sXmlForm = 'cases/cases_ViewAnyInputDocument2';
                 break;
@@ -540,6 +540,93 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
         $G_PUBLISH->AddContent('propeltable', 'paged-table', 'cases/cases_AllOutputdocsList', $oCase->getAllGeneratedDocumentsCriteria($_SESSION['PROCESS'], $_SESSION['APPLICATION'], $_SESSION['TASK'], $_SESSION['USER_LOGGED']));
 
         G::RenderPage('publish', 'raw');
+        break;
+    case 'getCasesInputDocuments':
+        $arrayToTranslation = [
+            "INPUT" => G::LoadTranslation("ID_INPUT_DB"),
+            "OUTPUT" => G::LoadTranslation("ID_OUTPUT_DB"),
+            "ATTACHED" => G::LoadTranslation("ID_ATTACHED_DB")
+        ];
+        $case = new Cases();
+        $fields = $case->loadCase($_POST['appUid']);
+        $proUid = $fields['PRO_UID'];
+        $processes = [];
+        $criteria = $case->getAllUploadedDocumentsCriteria(
+            $proUid,
+            $_POST['appUid'],
+            '',
+            $_SESSION['USER_LOGGED'],
+            $_POST['delIndex']
+        );
+        if ($criteria->getDbName() == 'dbarray') {
+            $rs = ArrayBasePeer::doSelectRs($criteria);
+        } else {
+            $rs = GulliverBasePeer::doSelectRs($criteria);
+        }
+        $totalCount = $rs->getRecordCount();
+        if ($criteria->getDbName() == 'dbarray') {
+            $rs = ArrayBasePeer::doSelectRs($criteria);
+        } else {
+            $rs = GulliverBasePeer::doSelectRs($criteria);
+        }
+        $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        while ($rs->next()) {
+            $result = $rs->getRow();
+            $result["TYPE"] = (array_key_exists($result["TYPE"], $arrayToTranslation)) ? $arrayToTranslation[$result["TYPE"]] : $result["TYPE"];
+            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
+            $processes[] = $result;
+        }
+        $r = new stdclass();
+        $r->data = $processes;
+        $r->totalCount = $totalCount;
+        echo Bootstrap::json_encode($r);
+        break;
+    case 'getCasesOutputDocuments':
+        $case = new Cases();
+        $fields = $case->loadCase($_POST['appUid']);
+        $proUid = $fields['PRO_UID'];
+        $processes = [];
+        $c = $case->getAllGeneratedDocumentsCriteria(
+            $proUid,
+            $_POST['appUid'],
+            '',
+            $_SESSION['USER_LOGGED'],
+            $_POST['delIndex']
+        );
+        if ($c->getDbName() == 'dbarray') {
+            $rs = ArrayBasePeer::doSelectRs($c);
+        } else {
+            $rs = GulliverBasePeer::doSelectRs($c);
+        }
+        $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $rs->next();
+        $totalCount = 0;
+        for ($j = 0; $j < $rs->getRecordCount(); $j++) {
+            $result = $rs->getRow();
+            $result["FILEPDFEXIST"] = ($result["FILEPDF"]);
+            $result["DELETE_FILE"] = (isset($result['ID_DELETE']) && $result['ID_DELETE'] == 'Delete') ? true : false;
+            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
+            $processes[] = $result;
+            $rs->next();
+            $totalCount++;
+        }
+        //!dateFormat
+        $conf = new Configurations();
+        try {
+            $globaleneralConfCasesList = $conf->getConfiguration('ENVIRONMENT_SETTINGS', '');
+        } catch (Exception $e) {
+            $generalConfCasesList = [];
+        }
+        $dateFormat = "";
+        $varFlag = isset($generalConfCasesList['casesListDateFormat']);
+        if ($varFlag && !empty($generalConfCasesList['casesListDateFormat'])) {
+            $dateFormat = $generalConfCasesList['casesListDateFormat'];
+        }
+        $r = new stdclass();
+        $r->data = $processes;
+        $r->totalCount = $totalCount;
+        $r->dataFormat = $dateFormat;
+        echo Bootstrap::json_encode($r);
         break;
     case 'uploadDocumentGrid_Ajax':
         global $G_PUBLISH;
@@ -582,7 +669,10 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
         while ($rs->next()) {
             $result = $rs->getRow();
             $result["TYPE"] = (array_key_exists($result["TYPE"], $arrayToTranslation)) ? $arrayToTranslation[$result["TYPE"]] : $result["TYPE"];
-            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
+            // Apply mask
+            $dateLabel = applyMaskDateEnvironment($result['CREATE_DATE'], '', false);
+            // Apply the timezone
+            $result['CREATE_DATE_LABEL'] = DateTime::convertUtcToTimeZone($dateLabel);
             $aProcesses[] = $result;
         }
 
@@ -624,7 +714,10 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
             $result["FILEDOCEXIST"] = ($result["FILEDOC"]);
             $result["FILEPDFEXIST"] = ($result["FILEPDF"]);
             $result["DELETE_FILE"] = (isset($result['ID_DELETE']) && $result['ID_DELETE'] == 'Delete') ? true : false;
-            $result['CREATE_DATE'] = DateTime::convertUtcToTimeZone($result['CREATE_DATE']);
+            // Apply mask
+            $dateLabel = applyMaskDateEnvironment($result['CREATE_DATE'],'', false);
+            // Apply the timezone
+            $result['CREATE_DATE_LABEL'] = DateTime::convertUtcToTimeZone($dateLabel);
             $aProcesses[] = $result;
 
             $rs->next();
@@ -748,8 +841,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
 
         global $G_PUBLISH;
         $G_PUBLISH = new Publisher();
-        $G_PUBLISH->AddContent('propeltable', 'paged-table', 'processes/processes_viewreassignCase', $oCriteria, array('THETYPE' => 'ADHOC'
-        ));
+        $G_PUBLISH->AddContent('propeltable', 'paged-table', 'processes/processes_viewreassignCase', $oCriteria, array('THETYPE' => 'ADHOC'));
         G::RenderPage('publish', 'raw');
         break;
     case 'showHistoryMessages':
@@ -780,7 +872,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
         $oCase = new Cases();
         $oCase->getAllGeneratedDocumentsCriteria($_SESSION['PROCESS'], $_SESSION['APPLICATION'], $_SESSION['TASK'], $_SESSION['USER_LOGGED']);
         break;
-    /* @Author Erik Amaru Ortiz <erik@colosa.com> */
+        /* @Author Erik Amaru Ortiz <erik@colosa.com> */
     case 'resendMessage':
         //require_once 'classes/model/Configuration.php';
 
@@ -823,17 +915,16 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
                 'OAUTH_REFRESH_TOKEN' => $aSetup['OAUTH_REFRESH_TOKEN']
             )
         );
-        $oSpool->create(array('msg_uid' => $data['MSG_UID'], 'app_uid' => $data['APP_UID'], 'del_index' => $data['DEL_INDEX'], 'app_msg_type' => $data['APP_MSG_TYPE'], 'app_msg_subject' => $data['APP_MSG_SUBJECT'], 'app_msg_from' => $data['APP_MSG_FROM'], 'app_msg_to' => $data['APP_MSG_TO'], 'app_msg_body' => $data['APP_MSG_BODY'], 'app_msg_cc' => $data['APP_MSG_CC'], 'app_msg_bcc' => $data['APP_MSG_BCC'], 'app_msg_attach' => $data['APP_MSG_ATTACH'], 'app_msg_template' => $data['APP_MSG_TEMPLATE'], 'app_msg_status' => 'pending'
-        ));
+        $oSpool->create(array('msg_uid' => $data['MSG_UID'], 'app_uid' => $data['APP_UID'], 'del_index' => $data['DEL_INDEX'], 'app_msg_type' => $data['APP_MSG_TYPE'], 'app_msg_subject' => $data['APP_MSG_SUBJECT'], 'app_msg_from' => $data['APP_MSG_FROM'], 'app_msg_to' => $data['APP_MSG_TO'], 'app_msg_body' => $data['APP_MSG_BODY'], 'app_msg_cc' => $data['APP_MSG_CC'], 'app_msg_bcc' => $data['APP_MSG_BCC'], 'app_msg_attach' => $data['APP_MSG_ATTACH'], 'app_msg_template' => $data['APP_MSG_TEMPLATE'], 'app_msg_status' => 'pending'));
         $oSpool->sendMail();
         break;
-    /* @Author Erik Amaru Ortiz <erik@colosa.com> */
+        /* @Author Erik Amaru Ortiz <erik@colosa.com> */
     case 'showdebug':
         $G_PUBLISH = new Publisher();
         $G_PUBLISH->AddContent('view', 'cases/showDebugFrame');
         G::RenderPage('publish', 'raw');
         break;
-    /* @Author Erik Amaru Ortiz <erik@colosa.com> */
+        /* @Author Erik Amaru Ortiz <erik@colosa.com> */
     case 'reassignByUserList':
         $APP_UIDS = explode(',', $_POST['APP_UIDS']);
         $sReassignFromUser = $_POST['FROM_USR_ID'];
@@ -877,11 +968,9 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
             array_push($aCasesList, $aCase);
         }
 
-        $filedNames = array("APP_UID", "APP_NUMBER", "APP_UPDATE_DATE", "DEL_PRIORITY", "DEL_INDEX", "TAS_UID", "DEL_INIT_DATE", "DEL_FINISH_DATE", "USR_UID", "APP_STATUS", "DEL_TASK_DUE_DATE", "APP_CURRENT_USER", "APP_TITLE", "APP_PRO_TITLE", "APP_TAS_TITLE", "APP_DEL_PREVIOUS_USER", "USERS"
-        );
+        $filedNames = array("APP_UID", "APP_NUMBER", "APP_UPDATE_DATE", "DEL_PRIORITY", "DEL_INDEX", "TAS_UID", "DEL_INIT_DATE", "DEL_FINISH_DATE", "USR_UID", "APP_STATUS", "DEL_TASK_DUE_DATE", "APP_CURRENT_USER", "APP_TITLE", "APP_PRO_TITLE", "APP_TAS_TITLE", "APP_DEL_PREVIOUS_USER", "USERS");
 
-        $aCasesList = array_merge(array($filedNames
-        ), $aCasesList);
+        $aCasesList = array_merge(array($filedNames), $aCasesList);
 
         global $_DBArray;
         $_DBArray['reassign_byuser'] = $aCasesList;
@@ -993,7 +1082,7 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
                     $response['exists'] = false;
                     $response['message'] = G::LoadTranslation('ID_NO_PERMISSION_NO_PARTICIPATED');
                 }
-            } else {//Check if the user participated in this case
+            } else { //Check if the user participated in this case
                 if (!$aUserCanAccess['participated'] && !$aUserCanAccess['rolesPermissions']['PM_ALLCASES'] && !$aUserCanAccess['objectPermissions']['SUMMARY_FORM']) {
                     $response['exists'] = false;
                     $response['message'] = G::LoadTranslation('ID_NO_PERMISSION_NO_PARTICIPATED');

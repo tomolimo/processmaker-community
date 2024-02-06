@@ -1,29 +1,9 @@
 <?php
-/**
- * sysLogin.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
+
+use Illuminate\Support\Facades\Crypt;
+
 if (isset ($_POST['form']['USER_ENV'])) {
-    $data = base64_encode(serialize($_POST));
+    $data = Crypt::encryptString(serialize($_POST));
     $url = sprintf('/sys%s/%s/%s/login/sysLoginVerify?d=%s', $_POST['form']['USER_ENV'], SYS_LANG, SYS_SKIN, $data);
     G::header("location: $url");
     die();
@@ -41,10 +21,13 @@ if (!empty($_SESSION['G_MESSAGE_TYPE'])) {
 }
 
 //Initialize session
-
 @session_destroy();
 session_start();
 session_regenerate_id();
+
+//Set options for PHP session cookie
+$cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + (24 * 60 * 60), 'httponly' => true]);
+setcookie(session_name(), session_id(), $cookieOptions);
 
 //Restore session variables
 $_SESSION = array_merge($_SESSION, $arraySession);
@@ -160,8 +143,12 @@ switch (WS_IN_LOGIN) {
         $fileLogin = 'login/sysLogin';
         break;
 }
-setcookie("PM-Warning", trim(G::LoadTranslation('ID_BLOCKER_MSG'), '*'), time() + (24 * 60 * 60), SYS_CURRENT_URI);
-setcookie("PM-TabPrimary", uniqid(), time() + (24 * 60 * 60), '/');
+$cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + (24 * 60 * 60), 'path' => SYS_CURRENT_URI]);
+setcookie('PM-Warning', trim(G::LoadTranslation('ID_BLOCKER_MSG'), '*'), $cookieOptions);
+
+$cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + (24 * 60 * 60)]);
+setcookie('PM-TabPrimary', uniqid(), $cookieOptions);
+
 $oHeadPublisher = headPublisher::getSingleton();
 $oHeadPublisher->addScriptFile('/jscore/src/PM.js');
 $oHeadPublisher->addScriptFile('/jscore/src/Sessions.js');

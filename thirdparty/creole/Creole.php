@@ -22,13 +22,7 @@
 include_once 'creole/SQLException.php';
 include_once 'creole/Connection.php';
 
-// static:
-// track errors is used by drivers to get better error messages
-// make sure it's set.
-
-@ini_set('track_errors', true);
-
- use ProcessMaker\Core\System;
+use ProcessMaker\Core\System;
  
 /**
  * This is the class that manages the database drivers.

@@ -97,6 +97,8 @@ class WebEntryMapBuilder
 
         $tMap->addColumn('WE_HIDE_INFORMATION_BAR', 'WeHideInformationBar', 'string', CreoleTypes::CHAR, false, 1);
 
+        $tMap->addColumn('WE_HIDE_ACTIVE_SESSION_WARNING', 'WeHideActiveSessionWarning', 'string', CreoleTypes::CHAR, false, 1);
+
         $tMap->addColumn('WE_CALLBACK', 'WeCallback', 'string', CreoleTypes::VARCHAR, true, 13);
 
         $tMap->addColumn('WE_CALLBACK_URL', 'WeCallbackUrl', 'string', CreoleTypes::LONGVARCHAR, false, null);

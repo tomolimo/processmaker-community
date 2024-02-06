@@ -392,7 +392,11 @@ Ext.onReady(function(){
             items:[{
               id: 'casesTab',
               title: _('ID_CASE') +' ' + _APP_NUM,
-              frameConfig:{name:'openCaseFrame', id:'openCaseFrame'},
+              frameConfig:{
+                name:'openCaseFrame',
+                id:'openCaseFrame',
+                title:'openCaseFrame'
+              },
               defaultSrc : uri,
               loadMask:{msg: _('ID_LOADING_GRID') },
               bodyStyle:{height: (PMExt.getBrowser().screen.height-60) + 'px', overflow:'hidden'},
@@ -416,7 +420,7 @@ Ext.onReady(function(){
 
     buttonCancel = new Ext.Button({
         buttonAlign: 'center',
-        text: 'Cancel',
+        text: _("ID_CANCEL"),
         handler: redirectHistory,
         cls: 'cancelSummary',
         width: '100px',
@@ -427,7 +431,7 @@ Ext.onReady(function(){
     buttonClaimCase = new Ext.Button({
         buttonAlign: 'center',
         ui: 'round',
-        text: 'Claim this case',
+        text: _("ID_CLAIM_THIS_CASE"),
         handler: claimCase,
         cls: 'claimCaseSummary',
         width: '120px',
@@ -457,7 +461,7 @@ Ext.onReady(function(){
      */
     function claimCase() {
         Ext.Ajax.request({
-            url: 'cases_CatchExecute',
+            url: 'cases_CatchExecute?hideMessage=true',
             success: function (response, opts) {
                 Ext.Ajax.request({
                     url: 'ajaxListener',
@@ -527,7 +531,8 @@ Ext.onReady(function(){
             },
             iconCls: 'ICON_STEPS',
             toggleHandler: togglePreview,
-            disabled: true
+            disabled: true,
+            hidden: (typeof (treeToReviseTitle) == 'undefined' ? false : true)
         }, {
             id: 'informationMenu',
             text: _('ID_INFORMATION'),
@@ -598,6 +603,14 @@ Ext.onReady(function(){
   Ext.getCmp('actionMenu').hide();
   Ext.getCmp('returnButton').hide();
 
+  // Hacky Code for update the debugger in new UI
+  document.getElementById("openCaseFrame").onload = function ()
+  {
+      if(window.parent){
+        window.parent.postMessage("update=debugger","*");
+      }
+  };
+  
   hideCaseNavigatorPanel();
   if(typeof appStatus !== "undefined") {
       showCaseNavigatorPanel(appStatus);
@@ -672,6 +685,7 @@ Ext.onReady(function(){
 	          } else {
 	              fieldset = {
 	                  xtype : 'fieldset',
+	                  title: _('ID_INFORMATION'),
 	                  autoHeight : true,
 	                  defaults : {
 	                      width : 170,
@@ -680,11 +694,66 @@ Ext.onReady(function(){
 	                      style: 'font-weight: bold'
 	                  },
 	                  items : [
-	                      {fieldLabel: _('ID_TITLE'), text: data.PRO_TITLE},
-	                      {fieldLabel: _('ID_DESCRIPTION'), text: data.PRO_DESCRIPTION},
-	                      {fieldLabel: _('ID_CATEGORY'), text: data.PRO_CATEGORY_LABEL},
-	                      {fieldLabel: _('ID_AUTHOR'), text: data.PRO_AUTHOR},
-	                      {fieldLabel: _('ID_CREATE_DATE'), text: data.PRO_CREATE_DATE}
+                      {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_TITLE'),
+                        value: data.PRO_TITLE,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                      },
+	                    {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_DESCRIPTION'),
+                        value: data.PRO_DESCRIPTION,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                      },
+	                    {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_CATEGORY'),
+                        value: data.PRO_CATEGORY_LABEL,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                      },
+	                    {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_AUTHOR'),
+                        value: data.PRO_AUTHOR,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                      },
+                      {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_CREATE_DATE'),
+                        value: data.PRO_CREATE_DATE,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                      }
 	                 ]
 	             }
 
@@ -747,24 +816,91 @@ Ext.onReady(function(){
 	                  }
 	              });
 	          } else {
-				fieldset = {
-				xtype : 'fieldset',
-				autoHeight : true,
-				defaults : {
-				width : 170,
-				xtype:'label',
-				labelStyle : 'padding: 0px;',
-				style: 'font-weight: bold'
-				},
-				items : [
-				{fieldLabel: _('ID_TITLE'), text: data.TAS_TITLE},
-				{fieldLabel: _('ID_DESCRIPTION'), text: data.TAS_DESCRIPTION},
-				{fieldLabel: _('ID_INIT_DATE'), text: data.INIT_DATE},
-				{fieldLabel: _('ID_DUE_DATE'), text: data.DUE_DATE},
-				{fieldLabel: _('ID_FINISH_DATE'), text: data.FINISH},
-				{fieldLabel: _('ID_TASK_DURATION'), text: data.DURATION}
-				]
-				}
+                fieldset = {
+                    xtype : 'fieldset',
+                    title: _('ID_INFORMATION'),
+                    autoHeight : true,
+                    defaults : {
+                    width : 170,
+				            xtype:'label',
+                    labelStyle : 'padding: 0px;',
+                    style: 'font-weight: bold'
+                },
+                items : [
+                  {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_TITLE'),
+                        value: data.TAS_TITLE,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                    },
+				            {
+                        xtype: 'textfield',
+                        fieldLabel: _('ID_DESCRIPTION'),
+                        value: data.TAS_DESCRIPTION,
+                        readOnly: true,
+                        style: {
+                          border: 'none',
+                          backgroundImage: 'none',
+                          fontWeight: 'bold',
+                          width: '170px'
+                        }
+                    },
+                    {
+                      xtype: 'textfield',
+                      fieldLabel: _('ID_INIT_DATE'),
+                      value: data.INIT_DATE_LABEL,
+                      readOnly: true,
+                      style: {
+                        border: 'none',
+                        backgroundImage: 'none',
+                        fontWeight: 'bold',
+                        width: '170px'
+                      }
+                    },
+                    {
+                      xtype: 'textfield',
+                      fieldLabel: _('ID_DUE_DATE'),
+                      value: data.DUE_DATE_LABEL,
+                      readOnly: true,
+                      style: {
+                        border: 'none',
+                        backgroundImage: 'none',
+                        fontWeight: 'bold',
+                        width: '170px'
+                      }
+                    },
+                    {
+                      xtype: 'textfield',
+                      fieldLabel: _('ID_FINISH_DATE'),
+                      value: data.FINISH,
+                      readOnly: true,
+                      style: {
+                        border: 'none',
+                        backgroundImage: 'none',
+                        fontWeight: 'bold',
+                        width: '170px'
+                      }
+                    },
+                    {
+                      xtype: 'textfield',
+                      fieldLabel: _('ID_TASK_DURATION'),
+                      value: data.DURATION,
+                      readOnly: true,
+                      style: {
+                        border: 'none',
+                        backgroundImage: 'none',
+                        fontWeight: 'bold',
+                        width: '170px'
+                      }
+                    }
+				        ]
+				    }
 
 				var frm = new Ext.FormPanel( {
 				labelAlign : 'right',
@@ -1040,7 +1176,7 @@ Ext.onReady(function(){
                   border: false,
                   frame: true,
                   items: [{
-                          html: '<div align="center" style="font: 14px tahoma,arial,helvetica,sans-serif">' + _('ID_CONFIRM_CANCEL_CASE') + '? </div> <br/>'
+                          html: '<div align="center" style="font: 14px tahoma,arial,helvetica,sans-serif">' + _('ID_CONFIRM_CANCEL_CASE') + '</div> <br/>'
                       },
                       {
                           xtype: 'textarea',
@@ -1080,26 +1216,39 @@ Ext.onReady(function(){
                                       var data = Ext.util.JSON.decode(result.responseText);
                                       if (data.status == true) {
                                           if (!isBrowserIE()) {
+                                            if (typeof parent.notify !== "undefined") { 
                                               // The case was cancelled
                                               parent.notify('', _("ID_CASE_CANCELLED", stringReplace("\\: ", "", _APP_NUM)));
+                                            }
+                                            if (typeof parent.updateCasesTree !== "undefined") { 
                                               parent.updateCasesTree();
+                                            }
+                                            if (typeof parent.highlightCasesTree !== "undefined") { 
                                               parent.highlightCasesTree();
+                                            }
                                           }
                                       } else {
                                           if (!isBrowserIE()) {
-                                              // The case wasn't cancel
-                                              parent.notify('', data.msg);
+                                              if (typeof parent.notify !== "undefined") {
+                                                  // The case wasn't cancel
+                                                  parent.notify('', data.msg);
+                                              }
                                           }
                                       }
                                   } catch (e) {
                                       if (isBrowserIE()) {
                                           Ext.MessageBox.alert(_('ID_FAILED'), _('ID_SOMETHING_WRONG'));
                                       } else {
-                                          parent.notify('', _('ID_SOMETHING_WRONG'));
+                                          if (typeof parent.notify !== "undefined") {
+                                              parent.notify('', _('ID_SOMETHING_WRONG'));
+                                          }
                                       }
-
                                   }
-                                  location.href = 'casesListExtJs';
+                                  if (typeof parent.postMessage !== "undefined") {
+                                    parent.postMessage("redirect=todo","*");
+                                  } else {
+                                    location.href = 'casesListExtJs';
+                                  }
                               },
                               failure: function (result, request) {
                                   Ext.MessageBox.alert(_('ID_FAILED'), result.responseText);
@@ -1301,7 +1450,8 @@ Ext.onReady(function(){
         url : 'ajaxListener' ,
         params : {action : 'verifySession'},
         success: function ( result, request ) {
-          var data = Ext.util.JSON.decode(result.responseText);
+          var data = Ext.util.JSON.decode(result.responseText),
+              i;
           if( data.lostSession ) {
            Ext.Msg.show({
                   title: _('ID_ERROR'),
@@ -1332,8 +1482,17 @@ Ext.onReady(function(){
                   }
                 });
           } else {
-                winReassignInCasesList.show();
-                grdpnlUsersToReassign.store.load();
+              winReassignInCasesList.show();
+              grdpnlUsersToReassign.store.load();
+              if (document.getElementsByTagName('input')) {
+                document.getElementsByTagName('input')[1].ariaLabel = "search";
+                document.getElementsByTagName('input')[2].ariaLabel = "pagination";
+              }
+              if (document.getElementsByTagName('button')) {
+                for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+                  document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].getAttribute('id');
+                }
+              }
           }
         },
         failure: function ( result, request) {
@@ -1347,7 +1506,8 @@ Ext.onReady(function(){
   Actions.reassignCase = function()
   {
     var rowSelected = Ext.getCmp("grdpnlUsersToReassign").getSelectionModel().getSelected();
-
+    var msg = "";
+    var credentials = JSON.parse(_CREDENTIALS);
     if( rowSelected ) {
         if (Ext.getCmp('idTextareaReason').getValue() === '') {
             Ext.Msg.alert(_('ID_ALERT'), _('ID_THE_REASON_REASSIGN_USER_EMPTY'));
@@ -1355,25 +1515,41 @@ Ext.onReady(function(){
         }
       PMExt.confirm(_('ID_CONFIRM'), _('ID_REASSIGN_CONFIRM'), function(){
         Ext.Ajax.request({
-          url : 'ajaxListener' ,
-          params : {action : 'reassignCase', USR_UID: rowSelected.data.USR_UID, NOTE_REASON: Ext.getCmp('idTextareaReason').getValue(), NOTIFY_REASSIGN: Ext.getCmp('idCheckboxReason').getValue()},
-          success: function ( result, request ) {
-            var data = Ext.util.JSON.decode(result.responseText);
-            if( data.status == 0 ) {
+          method:"PUT",
+          url: _SERVER + "/api/1.0/" + _WORKSPACE + `/cases/${_APP_UID}/reassign-case`,
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ` + credentials.accessToken,
+          },
+          jsonData : {del_index : _DEL_INDEX_DELEGATE, usr_uid_target: rowSelected.data.USR_UID,usr_uid_source: _USR_DELEGATE, reason: Ext.getCmp('idTextareaReason').getValue()},
+          success: function (result, request) {
+            var data = result;
+            if( data.status == 0 || data.status == 200) {
               try {
-                parent.notify('', data.msg);
-                parent.updateCasesTree();
-                parent.highlightCasesTree();
+                  if (typeof parent.notify !== "undefined") {
+                      parent.notify('', data.msg);
+                  }
+                  if (typeof parent.updateCasesTree !== "undefined") {
+                      parent.updateCasesTree();
+                  }
+                  if (typeof parent.highlightCasesTree !== "undefined") {
+                      parent.highlightCasesTree();
+                  }
+            } catch (e) {
+            }
+              if (typeof parent.postMessage !== "undefined") {
+                parent.postMessage("redirect=todo", "*");
+              } else {
+                location.href = 'casesListExtJs';
               }
-              catch (e) {
-              }
-              location.href = 'casesListExtJs';
             } else {
               alert(data.msg);
             }
           },
-          failure: function ( result, request) {
-            Ext.MessageBox.alert( _('ID_FAILED') , result.responseText);
+          failure: function (result, request) {
+            msg = JSON.parse(result.responseText);
+            Ext.MessageBox.alert( _('ID_FAILED') , msg.error? msg.error.message: "");
           }
         });
       });
@@ -1401,8 +1577,30 @@ Ext.onReady(function(){
         style: 'font-weight: bold'
       },
       items : [
-        {fieldLabel: _("ID_CASE"), text: stringReplace("\\: ", "", _APP_NUM)},
-        {fieldLabel: _("ID_PAUSE_DATE"), text: _ENV_CURRENT_DATE},
+        {
+          xtype: 'textfield',
+          fieldLabel: _('ID_CASE'),
+          value: stringReplace("\\: ", "", _APP_NUM),
+          readOnly: true,
+          style: {
+            border: 'none',
+            backgroundImage: 'none',
+            fontWeight: 'bold',
+            width: '170px'
+          }
+        },
+        {
+          xtype: 'textfield',
+          fieldLabel: _('ID_PAUSE_DATE'),
+          value: _ENV_CURRENT_DATE,
+          readOnly: true,
+          style: {
+            border: 'none',
+            backgroundImage: 'none',
+            fontWeight: 'bold',
+            width: '170px'
+          }
+        },
         new Ext.form.DateField({
           id:   'unpauseDate',
           format: 'Y-m-d',
@@ -1562,12 +1760,22 @@ Ext.onReady(function(){
                 success : function(res, req) {
                   if(req.result.success) {
                     try {
-                      parent.notify('PAUSE CASE', req.result.msg);
-                      parent.updateCasesTree();
-                      parent.highlightCasesTree();
-                    }catch (e) {
+                      if (typeof parent.notify !== "undefined") {
+                        parent.notify('PAUSE CASE', req.result.msg);
+                      }
+                      if (typeof parent.updateCasesTree !== "undefined") {
+                        parent.updateCasesTree();
+                      }
+                      if (typeof parent.highlightCasesTree !== "undefined") {
+                          parent.highlightCasesTree();
+                      }
+                    } catch (e) {
                     }
-                    location.href = urlToRedirectAfterPause;
+                    if (typeof parent.postMessage !== "undefined") {
+                      parent.postMessage("redirect=todo", "*");
+                    } else {
+                      location.href = urlToRedirectAfterPause;
+                    }
                   } else {
                     PMExt.error(_('ID_ERROR'), req.result.msg);
                   }
@@ -1656,14 +1864,23 @@ Ext.onReady(function(){
 				loadMask.hide();
 				var data = Ext.util.JSON.decode(result.responseText);
 				if( data.success ) {
-					try {
-					   parent.PMExt.notify(_('ID_DELETE_ACTION'), data.msg);
-					   parent.updateCasesTree();
-					   parent.highlightCasesTree();
-					}
-					catch (e) {
-					}
-					location.href = 'casesListExtJs';
+                      try {
+                          if (typeof parent.PMExt.updateCasesTree !== "undefined") {
+                              parent.PMExt.notify(_('ID_DELETE_ACTION'), data.msg);
+                          }
+                          if (typeof parent.updateCasesTree !== "undefined") {
+                              parent.updateCasesTree();
+                          }
+                          if (typeof parent.highlightCasesTree !== "undefined") {
+                            parent.highlightCasesTree();
+                          }
+					  } catch (e) {
+					  }
+                      if (typeof parent.postMessage !== "undefined") {
+                        parent.postMessage("redirect=todo", "*");
+                      } else {
+                          location.href = 'casesListExtJs';
+                      }
 				} else {
 				    PMExt.error(_('ID_ERROR'), data.msg);
 				}

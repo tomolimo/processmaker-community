@@ -59,7 +59,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
         ]
     });
     var isDirtyUpload = function () {
-        $("input,select,textarea").blur();
         if (formUpload.isDirty()) {
             var message_window = new PMUI.ui.MessageWindow({
                 id: "cancelMessageTriggers",
@@ -71,7 +70,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
                     {
                         text: "No".translate(),
                         handler: function () {
-
                             message_window.close();
                         },
                         buttonType: "error"
@@ -342,7 +340,6 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
         style: {cssClasses: ['mafe-button-upload'], cssProperties: {'margin-right': '5px', 'float': 'none'}},
         handler: function (event) {
             windowUpload.open();
-            formUpload.setFocus();
             applyStyleWindowForm(windowUpload);
 
         }

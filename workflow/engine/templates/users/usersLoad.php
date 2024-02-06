@@ -12,7 +12,7 @@
 }
 </style>
 <body onresize="autoResizeScreen()" onload="autoResizeScreen()">
-<iframe name="frameMain" id="frameMain" src ="../users/userMain<?php echo ((isset($_GET["create_app"]))? "?create_app" : ""); ?>" width="100%" height="200" frameborder="0">
+<iframe name="frameMain" id="frameMain" src ="../users/userMain<?php echo ((isset($_GET["create_app"]))? "?userInterface=v2&create_app" : "?userInterface=v2"); ?>" width="100%" height="200" frameborder="0">
   <p>Your browser does not support iframes.</p>
 </iframe>
 </body>

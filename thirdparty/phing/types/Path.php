@@ -355,8 +355,8 @@ class Path extends DataType {
      * replacements.  
      */
     protected static function translateFileSep(&$buffer, $pos) {
-        if ($buffer{$pos} == '/' || $buffer{$pos} == '\\') {
-            $buffer{$pos} = DIRECTORY_SEPARATOR;
+        if ($buffer[$pos] == '/' || $buffer[$pos] == '\\') {
+            $buffer[$pos] = DIRECTORY_SEPARATOR;
             return true;
         }
         return false;

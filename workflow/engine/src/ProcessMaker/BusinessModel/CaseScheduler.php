@@ -379,19 +379,19 @@ class CaseScheduler
                             throw new \Exception(\G::LoadTranslation("ID_CAN_NOT_BE_NULL", array('sch_start_day_opt_2')));
                         }
                         $caseSchedulerData['SCH_START_DAY'] = $nStartDay . '|' . $caseSchedulerData['SCH_START_DAY_OPT_2'];
-                        $optionTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{0};
+                        $optionTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][0];
                         if ($optionTwo == "1" || $optionTwo == "2" || $optionTwo == "3" || $optionTwo == "4" || $optionTwo == "5") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {
                             throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_FOR", array('sch_start_day_opt_2')));
                         }
-                        $pipelineTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{1};
+                        $pipelineTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][1];
                         if ($pipelineTwo == "|") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {
                             throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_FOR", array('sch_start_day_opt_2')));
                         }
-                        $dayTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{2};
+                        $dayTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][2];
                         if ($dayTwo == "1" || $dayTwo == "2" || $dayTwo == "3" || $dayTwo == "4" || $dayTwo == "5" || $dayTwo == "6" || $dayTwo == "7") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {
@@ -669,19 +669,19 @@ class CaseScheduler
                             throw new \Exception(\G::LoadTranslation("ID_CAN_NOT_BE_NULL", array('sch_start_day_opt_2')));
                         }
                         $caseSchedulerData['SCH_START_DAY'] = $nStartDay . '|' . $caseSchedulerData['SCH_START_DAY_OPT_2'];
-                        $optionTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{0};
+                        $optionTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][0];
                         if ($optionTwo == "1" || $optionTwo == "2" || $optionTwo == "3" || $optionTwo == "4" || $optionTwo == "5") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {
                             throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_FOR", array('sch_start_day_opt_2')));
                         }
-                        $pipelineTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{1};
+                        $pipelineTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][1];
                         if ($pipelineTwo == "|") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {
                             throw new \Exception(\G::LoadTranslation("ID_INVALID_VALUE_FOR", array('sch_start_day_opt_2')));
                         }
-                        $dayTwo = $caseSchedulerData['SCH_START_DAY_OPT_2']{2};
+                        $dayTwo = $caseSchedulerData['SCH_START_DAY_OPT_2'][2];
                         if ($dayTwo == "1" || $dayTwo == "2" || $dayTwo == "3" || $dayTwo == "4" || $dayTwo == "5" || $dayTwo == "6" || $dayTwo == "7") {
                             $caseSchedulerData['SCH_START_DAY_OPT_2'] = $caseSchedulerData['SCH_START_DAY_OPT_2'];
                         } else {

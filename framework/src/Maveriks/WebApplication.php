@@ -433,7 +433,8 @@ class WebApplication
      * The value of $executeSetupPlugin must always be true for a web environment.
      *
      * @param string $workspace
-     * @param boolean $executeSetupPlugin
+     * @param bool $executeSetupPlugin
+     * @param bool $setTimeZone
      * @return bool
      * @throws Exception
      *
@@ -441,7 +442,7 @@ class WebApplication
      * @see workflow/engine/bin/cli.php
      * @see \App\Console\Commands\AddParametersTrait
      */
-    public function loadEnvironment($workspace = "", $executeSetupPlugin = true)
+    public function loadEnvironment($workspace = "", $executeSetupPlugin = true, $setTimeZone = true)
     {
         define("PATH_SEP", DIRECTORY_SEPARATOR);
 
@@ -511,8 +512,10 @@ class WebApplication
 
         $arraySystemConfiguration = System::getSystemConfiguration('', '', $workspace);
 
-        //In community version the default value is 0
-        $_SESSION['__SYSTEM_UTC_TIME_ZONE__'] = (int)($arraySystemConfiguration['system_utc_time_zone']) == 1;
+        if ($setTimeZone) {
+            //In community version the default value is 0
+            $_SESSION['__SYSTEM_UTC_TIME_ZONE__'] = (int)($arraySystemConfiguration['system_utc_time_zone']) == 1;
+        }
 
         define('DEBUG_SQL_LOG', $arraySystemConfiguration['debug_sql']);
         define('DEBUG_TIME_LOG', $arraySystemConfiguration['debug_time']);
@@ -521,8 +524,10 @@ class WebApplication
         define('MEMCACHED_SERVER', $arraySystemConfiguration['memcached_server']);
         define('SYS_SKIN', $arraySystemConfiguration['default_skin']);
         define('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION', $arraySystemConfiguration['disable_download_documents_session_validation']);
-        define('TIME_ZONE',
-            (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $arraySystemConfiguration['time_zone']);
+        if ($setTimeZone) {
+            define('TIME_ZONE',
+                (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $arraySystemConfiguration['time_zone']);
+        }
 
         // Change storage path
         app()->useStoragePath(realpath(PATH_DATA));
@@ -537,18 +542,19 @@ class WebApplication
         ini_set('short_open_tag', 'On'); //??
         ini_set('default_charset', 'UTF-8'); //??
         ini_set('soap.wsdl_cache_enabled', $arraySystemConfiguration['wsdl_cache']);
-        ini_set('date.timezone', TIME_ZONE); //Set Time Zone
-
-        date_default_timezone_set(TIME_ZONE);
-
-        config(['app.timezone' => TIME_ZONE]);
+        if ($setTimeZone) {
+            ini_set('date.timezone', TIME_ZONE); //Set Time Zone
+            date_default_timezone_set(TIME_ZONE);
+            config(['app.timezone' => TIME_ZONE]);
+        }
 
         // Define the language
         Bootstrap::setLanguage();
 
         Bootstrap::LoadTranslationObject((defined("SYS_LANG")) ? SYS_LANG : "en");
 
-        if (empty($workspace)) {
+        // In this case, we cannot make a strict comparison because the workspace value can arrive as a string or integer.
+        if (empty($workspace) && $workspace != 0) {
             // If the workspace is empty the function should be return the control to the previous file
             return true;
         }

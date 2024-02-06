@@ -62,7 +62,7 @@ Ext.onReady(function(){
 
   newButton = new Ext.Action({
     text: _('ID_NEW'),
-    iconCls: 'button_menu_ext ss_sprite  ss_add',
+    icon: '/images/add_18.png',
     disabled: false,
     handler: newSkin
   });
@@ -70,7 +70,7 @@ Ext.onReady(function(){
 
   deleteButton = new Ext.Action({
     text: _('ID_DELETE'),
-    iconCls: 'button_menu_ext ss_sprite  ss_delete',
+    icon: '/images/delete-16x16.gif',
     handler: deleteSkin,
     disabled: true
   });
@@ -78,14 +78,14 @@ Ext.onReady(function(){
 
   importButton = new Ext.Action({
     text: _('ID_IMPORT'),
-    iconCls: 'button_menu_ext ss_sprite ss_building_add',
+    icon: '/images/add_building.png',
     handler: importSkin,
     disabled: false
   });
 
   exportButton = new Ext.Action({
     text: _('ID_EXPORT'),
-    iconCls: 'button_menu_ext ss_sprite ss_building_go',
+    icon: '/images/export_building.png',
     handler: exportSkin,
     disabled: true
   });

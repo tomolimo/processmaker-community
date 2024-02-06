@@ -146,7 +146,7 @@ class DB_common extends PEAR
     /**
      * Constructor
      */
-    function DB_common()
+    function __construct()
     {
         $this->PEAR('DB_Error');
     }
@@ -167,7 +167,7 @@ class DB_common extends PEAR
     function quoteString($string)
     {
         $string = $this->quote($string);
-        if ($string{0} == "'") {
+        if ($string[0] == "'") {
             return substr($string, 1, -1);
         }
         return $string;
@@ -1348,7 +1348,7 @@ class DB_common extends PEAR
         if (!is_array($row = $res->fetchRow($fetchmode))) {
             $ret = array();
         } else {
-            if (!array_key_exists($col, $row)) {
+            if (is_array($row) && !array_key_exists($col, $row)) {
                 $ret =& $this->raiseError(DB_ERROR_NOSUCHFIELD);
             } else {
                 $ret = array($row[$col]);

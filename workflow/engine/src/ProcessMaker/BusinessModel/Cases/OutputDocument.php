@@ -3,6 +3,7 @@ namespace ProcessMaker\BusinessModel\Cases;
 
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
+use stdClass;
 
 class OutputDocument
 {
@@ -372,6 +373,21 @@ class OutputDocument
 
         $pathInfo = pathinfo($appDocument->getAppDocFilename());
 
+        // Plugin Hook PM_REDIRECT to redirect to a custom page
+        $pluginRegistry = PluginRegistry::loadSingleton();
+
+        // If the hook exists try to execute
+        if ($pluginRegistry->existsTrigger(PM_REDIRECT)) {
+            // Build the object to send
+            $data = new stdClass();
+            $data->sApplicationUid = $appDocument->getAppUid();
+            $data->appDocUid = $appDocument->getAppDocUid();
+            $data->docType = $ext;
+
+            // Execute hook
+            $pluginRegistry->executeTriggers(PM_REDIRECT, $data);
+        }
+
         $extensionDoc = $ext;
 
         $versionDoc =  '_' . $arrayAppDocumentData['DOC_VERSION'];
@@ -540,7 +556,7 @@ class OutputDocument
                 $oData['ATTACHMENT_FOLDER'] = true;
                 switch ($aOD['OUT_DOC_GENERATE']) {
                     case "BOTH":
-                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.pdf', $sFilename . '.pdf', $sDocUID, $oAppDocument->getDocVersion());
+                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.pdf', $oAppDocument->getAppDocFilename() . '.pdf', $sDocUID, $oAppDocument->getDocVersion());
                         $documentData->sFileType = "PDF";
                         $documentData->bUseOutputFolder = true;
                         $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
@@ -548,7 +564,7 @@ class OutputDocument
                             //Only delete if the file was saved correctly
                             unlink($pathOutput . $sFilename . '.pdf');
                         }
-                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.doc', $sFilename . '.doc', $sDocUID, $oAppDocument->getDocVersion());
+                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.doc', $oAppDocument->getAppDocFilename() . '.doc', $sDocUID, $oAppDocument->getDocVersion());
                         $documentData->sFileType = "DOC";
                         $documentData->bUseOutputFolder = true;
                         $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
@@ -558,7 +574,7 @@ class OutputDocument
                         }
                         break;
                     case "PDF":
-                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.pdf', $sFilename . '.pdf', $sDocUID, $oAppDocument->getDocVersion());
+                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.pdf', $oAppDocument->getAppDocFilename() . '.pdf', $sDocUID, $oAppDocument->getDocVersion());
                         $documentData->sFileType = "PDF";
                         $documentData->bUseOutputFolder = true;
                         $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
@@ -568,7 +584,7 @@ class OutputDocument
                         }
                         break;
                     case "DOC":
-                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.doc', $sFilename . '.doc', $sDocUID, $oAppDocument->getDocVersion());
+                        $documentData = new \uploadDocumentData($sApplication, $sUserLogged, $pathOutput . $sFilename . '.doc', $oAppDocument->getAppDocFilename() . '.doc', $sDocUID, $oAppDocument->getDocVersion());
                         $documentData->sFileType = "DOC";
                         $documentData->bUseOutputFolder = true;
                         $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
@@ -728,6 +744,7 @@ class OutputDocument
                 if (isset($aProperties['report_generator'])) {
                     switch ($aProperties['report_generator']) {
                         case 'TCPDF':
+                        default:
                             $o = new \OutputDocument();
                             if (strlen($sContent) == 0) {
                                 libxml_use_internal_errors(true);
@@ -737,13 +754,10 @@ class OutputDocument
                                 $o->generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
                             }
                             break;
-                        case 'HTML2PDF':
-                        default:
-                            $this->generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties, $sApplication);
-                            break;
                     }
                 } else {
-                    $this->generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
+                    $o = new \OutputDocument();
+                    $o->generateTcpdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape, $aProperties);
                 }
             }
             //end if $sTypeDocToGener
@@ -758,197 +772,6 @@ class OutputDocument
                 'G_Error',
                 true
             );
-        }
-    }
-
-    /*
-     * Generate Html2ps_pdf
-     * @param string $sUID
-     * @param array $aFields
-     * @param string $sPath
-     * @param string $sApplication
-     * @return variant
-     */
-    public function generateHtml2ps_pdf($sUID, $aFields, $sPath, $sFilename, $sContent, $sLandscape = false, $aProperties = array(), $sApplication)
-    {
-        define("MAX_FREE_FRACTION", 1);
-        define('PATH_OUTPUT_FILE_DIRECTORY', PATH_HTML . 'files/' . $sApplication . '/outdocs/');
-        \G::verifyPath(PATH_OUTPUT_FILE_DIRECTORY, true);
-        require_once(PATH_THIRDPARTY . 'html2ps_pdf/config.inc.php');
-        require_once(PATH_THIRDPARTY . 'html2ps_pdf/pipeline.factory.class.php');
-        parse_config_file(PATH_THIRDPARTY . 'html2ps_pdf/html2ps.config');
-        $GLOBALS['g_config'] = array(
-            'cssmedia' => 'screen',
-            'media' => 'Letter',
-            'scalepoints' => false,
-            'renderimages' => true,
-            'renderfields' => true,
-            'renderforms' => false,
-            'pslevel' => 3,
-            'renderlinks' => true,
-            'pagewidth' => 800,
-            'landscape' => $sLandscape,
-            'method' => 'fpdf',
-            'margins' => array('left' => 15, 'right' => 15, 'top' => 15, 'bottom' => 15,),
-            'encoding' => '',
-            'ps2pdf' => false,
-            'compress' => true,
-            'output' => 2,
-            'pdfversion' => '1.3',
-            'transparency_workaround' => false,
-            'imagequality_workaround' => false,
-            'draw_page_border' => isset($_REQUEST['pageborder']),
-            'debugbox' => false,
-            'html2xhtml' => true,
-            'mode' => 'html',
-            'smartpagebreak' => true
-        );
-        $GLOBALS['g_config'] = array_merge($GLOBALS['g_config'], $aProperties);
-        $g_media = \Media::predefined($GLOBALS['g_config']['media']);
-        $g_media->set_landscape($GLOBALS['g_config']['landscape']);
-        $g_media->set_margins($GLOBALS['g_config']['margins']);
-        $g_media->set_pixels($GLOBALS['g_config']['pagewidth']);
-        if (isset($GLOBALS['g_config']['pdfSecurity'])) {
-            if (isset($GLOBALS['g_config']['pdfSecurity']['openPassword']) &&
-                $GLOBALS['g_config']['pdfSecurity']['openPassword'] != ""
-            ) {
-                $GLOBALS['g_config']['pdfSecurity']['openPassword'] = G::decrypt(
-                    $GLOBALS['g_config']['pdfSecurity']['openPassword'],
-                    $sUID
-                );
-            }
-            if (isset($GLOBALS['g_config']['pdfSecurity']['ownerPassword']) &&
-                $GLOBALS['g_config']['pdfSecurity']['ownerPassword'] != ""
-            ) {
-                $GLOBALS['g_config']['pdfSecurity']['ownerPassword'] = G::decrypt(
-                    $GLOBALS['g_config']['pdfSecurity']['ownerPassword'],
-                    $sUID
-                );
-            }
-            $g_media->set_security($GLOBALS['g_config']['pdfSecurity']);
-            require_once(HTML2PS_DIR . 'pdf.fpdf.encryption.php');
-        }
-        $pipeline = new \Pipeline();
-        if (extension_loaded('curl')) {
-            require_once(HTML2PS_DIR . 'fetcher.url.curl.class.php');
-            $pipeline->fetchers = array(new \FetcherURLCurl());
-            if (isset($proxy)) {
-                if ($proxy != '') {
-                    $pipeline->fetchers[0]->set_proxy($proxy);
-                }
-            }
-        } else {
-            require_once(HTML2PS_DIR . 'fetcher.url.class.php');
-            $pipeline->fetchers[] = new \FetcherURL();
-        }
-        $pipeline->data_filters[] = new \DataFilterDoctype();
-        $pipeline->data_filters[] = new \DataFilterUTF8($GLOBALS['g_config']['encoding']);
-        if ($GLOBALS['g_config']['html2xhtml']) {
-            $pipeline->data_filters[] = new \DataFilterHTML2XHTML();
-        } else {
-            $pipeline->data_filters[] = new \DataFilterXHTML2XHTML();
-        }
-        $pipeline->parser = new \ParserXHTML();
-        $pipeline->pre_tree_filters = array();
-        $header_html = '';
-        $footer_html = '';
-        $filter = new \PreTreeFilterHeaderFooter($header_html, $footer_html);
-        $pipeline->pre_tree_filters[] = $filter;
-
-        if ($GLOBALS['g_config']['renderfields']) {
-            $pipeline->pre_tree_filters[] = new \PreTreeFilterHTML2PSFields();
-        }
-        if ($GLOBALS['g_config']['method'] === 'ps') {
-            $pipeline->layout_engine = new \LayoutEnginePS();
-        } else {
-            $pipeline->layout_engine = new \LayoutEngineDefault();
-        }
-        $pipeline->post_tree_filters = array();
-        if ($GLOBALS['g_config']['pslevel'] == 3) {
-            $image_encoder = new \PSL3ImageEncoderStream();
-        } else {
-            $image_encoder = new \PSL2ImageEncoderStream();
-        }
-        switch ($GLOBALS['g_config']['method']) {
-            case 'fastps':
-                if ($GLOBALS['g_config']['pslevel'] == 3) {
-                    $pipeline->output_driver = new \OutputDriverFastPS($image_encoder);
-                } else {
-                    $pipeline->output_driver = new \OutputDriverFastPSLevel2($image_encoder);
-                }
-                break;
-            case 'pdflib':
-                $pipeline->output_driver = new \OutputDriverPDFLIB16($GLOBALS['g_config']['pdfversion']);
-                break;
-            case 'fpdf':
-                $pipeline->output_driver = new \OutputDriverFPDF();
-                break;
-            case 'png':
-                $pipeline->output_driver = new \OutputDriverPNG();
-                break;
-            case 'pcl':
-                $pipeline->output_driver = new \OutputDriverPCL();
-                break;
-            default:
-                die('Unknown output method');
-        }
-        if (isset($GLOBALS['g_config']['watermarkhtml'])) {
-            $watermark_text = $GLOBALS['g_config']['watermarkhtml'];
-        } else {
-            $watermark_text = '';
-        }
-        $pipeline->output_driver->set_watermark($watermark_text);
-        if ($watermark_text != '') {
-            $dispatcher = $pipeline->getDispatcher();
-        }
-        if ($GLOBALS['g_config']['debugbox']) {
-            $pipeline->output_driver->set_debug_boxes(true);
-        }
-        if ($GLOBALS['g_config']['draw_page_border']) {
-            $pipeline->output_driver->set_show_page_border(true);
-        }
-        if ($GLOBALS['g_config']['ps2pdf']) {
-            $pipeline->output_filters[] = new \OutputFilterPS2PDF($GLOBALS['g_config']['pdfversion']);
-        }
-        if ($GLOBALS['g_config']['compress'] && $GLOBALS['g_config']['method'] == 'fastps') {
-            $pipeline->output_filters[] = new \OutputFilterGZip();
-        }
-        if (!isset($GLOBALS['g_config']['process_mode'])) {
-            $GLOBALS['g_config']['process_mode'] = '';
-        }
-        if ($GLOBALS['g_config']['process_mode'] == 'batch') {
-            $filename = 'batch';
-        } else {
-            $filename = $sFilename;
-        }
-        switch ($GLOBALS['g_config']['output']) {
-            case 0:
-                $pipeline->destination = new \DestinationBrowser($filename);
-                break;
-            case 1:
-                $pipeline->destination = new \DestinationDownload($filename);
-                break;
-            case 2:
-                $pipeline->destination = new \DestinationFile($filename);
-                break;
-        }
-        copy($sPath . $sFilename . '.html', PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
-        try {
-            $status = $pipeline->process(System::getServerProtocolHost() . '/files/' . $sApplication . '/outdocs/' . $sFilename . '.html', $g_media);
-            copy(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf', $sPath . $sFilename . '.pdf');
-            unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.pdf');
-            unlink(PATH_OUTPUT_FILE_DIRECTORY . $sFilename . '.html');
-        } catch (\Exception $e) {
-            if ($e->getMessage() == 'ID_OUTPUT_NOT_GENERATE') {
-                include_once 'classes/model/AppDocument.php';
-                $dataDocument = explode('_', $sFilename);
-                if (!isset($dataDocument[1])) {
-                    $dataDocument[1] = 1;
-                }
-                $oAppDocument = new \AppDocument();
-                $oAppDocument->remove($dataDocument[0], $dataDocument[1]);
-                \G::SendTemporalMessage(\G::LoadTranslation('ID_OUTPUT_NOT_GENERATE'), 'Error');
-            }
         }
     }
 

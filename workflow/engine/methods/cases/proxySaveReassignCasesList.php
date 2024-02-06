@@ -26,7 +26,7 @@ if (empty($dataPost)) {
     foreach ($dataPost as $data) {
         // It was supposed will return only one thread related to the task
         // todo: implement the reassign case for multi instance task
-        $openThreads = Delegation::getOpenThreads($data->APP_NUMBER, $data->TAS_UID);
+        $openThreads = Delegation::getOpenThread($data->APP_NUMBER, $data->DEL_INDEX);
         if (!empty($openThreads)) {
             // Get the user information assigned in the index
             $currentUsrUid = Delegation::getCurrentUser($openThreads['APP_NUMBER'], $openThreads['DEL_INDEX']);

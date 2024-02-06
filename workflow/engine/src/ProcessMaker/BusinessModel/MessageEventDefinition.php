@@ -1,6 +1,8 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
+use ProcessMaker\Model\Task;
+
 class MessageEventDefinition
 {
     private $arrayFieldDefinition = array(
@@ -352,6 +354,10 @@ class MessageEventDefinition
             //Set data
             $arrayData = array_change_key_case($arrayData, CASE_UPPER);
             $arrayDataBackup = $arrayData;
+
+            $evnUid = $arrayData['EVN_UID'];
+            $caseTitle = $arrayData['CASE_TITLE'];
+            Task::setTaskDefTitle($evnUid, $caseTitle);
 
             unset($arrayData["MSGED_UID"]);
             unset($arrayData["PRJ_UID"]);

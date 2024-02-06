@@ -25,11 +25,14 @@ abstract class BaseAppMessagePeer
     const CLASS_DEFAULT = 'classes.model.AppMessage';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 23;
+    const NUM_COLUMNS = 24;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
 
+
+    /** the column name for the APP_MSG_ID field */
+    const APP_MSG_ID = 'APP_MESSAGE.APP_MSG_ID';
 
     /** the column name for the APP_MSG_UID field */
     const APP_MSG_UID = 'APP_MESSAGE.APP_MSG_UID';
@@ -111,10 +114,10 @@ abstract class BaseAppMessagePeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('AppMsgUid', 'MsgUid', 'AppUid', 'DelIndex', 'AppMsgType', 'AppMsgTypeId', 'AppMsgSubject', 'AppMsgFrom', 'AppMsgTo', 'AppMsgBody', 'AppMsgDate', 'AppMsgCc', 'AppMsgBcc', 'AppMsgTemplate', 'AppMsgStatus', 'AppMsgStatusId', 'AppMsgAttach', 'AppMsgSendDate', 'AppMsgShowMessage', 'AppMsgError', 'ProId', 'TasId', 'AppNumber', ),
-        BasePeer::TYPE_COLNAME => array (AppMessagePeer::APP_MSG_UID, AppMessagePeer::MSG_UID, AppMessagePeer::APP_UID, AppMessagePeer::DEL_INDEX, AppMessagePeer::APP_MSG_TYPE, AppMessagePeer::APP_MSG_TYPE_ID, AppMessagePeer::APP_MSG_SUBJECT, AppMessagePeer::APP_MSG_FROM, AppMessagePeer::APP_MSG_TO, AppMessagePeer::APP_MSG_BODY, AppMessagePeer::APP_MSG_DATE, AppMessagePeer::APP_MSG_CC, AppMessagePeer::APP_MSG_BCC, AppMessagePeer::APP_MSG_TEMPLATE, AppMessagePeer::APP_MSG_STATUS, AppMessagePeer::APP_MSG_STATUS_ID, AppMessagePeer::APP_MSG_ATTACH, AppMessagePeer::APP_MSG_SEND_DATE, AppMessagePeer::APP_MSG_SHOW_MESSAGE, AppMessagePeer::APP_MSG_ERROR, AppMessagePeer::PRO_ID, AppMessagePeer::TAS_ID, AppMessagePeer::APP_NUMBER, ),
-        BasePeer::TYPE_FIELDNAME => array ('APP_MSG_UID', 'MSG_UID', 'APP_UID', 'DEL_INDEX', 'APP_MSG_TYPE', 'APP_MSG_TYPE_ID', 'APP_MSG_SUBJECT', 'APP_MSG_FROM', 'APP_MSG_TO', 'APP_MSG_BODY', 'APP_MSG_DATE', 'APP_MSG_CC', 'APP_MSG_BCC', 'APP_MSG_TEMPLATE', 'APP_MSG_STATUS', 'APP_MSG_STATUS_ID', 'APP_MSG_ATTACH', 'APP_MSG_SEND_DATE', 'APP_MSG_SHOW_MESSAGE', 'APP_MSG_ERROR', 'PRO_ID', 'TAS_ID', 'APP_NUMBER', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, )
+        BasePeer::TYPE_PHPNAME => array ('AppMsgId', 'AppMsgUid', 'MsgUid', 'AppUid', 'DelIndex', 'AppMsgType', 'AppMsgTypeId', 'AppMsgSubject', 'AppMsgFrom', 'AppMsgTo', 'AppMsgBody', 'AppMsgDate', 'AppMsgCc', 'AppMsgBcc', 'AppMsgTemplate', 'AppMsgStatus', 'AppMsgStatusId', 'AppMsgAttach', 'AppMsgSendDate', 'AppMsgShowMessage', 'AppMsgError', 'ProId', 'TasId', 'AppNumber', ),
+        BasePeer::TYPE_COLNAME => array (AppMessagePeer::APP_MSG_ID, AppMessagePeer::APP_MSG_UID, AppMessagePeer::MSG_UID, AppMessagePeer::APP_UID, AppMessagePeer::DEL_INDEX, AppMessagePeer::APP_MSG_TYPE, AppMessagePeer::APP_MSG_TYPE_ID, AppMessagePeer::APP_MSG_SUBJECT, AppMessagePeer::APP_MSG_FROM, AppMessagePeer::APP_MSG_TO, AppMessagePeer::APP_MSG_BODY, AppMessagePeer::APP_MSG_DATE, AppMessagePeer::APP_MSG_CC, AppMessagePeer::APP_MSG_BCC, AppMessagePeer::APP_MSG_TEMPLATE, AppMessagePeer::APP_MSG_STATUS, AppMessagePeer::APP_MSG_STATUS_ID, AppMessagePeer::APP_MSG_ATTACH, AppMessagePeer::APP_MSG_SEND_DATE, AppMessagePeer::APP_MSG_SHOW_MESSAGE, AppMessagePeer::APP_MSG_ERROR, AppMessagePeer::PRO_ID, AppMessagePeer::TAS_ID, AppMessagePeer::APP_NUMBER, ),
+        BasePeer::TYPE_FIELDNAME => array ('APP_MSG_ID', 'APP_MSG_UID', 'MSG_UID', 'APP_UID', 'DEL_INDEX', 'APP_MSG_TYPE', 'APP_MSG_TYPE_ID', 'APP_MSG_SUBJECT', 'APP_MSG_FROM', 'APP_MSG_TO', 'APP_MSG_BODY', 'APP_MSG_DATE', 'APP_MSG_CC', 'APP_MSG_BCC', 'APP_MSG_TEMPLATE', 'APP_MSG_STATUS', 'APP_MSG_STATUS_ID', 'APP_MSG_ATTACH', 'APP_MSG_SEND_DATE', 'APP_MSG_SHOW_MESSAGE', 'APP_MSG_ERROR', 'PRO_ID', 'TAS_ID', 'APP_NUMBER', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, )
     );
 
     /**
@@ -124,10 +127,10 @@ abstract class BaseAppMessagePeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('AppMsgUid' => 0, 'MsgUid' => 1, 'AppUid' => 2, 'DelIndex' => 3, 'AppMsgType' => 4, 'AppMsgTypeId' => 5, 'AppMsgSubject' => 6, 'AppMsgFrom' => 7, 'AppMsgTo' => 8, 'AppMsgBody' => 9, 'AppMsgDate' => 10, 'AppMsgCc' => 11, 'AppMsgBcc' => 12, 'AppMsgTemplate' => 13, 'AppMsgStatus' => 14, 'AppMsgStatusId' => 15, 'AppMsgAttach' => 16, 'AppMsgSendDate' => 17, 'AppMsgShowMessage' => 18, 'AppMsgError' => 19, 'ProId' => 20, 'TasId' => 21, 'AppNumber' => 22, ),
-        BasePeer::TYPE_COLNAME => array (AppMessagePeer::APP_MSG_UID => 0, AppMessagePeer::MSG_UID => 1, AppMessagePeer::APP_UID => 2, AppMessagePeer::DEL_INDEX => 3, AppMessagePeer::APP_MSG_TYPE => 4, AppMessagePeer::APP_MSG_TYPE_ID => 5, AppMessagePeer::APP_MSG_SUBJECT => 6, AppMessagePeer::APP_MSG_FROM => 7, AppMessagePeer::APP_MSG_TO => 8, AppMessagePeer::APP_MSG_BODY => 9, AppMessagePeer::APP_MSG_DATE => 10, AppMessagePeer::APP_MSG_CC => 11, AppMessagePeer::APP_MSG_BCC => 12, AppMessagePeer::APP_MSG_TEMPLATE => 13, AppMessagePeer::APP_MSG_STATUS => 14, AppMessagePeer::APP_MSG_STATUS_ID => 15, AppMessagePeer::APP_MSG_ATTACH => 16, AppMessagePeer::APP_MSG_SEND_DATE => 17, AppMessagePeer::APP_MSG_SHOW_MESSAGE => 18, AppMessagePeer::APP_MSG_ERROR => 19, AppMessagePeer::PRO_ID => 20, AppMessagePeer::TAS_ID => 21, AppMessagePeer::APP_NUMBER => 22, ),
-        BasePeer::TYPE_FIELDNAME => array ('APP_MSG_UID' => 0, 'MSG_UID' => 1, 'APP_UID' => 2, 'DEL_INDEX' => 3, 'APP_MSG_TYPE' => 4, 'APP_MSG_TYPE_ID' => 5, 'APP_MSG_SUBJECT' => 6, 'APP_MSG_FROM' => 7, 'APP_MSG_TO' => 8, 'APP_MSG_BODY' => 9, 'APP_MSG_DATE' => 10, 'APP_MSG_CC' => 11, 'APP_MSG_BCC' => 12, 'APP_MSG_TEMPLATE' => 13, 'APP_MSG_STATUS' => 14, 'APP_MSG_STATUS_ID' => 15, 'APP_MSG_ATTACH' => 16, 'APP_MSG_SEND_DATE' => 17, 'APP_MSG_SHOW_MESSAGE' => 18, 'APP_MSG_ERROR' => 19, 'PRO_ID' => 20, 'TAS_ID' => 21, 'APP_NUMBER' => 22, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, )
+        BasePeer::TYPE_PHPNAME => array ('AppMsgId' => 0, 'AppMsgUid' => 1, 'MsgUid' => 2, 'AppUid' => 3, 'DelIndex' => 4, 'AppMsgType' => 5, 'AppMsgTypeId' => 6, 'AppMsgSubject' => 7, 'AppMsgFrom' => 8, 'AppMsgTo' => 9, 'AppMsgBody' => 10, 'AppMsgDate' => 11, 'AppMsgCc' => 12, 'AppMsgBcc' => 13, 'AppMsgTemplate' => 14, 'AppMsgStatus' => 15, 'AppMsgStatusId' => 16, 'AppMsgAttach' => 17, 'AppMsgSendDate' => 18, 'AppMsgShowMessage' => 19, 'AppMsgError' => 20, 'ProId' => 21, 'TasId' => 22, 'AppNumber' => 23, ),
+        BasePeer::TYPE_COLNAME => array (AppMessagePeer::APP_MSG_ID => 0, AppMessagePeer::APP_MSG_UID => 1, AppMessagePeer::MSG_UID => 2, AppMessagePeer::APP_UID => 3, AppMessagePeer::DEL_INDEX => 4, AppMessagePeer::APP_MSG_TYPE => 5, AppMessagePeer::APP_MSG_TYPE_ID => 6, AppMessagePeer::APP_MSG_SUBJECT => 7, AppMessagePeer::APP_MSG_FROM => 8, AppMessagePeer::APP_MSG_TO => 9, AppMessagePeer::APP_MSG_BODY => 10, AppMessagePeer::APP_MSG_DATE => 11, AppMessagePeer::APP_MSG_CC => 12, AppMessagePeer::APP_MSG_BCC => 13, AppMessagePeer::APP_MSG_TEMPLATE => 14, AppMessagePeer::APP_MSG_STATUS => 15, AppMessagePeer::APP_MSG_STATUS_ID => 16, AppMessagePeer::APP_MSG_ATTACH => 17, AppMessagePeer::APP_MSG_SEND_DATE => 18, AppMessagePeer::APP_MSG_SHOW_MESSAGE => 19, AppMessagePeer::APP_MSG_ERROR => 20, AppMessagePeer::PRO_ID => 21, AppMessagePeer::TAS_ID => 22, AppMessagePeer::APP_NUMBER => 23, ),
+        BasePeer::TYPE_FIELDNAME => array ('APP_MSG_ID' => 0, 'APP_MSG_UID' => 1, 'MSG_UID' => 2, 'APP_UID' => 3, 'DEL_INDEX' => 4, 'APP_MSG_TYPE' => 5, 'APP_MSG_TYPE_ID' => 6, 'APP_MSG_SUBJECT' => 7, 'APP_MSG_FROM' => 8, 'APP_MSG_TO' => 9, 'APP_MSG_BODY' => 10, 'APP_MSG_DATE' => 11, 'APP_MSG_CC' => 12, 'APP_MSG_BCC' => 13, 'APP_MSG_TEMPLATE' => 14, 'APP_MSG_STATUS' => 15, 'APP_MSG_STATUS_ID' => 16, 'APP_MSG_ATTACH' => 17, 'APP_MSG_SEND_DATE' => 18, 'APP_MSG_SHOW_MESSAGE' => 19, 'APP_MSG_ERROR' => 20, 'PRO_ID' => 21, 'TAS_ID' => 22, 'APP_NUMBER' => 23, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, )
     );
 
     /**
@@ -227,6 +230,8 @@ abstract class BaseAppMessagePeer
      */
     public static function addSelectColumns(Criteria $criteria)
     {
+
+        $criteria->addSelectColumn(AppMessagePeer::APP_MSG_ID);
 
         $criteria->addSelectColumn(AppMessagePeer::APP_MSG_UID);
 

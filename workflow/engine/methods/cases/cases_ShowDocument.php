@@ -1,4 +1,5 @@
 <?php
+
 /**
  * cases_ShowDocument.php
  *
@@ -50,7 +51,7 @@ if (!empty($_SESSION['GUEST_USER']) && $_SESSION['GUEST_USER'] === RBAC::GUEST_U
 }
 $access = $RBAC->userCanAccess('PM_FOLDERS_ALL') != 1 && defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0;
 if ($access && $isGuestUser === false) {
-    if (!$oAppDocument->canDownloadInput($_SESSION['USER_LOGGED'], $_GET['a'], $docVersion)) {
+    if ((isset($_SESSION['USER_LOGGED']) && !$oAppDocument->canDownloadInput($_SESSION['USER_LOGGED'], $_GET['a'], $docVersion)) || !isset($_SESSION['USER_LOGGED'])) {
         G::header('Location: /errors/error403.php?url=' . urlencode($_SERVER['REQUEST_URI']));
         die();
     }

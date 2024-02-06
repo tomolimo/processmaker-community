@@ -42,7 +42,10 @@ try {
     foreach ($triggerLibraryO as $keyLibrary => $libraryObj) {
         $libraryName = $libraryObj->info["name"];
         $libraryIcon = (isset($libraryObj->info["icon"]) && ($libraryObj->info["icon"] != "")) ? $libraryObj->info["icon"] : "/images/browse.gif";
-        $libraryDescription = trim(str_replace("*", "", implode(" ", $libraryObj->info["description"])));
+        $libraryDescription = "";
+        if (isset($libraryObj->info["description"])) {
+            $libraryDescription = trim(str_replace("*", "", implode(" ", $libraryObj->info["description"])));
+        }
         $triggerCount = count($libraryObj->methods);
 
         if ($triggerCount > 0) {
@@ -58,7 +61,10 @@ try {
             foreach ($libraryObj->methods as $methodName => $methodObject) {
                 $methodName = $methodObject->info["name"];
                 $methodLabel = $methodObject->info["label"];
-                $methodDescription = trim(str_replace("*", "", implode(" ", $methodObject->info["description"])));
+                $methodDescription = "";
+                if (isset($libraryObj->info["description"])) {
+                    $methodDescription = trim(str_replace("*", "", implode(" ", $methodObject->info["description"])));
+                }
 
                 $oAux1 = $oNode->addChild($keyLibrary . "-" . $methodName, "<table><tr><td nowrap=\"nowrap\"><span style=\"cursor: pointer;\"><a class=\"linkInBlue\" href=\"javascript:;\" onclick=\"currentPopupWindow.remove(); triggerNewWizard('$methodName' , '$keyLibrary'); return false;\">" . $methodLabel . " (" . $methodName . ")</a></span></td></tr><tr><td><i>" . $methodDescription . "</i><br></span></td></tr></table>", array("nodeType" => "child"));
             }

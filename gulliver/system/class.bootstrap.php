@@ -220,7 +220,7 @@ class Bootstrap
                     return false;
                 }
                 if ($localPath != 'jsMethod') {
-                    $realPath = $localPath . $match[1];
+                    $realPath = $localPath . (isset($match[1]) ? $match[1] : '');
                 } else {
                     $realPath = $localPath;
                 }
@@ -362,12 +362,6 @@ class Bootstrap
      */
     public static function parseURI($uri, array $arrayFriendlyUri = null)
     {
-        // *** process the $_POST with magic_quotes enabled
-        // The magic_quotes_gpc feature has been DEPRECATED as of PHP 5.3.0.
-        if (get_magic_quotes_gpc() === 1) {
-            $_POST = g::strip_slashes($_POST);
-        }
-
         $aRequestUri = explode('/', $uri);
         $args = self::parseNormalUri($aRequestUri, $arrayFriendlyUri);
 
@@ -484,6 +478,7 @@ class Bootstrap
         if (!is_file(PATH_LANGUAGECONT . 'translation.en')) {
             return null;
         }
+        global $translation;
         // load the translations table
         require_once(PATH_LANGUAGECONT . 'translation.en');
         $defaultTranslations = $translation;
@@ -495,7 +490,6 @@ class Bootstrap
             $foreignTranslations = $translation;
         }
 
-        global $translation;
         if (defined("SHOW_UNTRANSLATED_AS_TAG") && SHOW_UNTRANSLATED_AS_TAG != 0) {
             $translation = $foreignTranslations;
         } else {
@@ -516,7 +510,7 @@ class Bootstrap
      * @param  array list plugins active
      * @return void
      */
-    public static function LoadTranslationPlugins($lang = SYS_LANG, $listPluginsActive)
+    public static function LoadTranslationPlugins($lang = SYS_LANG, $listPluginsActive = [])
     {
         if (! (is_array($listPluginsActive))) {
             return null;
@@ -812,10 +806,11 @@ class Bootstrap
     public static function streamCSSBigFile($filename)
     {
         header('Content-Type: text/css');
+        header('X-Content-Type-Options: nosniff');
 
         //First get Skin info
         $filenameParts = explode("-", $filename);
-        $skinName = $filenameParts[0];
+        $skinName = empty($filenameParts[0]) ? 'base' : $filenameParts[0];
         $skinVariant = "skin";
 
         if (isset($filenameParts[1])) {
@@ -838,9 +833,12 @@ class Bootstrap
                 $configurationFile = PATH_CUSTOM_SKINS . $skinName . PATH_SEP . 'config.xml';
             }
 
-            if (! is_file($configurationFile)) {
+            if (!is_file($configurationFile)) {
                 $configurationFile = Bootstrap::ExpandPath("skinEngine") . $skinName . PATH_SEP . 'config.xml';
             }
+        }
+        if (!file_exists($configurationFile)) {
+            $configurationFile = Bootstrap::ExpandPath("skinEngine") . 'base' . PATH_SEP . 'config.xml';
         }
 
         $mtime = date('U');
@@ -975,7 +973,7 @@ class Bootstrap
             header('Content-Disposition: attachment; filename="' . $downloadFileName . '"');
         }
         header('Content-Type: ' . $contentType);
-
+        header('X-Content-Type-Options: nosniff');
         // if userAgent (BROWSER) is MSIE we need special headers to avoid MSIE
         // behaivor.
         $userAgent = strtolower($_SERVER ['HTTP_USER_AGENT']);
@@ -2638,7 +2636,7 @@ class Bootstrap
                 $langServer = $locale['LOCALE'];
                 $language = explode('-', $langServer);
                 $language = head($language);
-                if ($language === $acceptLanguage) {
+                if ($language === $acceptLanguage || $langServer === $acceptLanguage) {
                     $inLang = true;
                     break;
                 }
@@ -2679,7 +2677,7 @@ class Bootstrap
         $context = [
             'ip' => G::getIpAddress(),
             'workspace' => config('system.workspace', 'Undefined Workspace'),
-            'timeZone' => DateTime::convertUtcToTimeZone(date('Y-m-d H:m:s')),
+            'timeZone' => DateTime::convertUtcToTimeZone(date('Y-m-d H:i:s')),
             'usrUid' => G::LoadTranslation('UID_UNDEFINED_USER')
         ];
         $context = array_merge($context, $extraParams);
@@ -2793,5 +2791,16 @@ class Bootstrap
             'url' => $_SERVER["REQUEST_URI"] ?? ''
         ];
         self::registerMonolog($channel, $level, $message, $context);
+    }
+
+    /**
+     * Build the options for a cookie, according to the system configuration and values optionally sent to this method
+     *
+     * @param array $options
+     * @return array
+     */
+    public static function buildCookieOptions(array $options = [])
+    {
+        return System::buildCookieOptions($options);
     }
 }

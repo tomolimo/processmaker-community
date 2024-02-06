@@ -1,4 +1,7 @@
 <?php
+
+use ProcessMaker\Model\Process;
+
 /**
  * This page is the WebEntry Access Point.
  */
@@ -18,6 +21,14 @@ $configuration = $conf->getConfiguration(
 $userInformationFormat = isset($outResult['format']) ? $outResult['format'] :
     '@lastName, @firstName (@userName)';
 $webEntryModel = \WebEntryPeer::retrieveByPK($weUid);
+if (!Process::isActive($webEntryModel->getProUid(), 'PRO_UID')) {
+    $G_PUBLISH = new Publisher();
+    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', [
+        'MESSAGE' => G::LoadTranslation('ID_THE_WEBSITE_CAN_NOT_BE_REACHED')
+    ]);
+    G::RenderPage('publish', 'blank');
+    exit();
+}
 ?>
 <html>
     <head>
@@ -25,6 +36,8 @@ $webEntryModel = \WebEntryPeer::retrieveByPK($weUid);
         <title><?php echo htmlentities($webEntryModel->getWeCustomTitle()); ?></title>
         <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
         <META HTTP-EQUIV="Expires" CONTENT="-1">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <script src="/js/bluebird/bluebird.min.js"></script>
         <?php
             $oHeadPublisher = headPublisher::getSingleton();
@@ -355,7 +368,8 @@ $webEntryModel = \WebEntryPeer::retrieveByPK($weUid);
                                 data: {
                                     action: 'startCase',
                                     processId: processUid,
-                                    taskId: tasUid
+                                    taskId: tasUid,
+                                    actionFrom: 'webEntry'
                                 },
                                 success: function (data) {
                                     data.TAS_UID = tasUid;

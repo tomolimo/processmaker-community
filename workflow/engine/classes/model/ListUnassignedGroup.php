@@ -13,6 +13,7 @@ require_once 'classes/model/om/BaseListUnassignedGroup.php';
  * long as it does not already exist in the output directory.
  *
  * @package    classes.model
+ * @deprecated Class deprecated in Release 3.6.0
  */
 // @codingStandardsIgnoreStart
 class ListUnassignedGroup extends BaseListUnassignedGroup

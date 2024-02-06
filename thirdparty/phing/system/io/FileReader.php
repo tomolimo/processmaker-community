@@ -105,7 +105,9 @@ class FileReader extends Reader {
 
         if (false === @fclose($this->fd)) {
             // FAILED.
-            $msg = "Cannot fclose " . $this->file->__toString() . " $php_errormsg";
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Error closing the file.';
+            $msg = "Cannot fclose " . $this->file->__toString() . " $errorMessage";
             throw new IOException($msg);
         } else {
             $this->fd = null;
@@ -114,23 +116,16 @@ class FileReader extends Reader {
     }
 
     function open() {
-        global $php_errormsg;
-        
         if ($this->fd === null) {
             $this->fd = @fopen($this->file->getAbsolutePath(), "rb");
         }
 
         if ($this->fd === false) {
             // fopen FAILED.
-            // Add error from php to end of log message. $php_errormsg.
-            $msg = "Cannot fopen ".$this->file->getAbsolutePath().". $php_errormsg";
-            throw new IOException($msg);
-        }
-
-        if (false) {
-            // Locks don't seem to work on windows??? HELP!!!!!!!!!
-            // if (FALSE === @flock($fp, LOCK_EX)) { // FAILED.
-            $msg = "Cannot acquire flock on $file. $php_errormsg";
+            // Add error from php to end of log message.
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Error opening the file.';
+            $msg = "Cannot fopen ".$this->file->getAbsolutePath().". $errorMessage";
             throw new IOException($msg);
         }
 
@@ -161,7 +156,9 @@ class FileReader extends Reader {
 
         $fileSize = $this->file->length();
         if ($fileSize === false) {
-            $msg = "Cannot get filesize of " . $this->file->__toString() . " $php_errormsg";
+            $lastError = error_get_last();
+            $errorMessage = $lastError['message'] ?? 'Error reading the file.';
+            $msg = "Cannot get filesize of " . $this->file->__toString() . " $errorMessage";
             throw new IOException($msg);
         }
         $rBuffer = fread($this->fd, $fileSize);

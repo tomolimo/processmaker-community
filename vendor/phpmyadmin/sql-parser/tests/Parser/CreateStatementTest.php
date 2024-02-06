@@ -13,12 +13,12 @@ class CreateStatementTest extends TestCase
      *
      * @dataProvider createProvider
      */
-    public function testCreate($test)
+    public function testCreate($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function createProvider()
+    public function createProvider(): array
     {
         return [
             ['parser/parseCreateDatabase'],
@@ -28,6 +28,7 @@ class CreateStatementTest extends TestCase
             ['parser/parseCreateFunctionErr2'],
             ['parser/parseCreateFunctionErr3'],
             ['parser/parseCreateProcedure'],
+            ['parser/parseCreateProcedure1'],
             ['parser/parseCreateProcedure2'],
             ['parser/parseCreateSchema'],
             ['parser/parseCreateSchemaErr'],
@@ -48,13 +49,21 @@ class CreateStatementTest extends TestCase
             ['parser/parseCreateTableLike'],
             ['parser/parseCreateTableSpatial'],
             ['parser/parseCreateTableTimestampWithPrecision'],
+            ['parser/parseCreateTableEnforcedCheck'],
+            ['parser/parseCreateTableNotEnforcedCheck'],
+            ['parser/parseCreateTableWithInvisibleKey'],
             ['parser/parseCreateTrigger'],
             ['parser/parseCreateUser'],
             ['parser/parseCreateView'],
             ['parser/parseCreateView2'],
+            ['parser/parseCreateView3'],
+            ['parser/parseCreateView4'],
+            ['parser/parseCreateViewMultiple'],
             ['parser/parseCreateViewWithoutQuotes'],
             ['parser/parseCreateViewWithQuotes'],
             ['parser/parseCreateViewWithWrongSyntax'],
+            ['parser/parseCreateViewWithUnion'],
+            ['parser/parseCreateViewAsWithAs'],
         ];
     }
 }

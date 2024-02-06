@@ -1,8 +1,9 @@
 <?php
 namespace ProcessMaker\Services\Api\Project;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Luracast\Restler\RestException;
+use ProcessMaker\Model\Task;
+use ProcessMaker\Services\Api;
 
 /**
  * Project\MessageEventDefinition Api Controller
@@ -38,7 +39,9 @@ class MessageEventDefinition extends Api
     {
         try {
             $response = $this->messageEventDefinition->getMessageEventDefinitions($prj_uid);
-
+            foreach ($response as $index => $val){
+                $response[$index]['tas_def_title'] = Task::getTaskDefTitle($response[$index]['evn_uid']);
+            }
             return $response;
         } catch (\Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());

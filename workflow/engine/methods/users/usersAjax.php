@@ -14,6 +14,18 @@ try {
 
     // Executing the action
     switch ($action) {
+        case 'timeZoneParameters':
+            $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
+
+            $data = array_map(function ($value) {
+                return ["value" => $value, "text" => $value];
+            }, DateTimeZone::listIdentifiers());
+            $result = [
+                "timeZoneList" => $data,
+                "systemTimeZone" => $arraySystemConfiguration['time_zone']
+            ];
+            print(G::json_encode($result));
+            break;
         case 'countryList':
             $c = new Criteria();
             $c->add(IsoCountryPeer::IC_UID, null, Criteria::ISNOTNULL);
@@ -120,7 +132,7 @@ try {
             $data = [['LAN_ID' => '', 'LAN_NAME' => '- ' . G::LoadTranslation('ID_NONE') . ' -']];
             foreach ($languages as $lang) {
                 $data[] = [
-                    'LAN_ID' => $lang['LOCALE'],
+                    'LAN_ID' => strtolower($lang['LAN_ID']),
                     'LAN_NAME' => $lang['LANGUAGE']
                 ];
             }
@@ -200,9 +212,6 @@ try {
                     } catch (Exception $e) {
                         $result->success = false;
                         $result->fileError = true;
-
-                        echo G::json_encode($result);
-                        exit(0);
                     }
                 }
 
@@ -376,6 +385,18 @@ try {
                         break;
                 }
             }
+            //remove duplicate elements
+            foreach ($rows as &$row) {
+                $row = json_encode($row);
+            }
+            $rows = array_unique($rows);
+            foreach ($rows as &$row) {
+                $row = json_decode($row);
+            }
+            //sort items by name for pretty view
+            usort($rows, function($a, $b) {
+                return $a->name > $b->name;
+            });
             print(G::json_encode($rows));
             break;
         case 'defaultCasesMenuOptionList':
@@ -412,7 +433,7 @@ try {
                 $fields['DESCRIPTION'] = G::LoadTranslation('ID_PASSWORD_COMPLIES_POLICIES') . '</span>';
                 $fields['STATUS'] = true;
             }
-            $span = '<span style="color: ' . $color . '; font: 9px tahoma,arial,helvetica,sans-serif;">';
+            $span = '<span style="color: ' . $color . '; ">';
             $gif = '<img width="13" height="13" border="0" src="' . $img . '">';
             $fields['DESCRIPTION'] = $span . $gif . $fields['DESCRIPTION'];
             print(G::json_encode($fields));
@@ -438,8 +459,7 @@ try {
             if (is_array($row) || $_POST['NEW_USERNAME'] == '') {
                 $color = 'red';
                 $img = '/images/delete.png';
-                $dataVar = ['USER_ID' => $_POST['NEW_USERNAME']];
-                $text = G::LoadTranslation('ID_USERNAME_ALREADY_EXISTS', $dataVar);
+                $text = G::LoadTranslation('ID_INVALID_USERNAME');
                 $text = ($_POST['NEW_USERNAME'] == '') ? G::LoadTranslation('ID_MSG_ERROR_USR_USERNAME') : $text;
                 $response['exists'] = true;
             } else {
@@ -449,7 +469,7 @@ try {
                 $response['exists'] = false;
             }
 
-            $span = '<span style="color: ' . $color . '; font: 9px tahoma,arial,helvetica,sans-serif;">';
+            $span = '<span style="color: ' . $color . '; ">';
             $gif = '<img width="13" height="13" border="0" src="' . $img . '">';
             $response['descriptionText'] = $span . $gif . $text . '</span>';
             echo G::json_encode($response);

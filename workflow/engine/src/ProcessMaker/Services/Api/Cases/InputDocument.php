@@ -6,6 +6,7 @@ use Luracast\Restler\RestException;
 use ProcessMaker\BusinessModel\Cases\InputDocument as CasesInputDocument;
 use ProcessMaker\BusinessModel\Cases as BussinessModelCases;
 use ProcessMaker\Services\Api;
+use ProcessMaker\Util\DateTime;
 
 /**
  * Cases\InputDocument Api Controller
@@ -14,6 +15,10 @@ use ProcessMaker\Services\Api;
  */
 class InputDocument extends Api
 {
+    private $arrayFieldIso8601 = [
+        'app_doc_create_date',
+        'app_doc_create_user',
+    ];
     /**
      * @url GET /:app_uid/input-documents
      *
@@ -55,7 +60,7 @@ class InputDocument extends Api
             //Return
             return $response;
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -69,11 +74,11 @@ class InputDocument extends Api
     {
         try {
             $userUid = $this->getUserId();
-            $inputDocument = new \ProcessMaker\BusinessModel\Cases\InputDocument();
+            $inputDocument = new CasesInputDocument();
             $response = $inputDocument->getCasesInputDocument($app_uid, $userUid, $inp_doc_uid);
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -88,9 +93,9 @@ class InputDocument extends Api
     public function doDownloadInputDocument($app_uid, $app_doc_uid, $v = 0)
     {
         try {
-            $inputDocument = new \ProcessMaker\BusinessModel\Cases\InputDocument();
+            $inputDocument = new CasesInputDocument();
             $inputDocument->downloadInputDocument($app_uid, $app_doc_uid, $v);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
@@ -107,12 +112,12 @@ class InputDocument extends Api
     public function doDeleteInputDocument($app_uid, $del_index, $app_doc_uid)
     {
         try {
-            $inputDocument = new \ProcessMaker\BusinessModel\Cases\InputDocument();
+            $inputDocument = new CasesInputDocument();
 
             $inputDocument->throwExceptionIfHaventPermissionToDelete($app_uid, $del_index, $this->getUserId(), $app_doc_uid);
             $inputDocument->throwExceptionIfInputDocumentNotExistsInSteps($app_uid, $del_index, $app_doc_uid);
             $inputDocument->removeInputDocument($app_doc_uid);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
@@ -141,11 +146,11 @@ class InputDocument extends Api
         try {
             $userUid = $this->getUserId();
 
-            $inputDocument = new \ProcessMaker\BusinessModel\Cases\InputDocument();
+            $inputDocument = new CasesInputDocument();
             $response = $inputDocument->addCasesInputDocument($app_uid, $tas_uid, $app_doc_comment, $inp_doc_uid, $userUid, false);
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -162,7 +167,7 @@ class InputDocument extends Api
         try {
             $inputDocument = new CasesInputDocument();
             $response = $inputDocument->getAllVersionByDocUid($app_uid, $app_doc_uid);
-            return $response;
+            return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }

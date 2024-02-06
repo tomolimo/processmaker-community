@@ -7,6 +7,7 @@ use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\Application;
 use ProcessMaker\Model\Fields;
+use ProcessMaker\Util\BatchProcessWithIndexes;
 
 require_once 'classes/model/om/BaseAdditionalTables.php';
 
@@ -395,11 +396,24 @@ class AdditionalTables extends BaseAdditionalTables
         }
     }
 
-    public function getAllData($sUID, $start = null, $limit = null, $keyOrderUppercase = true, $filter = '', $appUid = false, $search = '')
+    /**
+     * Get all data
+     *
+     * @param string $uid
+     * @param int $start
+     * @param int $limit
+     * @param bool $keyOrderUppercase
+     * @param string $filter
+     * @param bool $appUid
+     * @param string $search
+     *
+     * @return array
+     */
+    public static function getAllData($uid, $start = null, $limit = null, $keyOrderUppercase = true, $filter = '', $appUid = false, $search = '')
     {
         $conf = Bootstrap::getSystemConfiguration();
         $addTab = new AdditionalTables();
-        $aData = $addTab->load($sUID, true);
+        $aData = $addTab->load($uid, true);
         if (!isset($_SESSION['PROCESS'])) {
             $_SESSION["PROCESS"] = $aData['PRO_UID'];
         }
@@ -452,7 +466,7 @@ class AdditionalTables extends BaseAdditionalTables
         if ($filter != '' && is_string($filter)) {
             $stringOr = '';
             $closure = '';
-            $types = array('INTEGER', 'BIGINT', 'SMALLINT', 'TINYINT', 'DECIMAL', 'DOUBLE', 'FLOAT', 'REAL');
+            $types = ['INTEGER', 'BIGINT', 'SMALLINT', 'TINYINT', 'DECIMAL', 'DOUBLE', 'FLOAT', 'REAL', 'BOOLEAN'];
             foreach ($aData['FIELDS'] as $aField) {
                 if (($appUid == false && $aField['FLD_NAME'] != 'APP_UID') || ($appUid == true)) {
                     if (in_array($aField['FLD_TYPE'], $types)) {
@@ -758,36 +772,41 @@ class AdditionalTables extends BaseAdditionalTables
 
     /**
      * Populate the report table with all case data
-     * @param string $sType
-     * @param string $sProcessUid
-     * @param string $sGrid
-     * @return number
+     *
+     * @param string $tableName
+     * @param string $connection
+     * @param string $type
+     * @param string $processUid
+     * @param string $gridKey
+     * @param string $addTabUid
      */
-    public function populateReportTable($tableName, $sConnection = 'rp', $type = 'NORMAL', $processUid = '', $gridKey = '', $addTabUid = '')
+    public function populateReportTable($tableName, $connection = 'rp', $type = 'NORMAL', $processUid = '', $gridKey = '', $addTabUid = '')
     {
+        // Initializing variables
         $this->className = $className = $this->getPHPName($tableName);
         $this->classPeerName = $classPeerName = $className . 'Peer';
-        DB::statement("TRUNCATE " . $tableName);
         $workspace = config("system.workspace");
-        $pathWorkspace = PATH_WORKSPACE;
         $n = Application::count();
 
-        //batch process
+        // Truncate report table
+        DB::statement("TRUNCATE " . $tableName);
+
+        // Batch process
         $config = System::getSystemConfiguration();
         $reportTableBatchRegeneration = $config['report_table_batch_regeneration'];
 
-        $size = $n;
-        $start = 0;
-        $limit = $reportTableBatchRegeneration;
+        // Initializing more variables
+        $batch = new BatchProcessWithIndexes($n);
+        $batch->setLimit($reportTableBatchRegeneration);
 
-        for ($i = 1; $start < $size; $i++) {
-            $closure = function() use($workspace, $tableName, $type, $processUid, $gridKey, $addTabUid, $className, $pathWorkspace, $start, $limit) {
+        // Creating jobs
+        $batch->process(function ($start, $limit) use ($workspace, $tableName, $type, $processUid, $gridKey, $addTabUid) {
+            $closure = function () use ($workspace, $tableName, $type, $processUid, $gridKey, $addTabUid, $start, $limit) {
                 $workspaceTools = new WorkspaceTools($workspace);
-                $workspaceTools->generateDataReport($tableName, $type, $processUid, $gridKey, $addTabUid, $className, $pathWorkspace, $start, $limit);
+                $workspaceTools->generateDataReport($tableName, $type, $processUid, $gridKey, $addTabUid, $start, $limit);
             };
             JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
-            $start = $i * $limit;
-        }
+        });
     }
 
     /**
@@ -996,7 +1015,7 @@ class AdditionalTables extends BaseAdditionalTables
      * @param array $process
      * @return array
      */
-    public function getAll($start = 0, $limit = 20, $filter = '', $process = null)
+    public static function getAll($start = 0, $limit = 20, $filter = '', $process = null)
     {
         $criteria = new Criteria('workflow');
         $criteria->addSelectColumn(AdditionalTablesPeer::ADD_TAB_UID);

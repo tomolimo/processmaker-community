@@ -67,12 +67,11 @@ Ext.onReady(function () {
                 Ext.getCmp('gd').setValue(getFieldOutput(response.gd.version, response.gd.result));
                 Ext.getCmp('multibyte').setValue(getFieldOutput(response.multibyte.version, response.multibyte.result));
                 Ext.getCmp('soap').setValue(getFieldOutput(response.soap.version, response.soap.result));
-                Ext.getCmp("mcrypt").setValue(getFieldOutput(response.mcrypt.version, response.mcrypt.result));
                 Ext.getCmp('ldap').setValue(getFieldOutput(response.ldap.version, response.ldap.result));
                 Ext.getCmp('memory').setValue(getFieldOutput(response.memory.version, response.memory.result));
 
                 dbReq = response.mysql.result;
-                phpReq = response.php.result && response.curl.result && response.dom.result && response.gd.result && response.multibyte.result && response.soap.result && response.memory.result && response.mcrypt.result;
+                phpReq = response.php.result && response.curl.result && response.dom.result && response.gd.result && response.multibyte.result && response.soap.result && response.memory.result;
                 wizard.onClientValidation(0, dbReq && phpReq);
                 wizard.showLoadMask(false);
             },
@@ -322,11 +321,6 @@ Ext.onReady(function () {
                                 xtype: 'displayfield',
                                 fieldLabel: _('ID_PROCESSMAKER_REQUIREMENTS_SOAP'),
                                 id: 'soap'
-                            },
-                            {
-                                xtype: "displayfield",
-                                id: "mcrypt",
-                                fieldLabel: _("ID_MCRYPT_SUPPORT")
                             },
                             {
                                 xtype: 'displayfield',
@@ -639,7 +633,7 @@ Ext.onReady(function () {
                                         value: 'root',
                                         allowBlank: false,
                                         validator: function (v) {
-                                            var t = /^[.a-zA-Z_\-]+$/;
+                                            var t = /^[0-9\.a-zA-Z_\-]+$/;
                                             return t.test(v);
                                         },
                                         listeners: {

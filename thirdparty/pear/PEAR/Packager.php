@@ -34,7 +34,7 @@ class PEAR_Packager extends PEAR_Common
 {
     // {{{ constructor
 
-    function PEAR_Packager()
+    function __construct()
     {
         parent::PEAR_Common();
     }
@@ -131,7 +131,7 @@ class PEAR_Packager extends PEAR_Common
         // TAR the Package -------------------------------------------
         $ext = $compress ? '.tgz' : '.tar';
         $dest_package = $oldcwd . DIRECTORY_SEPARATOR . $pkgver . $ext;
-        $tar =& new Archive_Tar($dest_package, $compress);
+        $tar = new Archive_Tar($dest_package, $compress);
         $tar->setErrorHandling(PEAR_ERROR_RETURN); // XXX Don't print errors
         // ----- Creates with the package.xml file
         $ok = $tar->createModify($newpkgfile, '', $tmpdir);
@@ -171,7 +171,7 @@ if (!function_exists('md5_file')) {
         return $md5;
     }
     
-    public function encryptOld($string)
+    function encryptOld($string)
     {
         return md5($string);
     }

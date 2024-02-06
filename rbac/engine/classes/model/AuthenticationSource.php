@@ -16,6 +16,8 @@
   */
 require_once 'classes/model/om/BaseAuthenticationSource.php';
 
+use Illuminate\Support\Facades\Log;
+
  /**
   * @package  rbac-classes-model
   */
@@ -61,6 +63,11 @@ class AuthenticationSource extends BaseAuthenticationSource {
       }
     }
     $aData['AUTH_SOURCE_DATA'] = (is_array($aData['AUTH_SOURCE_DATA']) ? serialize($aData['AUTH_SOURCE_DATA']) : $aData['AUTH_SOURCE_DATA']);
+
+    // Removing sensitive data
+    $loggableData = $aData;
+    unset($loggableData['AUTH_SOURCE_PASSWORD']);
+
     $oConnection = Propel::getConnection(AuthenticationSourcePeer::DATABASE_NAME);
   	try {
   	  $oAuthenticationSource = new AuthenticationSource();
@@ -69,6 +76,7 @@ class AuthenticationSource extends BaseAuthenticationSource {
         $oConnection->begin();
         $iResult = $oAuthenticationSource->save();
         $oConnection->commit();
+        Log::channel(':ldapAdvanced')->info("create", Bootstrap::context($loggableData));
 
         $authSourceServerName = isset($aData['AUTH_SOURCE_SERVER_NAME']) ? ' - Server Name: '.$aData['AUTH_SOURCE_SERVER_NAME'] : '';
         $authSourcePort = isset($aData['AUTH_SOURCE_PORT']) ? ' - Port: '.$aData['AUTH_SOURCE_PORT'] : '';
@@ -113,6 +121,11 @@ class AuthenticationSource extends BaseAuthenticationSource {
     $authSourceFilter = isset($aData['AUTH_SOURCE_DATA']['AUTH_SOURCE_ADDITIONAL_FILTER']) ? ' - Aditional Filter: '.$aData['AUTH_SOURCE_DATA']['AUTH_SOURCE_ADDITIONAL_FILTER'] : '';
 
     $aData['AUTH_SOURCE_DATA'] = (is_array($aData['AUTH_SOURCE_DATA']) ? serialize($aData['AUTH_SOURCE_DATA']) : $aData['AUTH_SOURCE_DATA']);
+
+    // Removing sensitive data
+    $loggableData = $aData;
+    unset($loggableData['AUTH_SOURCE_PASSWORD']);
+
     $oConnection = Propel::getConnection(AuthenticationSourcePeer::DATABASE_NAME);
   	try {
   	  $oAuthenticationSource = AuthenticationSourcePeer::retrieveByPK($aData['AUTH_SOURCE_UID']);
@@ -122,6 +135,7 @@ class AuthenticationSource extends BaseAuthenticationSource {
   	    	$oConnection->begin();
           $iResult = $oAuthenticationSource->save();
           $oConnection->commit();
+          Log::channel(':ldapAdvanced')->info("update", Bootstrap::context($loggableData));
           G::auditLog("UpdateAuthSource", "Authentication Source Name: ".$aData['AUTH_SOURCE_NAME']." - Authentication Source ID: (".$aData['AUTH_SOURCE_UID'].") ".$authSourceServerName.$authSourcePort.$authSourceEnabledTLS.$authSourceVersion.$authSourceBaseDn.$authAnonymous.$authSourceSearchUser.$authSourceLdapType.$authSourceIdentifier.$authSourceFilter);
           return $iResult;
   	    }
@@ -131,6 +145,7 @@ class AuthenticationSource extends BaseAuthenticationSource {
   	      foreach($aValidationFailures as $oValidationFailure) {
             $sMessage .= $oValidationFailure->getMessage() . '<br />';
           }
+          Log::channel(':ldapAdvanced')->error($sMessage, Bootstrap::context($loggableData));
           throw(new Exception('The registry cannot be updated!<br />'.$sMessage));
   	    }
       }
@@ -158,6 +173,7 @@ class AuthenticationSource extends BaseAuthenticationSource {
   	  	$oConnection->begin();
         $iResult = $oAuthenticationSource->delete();
         $oConnection->commit();
+        Log::channel(':ldapAdvanced')->info("remove", Bootstrap::context(["AUTH_SOURCE_UID" => $sUID]));
 
         G::auditLog("DeleteAuthSource", "Authentication Source Name: ".$authenticationSource['AUTH_SOURCE_NAME']." Authentication Source ID: (".$sUID.") ");
         return $iResult;

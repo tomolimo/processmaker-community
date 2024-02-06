@@ -54,7 +54,7 @@ $G_TMP_MENU->AddIdRawOption(
 $G_TMP_MENU->AddIdRawOption(
     'CASES_SENT',
     'casesListExtJs?action=sent',
-    G::LoadTranslation('ID_SENT'),
+    G::LoadTranslation('ID_MY_CASES'),
     'icon-cases-outbox.png'
 );
 $G_TMP_MENU->AddIdRawOption(
@@ -86,7 +86,7 @@ if ($RBAC->userCanAccess('PM_SUPERVISOR') == 1) {
     $G_TMP_MENU->AddIdRawOption(
         'CASES_TO_REVISE',
         'casesListExtJs?action=to_revise',
-        G::LoadTranslation('ID_TO_REVISE'),
+        G::LoadTranslation('ID_SUPERVISING'),
         'document-review.png'
     );
 }

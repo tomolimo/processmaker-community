@@ -81,8 +81,6 @@ PMUI.ui.Window.prototype.open = function () {
         if (!$.stackModal) {
             $.stackModal = [];
         }
-        $(the_window).find(":tabbable:eq(0)").focus(1);
-        $(the_window).find(":tabbable:eq(1)").focus(1);
         $.stackModal.push(the_window);
         $(the_window).on("keydown", function (event) {
             if (event.keyCode !== $.ui.keyCode.TAB) {
@@ -92,10 +90,14 @@ PMUI.ui.Window.prototype.open = function () {
                 first = tabbables.filter(':first'),
                 last = tabbables.filter(':last');
             if (event.target === last[0] && !event.shiftKey) {
-                first.focus(1);
+                if (first && first.focus) {
+                    first.focus(1);
+                }
                 return false;
             } else if (event.target === first[0] && event.shiftKey) {
-                last.focus(1);
+                if (last && last.focus) {
+                    last.focus(1);
+                }
                 return false;
             }
             if (event.which === PMDesigner.keyCodeF5) {

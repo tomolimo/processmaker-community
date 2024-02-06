@@ -13,12 +13,12 @@ class DeleteStatementTest extends TestCase
      *
      * @dataProvider deleteProvider
      */
-    public function testDelete($test)
+    public function testDelete($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function deleteProvider()
+    public function deleteProvider(): array
     {
         return [
             ['parser/parseDelete'],

@@ -195,6 +195,12 @@ class Users extends BaseUsers
                 $role = $roles->loadByCode($aFields['USR_ROLE']);
                 $aFields['USR_ROLE_NAME'] = $role['ROL_NAME'];
 
+                if (empty($aFields['USR_DEFAULT_LANG'])) {
+                    $aFields['USR_DEFAULT_LANG'] = 'en';
+                }
+                //sometimes the USR_DEFAULT_LANG value is made up, it is formatted in order to find the value.
+                $explode = explode('-', $aFields['USR_DEFAULT_LANG']);
+                $aFields['USR_DEFAULT_LANG'] = strtolower($explode[0]);
                 $translations = new Language();
                 $translation  = $translations->loadByCode($aFields['USR_DEFAULT_LANG']);
                 $aFields['USR_DEFAULT_LANG_NAME'] = $translation['LANGUAGE_NAME'];
@@ -283,92 +289,101 @@ class Users extends BaseUsers
 
     /**
      * Get all information about the user
+     * 
      * @param string $userUid
+     * 
      * @return array $arrayData
      * @throws Exception
     */
-    public function getAllInformation ($userUid)
+    public function getAllInformation($userUid)
     {
         if (!isset($userUid) || empty($userUid)) {
-            throw (new Exception('$userUid is empty.'));
+            throw new Exception('$userUid is empty.');
         }
         if (RBAC::isGuestUserUid($userUid)) {
-            throw new Exception(G::LoadTranslation("ID_USER_CAN_NOT_UPDATE", array($userUid)));
+            throw new Exception(G::LoadTranslation("ID_USER_CAN_NOT_UPDATE", [$userUid]));
             return false;
         }
 
         try {
-            $aFields = $this->load( $userUid );
+            $fields = $this->load($userUid);
 
             $c = new Criteria( "workflow" );
-            $c->add( IsoCountryPeer::IC_UID, $aFields["USR_COUNTRY"] );
-            $rs = IsoCountryPeer::doSelectRS( $c );
-            $rs->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $rs->next();
-            $rowC = $rs->getRow();
-
-            $c->clearSelectColumns();
-            $c->add( IsoSubdivisionPeer::IC_UID, $aFields["USR_COUNTRY"] );
-            $c->add( IsoSubdivisionPeer::IS_UID, $aFields["USR_CITY"] );
-            $rs = IsoSubdivisionPeer::doSelectRS( $c );
-            $rs->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $rs->next();
-            $rowS = $rs->getRow();
-
-            $c->clearSelectColumns();
-            $c->add( IsoLocationPeer::IC_UID, $aFields["USR_COUNTRY"] );
-            $c->add( IsoLocationPeer::IL_UID, $aFields["USR_LOCATION"] );
-            $rs = IsoLocationPeer::doSelectRS( $c );
-            $rs->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $rs->next();
-            $rowL = $rs->getRow();
+            $rowC = [];
+            if (!empty($fields["USR_COUNTRY"])) {
+                $c->add(IsoCountryPeer::IC_UID, $fields["USR_COUNTRY"]);
+                $rs = IsoCountryPeer::doSelectRS($c);
+                $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rs->next();
+                $rowC = $rs->getRow();
+            }
+            $rowS = [];
+            if (!empty($fields["USR_CITY"])) {
+                $c->clearSelectColumns();
+                $c->add(IsoSubdivisionPeer::IC_UID, $fields["USR_COUNTRY"]);
+                $c->add(IsoSubdivisionPeer::IS_UID, $fields["USR_CITY"]);
+                $rs = IsoSubdivisionPeer::doSelectRS($c);
+                $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rs->next();
+                $rowS = $rs->getRow();
+            }
+            $rowL = [];
+            if (!empty($fields["USR_LOCATION"])) {
+                $c->clearSelectColumns();
+                $c->add(IsoLocationPeer::IC_UID, $fields["USR_COUNTRY"]);
+                $c->add(IsoLocationPeer::IL_UID, $fields["USR_LOCATION"]);
+                $rs = IsoLocationPeer::doSelectRS($c);
+                $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+                $rs->next();
+                $rowL = $rs->getRow();
+            }
 
             //Calendar
             $calendar = new Calendar();
-            $calendarInfo = $calendar->getCalendarFor( $userUid, $userUid, $userUid );
-            $aFields["USR_CALENDAR"] = ($calendarInfo["CALENDAR_APPLIED"] != "DEFAULT") ? $calendarInfo["CALENDAR_UID"] : "";
+            $calendarInfo = $calendar->getCalendarFor($userUid, $userUid, $userUid);
+            $fields["USR_CALENDAR"] = ($calendarInfo["CALENDAR_APPLIED"] != "DEFAULT") ? $calendarInfo["CALENDAR_UID"] : "";
 
             //Photo
             $pathPhoto = PATH_IMAGES_ENVIRONMENT_USERS . $userUid . ".gif";
 
-            if (! file_exists( $pathPhoto )) {
+            if (!file_exists($pathPhoto)) {
                 $pathPhoto = PATH_HOME . "public_html" . PATH_SEP . "images" . PATH_SEP . "user.gif";
             }
 
             //Data
-            $arrayData = array ();
-            $arrayData["username"] = $aFields["USR_USERNAME"];
-            $arrayData["firstname"] = $aFields["USR_FIRSTNAME"];
-            $arrayData["lastname"] = $aFields["USR_LASTNAME"];
-            $arrayData["mail"] = $aFields["USR_EMAIL"];
-            $arrayData["address"] = $aFields["USR_ADDRESS"];
-            $arrayData["zipcode"] = $aFields["USR_ZIP_CODE"];
-            $arrayData["country"] = $rowC["IC_NAME"];
-            $arrayData["state"] = $rowS["IS_NAME"];
-            $arrayData["location"] = $rowL["IL_NAME"];
-            $arrayData["phone"] = $aFields["USR_PHONE"];
-            $arrayData["fax"] = $aFields["USR_FAX"];
-            $arrayData["cellular"] = $aFields["USR_CELLULAR"];
-            $arrayData["birthday"] = $aFields["USR_BIRTHDAY"];
-            $arrayData["position"] = $aFields["USR_POSITION"];
-            $arrayData["replacedby"] = $aFields["USR_REPLACED_BY"];
-            if(strlen($arrayData["replacedby"] != 0)){
-                $oUser = UsersPeer::retrieveByPK( $arrayData["replacedby"] );
+            $arrayData = [];
+            $arrayData["username"] = $fields["USR_USERNAME"];
+            $arrayData["firstname"] = $fields["USR_FIRSTNAME"];
+            $arrayData["lastname"] = $fields["USR_LASTNAME"];
+            $arrayData["mail"] = $fields["USR_EMAIL"];
+            $arrayData["address"] = $fields["USR_ADDRESS"];
+            $arrayData["zipcode"] = $fields["USR_ZIP_CODE"];
+            $arrayData["country"] = !empty($rowC) ? $rowC["IC_NAME"] : '';
+            $arrayData["state"] = !empty($rowS) ? $rowS["IS_NAME"] : '';
+            $arrayData["location"] = !empty($rowL) ? $rowL["IL_NAME"]: '';
+            $arrayData["phone"] = $fields["USR_PHONE"];
+            $arrayData["fax"] = $fields["USR_FAX"];
+            $arrayData["cellular"] = $fields["USR_CELLULAR"];
+            $arrayData["birthday"] = $fields["USR_BIRTHDAY"];
+            $arrayData["position"] = $fields["USR_POSITION"];
+            $arrayData["replacedby"] = $fields["USR_REPLACED_BY"];
+            if(strlen($arrayData["replacedby"]) != 0) {
+                $oUser = UsersPeer::retrieveByPK($arrayData["replacedby"]);
                 $arrayData["replacedbyfullname"] = $oUser->getUsrFirstname() . ' ' . $oUser->getUsrLastname();
             }
-            $arrayData["duedate"] = $aFields["USR_DUE_DATE"];
-            $arrayData["calendar"] = $aFields["USR_CALENDAR"];
-            if(strlen($aFields["USR_CALENDAR"] != 0)){
-                $arrayData["calendarname"] = $calendar->calendarName( $aFields["USR_CALENDAR"] );
+            $arrayData["duedate"] = $fields["USR_DUE_DATE"];
+            $arrayData["calendar"] = $fields["USR_CALENDAR"];
+            if(strlen($fields["USR_CALENDAR"]) != 0) {
+                $arrayData["calendarname"] = $calendar->calendarName($fields["USR_CALENDAR"]);
             }
-            $arrayData["status"] = $aFields["USR_STATUS"];
-            $arrayData["department"] = $aFields["DEP_UID"];
+            $arrayData["status"] = $fields["USR_STATUS"];
+            $arrayData["department"] = $fields["DEP_UID"];
             if (strlen($arrayData["department"]) != 0) {
-                $oDepart = DepartmentPeer::retrieveByPk( $arrayData["department"] );
+                $oDepart = DepartmentPeer::retrieveByPk($arrayData["department"]);
                 $arrayData["departmentname"] = $oDepart->getDepTitle();
             }
-            $arrayData["reportsto"] = $aFields["USR_REPORTS_TO"];
-            $arrayData["userexperience"] = $aFields["USR_UX"];
+            $arrayData["reportsto"] = $fields["USR_REPORTS_TO"];
+            $arrayData["userexperience"] = $fields["USR_UX"];
             $arrayData["photo"] = $pathPhoto;
 
             return $arrayData;

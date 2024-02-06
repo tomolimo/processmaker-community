@@ -141,7 +141,7 @@ class ObjectPermission extends BaseObjectPermission
      *
      * @return array
      */
-    public function verifyDynaformAssigObjectPermission ($dynUid, $proUid)
+    public static function verifyDynaformAssigObjectPermission ($dynUid, $proUid)
     {
         $res = array();
         $oCriteria = new Criteria();

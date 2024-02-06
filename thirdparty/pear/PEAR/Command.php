@@ -119,7 +119,7 @@ class PEAR_Command
             return PEAR::raiseError("unknown command `$command'");
         }
         $ui = PEAR_Command::getFrontendObject();
-        $obj = &new $class($ui, $config);
+        $obj = new $class($ui, $config);
         return $obj;
     }
 
@@ -131,7 +131,7 @@ class PEAR_Command
     function &getFrontendObject()
     {
         if (empty($GLOBALS['_PEAR_Command_uiobject'])) {
-            $GLOBALS['_PEAR_Command_uiobject'] = &new $GLOBALS['_PEAR_Command_uiclass'];
+            $GLOBALS['_PEAR_Command_uiobject'] = new $GLOBALS['_PEAR_Command_uiclass'];
         }
         return $GLOBALS['_PEAR_Command_uiobject'];
     }
@@ -152,7 +152,7 @@ class PEAR_Command
         $file = str_replace('_', '/', $uiclass) . '.php';
         @include_once $file;
         if (class_exists(strtolower($uiclass))) {
-            $obj = &new $uiclass;
+            $obj = new $uiclass;
             // quick test to see if this class implements a few of the most
             // important frontend methods
             if (method_exists($obj, 'userConfirm')) {
@@ -209,7 +209,7 @@ class PEAR_Command
             $GLOBALS['_PEAR_Command_commandlist'] = array();
         }
         while ($entry = readdir($dp)) {
-            if ($entry{0} == '.' || substr($entry, -4) != '.php' || $entry == 'Common.php') {
+            if ($entry[0] == '.' || substr($entry, -4) != '.php' || $entry == 'Common.php') {
                 continue;
             }
             $class = "PEAR_Command_".substr($entry, 0, -4);
@@ -217,7 +217,7 @@ class PEAR_Command
             include_once $file;
             // List of commands
             if (empty($GLOBALS['_PEAR_Command_objects'][$class])) {
-                $GLOBALS['_PEAR_Command_objects'][$class] = &new $class($ui, $config);
+                $GLOBALS['_PEAR_Command_objects'][$class] = new $class($ui, $config);
             }
             $implements = $GLOBALS['_PEAR_Command_objects'][$class]->getCommands();
             foreach ($implements as $command => $desc) {

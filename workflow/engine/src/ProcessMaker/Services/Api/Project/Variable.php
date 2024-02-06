@@ -18,17 +18,22 @@ class Variable extends Api
      * @url GET /:prj_uid/process-variables
      *
      * @param string $prj_uid {@min 32}{@max 32}
+     * 
+     * @return array
+     * @throws RestException
+     * 
+     * @access protected
+     * @class AccessControl {@permission PM_FACTORY}
      */
     public function doGetVariables($prj_uid)
     {
         try {
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $response = $variable->getVariables($prj_uid);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -42,6 +47,12 @@ class Variable extends Api
      * @param int $start {@from path}
      * @param int $limit {@from path}
      * @param string $search {@from path}
+     * 
+     * @return array
+     * @throws RestException
+     * 
+     * @access protected
+     * @class AccessControl {@permission PM_FACTORY}
      */
     public function doGetVariablesByType($prj_uid, $typeVariable, $start = null, $limit = null, $search = null)
     {
@@ -65,7 +76,7 @@ class Variable extends Api
 
             return $response;
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -74,17 +85,22 @@ class Variable extends Api
      *
      * @param string $var_uid {@min 32}{@max 32}
      * @param string $prj_uid {@min 32}{@max 32}
+     * 
+     * @return array
+     * @throws RestException
+     * 
+     * @access protected
+     * @class AccessControl {@permission PM_FACTORY}
      */
     public function doGetVariable($var_uid, $prj_uid)
     {
         try {
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $response = $variable->getVariable($prj_uid, $var_uid);
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -107,15 +123,13 @@ class Variable extends Api
     {
         try {
             $request_data = (array)($request_data);
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $arrayData = $variable->create($prj_uid, $request_data);
-
             $response = $arrayData;
 
             return $response;
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -137,31 +151,32 @@ class Variable extends Api
     {
         try {
             $request_data = (array)($request_data);
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $variable->update($prj_uid, $var_uid, $request_data);
 
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * @url DELETE /:prj_uid/process-variable/:var_uid
-     * @access protected
-     * @class AccessControl {@permission PM_FACTORY}
      *
      * @param string $prj_uid {@min 32}{@max 32}
      * @param string $var_uid {@min 32}{@max 32}
+     * 
+     * @throws RestException
+     * 
+     * @access protected
+     * @class AccessControl {@permission PM_FACTORY}
      */
     public function doDeleteVariable($prj_uid, $var_uid)
     {
         try {
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $variable->delete($prj_uid, $var_uid);
-        } catch (\Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -185,14 +200,12 @@ class Variable extends Api
     public function doPostVariableExecuteSql($prj_uid, $var_name = '', $request_data = array())
     {
         try {
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $arrayData = ($request_data != null)? $variable->executeSql($prj_uid, $var_name, $request_data) : $variable->executeSql($prj_uid, $var_name);
-
             $response = $arrayData;
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
@@ -217,14 +230,12 @@ class Variable extends Api
     public function doPostVariableExecuteSqlSuggest($prj_uid, $var_name, $request_data)
     {
         try {
-            $variable = new \ProcessMaker\BusinessModel\Variable();
-
+            $variable = new BmVariable();
             $arrayData = ($request_data != null)? $variable->executeSqlSuggest($prj_uid, $var_name, $request_data) : $variable->executeSqlSuggest($prj_uid, $var_name);
-
             $response = $arrayData;
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }

@@ -48,7 +48,7 @@ try {
         $array['APP_TITLE'] = $Fields['TITLE'];
         $array['USR_USERNAME'] = $Fields['APP_DATA']['USR_USERNAME'];
         $array['USER_ENV'] = $Fields['APP_DATA']['SYS_SYS'];
-        $array['DATEPRINT'] = date( 'Y-m-d H:m:s' );
+        $array['DATEPRINT'] = date( 'Y-m-d H:i:s' );
     }
     $array['APP_PROCESS'] = $sProcess;
 

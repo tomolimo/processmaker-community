@@ -34,6 +34,12 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
     protected $note_id;
 
     /**
+     * The value for the app_number field.
+     * @var        int
+     */
+    protected $app_number = 0;
+
+    /**
      * The value for the app_uid field.
      * @var        string
      */
@@ -116,6 +122,17 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
     {
 
         return $this->note_id;
+    }
+
+    /**
+     * Get the [app_number] column value.
+     * 
+     * @return     int
+     */
+    public function getAppNumber()
+    {
+
+        return $this->app_number;
     }
 
     /**
@@ -270,6 +287,28 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
         }
 
     } // setNoteId()
+
+    /**
+     * Set the value of [app_number] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setAppNumber($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->app_number !== $v || $v === 0) {
+            $this->app_number = $v;
+            $this->modifiedColumns[] = AppNotesPeer::APP_NUMBER;
+        }
+
+    } // setAppNumber()
 
     /**
      * Set the value of [app_uid] column.
@@ -517,32 +556,34 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
 
             $this->note_id = $rs->getInt($startcol + 0);
 
-            $this->app_uid = $rs->getString($startcol + 1);
+            $this->app_number = $rs->getInt($startcol + 1);
 
-            $this->usr_uid = $rs->getString($startcol + 2);
+            $this->app_uid = $rs->getString($startcol + 2);
 
-            $this->note_date = $rs->getTimestamp($startcol + 3, null);
+            $this->usr_uid = $rs->getString($startcol + 3);
 
-            $this->note_content = $rs->getString($startcol + 4);
+            $this->note_date = $rs->getTimestamp($startcol + 4, null);
 
-            $this->note_type = $rs->getString($startcol + 5);
+            $this->note_content = $rs->getString($startcol + 5);
 
-            $this->note_availability = $rs->getString($startcol + 6);
+            $this->note_type = $rs->getString($startcol + 6);
 
-            $this->note_origin_obj = $rs->getString($startcol + 7);
+            $this->note_availability = $rs->getString($startcol + 7);
 
-            $this->note_affected_obj1 = $rs->getString($startcol + 8);
+            $this->note_origin_obj = $rs->getString($startcol + 8);
 
-            $this->note_affected_obj2 = $rs->getString($startcol + 9);
+            $this->note_affected_obj1 = $rs->getString($startcol + 9);
 
-            $this->note_recipients = $rs->getString($startcol + 10);
+            $this->note_affected_obj2 = $rs->getString($startcol + 10);
+
+            $this->note_recipients = $rs->getString($startcol + 11);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 11; // 11 = AppNotesPeer::NUM_COLUMNS - AppNotesPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 12; // 12 = AppNotesPeer::NUM_COLUMNS - AppNotesPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating AppNotes object", $e);
@@ -750,33 +791,36 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
                 return $this->getNoteId();
                 break;
             case 1:
-                return $this->getAppUid();
+                return $this->getAppNumber();
                 break;
             case 2:
-                return $this->getUsrUid();
+                return $this->getAppUid();
                 break;
             case 3:
-                return $this->getNoteDate();
+                return $this->getUsrUid();
                 break;
             case 4:
-                return $this->getNoteContent();
+                return $this->getNoteDate();
                 break;
             case 5:
-                return $this->getNoteType();
+                return $this->getNoteContent();
                 break;
             case 6:
-                return $this->getNoteAvailability();
+                return $this->getNoteType();
                 break;
             case 7:
-                return $this->getNoteOriginObj();
+                return $this->getNoteAvailability();
                 break;
             case 8:
-                return $this->getNoteAffectedObj1();
+                return $this->getNoteOriginObj();
                 break;
             case 9:
-                return $this->getNoteAffectedObj2();
+                return $this->getNoteAffectedObj1();
                 break;
             case 10:
+                return $this->getNoteAffectedObj2();
+                break;
+            case 11:
                 return $this->getNoteRecipients();
                 break;
             default:
@@ -800,16 +844,17 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
         $keys = AppNotesPeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getNoteId(),
-            $keys[1] => $this->getAppUid(),
-            $keys[2] => $this->getUsrUid(),
-            $keys[3] => $this->getNoteDate(),
-            $keys[4] => $this->getNoteContent(),
-            $keys[5] => $this->getNoteType(),
-            $keys[6] => $this->getNoteAvailability(),
-            $keys[7] => $this->getNoteOriginObj(),
-            $keys[8] => $this->getNoteAffectedObj1(),
-            $keys[9] => $this->getNoteAffectedObj2(),
-            $keys[10] => $this->getNoteRecipients(),
+            $keys[1] => $this->getAppNumber(),
+            $keys[2] => $this->getAppUid(),
+            $keys[3] => $this->getUsrUid(),
+            $keys[4] => $this->getNoteDate(),
+            $keys[5] => $this->getNoteContent(),
+            $keys[6] => $this->getNoteType(),
+            $keys[7] => $this->getNoteAvailability(),
+            $keys[8] => $this->getNoteOriginObj(),
+            $keys[9] => $this->getNoteAffectedObj1(),
+            $keys[10] => $this->getNoteAffectedObj2(),
+            $keys[11] => $this->getNoteRecipients(),
         );
         return $result;
     }
@@ -845,33 +890,36 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
                 $this->setNoteId($value);
                 break;
             case 1:
-                $this->setAppUid($value);
+                $this->setAppNumber($value);
                 break;
             case 2:
-                $this->setUsrUid($value);
+                $this->setAppUid($value);
                 break;
             case 3:
-                $this->setNoteDate($value);
+                $this->setUsrUid($value);
                 break;
             case 4:
-                $this->setNoteContent($value);
+                $this->setNoteDate($value);
                 break;
             case 5:
-                $this->setNoteType($value);
+                $this->setNoteContent($value);
                 break;
             case 6:
-                $this->setNoteAvailability($value);
+                $this->setNoteType($value);
                 break;
             case 7:
-                $this->setNoteOriginObj($value);
+                $this->setNoteAvailability($value);
                 break;
             case 8:
-                $this->setNoteAffectedObj1($value);
+                $this->setNoteOriginObj($value);
                 break;
             case 9:
-                $this->setNoteAffectedObj2($value);
+                $this->setNoteAffectedObj1($value);
                 break;
             case 10:
+                $this->setNoteAffectedObj2($value);
+                break;
+            case 11:
                 $this->setNoteRecipients($value);
                 break;
         } // switch()
@@ -902,43 +950,47 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[1], $arr)) {
-            $this->setAppUid($arr[$keys[1]]);
+            $this->setAppNumber($arr[$keys[1]]);
         }
 
         if (array_key_exists($keys[2], $arr)) {
-            $this->setUsrUid($arr[$keys[2]]);
+            $this->setAppUid($arr[$keys[2]]);
         }
 
         if (array_key_exists($keys[3], $arr)) {
-            $this->setNoteDate($arr[$keys[3]]);
+            $this->setUsrUid($arr[$keys[3]]);
         }
 
         if (array_key_exists($keys[4], $arr)) {
-            $this->setNoteContent($arr[$keys[4]]);
+            $this->setNoteDate($arr[$keys[4]]);
         }
 
         if (array_key_exists($keys[5], $arr)) {
-            $this->setNoteType($arr[$keys[5]]);
+            $this->setNoteContent($arr[$keys[5]]);
         }
 
         if (array_key_exists($keys[6], $arr)) {
-            $this->setNoteAvailability($arr[$keys[6]]);
+            $this->setNoteType($arr[$keys[6]]);
         }
 
         if (array_key_exists($keys[7], $arr)) {
-            $this->setNoteOriginObj($arr[$keys[7]]);
+            $this->setNoteAvailability($arr[$keys[7]]);
         }
 
         if (array_key_exists($keys[8], $arr)) {
-            $this->setNoteAffectedObj1($arr[$keys[8]]);
+            $this->setNoteOriginObj($arr[$keys[8]]);
         }
 
         if (array_key_exists($keys[9], $arr)) {
-            $this->setNoteAffectedObj2($arr[$keys[9]]);
+            $this->setNoteAffectedObj1($arr[$keys[9]]);
         }
 
         if (array_key_exists($keys[10], $arr)) {
-            $this->setNoteRecipients($arr[$keys[10]]);
+            $this->setNoteAffectedObj2($arr[$keys[10]]);
+        }
+
+        if (array_key_exists($keys[11], $arr)) {
+            $this->setNoteRecipients($arr[$keys[11]]);
         }
 
     }
@@ -954,6 +1006,10 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
 
         if ($this->isColumnModified(AppNotesPeer::NOTE_ID)) {
             $criteria->add(AppNotesPeer::NOTE_ID, $this->note_id);
+        }
+
+        if ($this->isColumnModified(AppNotesPeer::APP_NUMBER)) {
+            $criteria->add(AppNotesPeer::APP_NUMBER, $this->app_number);
         }
 
         if ($this->isColumnModified(AppNotesPeer::APP_UID)) {
@@ -1054,6 +1110,8 @@ abstract class BaseAppNotes extends BaseObject implements Persistent
     {
 
         $copyObj->setNoteId($this->note_id);
+
+        $copyObj->setAppNumber($this->app_number);
 
         $copyObj->setAppUid($this->app_uid);
 

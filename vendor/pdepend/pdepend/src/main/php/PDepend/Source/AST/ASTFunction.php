@@ -56,7 +56,8 @@ class ASTFunction extends AbstractASTCallable
     /**
      * The parent namespace for this function.
      *
-     * @var   \PDepend\Source\AST\ASTNamespace|null
+     * @var ASTNamespace|null
+     *
      * @since 0.10.0
      */
     private $namespace = null;
@@ -64,7 +65,8 @@ class ASTFunction extends AbstractASTCallable
     /**
      * The currently used builder context.
      *
-     * @var   \PDepend\Source\Builder\BuilderContext|null
+     * @var BuilderContext|null
+     *
      * @since 0.10.0
      */
     protected $context = null;
@@ -80,8 +82,10 @@ class ASTFunction extends AbstractASTCallable
     /**
      * Sets the currently active builder context.
      *
-     * @param  \PDepend\Source\Builder\BuilderContext $context Current builder context.
-     * @return \PDepend\Source\AST\ASTFunction
+     * @param BuilderContext $context Current builder context.
+     *
+     * @return $this
+     *
      * @since  0.10.0
      */
     public function setContext(BuilderContext $context)
@@ -93,7 +97,7 @@ class ASTFunction extends AbstractASTCallable
     /**
      * Returns the parent namespace for this function.
      *
-     * @return \PDepend\Source\AST\ASTNamespace
+     * @return ASTNamespace
      */
     public function getNamespace()
     {
@@ -103,7 +107,6 @@ class ASTFunction extends AbstractASTCallable
     /**
      * Sets the parent namespace for this function.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespace
      * @return void
      */
     public function setNamespace(ASTNamespace $namespace)
@@ -116,6 +119,7 @@ class ASTFunction extends AbstractASTCallable
      * Resets the namespace associated with this function node.
      *
      * @return void
+     *
      * @since  0.10.2
      */
     public function unsetNamespace()
@@ -129,6 +133,7 @@ class ASTFunction extends AbstractASTCallable
      * function does not belong to a namespace.
      *
      * @return string
+     *
      * @since  0.10.0
      */
     public function getNamespaceName()
@@ -139,7 +144,6 @@ class ASTFunction extends AbstractASTCallable
     /**
      * ASTVisitor method for node tree traversal.
      *
-     * @param  \PDepend\Source\ASTVisitor\ASTVisitor $visitor
      * @return void
      */
     public function accept(ASTVisitor $visitor)
@@ -153,6 +157,7 @@ class ASTFunction extends AbstractASTCallable
      * cached for all function instances.
      *
      * @return array<string>
+     *
      * @since  0.10.0
      */
     public function __sleep()
@@ -167,6 +172,7 @@ class ASTFunction extends AbstractASTCallable
      * context.
      *
      * @return void
+     *
      * @since  0.10.0
      */
     public function __wakeup()

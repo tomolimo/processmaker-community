@@ -352,7 +352,7 @@ trait PluginStructure
                     $valueField = [];
                     if ((array_key_exists($name, $fieldsInTable) && $fieldsInTable[$name])) {
                         foreach ($fieldsInTable[$name] as $index => $item) {
-                            if (method_exists($item, 'getAttributes')) {
+                            if (is_object($item) && method_exists($item, 'getAttributes')) {
                                 $valueField[$index] = $item->getAttributes();
                             } else {
                                 $valueField[$index] = $item;

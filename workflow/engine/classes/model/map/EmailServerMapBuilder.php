@@ -99,7 +99,7 @@ class EmailServerMapBuilder
 
         $tMap->addColumn('OAUTH_CLIENT_SECRET', 'OauthClientSecret', 'string', CreoleTypes::VARCHAR, true, 512);
 
-        $tMap->addColumn('OAUTH_REFRESH_TOKEN', 'OauthRefreshToken', 'string', CreoleTypes::VARCHAR, true, 512);
+        $tMap->addColumn('OAUTH_REFRESH_TOKEN', 'OauthRefreshToken', 'string', CreoleTypes::LONGVARCHAR, false, null);
 
     } // doBuild()
 

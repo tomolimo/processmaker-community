@@ -13,12 +13,12 @@ class TransactionStatementTest extends TestCase
      *
      * @dataProvider transactionProvider
      */
-    public function testTransaction($test)
+    public function testTransaction($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function transactionProvider()
+    public function transactionProvider(): array
     {
         return [
             ['parser/parseTransaction'],

@@ -47,13 +47,13 @@ class Test extends Api
             'age' => ''
         );
 
-        if (array_key_exists('name', $request_data)) {
+        if (is_array($request_data) && array_key_exists('name', $request_data)) {
             $this->data[$id]['name'] = $request_data['name'];
         }
-        if (array_key_exists('lastname', $request_data)) {
+        if (is_array($request_data) && array_key_exists('lastname', $request_data)) {
             $this->data[$id]['lastname'] = $request_data['lastname'];
         }
-        if (array_key_exists('age', $request_data)) {
+        if (is_array($request_data) && array_key_exists('age', $request_data)) {
             $this->data[$id]['age'] = $request_data['age'];
         }
 
@@ -65,13 +65,13 @@ class Test extends Api
     public function put($id, $request_data = null)
     {
         if (array_key_exists($id, $this->data)) {
-            if (array_key_exists('name', $request_data)) {
+            if (is_array($request_data) && array_key_exists('name', $request_data)) {
                 $this->data[$id]['name'] = $request_data['name'];
             }
-            if (array_key_exists('lastname', $request_data)) {
+            if (is_array($request_data) && array_key_exists('lastname', $request_data)) {
                 $this->data[$id]['lastname'] = $request_data['lastname'];
             }
-            if (array_key_exists('age', $request_data)) {
+            if (is_array($request_data) && array_key_exists('age', $request_data)) {
                 $this->data[$id]['age'] = $request_data['age'];
             }
             $this->saveData();

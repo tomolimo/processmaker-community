@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use App\Helpers\Workspace;
+use App\Console\Commands\WorkCommand;
 use App\Log\LogManager;
+use Illuminate\Queue\Worker;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
@@ -17,8 +18,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('workspace', function() {
-            return new Workspace();
+        $this->app->bind(WorkCommand::class, function ($app) {
+            $isDownForMaintenance = function () {
+                return $this->app->isDownForMaintenance();
+            };
+            return new WorkCommand(App::make(Worker::class, ['isDownForMaintenance' => $isDownForMaintenance]), $app['cache.store']);
         });
 
         $this->app->singleton('log', function ($app) {

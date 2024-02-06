@@ -681,6 +681,24 @@ jQuery.fn.extend({
             field.showColumn(parseInt(col, 10));
         }
     },
+    /**
+     * Helper to disable grid delete row feature
+     */
+    disableDelete: function(){
+        var field = getFieldById(this.attr("id")) || null;
+        if (field && field.model.get("type") === "grid") {
+            field.hideButton("delete");
+        }
+    },
+    /**
+     * Helper to enable grid delete row feature
+     */
+    enableDelete: function(){
+        var field = getFieldById(this.attr("id")) || null;
+        if (field && field.model.get("type") === "grid") {
+            field.showButton("delete");
+        }
+    },
     getData: function () {
         var field = getFieldById(this.attr("id")) || null, val;
         if (field && field.getData) {
@@ -3784,7 +3802,7 @@ xCase.extendNamespace = function (path, newClass) {
             userInfo: "light/user/data"
         };
         this.options.links = {
-            showDocument: "{server}/sys{workspace}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v={version}"
+            showDocument: "{server}/sys{workspace}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v={version}&p=1"
         };
         this.options.urlBase = "{server}/api/1.0/{workspace}/{endPointPath}";
         this.options.urlBaseStreaming = "{server}/sys{workspace}/{endPointPath}";
@@ -4256,6 +4274,39 @@ xCase.extendNamespace = function (path, newClass) {
             }
         });
         return resp;
+    };
+    /**
+     * Recovery the images in async mode - light/case/{caseUID}/download64
+     * @param {*} data 
+     * @param {*} fn 
+     */
+    WebServiceManager.prototype.getImages = function (data, fn) {
+        var that = this,
+            method,
+            url,
+            resp = [];
+        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.imageInfo);
+        method = "POST";
+        $.ajax({
+            url: url,
+            type: method,
+            async: true,
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                if (that.options.language !== null) {
+                    xhr.setRequestHeader("Accept-Language", that.options.language);
+                }
+            },
+            success: function (data, textStatus) {
+                resp = data;
+                if (_.isFunction(fn)) {
+                    fn(resp);
+                }
+            }
+        });
+        return null;
     };
 
     WebServiceManager.prototype.restClient = function () {
@@ -6150,6 +6201,8 @@ xCase.extendNamespace = function (path, newClass) {
         this.matrix = {};
         this.dependencies = {};
         this.fields;
+        this.deferredStack = [];
+        this.deferedModels = [];
 
         /**
          * @param {object}: form, Related form
@@ -6358,18 +6411,36 @@ xCase.extendNamespace = function (path, newClass) {
                 type: "joinFork",
                 id: this.getFieldId(modelField) + serial,
                 deleteOnCompletion: true,
-                callback: fn,
+                callback: function() {
+                    fn();
+                },
                 events: evs
             });
+            this.deferredStack = [];
+            this.deferredModels = [];
             this.oneDirectional(modelField, channel, serial);
             PMDynaform.EventBus.emit({
                 channel: "dependencies",
                 event: this.getFieldId(modelField) + serial,
                 payload: ""
             });
+
+            $.when.apply($, that.deferredStack).then(
+                function () {
+                    that. runDeferredSetOnChange();
+                }
+            );
         } else if (_.isFunction(fn)) {
             fn();
         }
+    };
+    /**
+     * Run all deferred setOnchange callbacks
+     */
+    DependentsFieldManager.prototype.runDeferredSetOnChange = function () {
+        _.forEach(this.deferredModels, function (el) {
+            el.runDeferredSetOnChange();
+        });
     };
     /**
      * Create a dependencies callback in asc order
@@ -6391,6 +6462,9 @@ xCase.extendNamespace = function (path, newClass) {
                         events: [{ event: that.getFieldId(modelField) + serial }]
                     });
                 } else {
+                    var dfd = jQuery.Deferred();
+                    that.deferredStack.push(dfd.promise());
+                    that.deferredModels.push(el)
                     PMDynaform.EventBus.subscribe({
                         channel: channel,
                         type: "joinFork",
@@ -6398,7 +6472,9 @@ xCase.extendNamespace = function (path, newClass) {
                         deleteOnCompletion: true,
                         callback: function () {
                             var dt = that.getDependenciesData(el);
-                            el.executeDependency(dt, serial);
+                            el.executeDependency(dt, serial, function (){
+                                dfd.resolve(el);
+                            });
                         },
                         events: [{ event: that.getFieldId(modelField) + serial }]
                     });
@@ -7815,7 +7891,9 @@ xCase.extendNamespace = function (path, newClass) {
                 itemField,
                 itemsField = this.items.asArray(),
                 filesNoUploaded = [],
+                filesWithError = [], 
                 field,
+                errorCollections,
                 hasLoadingFields = false;
 
             if (itemsField.length > 0) {
@@ -7838,7 +7916,13 @@ xCase.extendNamespace = function (path, newClass) {
                     }
                     // Verify if there is getFilesNotUploaded method
                     if (field.getFilesNotUploaded && typeof field.getFilesNotUploaded === "function") {
-                      filesNoUploaded = filesNoUploaded.concat(field.getFilesNotUploaded());
+                        errorCollections = field.getFilesNotUploaded();
+                        if (errorCollections.uploading) {
+                            filesNoUploaded = filesNoUploaded.concat(errorCollections.uploading);
+                        }
+                        if (field.model.get("required") && errorCollections.error) {
+                            filesWithError = filesWithError.concat(errorCollections.error);
+                        }
                     }
                 }
             }
@@ -7849,6 +7933,10 @@ xCase.extendNamespace = function (path, newClass) {
             if (filesNoUploaded.length > 0) {
                 formValid = false;
                 this.showFilesNoUploaded(filesNoUploaded);
+            }
+            if (filesWithError.length > 0) {
+                formValid = false;
+                this.showFilesWithError(filesWithError);
             }
             if (formValid) {
                 for (i = 0; i < itemsField.length; i += 1) {
@@ -8023,6 +8111,30 @@ xCase.extendNamespace = function (path, newClass) {
                     message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) didn't upload correctly," +
                         " remove the files from the form or upload the files again".translate();
                 }
+                nameFiles.push(files[i].name);
+            }
+            if (files.length > 0) {
+                message = message.replace("{%%%FILES%%%}", nameFiles);
+                flashModel = {
+                    message: message,
+                    startAnimation: 1000,
+                    type: "danger",
+                    duration: 4000,
+                    absoluteTop: true
+                };
+                this.project.flashMessage(flashModel);
+            }
+        },
+        /**
+         * Show flash message about the files with errors.
+         * @param files
+         */
+        showFilesWithError: function (files) {
+            var flashModel,
+                i,
+                nameFiles = [],
+                message = "Form cannot be submitted because file(s) {%%%FILES%%%} (are/is) invalid".translate();
+            for (i = 0; i < files.length; i += 1) {
                 nameFiles.push(files[i].name);
             }
             if (files.length > 0) {
@@ -8721,26 +8833,8 @@ xCase.extendNamespace = function (path, newClass) {
         showQueryFailMessage: function () {
             var message = "There was an error when populating the values of field".translate();
             message = message + " " + this.model.get("label");
-            message = '<strong>Error: </strong>' + message;
-            $.notify({
-                // options
-                message: message
-            }, {
-                // settings
-                type: 'danger',
-                spacing: 10,
-                allow_dismiss: true,
-                delay: 6000,
-                timer: 1000,
-                placement: {
-                    from: "top",
-                    align: "center"
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                }
-            });
+            message = 'Error: ' + message;
+            console.error(message);
             return this;
         },
         /**
@@ -9518,8 +9612,13 @@ xCase.extendNamespace = function (path, newClass) {
                                 }
                                 break;
                             default:
-                                control = $(cell.$el.find(".form-control"));
-                                hiddenControls = element.find("input[type='hidden']");
+                                if (type === "datetime") {
+                                    hiddenControls = $(cell.$el.find(".form-control"));
+                                    control= element.find("input[type='hidden']");
+                                } else {
+                                    control = $(cell.$el.find(".form-control"));
+                                    hiddenControls = element.find("input[type='hidden']");
+                                }
                                 if (this.model.get("variable") !== "") {
                                     nameControl = "form" + this.changeIdField(this.model.get("name"), i + 1, cell.model.get("columnName"));
                                     nameHiddeControl = nameControl.substring(0, nameControl.length - 1).concat("_label]");
@@ -10533,6 +10632,7 @@ xCase.extendNamespace = function (path, newClass) {
                         cell.model.set("toDraw", true);
                         break;
                     case 'dropdown':
+                        cell.model.set({toDraw: false, silent:true});
                         cell.model.set({ "data": fixedData }, { silent: true });
                         cell.model.set("toDraw", true);
                         break;
@@ -11185,7 +11285,7 @@ xCase.extendNamespace = function (path, newClass) {
          */
         hideButton: function (buttonText) {
             var itemNewButton = this.$el.find(".pmdynaform-grid-newitem"),
-                itemDeleteButton = this.$el.find("button.glyphicon.glyphicon-trash");
+                itemDeleteButton = this.$el.find("div.glyphicon.glyphicon-trash");
             switch (buttonText) {
                 case "add":
                     if (this.model.get("addRow") && itemNewButton.is(":visible")) {
@@ -11208,7 +11308,7 @@ xCase.extendNamespace = function (path, newClass) {
          */
         showButton: function (buttonText) {
             var itemNewButton = this.$el.find(".pmdynaform-grid-newitem"),
-                itemDeleteButton = this.$el.find("button.glyphicon.glyphicon-trash");
+                itemDeleteButton = this.$el.find("div.glyphicon.glyphicon-trash");
             switch (buttonText) {
                 case "add":
                     if (this.model.get("addRow") && !itemNewButton.is(":visible")) {
@@ -14239,7 +14339,7 @@ xCase.extendNamespace = function (path, newClass) {
     PMDynaform.extendNamespace("PMDynaform.view.CheckGroupR", CheckGroupView);
 }());
 
-(function () {
+(function() {
     var CheckBoxView = PMDynaform.view.Field.extend({
         item: null,
         template: _.template($("#tpl-checkbox_yes_no").html()),
@@ -14250,21 +14350,20 @@ xCase.extendNamespace = function (path, newClass) {
          * change input: when the change the control input type checkbox is fired the method handler event Listener
          */
         events: {
-            "change input": "eventListener",
-            "keydown input": "preventEvents"
+            "change input": "changeSelectEvent",
+            "keydown input": "preventEvents",
         },
         firstLoad: false,
         /**
          * Default function
          */
-        onChangeCallback: function () {
-        },
+        onChangeCallback: function() {},
         /**
          * Sets onChangeCallback function
          * @param fn
          * @returns {CheckBoxView}
          */
-        setOnChange: function (fn) {
+        setOnChange: function(fn) {
             if (typeof fn === "function") {
                 this.onChangeCallback = fn;
             }
@@ -14274,42 +14373,17 @@ xCase.extendNamespace = function (path, newClass) {
          * Initializes properties
          * @param options
          */
-        initialize: function (options) {
+        initialize: function(options) {
             this.form = options.form ? options.form : null;
             this.previousValue = this.getValue();
-            this.model.on("change:value", this.eventListener, this);
             this.model.on("change:toDraw", this.render, this);
+            this.model.on(
+                "change:dependencyDidUpdate",
+                this.afterDependencyDidUpdateView,
+                this
+            );
         },
-        /**
-         * Listens to change event
-         * @param event
-         * @param value
-         */
-        eventListener: function (event, value) {
-            this.onChange(event, value);
-            this.checkBinding();
-        },
-        /**
-         * Executes onChangeCallback function
-         * @returns {CheckBoxView}
-         */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: JSON.stringify(this.getValue()),
-                    previous: JSON.stringify(this.previousValue)
-                };
-
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
-        },
-        preventEvents: function (event) {
+        preventEvents: function(event) {
             //Validation for the Submit event
             if (event.which === 13) {
                 event.preventDefault();
@@ -14317,9 +14391,8 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        render: function () {
-            var hidden,
-                name;
+        render: function() {
+            var hidden, name;
             this.$el.html(this.template(this.model.toJSON()));
             if (this.model.get("hint") !== "") {
                 this.enableTooltip();
@@ -14331,25 +14404,36 @@ xCase.extendNamespace = function (path, newClass) {
                 name = name.substring(0, name.length - 1).concat("_label]");
                 hidden.name = hidden.id = "form" + name;
             } else {
-                this.$el.find("input[type='hidden']")[0].name = "form[" + this.model.get("name") + "_label]";
+                this.$el.find("input[type='hidden']")[0].name =
+                    "form[" + this.model.get("name") + "_label]";
             }
             if (this.model.get("options").length) {
-                this.$el.find("input[type='checkbox']").eq(0).data({
-                    value: this.model.get("options")[0]["value"],
-                    label: this.model.get("options")[0]["label"]
-                });
-                this.$el.find("input[type='checkbox']").eq(1).data({
-                    value: this.model.get("options")[1]["value"],
-                    label: this.model.get("options")[1]["label"]
-                });
+                this.$el
+                    .find("input[type='checkbox']")
+                    .eq(0)
+                    .data({
+                        value: this.model.get("options")[0]["value"],
+                        label: this.model.get("options")[0]["label"],
+                    });
+                this.$el
+                    .find("input[type='checkbox']")
+                    .eq(1)
+                    .data({
+                        value: this.model.get("options")[1]["value"],
+                        label: this.model.get("options")[1]["label"],
+                    });
             }
             this.setValueHideControl();
             if (this.model.get("name").trim().length === 0) {
                 this.$el.find("input[type='checkbox']").attr("name", "");
                 this.$el.find("input[type='hidden']").attr("name", "");
             }
-            this.updateAccessibility({ ariaLabel: this.model.get("data")["label"] });
-            this.$el.find(".content-print").text(this.model.get("data")["label"]);
+            this.updateAccessibility({
+                ariaLabel: this.model.get("data")["label"],
+            });
+            this.$el
+                .find(".content-print")
+                .text(this.model.get("data")["label"]);
             this.tagControl = this.$el.find(".pmdynaform-checkbox-items");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
@@ -14357,9 +14441,9 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Render checkbox only, it's works in grid mobile 
+         * Render checkbox only, it's works in grid mobile
          */
-        renderView: function () {
+        renderView: function() {
             this.$el.html(this.templateView(this.model.toJSON()));
         },
         /**
@@ -14367,27 +14451,39 @@ xCase.extendNamespace = function (path, newClass) {
          * @param {Object} params
          * @chainable
          */
-        updateAccessibility: function (params) {
+        updateAccessibility: function(params) {
             // for accessibilty arial label
-            if (this.model.get("ariaLabelVisible") && this.model.get("value") === "1") {
-                this.$el.find("input[type='checkbox']").eq(0).attr("aria-label", params.ariaLabel);
+            if (
+                this.model.get("ariaLabelVisible") &&
+                this.model.get("value") === "1"
+            ) {
+                this.$el
+                    .find("input[type='checkbox']")
+                    .eq(0)
+                    .attr("aria-label", params.ariaLabel);
             } else {
-                this.$el.find("input[type='checkbox']").eq(0).removeAttr("aria-label");
+                this.$el
+                    .find("input[type='checkbox']")
+                    .eq(0)
+                    .removeAttr("aria-label");
             }
             return this;
         },
-        validate: function () {
+        validate: function() {
             this.model.set({}, { validate: true });
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
                     this.validator.$el.remove();
-                    this.$el.removeClass('has-error has-feedback');
+                    this.$el.removeClass("has-error has-feedback");
                 }
                 if (!this.model.isValid()) {
                     this.validator = new PMDynaform.view.Validator({
-                        model: this.model.get("validator")
+                        model: this.model.get("validator"),
                     });
-                    this.$el.find(".pmdynaform-control-checkbox-list").parent().append(this.validator.el);
+                    this.$el
+                        .find(".pmdynaform-control-checkbox-list")
+                        .parent()
+                        .append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -14396,11 +14492,12 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
+         * Deprecated
          * This method is fired when the property value is changed
          * @param event: is the event target tag
          * @param value: is the change model when use set method
          */
-        onChange: function (event, value) {
+        onChange: function(event, value) {
             this.updateValues(event, value);
             if (!this.firstLoad) {
                 this.validate();
@@ -14411,24 +14508,26 @@ xCase.extendNamespace = function (path, newClass) {
          * Gets the html control using its class identifier
          * @returns {Object}
          */
-        getHTMLControl: function () {
+        getHTMLControl: function() {
             return this.$el.find(".pmdynaform-control-checkbox-list");
         },
-        setValueHideControl: function () {
+        setValueHideControl: function() {
             var control;
             control = this.$el.find("input[type='hidden']");
             if (this.model.get("dataType") === "boolean") {
                 $(control).val(this.model.get("data")["label"].toString());
             } else {
                 try {
-                    $(control).val(JSON.stringify(this.model.get("data")["label"]));
+                    $(control).val(
+                        JSON.stringify(this.model.get("data")["label"])
+                    );
                 } catch (e) {
                     console.error(e);
                 }
             }
             return this;
         },
-        updateValues: function (event, value) {
+        updateValues: function(event, value) {
             var controlHtml = this.$el.find("input[type='checkbox']"),
                 firstCheckbox = controlHtml.eq(0),
                 secondCheckbox = controlHtml.eq(1),
@@ -14467,32 +14566,177 @@ xCase.extendNamespace = function (path, newClass) {
          * @param value
          * @returns {CheckBoxView}
          */
-        updateDataModel: function (value) {
+        updateDataModel: function(value) {
             this.model.setData(value);
             return this;
         },
-        /**
-         * Call to setValue of Model
-         * @param value
-         * @returns {CheckBoxView}
-         */
-        setValue: function (value) {
-            this.previousValue = this.getValue();
-            this.model.setValue(value);
-            this.firstLoad = false;
-            return this;
-        },
-        getText: function () {
+        getText: function() {
             var data = this.model.get("data");
             return data ? data["label"] : null;
         },
-        getValue: function () {
+        getValue: function() {
             return this.model.getValue();
         },
-        getControl: function () {
+        getControl: function() {
             var htmlControl = this.$el.find("input[type='checkbox']");
             return htmlControl;
-        }
+        },
+        /**
+         * New Methods for implements dependencies
+         * When The select control change value
+         * @param {*} event
+         * @param {*} value
+         * @returns {CheckGroupView}
+         */
+        changeSelectEvent: function(event, value) {
+            var that = this,
+                dt;
+            dt = this.updateView(function() {
+                that.executeChangeCallback();
+                that.validate();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value
+         * @param {*} fn
+         * @returns {CheckGroupView}
+         */
+        changeHelperEvent: function(value, fn) {
+            var that = this;
+            this.updateView(function() {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            }, value);
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * method UPDATE very IMPORTANT
+         * Update only view of checkgroup
+         * @param {function} fn
+         * @param {string} value
+         * @returns {CheckGroupView}
+         */
+        updateView: function(fn, value) {
+            var dt = {
+                value: "",
+                label: "",
+            };
+            dt = this.updateFieldView(value);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn,
+            });
+            this.validate();
+            return this;
+        },
+        /**
+         * Method very IMPORTANT
+         * Method for update the view in this field and return the data to update the model
+         * @param {*} values
+         * @returns {*}
+         */
+        updateFieldView: function(value) {
+            var controlHtml = this.$el.find("input[type='checkbox']"),
+                firstCheckbox = controlHtml.eq(0),
+                secondCheckbox = controlHtml.eq(1),
+                newValue = "0",
+                valuesForTrue = this.model.get('optionsToTrue'),
+                data;
+            if (!value) {
+                if (firstCheckbox.prop("checked")) {
+                    secondCheckbox.prop("checked", false);
+                    newValue = "1";
+                } else {
+                    secondCheckbox.prop("checked", true);
+                    newValue = "0";
+                }
+            } else {
+                newValue = value;
+                if (valuesForTrue.indexOf(newValue) !== -1 ||
+                    valuesForTrue.indexOf(newValue[0]) !== -1) {
+                    firstCheckbox.prop("checked", true);
+                    secondCheckbox.prop("checked", false);
+                } else {
+                    firstCheckbox.prop("checked", false);
+                    secondCheckbox.prop("checked", true);
+                }
+            }
+            var data = this.model.findOptions(newValue, "value");
+            firstCheckbox.val(data.value);
+            this.updateAccessibility({ ariaLabel: data.label });
+            this.$el.find(".content-print").text(data.label);
+            this.$el.find("input[type='hidden']").val(data.label);
+            return data;
+        },
+        /**
+         * Execute the onChangeCallback after the executes de dependencies
+         */
+        executeChangeCallback: function() {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.model.get("data").value,
+                    previous: this.previousValue,
+                };
+
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(
+                    this.model.get("data").value,
+                    paramsValue.previous
+                );
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.model.get("data").value;
+            }
+        },
+        /**
+         * Sets value and update previousValue
+         * @param value
+         * @returns {CheckGroupView}
+         */
+        setValue: function(value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Sets value and update previousValue
+         * @param value
+         * @param callback
+         * @returns {CheckGroupView}
+         */
+        setValueAsync: function(value, fn) {
+            if (value || value == 0) {
+                this.previousValue = this.model.getValue();
+                this.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        afterDependencyDidUpdateView: function() {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ dependencyDidUpdate: false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        dependencyDidUpdateView: function() {
+            this.validate();
+        },
     });
 
     PMDynaform.extendNamespace("PMDynaform.view.CheckBox", CheckBoxView);
@@ -14696,7 +14940,7 @@ xCase.extendNamespace = function (path, newClass) {
             if (this.model.get('hint') !== '') {
                 this.enableTooltip();
             }
-            this.setNameHiddenControl();
+            this.setNameHiddenControlViewMode();
             this.model.set({ "toDraw": false }, { silent: true });
         },
         /**
@@ -14799,6 +15043,24 @@ xCase.extendNamespace = function (path, newClass) {
             if (this.el) {
                 if (this.model.get("group") === "grid") {
                     hidden = this.$el.find("input[type = 'hidden']")[0];
+                    name = this.model.get("name");
+                    name = name.substring(0, name.length - 1).concat("_label]");
+                    hidden.name = "form" + name;
+                    hidden.id = "form" + name;
+                }
+            }
+            return this;
+        },
+        /**
+         * Update the name in hidden input mode view
+         * @returns {SuggestView}
+         */
+        setNameHiddenControlViewMode: function () {
+            var hidden,
+                name;
+            if (this.el) {
+                if (this.model.get("group") === "grid") {
+                    hidden = this.$el.find(".label-hidden")[0];
                     name = this.model.get("name");
                     name = name.substring(0, name.length - 1).concat("_label]");
                     hidden.name = "form" + name;
@@ -14953,15 +15215,13 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {SuggestView}
          */
         setData: function (data) {
-            var dataObject;
-            if (typeof data === "object") {
-                dataObject = {
-                    value: data['value'] !== undefined ? data['value'] : "",
-                    label: data['label'] !== undefined ? data['label'] : ""
-                };
-                this.setValue(data['value']);
-                this.render();
-            }
+            var fixedData = {
+                value: data.value || '',
+                label: data.label || data.value || ''
+            };
+            this.model.set({ "data": fixedData }, { silent: true });
+            this.model.set({ "value": fixedData.value }, { silent: true });
+            this.model.set("toDraw", true);
             return this;
         },
         /**
@@ -14984,7 +15244,7 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {*}
          */
         getControl: function () {
-            return this.$el.find(".select2-selection__rendered");
+            return this.$el.find("select");
         },
         /**
          * PreparePostData, Prepares the additional data to execute the service to execute the query
@@ -15114,7 +15374,14 @@ xCase.extendNamespace = function (path, newClass) {
             if (this.model.get("dependencyDidUpdate").error && this.model.get("dependencyDidUpdate").error !== "abort") {
 
             }
-            this.setOption(this.model.get("data"));
+            if (this.model.get("mode") != "view") {
+                this.setOption(this.model.get("data"));
+            } else {
+                this.model.set({
+                    data: this.model.get("data")
+                }, { silent: true });
+                this.model.set({ "toDraw": true });
+            }
             this.onFieldAssociatedHandler();
         },
         /**
@@ -15333,7 +15600,9 @@ xCase.extendNamespace = function (path, newClass) {
         },
         render: function () {
             var hidden, name, newDateTime, $textAreaContent, msie;
-            this.setFirstOption();
+            if(this.model.get("originalType") !== "radio"){
+                this.setFirstOption();
+            }
             this.$el.html(this.template(this.model.toJSON()));
             if (this.model.get("hint") !== "") {
                 this.enableTooltip();
@@ -16738,8 +17007,6 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Prepares the value in the required format.
-         * if has time we will use "datetimeIsoFormat" format
-         * if has not we will use "dateIsoFormat" format
          * @param userValue
          * @returns {object}
          */
@@ -18323,38 +18590,28 @@ xCase.extendNamespace = function (path, newClass) {
         renderWeb: function (items) {
             var ieVersion,
                 type = this.model.get("type"),
-                i,
+                that = this,
+                element,
+                fData,
                 viewFiles,
-                elements = [],
-                container = this.$el.find(".pmdynaform-file-control"),
-                downloadLink,
-                data,
-                linkService = "showDocument";
+                container = this.$el.find(".pmdynaform-file-control");
             if (_.isArray(items)) {
-                this.model.set({"data": {"value": items}});
+                this.model.set({ "data": { "value": items } });
                 container.empty();
                 ieVersion = PMDynaform.core.Utils.checkValidIEVersion();
-                if (type === "imageMobile") {
-                    elements = this.model.remoteProxyData(items);
-                } else {
-                    for (i = 0; i < items.length; i += 1) {
-                        data = {
-                            uid: items[i],
-                            type: linkService
-                        };
-                        downloadLink = this.project.webServiceManager.showDocument(data);
-                        data = $.extend(true, this.model.urlFileStreaming(items[i]), {downloadLink: downloadLink});
-                        elements.push(data);
-                    }
-                }
-                viewFiles = this.templateRenderingWeb({
-                    elements: elements,
-                    type: type,
-                    ieVersion: ieVersion
+                _.forEach(items, function (e) {
+                    element = that.model.remoteProxyData([e], function (dt) {
+                        fData = that.model.formatArrayImages(dt);
+                        viewFiles = that.templateRenderingWeb({
+                            elements: fData,
+                            type: type,
+                            ieVersion: ieVersion
+                        });
+                        container.append(viewFiles);
+                    });
                 });
-                container.append(viewFiles);
             }
-        },
+        }, 
         /**
          * Set File data from mobile api
          * @param arrayFiles
@@ -21586,7 +21843,7 @@ xCase.extendNamespace = function (path, newClass) {
          * @param {*} serial
          * @returns {FieldModel} 
          */
-        executeDependency: function (dt, serial) {
+        executeDependency: function (dt, serial , fn) {
             var that = this,
                 data = _.extend(dt, this.preparePostData()),
                 callback = function (data, err) {
@@ -21597,6 +21854,7 @@ xCase.extendNamespace = function (path, newClass) {
                         event: that.getFieldId() + serial,
                         payload: ""
                     });
+                    fn();
                     // Hack to manage when we need update the grid columns model
                     rootField = that.get("form").get("rootField");
                     if (rootField && rootField.get("group") !== "grid" && that.get("group") == "grid") {
@@ -21614,6 +21872,16 @@ xCase.extendNamespace = function (path, newClass) {
                 this.executeQueryMobile(data, callback);
             } else {
                 this.executeQueryWeb(data, this.get("form").get("isSync") ? false : true, callback);
+            }
+            return this;
+        },
+        /**
+         * Run the setOnchange callback from a model
+         * @chainable
+         */
+        runDeferredSetOnChange: function () {
+            if (this.get("view")) {
+                this.get("view").executeChangeCallback();
             }
             return this;
         },
@@ -21929,14 +22197,14 @@ xCase.extendNamespace = function (path, newClass) {
         },
         sumValues: function (colIndex) {
             var i,
-                sum = 0,
+                sum = new Decimal(0),
                 grid = this.attributes.gridFunctions;
 
             for (i = 0; i < grid.length; i += 1) {
-                sum += grid[i][colIndex];
+                sum = sum.plus(grid[i][colIndex]);
             }
 
-            return sum;
+            return sum.toNumber();
         },
         avgValues: function (colIndex) {
             var i,
@@ -23892,7 +24160,7 @@ xCase.extendNamespace = function (path, newClass) {
 }());
 
 (function () {
-    var CheckBoxModel = PMDynaform.model.Field.extend({
+    var CheckBoxModel = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -23928,38 +24196,52 @@ xCase.extendNamespace = function (path, newClass) {
             /**
              * @member toDraw {boolean}: toDraw: When this property change, the view is redrawn
              */
-            toDraw: false
+            toDraw: false,
         },
         /**
          * This initialize data
          * @param defData: json with valid options value and label
          * @returns {CheckBoxModel}
          */
-        initialize: function (attrs) {
+        initialize: function(attrs) {
             var data;
             this.on("change:data", this.updateValue, this);
             this.on("change:value", this.updateItemSelected, this);
-            this.set("validator", new PMDynaform.model.Validator({
-                type: this.get("type"),
-                required: this.get("required"),
-                requiredFieldErrorMessage: this.get("requiredFieldErrorMessage")
-            }));
+            this.set(
+                "validator",
+                new PMDynaform.model.Validator({
+                    type: this.get("type"),
+                    required: this.get("required"),
+                    requiredFieldErrorMessage: this.get(
+                        "requiredFieldErrorMessage"
+                    ),
+                })
+            );
             if (_.isArray(this.get("options")) && !this.get("options").length) {
                 this.attributes.options = [
                     {
-                        "value": "1",
-                        "label": "true"
+                        value: "1",
+                        label: "true",
                     },
                     {
-                        "value": "0",
-                        "label": "false"
-                    }
+                        value: "0",
+                        label: "false",
+                    },
                 ];
                 this.attributes.dataType = "boolean";
             }
-            if (this.get("data") || this.get("value") || this.get("defaultValue")) {
-                data = this.initData(this.get("defaultValue"), this.get("value"), this.get("data"), this.get("variable"));
-                this.set({data: data}, {silent: true});
+            if (
+                this.get("data") ||
+                this.get("value") ||
+                this.get("defaultValue")
+            ) {
+                data = this.initData(
+                    this.get("defaultValue"),
+                    this.get("value"),
+                    this.get("data"),
+                    this.get("variable")
+                );
+                this.set({ data: data }, { silent: true });
                 this.attributes.value = this.get("data")["value"];
             } else {
                 this.attributes.data["value"] = "";
@@ -23980,18 +24262,20 @@ xCase.extendNamespace = function (path, newClass) {
             this.defineModelEvents();
             return this;
         },
-        initControl: function () {
+        initControl: function() {
             var opts = this.get("options"),
                 i,
                 newOpts = [],
                 itemsSelected = [];
             if (_.isArray(opts)) {
                 for (i = 0; i < opts.length; i += 1) {
-                    if (!opts[i].value && (typeof opts[i].value !== "number")) {
+                    if (!opts[i].value && typeof opts[i].value !== "number") {
                         opts[i].value = opts[i].label;
                     }
                     if (this.get("data") && this.get("data").value) {
-                        if (this.get("data").value.indexOf(opts[i].value) > -1) {
+                        if (
+                            this.get("data").value.indexOf(opts[i].value) > -1
+                        ) {
                             opts[i].selected = true;
                         } else {
                             opts[i].selected = false;
@@ -24000,39 +24284,41 @@ xCase.extendNamespace = function (path, newClass) {
                     newOpts.push({
                         label: opts[i].label,
                         value: opts[i].value,
-                        selected: opts[i].selected ? true : false
+                        selected: opts[i].selected ? true : false,
                     });
                 }
             }
             this.set("options", newOpts);
             this.set("selected", itemsSelected);
         },
-        setLocalOptions: function () {
+        setLocalOptions: function() {
             this.set("localOptions", this.get("options"));
             return this;
         },
-        getData: function () {
+        getData: function() {
             if (this.get("group") === "grid") {
                 return {
                     name: this.get("columnName") ? this.get("columnName") : "",
-                    value: [this.get("value")]
-                }
-
+                    value: [this.get("value")],
+                };
             } else {
                 return {
                     name: this.get("name") ? this.get("name") : "",
-                    value: [this.get("value")]
-                }
+                    value: [this.get("value")],
+                };
             }
             return this;
         },
-        validate: function (attrs) {
+        validate: function(attrs) {
             var value;
             value = parseInt(this.get("data")["value"]);
             if (this.get("enableValidate")) {
                 this.get("validator").set("value", value);
                 if (this.get("options").length) {
-                    this.get("validator").set("options", this.attributes.options);
+                    this.get("validator").set(
+                        "options",
+                        this.attributes.options
+                    );
                 }
                 this.get("validator").verifyValue();
             } else {
@@ -24041,20 +24327,20 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("valid", this.get("validator").get("valid"));
             return this;
         },
-        isValid: function () {
+        isValid: function() {
             return this.get("valid");
         },
         /**
          * Update data with the current value
          * @returns {CheckBoxModel}
          */
-        updateItemSelected: function () {
+        updateItemSelected: function() {
             var currValue = this.get("value"),
                 currData = this.get("data");
             if (!this.attributes.disabled) {
                 this.get("validator").set({
                     valueDomain: currValue,
-                    options: this.get("options")
+                    options: this.get("options"),
                 });
                 this.get("validator").set("value", this.get("selected").length);
                 this.get("validator").verifyValue();
@@ -24068,10 +24354,10 @@ xCase.extendNamespace = function (path, newClass) {
          * Update value with the current data
          * @returns {CheckBoxModel}
          */
-        updateValue: function () {
+        updateValue: function() {
             var currentData = this.get("data");
             if (currentData && currentData.value) {
-                this.set({value: currentData.value}, {silent: true});
+                this.set({ value: currentData.value }, { silent: true });
             }
             return this;
         },
@@ -24079,7 +24365,7 @@ xCase.extendNamespace = function (path, newClass) {
          * Get Value from data
          * @returns {null}
          */
-        getValue: function () {
+        getValue: function() {
             var data = this.get("data");
             return data ? data["value"] : null;
         },
@@ -24088,10 +24374,10 @@ xCase.extendNamespace = function (path, newClass) {
          * @param value
          * @returns {CheckBoxModel}
          */
-        setValue: function (value) {
+        setValue: function(value) {
             var valuesForTrue = [1, true, "1", "true"],
                 valuesForFalse = [0, false, "0", "false"];
-            value = (_.isArray(value) && value.length > 0) ? value[0] : value;
+            value = _.isArray(value) && value.length > 0 ? value[0] : value;
             if (value !== undefined) {
                 if (valuesForTrue.indexOf(value) > -1) {
                     this.set("value", "1");
@@ -24106,12 +24392,12 @@ xCase.extendNamespace = function (path, newClass) {
          * @param value
          * @returns {CheckBoxModel}
          */
-        setData: function (value) {
+        setData: function(value) {
             var data = this.findOption(value, "value");
             if (data) {
-                this.set('data', {
-                    value: data.value || '',
-                    label: data.label || ''
+                this.set("data", {
+                    value: data.value || "",
+                    label: data.label || "",
                 });
             }
             return this;
@@ -24121,17 +24407,51 @@ xCase.extendNamespace = function (path, newClass) {
          * service to the component
          * @param data {boolean|string|number} valid data for this component
          */
-        setAppData: function (value) {
+        setAppData: function(value) {
             var data;
             data = this.findOption(value, "value");
             if (data) {
                 this.selectedOptions("index", [data.index]);
-                this.set({"data": data}, {silent: true});
-                this.set({"value": data["value"]}, {silent: true});
+                this.set({ data: data }, { silent: true });
+                this.set({ value: data["value"] }, { silent: true });
                 this.set("toDraw", true);
             }
             return this;
-        }
+        },
+        /**
+         * findOptions(): This method find and return an option in the array options if exist
+         * @param value = the filter in the search  "value", "label" or "defaultValue"
+         * @param criteria = is the criteria in the find the option should be a "value", "label"
+         * @returns {boolean||object}
+         */
+         findOptions: function (value, criteria) {
+            var i,
+                index = -1,
+                options,
+                auxValue,
+                auxOption,
+                option = null;
+            if (_.isArray(this.get("options"))) {
+                options = this.get("options").slice(0);
+                if (_.isArray(options) && value !== undefined && typeof criteria === "string") {
+                    for (i = 0; i < options.length; i += 1) {
+                        auxValue = typeof value !== 'object' ?
+                            this.attributes.optionsToTrue.indexOf(value) > -1 :
+                            auxValue = this.attributes.optionsToTrue.indexOf(value[0]) > -1;
+                        auxOption = this.attributes.optionsToTrue.indexOf(options[i][criteria]) > -1;
+                        if (options[i] && (auxValue == auxOption)) {
+                            option = _.extend({}, options[i]);
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (option !== null) {
+                option['index'] = index;
+            }
+            return option;
+        },
     });
     PMDynaform.extendNamespace("PMDynaform.model.CheckBox", CheckBoxModel);
 }());
@@ -25170,7 +25490,7 @@ xCase.extendNamespace = function (path, newClass) {
                 data = this.getDataCheckgroup(data);
             }
 
-            if (data && !_.isEmpty(data) && data.value) {
+            if (data && !_.isEmpty(data) && data.value != null && data.value != undefined) {
                 this.set("data", data);
                 this.set({ "value": data["value"] }, { silent: true });
             } else {
@@ -26533,15 +26853,13 @@ xCase.extendNamespace = function (path, newClass) {
          * @param arrayImages
          * @returns [{id:"123456789...", base64: "sdhfg%4hd/f24g.."}] || []
          */
-        remoteProxyData: function (arrayImages) {
+        remoteProxyData: function (arrayImages, fn) {
             var project = this.get("project"),
                 response,
-                requestManager = project && PMDynaform.core.ProjectMobile ? project.getRequestManager() : null,
                 respData = [],
                 data;
             data = this.formatArrayImagesToSend(arrayImages);
-            response = requestManager ? requestManager.imagesInfo(data) : project.webServiceManager.imagesInfo(data);
-            respData = this.formatArrayImages(response);
+            response = project.webServiceManager.getImages(data, fn);
             return respData;
         },
         /**
@@ -27132,6 +27450,8 @@ xCase.extendNamespace = function (path, newClass) {
             tabIndex: "",
             ariaLabel: "",
             labelButton: "Choose Files".translate(),
+            labelMaxFile: "The maximum number of files allowed was reached".translate(),
+            filesUpload: 0,
             mode: "edit",
             name: PMDynaform.core.Utils.generateName("file"),
             required: false,
@@ -27325,7 +27645,8 @@ xCase.extendNamespace = function (path, newClass) {
             formData: null,
             fileArray: [],
             messageValidations: "This field is required.".translate(),
-            enableValidate: true
+            enableValidate: true,
+            disableUpload: false
         },
         initialize: function (options) {
             if (_.isString(this.get("variable")) && this.get("variable") !== "") {
@@ -27461,6 +27782,7 @@ xCase.extendNamespace = function (path, newClass) {
                 fileModel.set("errorType", true);
             }
             files.updateIndex();
+            this.set('filesUpload', this.get('filesUpload') + 1);
             return fileModel;
         },
         /**
@@ -27681,6 +28003,11 @@ xCase.extendNamespace = function (path, newClass) {
             }
             this.loadDataFromAppData();
             this.model.updateData();
+            this.model.set('filesUpload', this.model.get('fileCollection').length);
+            if (this.model.get("mode") === "edit" && this.model.get('group') === 'form') {
+                this.validationMaxFileNumber(this.model.get('maxFileNumber'));
+                this.verifyMaxFile();
+            }
             this.populateItemsPrintMode(this.getKeyLabel());
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
@@ -27876,6 +28203,7 @@ xCase.extendNamespace = function (path, newClass) {
                 that.processFiles(files);
                 event.target.value = "";
                 that.$el.find(that.hiddenFile).remove();
+                that.verifyMaxFile();
                 return false;
             };
         },
@@ -27911,8 +28239,11 @@ xCase.extendNamespace = function (path, newClass) {
             var index = 0,
                 fileView,
                 fileModel,
-                box = this.$el.find(".pmdynaform-multiplefile-box");
-            if (files.length) {
+                box = this.$el.find(".pmdynaform-multiplefile-box"),
+                maxFileNumber = this.model.get('maxFileNumber') || 0,
+                filesUpload = this.model.get('fileCollection').length,
+                slotAvailableFiles = maxFileNumber - filesUpload;
+            if ((slotAvailableFiles > 0 && slotAvailableFiles >= files.length) || maxFileNumber === 0) {
                 for (index = 0; index < files.length; index += 1) {
                     fileModel = this.model.addFileModel(files[index], "edit");
                     //create an instance of a file
@@ -27928,6 +28259,14 @@ xCase.extendNamespace = function (path, newClass) {
                     fileModel.fileUploadMultipart();
                     fileModel.set('fromWizard', false);
                 }
+            } else {
+                window.dynaform.flashMessage({
+                    emphasisMessage: "Operation not allowed: ".translate(),
+                    message: "You can only upload ".translate() + maxFileNumber + " files.".translate(),
+                    type: 'warning',
+                    absoluteTop: true,
+                    duration: 3000
+                });
             }
             this.validate();
             this.populateItemsPrintMode(this.model.getKeyLabel());
@@ -28136,6 +28475,65 @@ xCase.extendNamespace = function (path, newClass) {
             }
         },
         /**
+         * Verify the max file number.
+         * @returns {MultipleFileView}
+         */
+        verifyMaxFile: function () {
+            if (this.model.get('maxFileNumber') !== 0) {
+                if (this.model.get('filesUpload') >= this.model.get('maxFileNumber')) {
+                    this.disableUpload();
+                } else if (this.model.get('filesUpload') < this.model.get('maxFileNumber')) {
+                    this.enableUpload();
+                }
+            }
+            return this;
+        },
+        /**
+         * Disable upload for multiple file.
+         * @returns {MultipleFileView}
+         */
+        disableUpload: function () {
+            var that = this,
+                view = that.model.get('group') === 'form' ? that.$el : that.uploadModalView.modal;
+            if (!that.model.get('disableUpload')) {
+                view.find('.btn-uploadfile').addClass('btn-uploadfile-disabled');
+                view.find('.btn-uploadfile').attr('disabled', 'disabled');
+                view.find('.btn-uploadfile')[0].innerHTML = that.model.get('labelMaxFile');
+                view.find('.btn-uploadfile')[0].innerText = that.model.get('labelMaxFile');
+                view.find('.btn-uploadfile').removeClass('btn-uploadfile');
+                that.model.set('disableUpload', true);
+            }
+            return that;
+        },
+        /**
+         * Enable upload for multiple file.
+         * @returns {MultipleFileView}
+         */
+        enableUpload: function () {
+            var that = this,
+                view = that.model.get('group') === 'form' ? that.$el : that.uploadModalView.modal;
+            if (that.model.get('disableUpload')) {
+                view.find('.btn-uploadfile-disabled').addClass('btn-uploadfile');
+                view.find('.btn-uploadfile').attr('disabled', false);
+                view.find('.btn-uploadfile-disabled')[0].innerHTML = that.model.get('labelButton');
+                view.find('.btn-uploadfile-disabled')[0].innerText = that.model.get('labelButton');
+                view.find('.btn-uploadfile-disabled').removeClass('btn-uploadfile-disabled');
+                that.model.set('disableUpload', false);
+            }
+            return that;
+        },
+        /**
+         * Validation maxFileNumber if string the value is 0.
+         * @param maxFileNumber
+         */
+        validationMaxFileNumber: function (maxFileNumber) {
+            if (isNaN(maxFileNumber) && typeof maxFileNumber === 'string') {
+                this.model.set('maxFileNumber', 0);
+            } else {
+                this.model.set('maxFileNumber', parseInt(maxFileNumber));
+            }
+        },
+        /*
          * Remove the inputs type hidden.
          */
         clearHiddenByModel: function () {
@@ -28159,7 +28557,7 @@ xCase.extendNamespace = function (path, newClass) {
             version: 1,
             isValid: true,
             fromWizard: false,
-            urlBase: "{server}/sys{ws}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v=1",
+            urlBase: "{server}/sys{ws}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v=1&p=1",
             linkService: "showDocument",
             errorSize: false,
             errorType: false,
@@ -28810,10 +29208,16 @@ xCase.extendNamespace = function (path, newClass) {
 
             switch (value) {
                 case "size":
-                    message = (file ? "\"" + file.name + "\"" : 'File') + " size exceeds the allowable limit of {" + sizeAllow + "}";
+                    message = "File size exceeds the allowable limit of {0}".translate([sizeAllow]);
+                    if (file) {
+                        message = "{0} size exceeds the allowable limit of {1}".translate([file.name, sizeAllow]);
+                    }
                     break;
                 case "type":
-                    message = "Invalid file format " + (file ? 'for "' + file.name + '"': '') + ", please upload a file with one of the following formats {" + typeAllow + "}";
+                    message = "Invalid file format, please upload a file with one of the following formats {0}".translate([typeAllow]);
+                    if (file) {
+                        message = "Invalid file format for {0}, please upload a file with one of the following formats {1}".translate([file.name, typeAllow]);
+                    }
                     break;
             }
             return message;
@@ -29154,7 +29558,8 @@ xCase.extendNamespace = function (path, newClass) {
                 }
                 this.model.get('parent').resetInputFile();
             }
-
+            parentView.model.set('filesUpload', parentView.model.get('filesUpload') - 1);
+            parentView.verifyMaxFile();
             e.preventDefault();
 
             return this;
@@ -29255,14 +29660,20 @@ xCase.extendNamespace = function (path, newClass) {
          */
         getFilesNotUploaded: function() {
             var index,
-                resp = false,
-                unCompletedFiles= [];
+                unCompletedFiles= [],
+                errorFiles = [];
             for (index = 0; index < this.models.length; index += 1) {
-                if (!this.models[index].get("completed") && !this.models[index].get("error")) {
-                    unCompletedFiles.push({ "name": this.models[index].attributes.file.name});
+                if (!this.models[index].get("completed") && !this.models[index].get("error")    ) {
+                    unCompletedFiles.push({"name": this.models[index].attributes.file.name});
+                }
+                if (this.models[index].get("error")    ) {
+                    errorFiles.push({"name": this.models[index].attributes.file.name});
                 }
             }
-            return unCompletedFiles;
+            return {
+                    uploading: unCompletedFiles,
+                    error: errorFiles
+                };
         }
     });
 
@@ -29381,7 +29792,8 @@ xCase.extendNamespace = function (path, newClass) {
      */
     var UploadModalModel = PMDynaform.file.MultipleFileModel.extend({
         defaults: {
-            parent: null
+            parent: null,
+            disableUpload: false
         },
         /**
          * Adds the file model to collection to drive all files in a collection
@@ -29424,12 +29836,14 @@ xCase.extendNamespace = function (path, newClass) {
                 fileModel = files.add(fileModel);
                 files.updateIndex();
             }
+            parentFile.set('filesUpload', parentFile.get('filesUpload') + 1);
             return fileModel;
         }
 
     });
     PMDynaform.extendNamespace("PMDynaform.file.UploadModalModel", UploadModalModel);
 }());
+
 (function () {
     var UploadModal = Backbone.View.extend({
         timeHide: 1000,
@@ -29438,6 +29852,7 @@ xCase.extendNamespace = function (path, newClass) {
         $hiddenFile: null,
         labelButton: "Choose Files".translate(),
         labelClose: "Close".translate(),
+        labelMaxFile: "The maximum number of files allowed was reached".translate(),
         $hiddens: [],
         initialize: function () {
             //TODO: no need params.
@@ -29455,7 +29870,8 @@ xCase.extendNamespace = function (path, newClass) {
                 mode = "edit",
                 ext = "",
                 view,
-                parent = this.model.get("parent");
+                parent = this.model.get("parent"),
+                viewParent = this.model.get("parent").get('view');
 
             if ($('#modalUpload').length) {
                 $('#modalUpload').remove();
@@ -29469,12 +29885,17 @@ xCase.extendNamespace = function (path, newClass) {
                 extensions: ext
             }));
             $('body').append(this.modal);
-
-            this.show();
-            this.eventsBinding();
             this.modal.find('.btn-uploadfile').on('click', function (e) {
                 that.onClickUploadButton(e);
             });
+            viewParent.model.set('filesUpload', viewParent.model.get('fileCollection').length);
+            if (mode === 'edit') {
+                viewParent.model.set('disableUpload', false);
+                viewParent.validationMaxFileNumber(viewParent.model.get('maxFileNumber'));
+                viewParent.verifyMaxFile();
+            }
+            this.show();
+            this.eventsBinding();
             box = this.modal.find(".pmdynaform-multiplefile-box");
             if (collection instanceof Backbone.Collection) {
                 for (i = 0; i < collection.length; i += 1) {
@@ -29548,6 +29969,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.processFiles(files);
             event.target.value = "";
             parent.get('view').populateItemsPrintMode(parent.getKeyLabel());
+            parent.get('view').verifyMaxFile();
             return false;
         },
         /**
@@ -29560,8 +29982,11 @@ xCase.extendNamespace = function (path, newClass) {
             var index = 0,
                 fileView,
                 fileModel,
-                box = this.modal.find(".pmdynaform-multiplefile-box");
-            if (files.length) {
+                box = this.modal.find(".pmdynaform-multiplefile-box"),
+                maxFileNumber = this.model.get('parent').get('maxFileNumber') || 0,
+                filesUpload = this.model.get('parent').get('fileCollection').length,
+                slotAvailableFiles = maxFileNumber - filesUpload;
+            if ((slotAvailableFiles > 0 && slotAvailableFiles >= files.length) || maxFileNumber === 0) {
                 for (index = 0; index < files.length; index += 1) {
                     fileModel = this.model.addFileModel(files[index], "edit", this);
 
@@ -29578,6 +30003,14 @@ xCase.extendNamespace = function (path, newClass) {
                     fileModel.set('fromWizard', false);
                     this.model.get('parent').updateGridDetail(fileModel);
                 }
+            } else {
+                window.dynaform.flashMessage({
+                    emphasisMessage: "Operation not allowed: ".translate(),
+                    message: "You can only upload ".translate() + maxFileNumber + " files.".translate(),
+                    type: 'warning',
+                    absoluteTop: true,
+                    duration: 3000
+                });
             }
             return this;
         },

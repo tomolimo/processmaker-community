@@ -81,6 +81,7 @@ abstract class XMLElement {
 		if (is_numeric($val)) {
 			return (bool) $val;
 		} else {
+                        $val = is_null($val) ? '' : $val;
 			return (in_array(strtolower($val), array('true', 't', 'y', 'yes'), true) ? true : false);
 		}
 	}

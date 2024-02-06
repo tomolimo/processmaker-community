@@ -2,14 +2,20 @@
 
 namespace ProcessMaker\BusinessModel;
 
+
+use Application;
+use DateTime;
+use Department;
 use Exception;
 use G;
+use Process;
+use ProcessMaker\Util\DateTime as UtilDateTime;
+use ProcessCategory;
+use Triggers;
+use Users;
 
 /**
  * Validator fields
- *
- * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
- * @copyright Colosa - Bolivia
  *
  * @protected
  */
@@ -17,45 +23,43 @@ class Validator
 {
     /**
      * Validate dep_uid
-     * @var string $dep_uid . Uid for Departament
-     * @var string $nameField . Name of field for message
+     * 
+     * @param string $dep_uid . Uid for Departament
+     * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function depUid($dep_uid, $nameField = 'dep_uid')
     {
         $dep_uid = trim($dep_uid);
-        if ($dep_uid == '') {
-            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField, ''))));
+        if (empty($dep_uid)) {
+            throw new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", [$nameField, '']));
         }
-        $oDepartment = new \Department();
-        if (!($oDepartment->existsDepartment($dep_uid))) {
-            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array($nameField, $dep_uid))));
+        $department = new Department();
+        if (!($department->existsDepartment($dep_uid))) {
+            throw new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", [$nameField, $dep_uid]));
         }
         return $dep_uid;
     }
 
     /**
      * Validate dep_status
-     * @var string $dep_uid . Uid for Departament
-     * @var string $nameField . Name of field for message
+     * 
+     * @param string $dep_uid . Uid for Departament
+     * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function depStatus($dep_status)
     {
         $dep_status = trim($dep_status);
-        $values = array('ACTIVE', 'INACTIVE');
+        $values = ['ACTIVE', 'INACTIVE'];
         if (!in_array($dep_status, $values)) {
-            throw (new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", array('dep_status', $dep_status))));
+            throw new Exception(G::LoadTranslation("ID_DEPARTMENT_NOT_EXIST", ['dep_status', $dep_status]));
         }
         return $dep_status;
     }
@@ -67,20 +71,18 @@ class Validator
      * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function usrUid($usr_uid, $nameField = 'usr_uid')
     {
         $usr_uid = trim($usr_uid);
-        if ($usr_uid == '') {
-            throw (new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField, ''))));
+        if (empty($usr_uid)) {
+            throw new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", [$nameField, '']));
         }
-        $oUsers = new \Users();
-        if (!($oUsers->userExists($usr_uid))) {
-            throw (new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", array($nameField, $usr_uid))));
+        $users = new Users();
+        if (!($users->userExists($usr_uid))) {
+            throw new Exception(G::LoadTranslation("ID_USER_NOT_EXIST", [$nameField, $usr_uid]));
         }
         return $usr_uid;
     }
@@ -89,23 +91,24 @@ class Validator
      * Validate app_uid
      *
      * @param string $app_uid , Uid for application
-     * @param string $nameField . Name of field for message
+     * @param string $nameField , Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function appUid($app_uid, $nameField = 'app_uid')
     {
         $app_uid = trim($app_uid);
-        if ($app_uid == '') {
-            throw (new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField, ''))));
+        if (empty($app_uid)) {
+            throw new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", [$nameField, '']));
         }
-        $oApplication = new \Application();
-        if (!($oApplication->exists($app_uid))) {
-            throw (new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", array($nameField, $app_uid))));
+        if (strlen($app_uid) !== 32) {
+            throw new Exception(G::LoadTranslation("ID_CASE_NOT_EXISTS"));
+        }
+        $application = new Application();
+        if (!($application->exists($app_uid))) {
+            throw new Exception(G::LoadTranslation("ID_APPLICATION_NOT_EXIST", [$nameField, $app_uid]));
         }
         return $app_uid;
     }
@@ -117,20 +120,18 @@ class Validator
      * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function triUid($tri_uid, $nameField = 'tri_uid')
     {
         $tri_uid = trim($tri_uid);
-        if ($tri_uid == '') {
-            throw (new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField, ''))));
+        if (empty($tri_uid)) {
+            throw new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", [$nameField, '']));
         }
-        $oTriggers = new \Triggers();
-        if (!($oTriggers->TriggerExists($tri_uid))) {
-            throw (new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", array($nameField, $tri_uid))));
+        $triggers = new Triggers();
+        if (!($triggers->TriggerExists($tri_uid))) {
+            throw new Exception(G::LoadTranslation("ID_TRIGGER_NOT_EXIST", [$nameField, $tri_uid]));
         }
         return $tri_uid;
     }
@@ -149,12 +150,12 @@ class Validator
     {
         $proUid = trim($proUid);
         if (empty($proUid)) {
-            throw (new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField, ''))));
+            throw new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", [$nameField, '']));
         }
-        $process = new \Process();
+        $process = new Process();
         $proId = 0;
         if (!($process->exists($proUid))) {
-            throw (new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", array($nameField, $proUid))));
+            throw new Exception(G::LoadTranslation("ID_PROCESS_NOT_EXIST", [$nameField, $proUid]));
         } else {
             $proId = $process->load($proUid)['PRO_ID'];
         }
@@ -169,20 +170,18 @@ class Validator
      * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function catUid($cat_uid, $nameField = 'cat_uid')
     {
         $cat_uid = trim($cat_uid);
-        if ($cat_uid == '') {
-            throw (new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField, ''))));
+        if (empty($cat_uid)) {
+            throw new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", [$nameField, '']));
         }
-        $oCategory = new \ProcessCategory();
-        if (!($oCategory->exists($cat_uid))) {
-            throw (new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", array($nameField, $cat_uid))));
+        $category = new ProcessCategory();
+        if (!($category->exists($cat_uid))) {
+            throw new Exception(G::LoadTranslation("ID_CATEGORY_NOT_EXIST", [$nameField, $cat_uid]));
         }
         return $cat_uid;
     }
@@ -191,123 +190,123 @@ class Validator
      * Validate date
      *
      * @param string $date , Date for validate
+     * @param string $format
      * @param string $nameField . Name of field for message
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return string
      */
     static public function isDate($date, $format = 'Y-m-d H:i:s', $nameField = 'app_uid')
     {
         $date = trim($date);
-        if ($date == '') {
-            throw (new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", array('', $format))));
+        if (empty($date)) {
+            throw new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", ['', $format]));
         }
-        $d = \DateTime::createFromFormat($format, $date);
+        $d = DateTime::createFromFormat($format, $date);
         if (!($d && $d->format($format) == $date)) {
-            throw (new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", array($date, $format))));
+            throw new Exception(G::LoadTranslation("ID_DATE_NOT_VALID", [$date, $format]));
         }
         return $date;
     }
 
     /**
      * Validate is array
-     * @var array $field . Field type array
+     * 
+     * @param string $field
+     * @param string $nameField
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return void
      */
     static public function isArray($field, $nameField)
     {
         if (!is_array($field)) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_ARRAY", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_ARRAY", [$nameField]));
         }
     }
 
     /**
      * Validate is string
-     * @var array $field . Field type string
+     * 
+     * @param string $field
+     * @param string $nameField
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return void
      */
     static public function isString($field, $nameField)
     {
         if (!is_string($field)) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_STRING", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_STRING", [$nameField]));
         }
     }
 
     /**
      * Validate is integer
-     * @var array $field . Field type integer
+     * 
+     * @param string $field
+     * @param string $nameField
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return void
      */
     static public function isInteger($field, $nameField)
     {
         if (!is_integer($field)) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_INTEGER", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_INTEGER", [$nameField]));
         }
     }
 
     /**
      * Validate is boolean
-     * @var boolean $field . Field type boolean
+     * 
+     * @param string $field
+     * @param string $nameField
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return void
      */
     static public function isBoolean($field, $nameField)
     {
         if (!is_bool($field)) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_BOOLEAN", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_BOOLEAN", [$nameField]));
         }
     }
 
     /**
-     * Validate is boolean
-     * @var boolean $field . Field type boolean
+     * Validate is empty
+     * 
+     * @param string $field
+     * @param string $nameField
      *
      * @access public
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
      *
      * @return void
      */
     static public function isNotEmpty($field, $nameField)
     {
         if (empty($field)) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_VALUE_IS_EMPTY", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_IS_EMPTY", [$nameField]));
         }
     }
 
     /**
      * Validate a variable name
+     * 
      * @param $nameField
-     * @throws \Exception
+     * 
      * @return void
      */
     static public function isValidVariableName($nameField)
     {
         $resp = preg_match(config('constants.validation.pmVariable.regEx'), $nameField, $matches);
         if (isset($resp) && $resp === 0) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_NAME", array($nameField))));
+            throw new Exception(G::LoadTranslation("ID_INVALID_NAME", [$nameField]));
         }
     }
 
@@ -319,11 +318,11 @@ class Validator
      *
      * return void Throw exception if data is not array
      */
-    public function throwExceptionIfDataIsNotArray($data, $dataNameForException)
+    static public function throwExceptionIfDataIsNotArray($data, $dataNameForException)
     {
         try {
             if (!is_array($data)) {
-                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_THIS_MUST_BE_ARRAY", array($dataNameForException)));
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_THIS_MUST_BE_ARRAY", [$dataNameForException]));
             }
         } catch (Exception $e) {
             throw $e;
@@ -338,11 +337,11 @@ class Validator
      *
      * return void Throw exception if data is empty
      */
-    public function throwExceptionIfDataIsEmpty($data, $dataNameForException)
+    static public function throwExceptionIfDataIsEmpty($data, $dataNameForException)
     {
         try {
             if (empty($data)) {
-                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_CAN_NOT_BE_EMPTY", array($dataNameForException)));
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_CAN_NOT_BE_EMPTY", [$dataNameForException]));
             }
         } catch (Exception $e) {
             throw $e;
@@ -364,8 +363,8 @@ class Validator
                 return;
             }
 
-            $regexpDate = \ProcessMaker\Util\DateTime::REGEXPDATE;
-            $regexpTime = \ProcessMaker\Util\DateTime::REGEXPTIME;
+            $regexpDate = UtilDateTime::REGEXPDATE;
+            $regexpTime = UtilDateTime::REGEXPTIME;
 
             $regexpIso8601 = $regexpDate . 'T' . $regexpTime . '[\+\-]\d{2}:\d{2}';
 
@@ -417,7 +416,7 @@ class Validator
                         (int)($value) < 0
                     )
                 ) {
-                    return \G::LoadTranslation('ID_INVALID_VALUE_EXPECTING_POSITIVE_INTEGER', [$nameForException]);
+                    return G::LoadTranslation('ID_INVALID_VALUE_EXPECTING_POSITIVE_INTEGER', [$nameForException]);
                 }
             }
 

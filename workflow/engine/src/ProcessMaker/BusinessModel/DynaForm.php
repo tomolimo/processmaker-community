@@ -3,9 +3,17 @@
 namespace ProcessMaker\BusinessModel;
 
 use AdditionalTables;
+use CaseTrackerObject;
+use Criteria;
+use Dynaform as ModelDynaform;
 use DynaformHandler;
+use DynaformPeer;
 use Exception;
 use G;
+use ObjectPermission;
+use ResultSet;
+use Step;
+use StepSupervisor;
 use PmDynaform;
 
 class DynaForm
@@ -139,35 +147,34 @@ class DynaForm
      */
     public function dynaFormDepends($dynUid, $proUid)
     {
-        $oCriteria = new \Criteria();
-        $oCriteria->addSelectColumn(\DynaformPeer::DYN_TYPE);
-        $oCriteria->add(\DynaformPeer::DYN_UID, $dynUid);
-        $oCriteria->add(\DynaformPeer::PRO_UID, $proUid);
-        $oDataset = \DynaformPeer::doSelectRS($oCriteria);
-        $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
+        $oCriteria = new Criteria();
+        $oCriteria->addSelectColumn(DynaformPeer::DYN_TYPE);
+        $oCriteria->add(DynaformPeer::DYN_UID, $dynUid);
+        $oCriteria->add(DynaformPeer::PRO_UID, $proUid);
+        $oDataset = DynaformPeer::doSelectRS($oCriteria);
+        $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         $oDataset->next();
         $dataDyna = $oDataset->getRow();
 
         if ($dataDyna['DYN_TYPE'] == 'grid') {
-            $formsDepend = array();
+            $formsDepend = [];
 
-
-            $oCriteria = new \Criteria('workflow');
-            $oCriteria->addSelectColumn(\DynaformPeer::DYN_UID);
-            $oCriteria->addSelectColumn(\DynaformPeer::DYN_TITLE);
-            $oCriteria->add(\DynaformPeer::PRO_UID, $proUid);
-            $oCriteria->add(\DynaformPeer::DYN_TYPE, "xmlform");
-            $oDataset = \DynaformPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
+            $oCriteria = new Criteria('workflow');
+            $oCriteria->addSelectColumn(DynaformPeer::DYN_UID);
+            $oCriteria->addSelectColumn(DynaformPeer::DYN_TITLE);
+            $oCriteria->add(DynaformPeer::PRO_UID, $proUid);
+            $oCriteria->add(DynaformPeer::DYN_TYPE, "xmlform");
+            $oDataset = DynaformPeer::doSelectRS($oCriteria);
+            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
             while ($oDataset->next()) {
                 $dataForms = $oDataset->getRow();
                 $dynHandler = new DynaformHandler(PATH_DYNAFORM . $proUid . PATH_SEP . $dataForms["DYN_UID"] . ".xml");
                 $dynFields = $dynHandler->getFields();
                 foreach ($dynFields as $field) {
-                    $sType = \Step::getAttribute($field, 'type');
+                    $sType = Step::getAttribute($field, 'type');
                     if ($sType == 'grid') {
-                        $sxmlgrid = \Step::getAttribute($field, 'xmlgrid');
+                        $sxmlgrid = Step::getAttribute($field, 'xmlgrid');
                         $aGridInfo = explode("/", $sxmlgrid);
                         if ($aGridInfo[0] == $proUid && $aGridInfo[1] == $dynUid) {
                             $formsDepend[] = $dataForms["DYN_TITLE"];
@@ -183,9 +190,9 @@ class DynaForm
             }
         } else {
             $flagDepend = false;
-            $stepsDepends = \Step::verifyDynaformAssigStep($dynUid, $proUid);
+            $stepsDepends = Step::verifyDynaformAssigStep($dynUid, $proUid);
 
-            $messageSteps = '(0) Depends in steps';
+            $messageSteps = G::LoadTranslation("ID_DYNAFORM_DEPENDS_STEPS", [0]);
             if (!empty($stepsDepends)) {
                 $flagDepend = true;
                 $countSteps = count($stepsDepends);
@@ -193,41 +200,41 @@ class DynaForm
                 foreach ($stepsDepends as $value) {
                     $messTemp .= ", the task '" . $value['CON_VALUE'] . "' position " . $value['STEP_POSITION'];
                 }
-                $messageSteps = "($countSteps) Depends in steps in" . $messTemp;
+                $messageSteps = G::LoadTranslation("ID_DYNAFORM_DEPENDS_STEPS", [$countSteps]) . ' in ' . $messTemp;
             }
 
-            $stepSupervisorsDepends = \StepSupervisor::verifyDynaformAssigStepSupervisor($dynUid, $proUid);
-            $messageStepsSupervisors = '(0) Depends in steps supervisor';
+            $stepSupervisorsDepends = StepSupervisor::verifyDynaformAssigStepSupervisor($dynUid, $proUid);
+            $messageStepsSupervisors = G::LoadTranslation("ID_DYNAFORM_DEPENDS_STEPS_SUPERVISOR", [0]);
             if (!empty($stepSupervisorsDepends)) {
                 $flagDepend = true;
                 $countSteps = count($stepSupervisorsDepends);
-                $messageStepsSupervisors = "($countSteps) Depends in steps supervisor";
+                $messageStepsSupervisors = G::LoadTranslation("ID_DYNAFORM_DEPENDS_STEPS_SUPERVISOR", [$countSteps]);
             }
 
-            $objectPermissionDepends = \ObjectPermission::verifyDynaformAssigObjectPermission($dynUid, $proUid);
-            $messageObjectPermission = '(0) Depends in permissions';
+            $objectPermissionDepends = ObjectPermission::verifyDynaformAssigObjectPermission($dynUid, $proUid);
+            $messageObjectPermission = G::LoadTranslation("ID_DYNAFORM_DEPENDS_PERMISSIONS", [0]);
             if (!empty($objectPermissionDepends)) {
                 $flagDepend = true;
                 $countSteps = count($objectPermissionDepends);
-                $messageObjectPermission = "($countSteps) Depends in permissions";
+                $messageObjectPermission = G::LoadTranslation("ID_DYNAFORM_DEPENDS_PERMISSIONS", [$countSteps]);
             }
 
-            $caseTrackerDepends = \CaseTrackerObject::verifyDynaformAssigCaseTracker($dynUid, $proUid);
-            $messageCaseTracker = '(0) Depends in case traker';
+            $caseTrackerDepends = CaseTrackerObject::verifyDynaformAssigCaseTracker($dynUid, $proUid);
+            $messageCaseTracker = G::LoadTranslation("ID_DYNAFORM_DEPENDS_CASE_TRACKER", [0]);
             if (!empty($caseTrackerDepends)) {
                 $flagDepend = true;
                 $countSteps = count($caseTrackerDepends);
-                $messageCaseTracker = "($countSteps) Depends in case traker";
+                $messageCaseTracker = G::LoadTranslation("ID_DYNAFORM_DEPENDS_CASE_TRACKER", [$countSteps]);
             }
 
-            $dynaformDepends = \Dynaform::verifyDynaformAssignDynaform($dynUid, $proUid);
-            $messageDynaform = '(0) Depends in case traker';
+            $dynaformDepends = ModelDynaform::verifyDynaformAssignDynaform($dynUid, $proUid);
+            $messageDynaform = G::LoadTranslation("ID_DYNAFORM_DEPENDS_DYNAFORMS", [0]);
             if (!empty($dynaformDepends)) {
                 $flagDepend = true;
                 $countSteps = count($dynaformDepends);
-                $messageDynaform = "($countSteps) Depends in dynaform";
+                $messageDynaform = G::LoadTranslation("ID_DYNAFORM_DEPENDS_DYNAFORMS", [$countSteps]);
             }
-
+            $message = '';
             if ($flagDepend) {
                 $message = "You can not delete the dynaform '$dynUid', because it has the following dependencies: \n\n";
                 $message .= $messageSteps . ".\n" . $messageStepsSupervisors . ".\n";
@@ -235,7 +242,7 @@ class DynaForm
                 $message .= $messageDynaform;
                 return $message;
             }
-            return '';
+            return $message;
         }
     }
 
@@ -453,14 +460,11 @@ class DynaForm
 
             //Load DynaForm
             $dynaForm = new \Dynaform();
-
             $arrayDynaFormData = $dynaForm->Load($dynaFormUid);
-
             $processUid = $arrayDynaFormData["PRO_UID"];
 
             //Verify data
             $process = new \ProcessMaker\BusinessModel\Process();
-
             $process->throwExceptionIfDataNotMetFieldDefinition($arrayData, $this->arrayFieldDefinition, $this->arrayFieldNameForException, false);
 
             if (isset($arrayData["DYN_TITLE"])) {
@@ -471,8 +475,9 @@ class DynaForm
 
             //Update
             $arrayData["DYN_UID"] = $dynaFormUid;
-
             $result = $dynaForm->update($arrayData);
+            //Add Audit Log
+            G::auditLog("UpdateDynaform", "Dynaform Title: " . $arrayData['DYN_TITLE'] . ", Type: " . $arrayData['DYN_TYPE'] . ", Description: " . $arrayData['DYN_DESCRIPTION'] . ", Uid: " . $arrayData["DYN_UID"]);
 
             //Return
             unset($arrayData["DYN_UID"]);
@@ -482,7 +487,7 @@ class DynaForm
             }
 
             return $arrayData;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         }
     }

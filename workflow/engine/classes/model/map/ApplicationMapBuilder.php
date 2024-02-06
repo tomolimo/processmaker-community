@@ -111,6 +111,10 @@ class ApplicationMapBuilder
 
         $tMap->addColumn('APP_ROUTING_DATA', 'AppRoutingData', 'string', CreoleTypes::LONGVARCHAR, false, null);
 
+        $tMap->addColumn('PRO_ID', 'ProId', 'int', CreoleTypes::INTEGER, true, null);
+
+        $tMap->addColumn('APP_INIT_USER_ID', 'AppInitUserId', 'int', CreoleTypes::INTEGER, true, null);
+
         $tMap->addValidator('APP_STATUS', 'validValues', 'propel.validator.ValidValuesValidator', 'DRAFT|TO_DO|PAUSED|COMPLETED|CANCELLED', 'Please select a valid status.');
 
     } // doBuild()

@@ -5,6 +5,7 @@ var CriteriaField = function (options) {
     this.workspace = null;
     this.buttonHTML = null;
     this.rows = options.rows;
+    this.options = options;
     CriteriaField.prototype.init.call(this, options);
 };
 
@@ -48,6 +49,15 @@ CriteriaField.prototype.setControls = function () {
         this.controls.push(new PMUI.control.TextAreaControl({style: {cssProperties: {resize: 'vertical'}}}));
     }
     return this;
+};
+
+/**
+ * Update the property disable
+ * @param {boolean} value 
+ */
+CriteriaField.prototype.updateDisabled = function (value) {
+    this.setDisabled(value);
+    this.buttonHTML.setDisabled(value);
 };
 
 CriteriaField.prototype.createCallBack = function () {
@@ -100,6 +110,9 @@ CriteriaField.prototype.createHTML = function () {
     $(this.helper.html).before(button.getHTML());
     this.buttonHTML.style.addProperties({"margin-left": "10px"});
     this.buttonHTML.html.tabIndex = -1;
+    if (typeof this.options.disabled === 'boolean') {
+        this.buttonHTML.setDisabled(this.options.disabled);
+    }
 
     if (this.rows != null)
         this.controls[0].setHeight(this.rows);

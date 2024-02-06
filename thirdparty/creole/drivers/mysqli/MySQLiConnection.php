@@ -75,11 +75,9 @@ class MySQLiConnection extends ConnectionCommon implements Connection {
 
 		$encoding = !empty($dsninfo['encoding']) ? $dsninfo['encoding'] : null;
 
-        @ini_set('track_errors', true);
-
-		$conn = mysqli_connect($host, $user, $pw, $database, $port, $socket);
-
-            @ini_restore('track_errors');
+        $conn = mysqli_connect($host, $user, $pw, $database, $port, $socket);
+        $errorGetLast = error_get_last();
+        $php_errormsg = isset($errorGetLast['message']) ? $errorGetLast['message'] : '';
 
         if (empty($conn)) {
             if (($err = @mysqli_error()) != '') {

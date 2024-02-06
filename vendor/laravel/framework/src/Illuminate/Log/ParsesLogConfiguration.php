@@ -50,6 +50,23 @@ trait ParsesLogConfiguration
     }
 
     /**
+     * Parse the action level from the given configuration.
+     *
+     * @param  array  $config
+     * @return int
+     */
+    protected function actionLevel(array $config)
+    {
+        $level = $config['action_level'] ?? 'debug';
+
+        if (isset($this->levels[$level])) {
+            return $this->levels[$level];
+        }
+
+        throw new InvalidArgumentException('Invalid log action level.');
+    }
+
+    /**
      * Extract the log channel from the given configuration.
      *
      * @param  array  $config
@@ -57,10 +74,6 @@ trait ParsesLogConfiguration
      */
     protected function parseChannel(array $config)
     {
-        if (! isset($config['name'])) {
-            return $this->getFallbackChannelName();
-        }
-
-        return $config['name'];
+        return $config['name'] ?? $this->getFallbackChannelName();
     }
 }

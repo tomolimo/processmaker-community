@@ -705,7 +705,7 @@ class Dynaform extends BaseDynaform
      *
      * @return array
      */
-    public function verifyDynaformAssignDynaform ($dynUid, $proUid) 
+    public static function verifyDynaformAssignDynaform ($dynUid, $proUid)
     {
         $res = array();
         $oCriteria = new Criteria();

@@ -772,9 +772,10 @@ EOREGEX;
         $last = array_pop( $stripped );
         if (! $alias && $last['expr_type'] == 'colref') {
             $prev = array_pop( $stripped );
-            if ($prev['expr_type'] == 'operator' || $prev['expr_type'] == 'const' || $prev['expr_type'] == 'function' || $prev['expr_type'] == 'expression' ||
+            $exprType = isset($prev['expr_type']) ? $prev['expr_type'] : null;
+            if ($exprType == 'operator' || $exprType == 'const' || $exprType == 'function' || $exprType == 'expression' ||
             #$prev['expr_type'] == 'aggregate_function' ||
-            $prev['expr_type'] == 'subquery' || $prev['expr_type'] == 'colref') {
+            $exprType == 'subquery' || $exprType == 'colref') {
                 $alias = $last['base_expr'];
 
                 #remove the last token

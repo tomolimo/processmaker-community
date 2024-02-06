@@ -388,7 +388,7 @@ class PEAR_Config extends PEAR
      *
      * @see PEAR_Config::singleton
      */
-    function PEAR_Config($user_file = '', $system_file = '')
+    function __construct($user_file = '', $system_file = '')
     {
         $this->PEAR();
         $sl = DIRECTORY_SEPARATOR;
@@ -445,7 +445,7 @@ class PEAR_Config extends PEAR
             return $GLOBALS['_PEAR_Config_instance'];
         }
         $GLOBALS['_PEAR_Config_instance'] =
-             &new PEAR_Config($user_file, $system_file);
+             new PEAR_Config($user_file, $system_file);
         return $GLOBALS['_PEAR_Config_instance'];
     }
 

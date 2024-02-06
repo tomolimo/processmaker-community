@@ -1,6 +1,15 @@
 <?php
 
 use Processmaker\Core\System;
+use ProcessMaker\Exception\RBACException;
+
+// Include global object RBAC
+global $RBAC;
+
+// Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+if ($RBAC->userCanAccess('PM_SETUP_ADVANCE') !== 1 || $RBAC->userCanAccess('PM_SETUP_CASES_LIST_CACHE_BUILDER') !== 1) {
+    throw new RBACException('ID_ACCESS_DENIED', 403);
+}
 
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
@@ -212,7 +221,6 @@ switch ($request) {
         echo $message;
         break;
     case 'captcha':
-        require_once PATH_TRUNK . 'vendor/dapphp/securimage/securimage.php';
         $img = new Securimage();
         $img->show();
         break;

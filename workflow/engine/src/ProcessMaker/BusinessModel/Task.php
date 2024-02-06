@@ -1,10 +1,14 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
-use \G;
+use Exception;
+use G;
+use ProcessMaker\Model\Groupwf;
+use ProcessMaker\Model\TaskUser;
+use ProcessMaker\Model\User;
 use ProcessMaker\Plugins\Interfaces\StepDetail;
 use ProcessMaker\Plugins\PluginRegistry;
-use \ProcessMaker\Util;
+use ProcessMaker\Util;
 
 class Task
 {
@@ -256,7 +260,9 @@ class Task
             }
 
             foreach ($arrayProperty as $k => $v) {
-                $arrayProperty[$k] = str_replace("@amp@", "&", $v);
+                if (!is_array($v)) {
+                    $arrayProperty[$k] = str_replace("@amp@", "&", $v);
+                }
             }
 
             if (isset($arrayProperty["TAS_SEND_LAST_EMAIL"])) {
@@ -1241,68 +1247,49 @@ class Task
     /**
      * Assign a user or group to an activity
      *
-     * @param string $sProcessUID {@min 32} {@max 32}
-     * @param string $sTaskUID {@min 32} {@max 32}
-     * @param string $sAssigneeUID {@min 32} {@max 32}
-     * @param string $assType {@choice user,group}
+     * @param string $proUid {@min 32} {@max 32}
+     * @param string $tasUid {@min 32} {@max 32}
+     * @param string $uid {@min 32} {@max 32}
+     * @param string $type {@choice user,group}
      *
-     * return array
+     * @return array
      *
      * @access public
      */
-    public function addTaskAssignee($sProcessUID, $sTaskUID, $sAssigneeUID, $assType)
+    public function addTaskAssignee($proUid, $tasUid, $uid, $type)
     {
         try {
-            Validator::proUid($sProcessUID, '$prj_uid');
-            $this->validateActUid($sTaskUID);
-            $iType = 1;
-            $iRelation = '';
-            $oCriteria = new \Criteria('workflow');
-            $oCriteria->addSelectColumn( \TaskUserPeer::TU_RELATION );
-            $oCriteria->add(\TaskUserPeer::USR_UID, $sAssigneeUID );
-            $oCriteria->add(\TaskUserPeer::TAS_UID, $sTaskUID );
-            $oCriteria->add(\TaskUserPeer::TU_TYPE, $iType );
-            $oTaskUser = \TaskUserPeer::doSelectRS( $oCriteria );
-            $oTaskUser->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-            while ($oTaskUser->next()) {
-                $aRow = $oTaskUser->getRow();
-                $iRelation = $aRow['TU_RELATION'];
-            }
-            $oTaskUser = \TaskUserPeer::retrieveByPK( $sTaskUID, $sAssigneeUID, $iType, $iRelation );
-            if (! is_null( $oTaskUser )) {
-                throw new \Exception(\G::LoadTranslation("ID_ALREADY_ASSIGNED", array($sAssigneeUID, $sTaskUID)));
+            Validator::proUid($proUid, '$prj_uid');
+            $this->validateActUid($tasUid);
+            $taskUser = new TaskUser();
+            $response = $taskUser->getAssigment($tasUid, $uid);
+            if (!empty($response)) {
+                throw new Exception(G::LoadTranslation("ID_ALREADY_ASSIGNED", [$uid, $tasUid]));
             } else {
-                $oTypeAssigneeG = \GroupwfPeer::retrieveByPK( $sAssigneeUID );
-                $oTypeAssigneeU = \UsersPeer::retrieveByPK( $sAssigneeUID );
-                if (is_null( $oTypeAssigneeG ) && is_null( $oTypeAssigneeU ) ) {
-                    throw new \Exception(\G::LoadTranslation("ID_DOES_NOT_CORRESPOND", array($sAssigneeUID, $assType)));
+                $groupUid = Groupwf::query()->select()->group($uid)->get()->toArray();
+                $userUid = User::query()->select()->user($uid)->get()->toArray();
+                if (empty($groupUid) && empty($userUid)) {
+                    throw new Exception(G::LoadTranslation("ID_DOES_NOT_CORRESPOND", [$uid, $type]));
                 }
-                if (is_null( $oTypeAssigneeG ) && ! is_null( $oTypeAssigneeU) ) {
-                    $type = "user";
-                    if ( $type != $assType ) {
-                        throw new \Exception(\G::LoadTranslation("ID_DOES_NOT_CORRESPOND", array($sAssigneeUID, $assType)));
-                    }
+                if (empty($groupUid) && !empty($userUid) && $type !== "user") {
+                    throw new Exception(G::LoadTranslation("ID_DOES_NOT_CORRESPOND", [$uid, $type]));
                 }
-                if (! is_null( $oTypeAssigneeG ) && is_null( $oTypeAssigneeU ) ) {
-                    $type = "group";
-                    if ( $type != $assType ) {
-                        throw new \Exception(\G::LoadTranslation("ID_DOES_NOT_CORRESPOND", array($sAssigneeUID, $assType)));
-                    }
+                if (!empty($groupUid) && empty($userUid) && $type !== "group") {
+                    throw new Exception(G::LoadTranslation("ID_DOES_NOT_CORRESPOND", [$uid, $type]));
                 }
-                $oTaskUser = new \TaskUser();
-                if ( $assType == "user" ) {
-                    $oTaskUser->create(array('TAS_UID' => $sTaskUID,
-                                             'USR_UID' => $sAssigneeUID,
-                                             'TU_TYPE' => $iType,
-                                             'TU_RELATION' => 1));
-                } else {
-                    $oTaskUser->create(array('TAS_UID' => $sTaskUID,
-                                             'USR_UID' => $sAssigneeUID,
-                                             'TU_TYPE' => $iType,
-                                             'TU_RELATION' => 2));
-                }
+                // Register the assigment
+                $attributes = [
+                    'TAS_UID' => $tasUid,
+                    'USR_UID' => $uid,
+                    'TU_TYPE' => 1,
+                    'TU_RELATION' => ($type === "user") ? 1 : 2
+                ];
+                $assigment = TaskUser::create($attributes);
+                // Register the action in audit log
+                $assignTask = ($type === "user") ? 'AssignUserTask' : 'AssignGroupTask';
+                G::auditlog($assignTask, 'Assign ' . $type . ' to Task -> ' . $tasUid . ',' . $type . ' Uid -> ' . $uid);
             }
-        } catch ( \Exception $e ) {
+        } catch (Exception $e) {
             throw $e;
         }
     }

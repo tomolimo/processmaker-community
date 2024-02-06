@@ -425,14 +425,7 @@ class XmlFormField
         $fields = [];
         if (isset($this->formula)) {
             preg_match_all("/\b[a-zA-Z][a-zA-Z_0-9]*\b/", $this->formula, $matches, PREG_PATTERN_ORDER);
-            /*      if ($this->formula!=''){
-            var_dump($this->formula);
-            var_dump($matches);
-            var_dump(array_keys($this->owner->fields));
-            die;
-            }*/
             foreach ($matches[0] as $field) {
-                //if (array_key_exists( $this->owner->fields, $field ))
                 $fields[] = $field;
             }
         }
@@ -3591,7 +3584,7 @@ class XmlFormFieldDropdown extends XmlFormField
                 $html .= 'value="' . (($findValue != '') ? $findValue : $firstValue) . '" />';
             }
 
-            $this->selectedValue = ($findValue != "") ? $findValue : ($count == 0) ? $firstValue : "";
+            $this->selectedValue = (!empty($findValue) ? $findValue : ($count == 0)) ? $firstValue : "";
         } else {
             //Render Field showing only value;
             foreach ($this->option as $optValue => $optName) {

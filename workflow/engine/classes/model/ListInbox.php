@@ -14,6 +14,7 @@ use ProcessMaker\BusinessModel\User as BmUser;
  * long as it does not already exist in the output directory.
  *
  * @package    classes.model
+ * @deprecated Class deprecated in Release 3.6.0
  */
 
 class ListInbox extends BaseListInbox implements ListInterface
@@ -425,11 +426,12 @@ class ListInbox extends BaseListInbox implements ListInterface
             case 'to_reassign':
                 global $RBAC;
                 $criteria->add(ListInboxPeer::APP_STATUS, 'TO_DO', Criteria::EQUAL);
+                // We will not consider without user threads
+                $criteria->add(ListInboxPeer::USR_UID, '', Criteria::NOT_EQUAL);
                 $user = new BmUser();
                 $listProcess = $user->getProcessToReassign(['PM_REASSIGNCASE','PM_REASSIGNCASE_SUPERVISOR']);
-
-                //If is not a supervisor and does not have the permission for view all cases we can not list cases
-                //If is a supervisor, we can list only his processes
+                // If is not a supervisor and does not have the permission for view all cases we can not list cases
+                // If is a supervisor, we can list only his processes
                 if (
                     (empty($listProcess) && $RBAC->userCanAccess('PM_REASSIGNCASE') !== 1) ||
                     (is_array($listProcess) && count($listProcess) > 0)

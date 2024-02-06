@@ -91,6 +91,16 @@ var MessageEventDefinition = function (bpmnEvent) {
         }
     };
 
+    this.txtCaseTitle = new CriteriaField({
+        id: "txtCaseTitle",
+        name: "txtCaseTitle",
+        valueType: "string",
+        label: "Case Title".translate(),
+        maxLength: 200,
+        value: "",
+        controlsWidth: 380
+    });
+
     this.txtCorrelationValue = new CriteriaField({
         id: "txtCorrelationValue",
         name: "txtCorrelationValue",
@@ -137,6 +147,7 @@ var MessageEventDefinition = function (bpmnEvent) {
         width: DEFAULT_WINDOW_WIDTH - 70,
         visibleHeader: false,
         items: [
+            that.txtCaseTitle,
             that.cboMessageType,
             that.txtCorrelationValue,
             {
@@ -329,6 +340,7 @@ MessageEventDefinition.prototype.createWindow = function () {
                         msged_correlation: correlationValueAux.txtCorrelationValue
                     };
 
+                    data.case_title = that.txtCaseTitle.value;
                     switch (that.messageEventDefinitionOption) {
                         case "POST":
                             that.messageEventDefintionPostRestProxy(data);
@@ -431,6 +443,7 @@ MessageEventDefinition.prototype.load = function () {
 
                 that.gridCurrent.setDataItems(that.getVariablesByObject(arrayMessageEventDefinitionData.msged_variables));
                 that.frmMessageEventDefinition1.getField("txtCorrelationValue").setValue(arrayMessageEventDefinitionData.msged_correlation);
+                that.frmMessageEventDefinition1.getField("txtCaseTitle").setValue(arrayMessageEventDefinitionData.tas_def_title);
             }
         },
         functionFailure: function (xhr, response) {

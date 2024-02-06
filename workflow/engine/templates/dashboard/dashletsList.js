@@ -57,20 +57,20 @@ Ext.onReady(function(){
 
   newButton = new Ext.Action({
     text: _('ID_NEW'),
-    iconCls: 'button_menu_ext ss_sprite ss_add',
+    icon: '/images/add_18.png',
     handler: newDashletInstance
   });
 
   editButton = new Ext.Action({
     text: _('ID_EDIT'),
-    iconCls: 'button_menu_ext ss_sprite  ss_pencil',
+    icon: '/images/pencil.png',
     handler: editDashletInstance,
     disabled: true
   });
 
   deleteButton = new Ext.Action({
     text: _('ID_DELETE'),
-    iconCls: 'button_menu_ext ss_sprite  ss_delete',
+    icon: '/images/delete-16x16.gif',
     handler: deleteDashletInstance,
     disabled: true
   });

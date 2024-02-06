@@ -1,6 +1,6 @@
 <?php
-namespace ProcessMaker\Services\Api;
 
+namespace ProcessMaker\Services\Api;
 
 use AppDelegation;
 use AppDelegationPeer;
@@ -10,6 +10,7 @@ use Exception;
 use ListUnassigned;
 use Luracast\Restler\RestException;
 use ProcessMaker\BusinessModel\Cases as BmCases;
+use ProcessMaker\BusinessModel\Cases\Filter;
 use ProcessMaker\BusinessModel\User as BmUser;
 use ProcessMaker\Services\Api;
 use ProcessMaker\Util\DateTime;
@@ -18,9 +19,6 @@ use RBAC;
 
 /**
  * Cases Api Controller
- *
- * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
- * @copyright Colosa - Bolivia
  *
  * @protected
  */
@@ -68,7 +66,7 @@ class Cases extends Api
             $arrayArgs  = $this->restler->apiMethodInfo->arguments;
             switch ($methodName) {
                 case 'doGetCaseVariables':
-                    $applicationUid = $this->parameters[$arrayArgs['app_uid']];
+                    $applicationUid = $this->parameters[$arrayArgs['appUid']];
                     $dynaformUid = $this->parameters[$arrayArgs['dyn_uid']];
                     $delIndex = $this->parameters[$arrayArgs['app_index']];
                     $userUid = $this->getUserId();
@@ -78,20 +76,20 @@ class Cases extends Api
                     }
                     //Check if the user has the case
                     $appDelegation = new AppDelegation();
-                    $aCurUser = $appDelegation->getCurrentUsers($applicationUid, $delIndex);
-                    if (!empty($aCurUser)) {
-                        foreach ($aCurUser as $key => $value) {
+                    $curUser = $appDelegation->getCurrentUsers($applicationUid, $delIndex);
+                    if (!empty($curUser)) {
+                        foreach ($curUser as $key => $value) {
                             if ($value === $userUid) {
                                 return true;
                             }
                         }
                     }
                     //Check if the user has Permissions
-                    $oCases = new BmCases();
-                    return $oCases->checkUserHasPermissionsOrSupervisor($userUid, $applicationUid, $dynaformUid);
+                    $cases = new BmCases();
+                    return $cases->checkUserHasPermissionsOrSupervisor($userUid, $applicationUid, $dynaformUid);
                     break;
                 case 'doPutCaseVariables':
-                    $applicationUid = $this->parameters[$arrayArgs['app_uid']];
+                    $applicationUid = $this->parameters[$arrayArgs['appUid']];
                     $dynaformUid = $this->parameters[$arrayArgs['dyn_uid']];
                     $delIndex = $this->parameters[$arrayArgs['del_index']];
                     $userUid = $this->getUserId();
@@ -136,7 +134,7 @@ class Cases extends Api
                     }
                     break;
                 case 'doPutReassignCase':
-                    $appUid = $this->parameters[$arrayArgs['app_uid']];
+                    $appUid = $this->parameters[$arrayArgs['appUid']];
                     $usrUid = $this->getUserId();
                     $case = new BmCases();
                     $user = new BmUser();
@@ -145,7 +143,7 @@ class Cases extends Api
                     return $user->userCanReassign($usrUid, $arrayApplicationData['PRO_UID']);
                     break;
                 case 'doGetCaseInfo':
-                    $appUid = $this->parameters[$arrayArgs['app_uid']];
+                    $appUid = $this->parameters[$arrayArgs['appUid']];
                     $usrUid = $this->getUserId();
 
                     $case = new BmCases();
@@ -186,14 +184,14 @@ class Cases extends Api
                     $appDocUid = $this->parameters[$arrayArgs['app_doc_uid']];
                     $version = $this->parameters[$arrayArgs['v']];
                     $usrUid = $this->getUserId();
-                    $oAppDocument = new AppDocument();
+                    $appDocument = new AppDocument();
                     if ($version == 0) {
-                        $docVersion = $oAppDocument->getLastAppDocVersion($appDocUid);
+                        $docVersion = $appDocument->getLastAppDocVersion($appDocUid);
                     } else {
                         $docVersion = $version;
                     }
                     if (defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0) {
-                        if ($oAppDocument->canDownloadInput($usrUid, $appDocUid, $docVersion)) {
+                        if ($appDocument->canDownloadInput($usrUid, $appDocUid, $docVersion)) {
                             return true;
                         }
                     } else {
@@ -211,6 +209,8 @@ class Cases extends Api
     /**
      * Get list Cases To Do
      *
+     * @url GET
+     *
      * @param int $start {@from path}
      * @param int $limit {@from path}
      * @param string $sort {@from path}
@@ -218,10 +218,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListToDo(
         $start = 0,
@@ -236,7 +236,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'todo';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -244,8 +243,8 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
 
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
@@ -255,6 +254,7 @@ class Cases extends Api
 
     /**
      * Get list Cases To Do with paged
+     * @url GET /paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -263,10 +263,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListToDoPaged(
         $start = 0,
@@ -281,7 +281,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'todo';
             $dataList['paged']  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -289,8 +288,9 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -299,6 +299,7 @@ class Cases extends Api
 
     /**
      * Get list Cases Draft
+     * @url GET /draft
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -307,10 +308,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /draft
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListDraft(
         $start = 0,
@@ -325,7 +326,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'draft';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -333,8 +333,9 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -343,6 +344,7 @@ class Cases extends Api
 
     /**
      * Get list Cases Draft with paged
+     * @url GET /draft/paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -351,10 +353,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /draft/paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListDraftPaged(
         $start = 0,
@@ -369,7 +371,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'draft';
             $dataList['paged']  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -377,8 +378,9 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -387,6 +389,7 @@ class Cases extends Api
 
     /**
      * Get list Cases Participated
+     * @url GET /participated
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -395,10 +398,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /participated
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListParticipated(
         $start = 0,
@@ -413,7 +416,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'sent';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -421,8 +423,9 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -431,6 +434,7 @@ class Cases extends Api
 
     /**
      * Get list Cases Participated with paged
+     * @url GET /participated/paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -439,10 +443,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /participated/paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListParticipatedPaged(
         $start = 0,
@@ -457,7 +461,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'sent';
             $dataList['paged']  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -465,8 +468,9 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
@@ -475,6 +479,7 @@ class Cases extends Api
 
     /**
      * Get list Cases Unassigned
+     * @url GET /unassigned
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -483,10 +488,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /unassigned
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListUnassigned(
         $start = 0,
@@ -501,7 +506,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'unassigned';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -509,16 +513,18 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get list Cases Unassigned with paged
+     * @url GET /unassigned/paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -527,10 +533,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /unassigned/paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListUnassignedPaged(
         $start = 0,
@@ -545,7 +551,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'unassigned';
             $dataList['paged']  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -553,16 +558,18 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get list Cases Paused
+     * @url GET /paused
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -571,10 +578,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /paused
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListPaused(
         $start = 0,
@@ -589,7 +596,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'paused';
             $dataList['paged']  = false;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -597,16 +603,18 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get list Cases Paused with paged
+     * @url GET /paused/paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -615,10 +623,10 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /paused/paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListPausedPaged(
         $start = 0,
@@ -633,7 +641,6 @@ class Cases extends Api
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'paused';
             $dataList["paged"]  = true;
-
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -641,16 +648,18 @@ class Cases extends Api
             $dataList['category'] = $cat_uid;
             $dataList['process'] = $pro_uid;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get list Cases Advanced Search
+     * @url GET /advanced-search
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -659,14 +668,14 @@ class Cases extends Api
      * @param string $cat_uid {@from path}
      * @param string $pro_uid {@from path}
      * @param string $app_status {@from path}
-     * @param string $user {@from path}
+     * @param string $usr_uid {@from path}
      * @param string $date_from {@from path}
      * @param string $date_to {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /advanced-search
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListAdvancedSearch(
         $start = 0,
@@ -698,16 +707,18 @@ class Cases extends Api
             $dataList['dateFrom'] = $date_from;
             $dataList['dateTo'] = $date_to;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get list Cases Advanced Search with Paged
+     * @url GET /advanced-search/paged
      *
      * @param int $start {@from path}
      * @param int $limit {@from path}
@@ -720,10 +731,10 @@ class Cases extends Api
      * @param string $date_from {@from path}
      * @param string $date_to {@from path}
      * @param string $search {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /advanced-search/paged
+     * @deprecated Method deprecated in Release 3.6.x
      */
     public function doGetCasesListAdvancedSearchPaged(
         $start = 0,
@@ -755,31 +766,33 @@ class Cases extends Api
             $dataList['dateFrom'] = $date_from;
             $dataList['dateTo'] = $date_to;
             $dataList['search'] = $search;
-            $oCases = new BmCases();
-            $response = $oCases->getList($dataList);
+            $cases = new BmCases();
+            $response = $cases->getList($dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * @access protected
      * @class AccessControl {@className \ProcessMaker\Services\Api\Cases}
-     * @url GET /:app_uid
+     * @url GET /:appUid
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
+     *
      * @return array
      * @throws Exception
      */
-    public function doGetCaseInfo($app_uid)
+    public function doGetCaseInfo($appUid)
     {
         try {
             $case = new BmCases();
             $case->setFormatFieldNameInUppercase(false);
-
-            $caseInfo = $case->getCaseInfo($app_uid, $this->getUserId());
+            $caseInfo = $case->getCaseInfo($appUid, $this->getUserId());
             $caseInfo = DateTime::convertUtcToIso8601($caseInfo, $this->arrayFieldIso8601);
+
             return $caseInfo;
         } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
@@ -787,23 +800,21 @@ class Cases extends Api
     }
 
     /**
-     * @url GET /:app_uid/current-task
+     * @url GET /:appUid/current-task
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      */
-    public function doGetTaskCase($app_uid)
+    public function doGetTaskCase($appUid)
     {
         try {
             $case = new BmCases();
             $case->setFormatFieldNameInUppercase(false);
-
-            $arrayData = $case->getTaskCase($app_uid, $this->getUserId());
-
+            $arrayData = $case->getTaskCase($appUid, $this->getUserId());
             $response = $arrayData;
 
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -829,10 +840,11 @@ class Cases extends Api
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $oData = $cases->addCase($pro_uid, $tas_uid, $userUid, $variables);
-            return $oData;
+            $data = $cases->addCase($pro_uid, $tas_uid, $userUid, $variables);
+
+            return $data;
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -846,6 +858,7 @@ class Cases extends Api
      * PUT /cases/{app_uid}/execute-trigger/{tri_uid} to execute it.
      * 
      * @url POST /impersonate
+     * @status 201
      * 
      * @param string $pro_uid {@from body} {@min 32}{@max 32}
      * @param string $usr_uid {@from body} {@min 32}{@max 32}
@@ -862,45 +875,47 @@ class Cases extends Api
     {
         try {
             $cases = new BmCases();
-            $oData = $cases->addCaseImpersonate($pro_uid, $usr_uid, $tas_uid, $variables);
-            return $oData;
+            $data = $cases->addCaseImpersonate($pro_uid, $usr_uid, $tas_uid, $variables);
+            return $data;
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Update case reassignment.
      *
-     * @url PUT /:app_uid/reassign-case
+     * @url PUT /:appUid/reassign-case
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      * @param string $usr_uid_source {@from body} {@min 32}{@max 32}
      * @param string $usr_uid_target {@from body} {@min 32}{@max 32}
-     * @param string $del_index {@from body}
+     * @param int $del_index {@from body}
+     * @param string $reason {@from body}
+     * @param boolean $sendMail {@from body}
      *
      * @throws RestException
      *
      * @access protected
      * @class AccessControl {@className \ProcessMaker\Services\Api\Cases}
      */
-    public function doPutReassignCase($app_uid, $usr_uid_source, $usr_uid_target, $del_index = null)
+    public function doPutReassignCase($appUid, $usr_uid_source, $usr_uid_target, $del_index = null, $reason = '', $sendMail = false)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $cases->updateReassignCase($app_uid, $userUid, $del_index, $usr_uid_source, $usr_uid_target);
+            $cases->updateReassignCase($appUid, $userUid, $del_index, $usr_uid_source, $usr_uid_target, $reason, $sendMail);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Route Case.
      *
-     * @url PUT /:app_uid/route-case
+     * @url PUT /:appUid/route-case
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      * @param string $del_index {@from body}
      * @param boolean $executeTriggersBeforeAssignment {@from body}
      *
@@ -909,97 +924,206 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPutRouteCase($app_uid, $del_index = null, $executeTriggersBeforeAssignment = false)
+    public function doPutRouteCase($appUid, $del_index = null, $executeTriggersBeforeAssignment = false)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $cases->updateRouteCase($app_uid, $userUid, $del_index, $executeTriggersBeforeAssignment);
+            $cases->updateRouteCase($appUid, $userUid, $del_index, $executeTriggersBeforeAssignment);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Cancel Case
      *
-     * @url PUT /:cas_uid/cancel
+     * @url PUT /:appUid/cancel
      *
-     * @param string $cas_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
+     * @param integer $index {@from body}
+     * @param string $reason {@from body}
+     * @param boolean $sendMail {@from body}
      *
      * @throws RestException
      *
      * @access protected
      * @class AccessControl {@permission PM_CANCELCASE}
      */
-    public function doPutCancelCase($cas_uid)
+    public function doPutCancelCase($appUid, $index = null, $reason = '', $sendMail = false)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $cases->putCancelCase($cas_uid, $userUid);
+            $cases->putCancelCase($appUid, $userUid, $index, $reason, $sendMail);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Pause Case
      *
-     * @url PUT /:cas_uid/pause
+     * @url PUT /:appUid/pause
      *
-     * @param string $cas_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param string $unpaused_date {@from body}
+     * @param string $unpaused_time {@from body}
+     * @param int $index {@from body}
+     * @param string $reason {@from body}
+     * @param boolean $sendMail {@from body}
      *
      * @throws RestException
      *
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPutPauseCase($cas_uid, $unpaused_date = null)
+    public function doPutPauseCase($appUid, $unpaused_date = null, $unpaused_time = '00:00', $index = 0, $reason = '', $sendMail = false)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            if ($unpaused_date == null) {
-                $cases->putPauseCase($cas_uid, $userUid);
-            } else {
-                $cases->putPauseCase($cas_uid, $userUid, false, $unpaused_date);
-            }
+            $cases->putPauseCase($appUid, $userUid, $index, $unpaused_date, $unpaused_time, $reason, $sendMail);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Unpause Case
      *
-     * @url PUT /:cas_uid/unpause
+     * @url PUT /:appUid/unpause
      *
-     * @param string $cas_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
+     * @param int $index {@from body}
      *
      * @throws RestException
      *
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPutUnpauseCase($cas_uid)
+    public function doPutUnpauseCase($appUid, $index = 0)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $cases->putUnpauseCase($cas_uid, $userUid);
+            $cases->putUnpauseCase($appUid, $userUid, $index);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Claim Case
+     *
+     * @url PUT /:appUid/claim
+     *
+     * @param string $appUid {@min 1}{@max 32}
+     * @param integer $index {@from body}
+     *
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function doPutClaimCase($appUid, $index)
+    {
+        try {
+            $userUid = $this->getUserId();
+            $cases = new BmCases();
+            $cases->putClaimCase($appUid, $index, $userUid, 'Claim');
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+    
+    /**
+     * Verify if current user is a supervisor
+     *
+     * @url GET /:appNumber/supervisor
+     *
+     * @param int $appNumber
+     *
+     * @return boolean
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function isSupervisor(int $appNumber)
+    {
+        try {
+            $userUid = $this->getUserId();
+            $cases = new BmCases();
+            return $cases->isSupervisor($userUid, $appNumber);
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Assign Case
+     *
+     * @url PUT /:appUid/:usrUid/assign
+     *
+     * @param string $appUid {@min 1}{@max 32}
+     * @param string $usrUid {@min 1}{@max 32}
+     * @param int $index {@from body}
+     * @param string $reason {@from body}
+     * @param bool $sendMail {@from body}
+     *
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function doPutAssignCase($appUid, $usrUid, $index, $reason = '', $sendMail = false)
+    {
+        try {
+            $cases = new BmCases();
+            $cases->putClaimCase($appUid, $index, $usrUid, 'Assign', $reason);
+
+            /** Add the note */
+            if (!empty($reason)) {
+                $currentUserUid = $this->getUserId();
+                $cases->sendMail($appUid, $currentUserUid, $reason, $sendMail, $usrUid);
+            }
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Get users to reassign or assign
+     *
+     * @url GET /:task_uid/:app_uid/userstoreassign
+     *
+     * @param string $task_uid
+     * @param string $app_uid
+     *
+     * @return array
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_CASES}
+     */
+    public function usersToReasign($task_uid, $app_uid)
+    {
+        try {
+            $usr_uid = $this->getUserId();
+            $cases = new BmCases();
+            return $cases->usersToReassign($usr_uid, $task_uid, $app_uid);
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Execute trigger in a case.
      *
-     * @url PUT /:cas_uid/execute-trigger/:tri_uid
+     * @url PUT /:appUid/execute-trigger/:tri_uid
      *
-     * @param string $cas_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param string $tri_uid {@min 1}{@max 32}
      *
      * @throws RestException
@@ -1007,34 +1131,34 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPutExecuteTriggerCase($cas_uid, $tri_uid)
+    public function doPutExecuteTriggerCase($appUid, $tri_uid)
     {
         try {
             $userUid = $this->getUserId();
             $cases = new BmCases();
-            $cases->putExecuteTriggerCase($cas_uid, $tri_uid, $userUid);
+            $cases->putExecuteTriggerCase($appUid, $tri_uid, $userUid);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Delete Case
-     * @url DELETE /:cas_uid
+     * @url DELETE /:appUid
      *
      * @access protected
      * @class AccessControl {@permission PM_CASES}
-     * @param string $cas_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @throws Exception
      */
-    public function doDeleteCase($cas_uid)
+    public function doDeleteCase($appUid)
     {
         try {
             $usr_uid = $this->getUserId();
             $cases = new BmCases();
-            $cases->deleteCase($cas_uid, $usr_uid);
+            $cases->deleteCase($appUid, $usr_uid);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
@@ -1043,9 +1167,9 @@ class Cases extends Api
      *
      * @access protected
      * @class  AccessControl {@className \ProcessMaker\Services\Api\Cases}
-     * @url GET /:app_uid/variables
+     * @url GET /:appUid/variables
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param string $dyn_uid
      * @param string $pro_uid
      * @param string $act_uid
@@ -1053,24 +1177,24 @@ class Cases extends Api
      * @return mixed
      * @throws RestException
      */
-    public function doGetCaseVariables($app_uid, $dyn_uid = null, $pro_uid = null, $act_uid = null, $app_index = null)
+    public function doGetCaseVariables($appUid, $dyn_uid = null, $pro_uid = null, $act_uid = null, $app_index = null)
     {
         try {
             $usr_uid = $this->getUserId();
             $cases = new BmCases();
-            $response = $cases->getCaseVariables($app_uid, $usr_uid, $dyn_uid, $pro_uid, $act_uid, $app_index);
+            $response = $cases->getCaseVariables($appUid, $usr_uid, $dyn_uid, $pro_uid, $act_uid, $app_index);
             return DateTime::convertUtcToIso8601($response);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Put Case Variables
      *
-     * @url PUT /:app_uid/variable
+     * @url PUT /:appUid/variable
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param array $request_data
      * @param string $dyn_uid {@from path}
      * @param int $del_index {@from path}
@@ -1080,22 +1204,25 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPutCaseVariables($app_uid, $request_data, $dyn_uid = '', $del_index = 0)
+    public function doPutCaseVariables($appUid, $request_data, $dyn_uid = '', $del_index = 0)
     {
         try {
             $usr_uid = $this->getUserId();
             $cases = new BmCases();
             $request_data = \ProcessMaker\Util\DateTime::convertDataToUtc($request_data);
-            $cases->setCaseVariables($app_uid, $request_data, $dyn_uid, $usr_uid, $del_index);
+            $cases->setCaseVariables($appUid, $request_data, $dyn_uid, $usr_uid, $del_index);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
      * Get Case Notes
+     * @url GET /:appUid/notes
+     * @url GET /:appUid/notes/:paged
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
+     * @param string $paged
      * @param int $start {@from path}
      * @param int $limit {@from path}
      * @param string $sort {@from path}
@@ -1104,25 +1231,26 @@ class Cases extends Api
      * @param string $date_from {@from path}
      * @param string $date_to {@from path}
      * @param string $search {@from path}
+     * @param boolean $files {@from path}
+     *
      * @return array
      * @throws Exception
-     *
-     * @url GET /:app_uid/notes
      */
     public function doGetCaseNotes(
-        $app_uid,
+        $appUid,
+        $paged = '',
         $start = 0,
         $limit = 25,
-        $sort = 'APP_CACHE_VIEW.APP_NUMBER',
+        $sort = 'NOTE_DATE',
         $dir = 'DESC',
         $usr_uid = '',
         $date_from = '',
         $date_to = '',
-        $search = ''
+        $search = '',
+        $files = false
     ) {
         try {
-            $dataList['paged']  = false;
-
+            $dataList['paged'] = ($paged === 'paged') ? true : false;
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
             $dataList['sort'] = $sort;
@@ -1131,59 +1259,14 @@ class Cases extends Api
             $dataList['dateFrom'] = $date_from;
             $dataList['dateTo'] = $date_to;
             $dataList['search'] = $search;
-
+            $dataList['files'] = $files;
             $usr_uid = $this->getUserId();
             $cases = new BmCases();
-            $response = $cases->getCaseNotes($app_uid, $usr_uid, $dataList);
+            $response = $cases->getCaseNotes($appUid, $usr_uid, $dataList);
+
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
-        }
-    }
-
-    /**
-     * Get Case Notes with Paged
-     *
-     * @param int $start {@from path}
-     * @param int $limit {@from path}
-     * @param string $sort {@from path}
-     * @param string $dir {@from path}
-     * @param string $usr_uid {@from path}
-     * @param string $date_from {@from path}
-     * @param string $date_to {@from path}
-     * @param string $search {@from path}
-     * @return array
-     * @throws Exception
-     *
-     * @url GET /:app_uid/notes/paged
-     */
-    public function doGetCaseNotesPaged(
-        $app_uid,
-        $start = 0,
-        $limit = 25,
-        $sort = 'APP_CACHE_VIEW.APP_NUMBER',
-        $dir = 'DESC',
-        $usr_uid = '',
-        $date_from = '',
-        $date_to = '',
-        $search = ''
-    ) {
-        try {
-            $dataList['start'] = $start;
-            $dataList['limit'] = $limit;
-            $dataList['sort'] = $sort;
-            $dataList['dir'] = $dir;
-            $dataList['user'] = $usr_uid;
-            $dataList['dateFrom'] = $date_from;
-            $dataList['dateTo'] = $date_to;
-            $dataList['search'] = $search;
-
-            $usr_uid = $this->getUserId();
-            $cases = new BmCases();
-            $response = $cases->getCaseNotes($app_uid, $usr_uid, $dataList);
-            return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
-        } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(401, $e->getMessage());
         }
     }
 
@@ -1192,9 +1275,10 @@ class Cases extends Api
      * currently assigned to work on the case or have Process Permissions to
      * access case notes may create a case note.
      *
-     * @url POST /:app_uid/note
+     * @url POST /:appUid/note
+     * @status 201
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param string $note_content {@min 1}{@max 500}
      * @param int $send_mail {@choice 1,0}
      *
@@ -1204,32 +1288,31 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doPostCaseNote($app_uid, $note_content, $send_mail = 0)
+    public function doPostCaseNote($appUid, $note_content, $send_mail = 0)
     {
         try {
             $usr_uid = $this->getUserId();
             $cases = new BmCases();
             $send_mail = ($send_mail == 0) ? false : true;
-            $cases->saveCaseNote($app_uid, $usr_uid, $note_content, $send_mail);
+            $cases->saveCaseNote($appUid, $usr_uid, $note_content, $send_mail);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
-     * @url GET /:app_uid/tasks
+     * @url GET /:appUid/tasks
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      */
-    public function doGetTasks($app_uid)
+    public function doGetTasks($appUid)
     {
         try {
             $case = new BmCases();
             $case->setFormatFieldNameInUppercase(false);
+            $response = $case->getTasks($appUid);
 
-            $response = $case->getTasks($app_uid);
-
-            return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
+            return DateTime::convertUtcToTimeZone($response);
         } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
@@ -1238,9 +1321,9 @@ class Cases extends Api
     /**
      * Execute triggers
      *
-     * @url PUT /:app_uid/execute-triggers
+     * @url PUT /:appUid/execute-triggers
      *
-     * @param string $app_uid {@min 1}{@max 32}
+     * @param string $appUid {@min 1}{@max 32}
      * @param int $del_index {@from body}
      * @param string $obj_type {@from body}
      * @param string $obj_uid {@from body}
@@ -1250,30 +1333,28 @@ class Cases extends Api
      * @class AccessControl {@permission PM_CASES}
      * @access protected
      */
-    public function doPutExecuteTriggers($app_uid, $del_index, $obj_type, $obj_uid)
+    public function doPutExecuteTriggers($appUid, $del_index, $obj_type, $obj_uid)
     {
         try {
             $cases = new BmCases();
-            $cases->putExecuteTriggers($app_uid, $del_index, $obj_type, $obj_uid);
+            $cases->putExecuteTriggers($appUid, $del_index, $obj_type, $obj_uid);
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
     }
 
     /**
-     * @url GET /:app_uid/:del_index/steps
+     * @url GET /:appUid/:del_index/steps
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      * @param int $del_index
-     *
      */
-    public function doGetSteps($app_uid, $del_index)
+    public function doGetSteps($appUid, $del_index)
     {
         try {
             $case = new BmCases();
             $case->setFormatFieldNameInUppercase(false);
-
-            $response = $case->getSteps($app_uid, $del_index);
+            $response = $case->getSteps($appUid, $del_index);
 
             return $response;
         } catch (Exception $e) {
@@ -1289,16 +1370,14 @@ class Cases extends Api
      * @param string $type_view {@from path}
      * @return array
      * @throws Exception
-     *
      */
     public function doGetCasesListStarCase(
         $type_view = ''
     ) {
         try {
-            $usr_uid = $this->getUserId();
+            $usrUid = $this->getUserId();
             $case = new BmCases();
-
-            $response = $case->getCasesListStarCase($usr_uid, $type_view);
+            $response = $case->getCasesListStarCase($usrUid, $type_view);
 
             return $response;
         } catch (Exception $e) {
@@ -1314,16 +1393,14 @@ class Cases extends Api
      * @param string $type_view {@from path}
      * @return array
      * @throws Exception
-     *
      */
     public function doGetCasesListBookmarkStarCase(
         $type_view = ''
     ) {
         try {
-            $usr_uid = $this->getUserId();
+            $usrUid = $this->getUserId();
             $case = new BmCases();
-
-            $response = $case->getCasesListBookmarkStarCase($usr_uid, $type_view);
+            $response = $case->getCasesListBookmarkStarCase($usrUid, $type_view);
 
             return $response;
         } catch (Exception $e) {
@@ -1391,6 +1468,7 @@ class Cases extends Api
         try {
             $case = new BmCases();
             $response = $case->doPostReassign($request_data);
+
             return $response;
         } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
@@ -1401,11 +1479,11 @@ class Cases extends Api
      * Upload attachment related to the case, it does not need docUid
      * Upload document related to the case, it does need docUid
      *
-     * @url POST /:app_uid/upload/:var_name
-     * @url POST /:app_uid/upload/:var_name/:doc_uid
-     * @url POST /:app_uid/upload/:var_name/:doc_uid/:app_doc_uid
+     * @url POST /:appUid/upload/:var_name
+     * @url POST /:appUid/upload/:var_name/:doc_uid
+     * @url POST /:appUid/upload/:var_name/:doc_uid/:app_doc_uid
      *
-     * @param string $app_uid
+     * @param string $appUid
      * @param string $var_name
      * @param string $doc_uid
      * @param string $app_doc_uid
@@ -1417,20 +1495,20 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function uploadDocumentToCase($app_uid, $var_name, $doc_uid = '-1', $app_doc_uid = null, $delIndex = null)
+    public function uploadDocumentToCase($appUid, $var_name, $doc_uid = '-1', $app_doc_uid = null, $delIndex = null)
     {
         try {
             $userUid = $this->getUserId();
             $case = new BmCases();
             if (isset($delIndex)) {
-                $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid, $delIndex);
+                $response = $case->uploadFiles($userUid, $appUid, $var_name, $doc_uid, $app_doc_uid, $delIndex);
             } else {
-                $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid);
+                $response = $case->uploadFiles($userUid, $appUid, $var_name, $doc_uid, $app_doc_uid);
             }
         } catch (ExceptionRestApi $e) {
             throw new RestException($e->getCode(), $e->getMessage());
         } catch (Exception $e) {
-            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }
 
         return $response;
@@ -1439,9 +1517,9 @@ class Cases extends Api
     /**
      * Return information for sub process cases
      *
-     * @url GET /:app_uid/sub-process-cases
+     * @url GET /:appUid/sub-process-cases
      *
-     * @param string $app_uid {@min 32}{@max 32}
+     * @param string $appUid {@min 32}{@max 32}
      *
      * @return array
      * @throws Exception
@@ -1449,16 +1527,134 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function doGetCaseSubProcess($app_uid)
+    public function doGetCaseSubProcess($appUid)
     {
         try {
             $case = new BmCases();
             $case->setFormatFieldNameInUppercase(false);
-
-            $caseInfo = $case->getCaseInfoSubProcess($app_uid, $this->getUserId());
+            $caseInfo = $case->getCaseInfoSubProcess($appUid, $this->getUserId());
             $caseInfo = DateTime::convertUtcToIso8601($caseInfo, $this->arrayFieldIso8601);
 
             return $caseInfo;
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Get filters of the advanced search for the current user
+     *
+     * @url GET /advanced-search/filters
+     *
+     * @return array
+     *
+     * @throws RestException
+     */
+    public function doGetAdvancedSearchFilters()
+    {
+        try {
+            return Filter::getByUser($this->getUserId());
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Get a specific filter of the advanced search for the current user
+     *
+     * @url GET /advanced-search/filter/:filterUid
+     *
+     * @param string $filterUid {@min 32}{@max 32}
+     *
+     * @return object
+     *
+     * @throws RestException
+     */
+    public function doGetAdvancedSearchFilter($filterUid)
+    {
+        try {
+            $filter = Filter::getByUid($this->getUserId(), $filterUid);
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+
+        // If not exists the requested filter throw an 404 error
+        if (is_null($filter)) {
+            throw new RestException(404, "Filter with Uid '{$filterUid}'.");
+        }
+        return $filter;
+    }
+
+    /**
+     * Add a new filter of the advanced search for the current user
+     *
+     * @url POST /advanced-search/filter
+     *
+     * @param string $name
+     * @param string $filters
+     *
+     * @return object
+     *
+     * @throws RestException
+     */
+    public function doPostAdvancedSearchFilter($name, $filters)
+    {
+        try {
+            // Create JSON object if is a serialized string
+            $filters = is_string($filters) ? json_decode($filters) : $filters;
+            // Create new filter
+            $filter = Filter::create($this->getUserId(), $name, $filters);
+            // Return the new filter
+            return $filter;
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+    }
+
+    /**
+     * Update a filter of the advanced search for the current user
+     *
+     * @url PUT /advanced-search/filter/:filterUid
+     *
+     * @param string $filterUid {@min 32}{@max 32}
+     * @param string $name
+     * @param string $filters
+     *
+     * @throws RestException
+     */
+    public function doPutAdvancedSearchFilter($filterUid, $name, $filters)
+    {
+        try {
+            // Create JSON object if is a serialized string
+            $filters = is_string($filters) ? json_decode($filters) : $filters;
+            // Get requested filter
+            $filter = Filter::getByUid($this->getUserId(), $filterUid);
+            // Update the requested filter if exists
+            if (!is_null($filter)) {
+                Filter::update($this->getUserId(), $filterUid, $name, $filters);
+            }
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+        // If not exists the requested filter throw an 404 error
+        if (is_null($filter)) {
+            throw new RestException(404, "Filter with Uid '{$filterUid}'.");
+        }
+    }
+
+    /**
+     * Delete a specific filter of the advanced search for the current user
+     *
+     * @url DELETE /advanced-search/filter/:filterUid
+     *
+     * @param string $filterUid {@min 32}{@max 32}
+     *
+     * @throws RestException
+     */
+    public function doDeleteAdvancedSearchFilter($filterUid)
+    {
+        try {
+            Filter::delete($filterUid);
         } catch (Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }

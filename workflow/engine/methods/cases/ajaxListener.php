@@ -243,7 +243,17 @@ class Ajax
                     || in_array($appUid, $userAuthorization['objectPermissions']['REASSIGN_MY_CASES'])
                 ) {
                     if (!AppDelay::isPaused($appUid, $index)) {
-                        $options[] = ['text' => G::LoadTranslation('ID_REASSIGN'), 'fn' => 'getUsersToReassign'];
+                        $subprocess = SubProcess::getSubProcessConfiguration(
+                            $proUid,
+                            $_SESSION['CURRENT_TASK']
+                        );
+                        if (empty($subprocess)) {
+                            $options[] = ['text' => G::LoadTranslation('ID_REASSIGN'), 'fn' => 'getUsersToReassign'];
+                        } else {
+                            if ($subprocess['SP_SYNCHRONOUS'] == 0) {
+                                $options[] = ['text' => G::LoadTranslation('ID_REASSIGN'), 'fn' => 'getUsersToReassign'];
+                            }
+                        }
                     }
                 }
                 break;
@@ -252,24 +262,11 @@ class Ajax
                 break;
         }
 
-        if ($_SESSION["TASK"] != "" && $_SESSION["TASK"] != "-1") {
-            $task = new Task();
-            $tasksInParallel = explode('|', $_SESSION['TASK']);
-            $tasksInParallel = array_filter($tasksInParallel, function ($value) {
-                return !empty($value);
-            });
-            $nTasksInParallel = count($tasksInParallel);
-
-            if ($nTasksInParallel > 1) {
-                $taskProperties = $task->load($tasksInParallel[$nTasksInParallel - 1]);
-            } else {
-                $taskProperties = $task->load($_SESSION['TASK']);
-            }
-
-            if ($taskProperties['TAS_TYPE'] == 'ADHOC') {
-                $options[] = ['text' => G::LoadTranslation('ID_ADHOC_ASSIGNMENT'), 'fn' => 'adhocAssignmentUsers'];
-            }
-        }
+        /**
+         * The menu ID_ADHOC_ASSIGNMENT was deprecated because it's possible to reassign a case from the options reassign
+         * 
+         * @link https://wiki.processmaker.com/3.6/Cases/Actions#Reassign_2
+         */
 
         return $options;
     }
@@ -392,10 +389,11 @@ class Ajax
         } catch (Exception $oError) {
             $processData['PRO_AUTHOR'] = '(USER DELETED)';
         }
+        // Apply mask
+        $dateLabel = applyMaskDateEnvironment($processData['PRO_CREATE_DATE'],'', false);
+        // Apply the timezone
+        $processData['PRO_CREATE_DATE'] = DateTime::convertUtcToTimeZone($dateLabel);
 
-        $conf = new Configurations();
-        $conf->getFormats();
-        $processData['PRO_CREATE_DATE'] = $conf->getSystemDate($processData['PRO_CREATE_DATE']);
         print(G::json_encode($processData));
     }
 
@@ -429,6 +427,12 @@ class Ajax
 
         $task = new ModelTask();
         $taskData = $task->information($_SESSION['APPLICATION'], $taskUid, $_SESSION['INDEX']);
+        // Apply mask
+        $dateInitLabel = applyMaskDateEnvironment($taskData['INIT_DATE'],'', false);
+        $dateDueLabel = applyMaskDateEnvironment($taskData['DUE_DATE'],'', false);
+        // Apply the timezone
+        $taskData['INIT_DATE_LABEL'] = DateTime::convertUtcToTimeZone($dateInitLabel);
+        $taskData['DUE_DATE_LABEL'] = DateTime::convertUtcToTimeZone($dateDueLabel);
         $taskData = DateTime::convertUtcToTimeZone($taskData);
 
         print(G::json_encode($taskData));
@@ -474,13 +478,22 @@ class Ajax
     public function changeLogHistory()
     {
         global $G_PUBLISH;
-
-        $idHistory = sprintf(
-            '%s_%s_%s',
-            $_SESSION['PROCESS'],
-            $_SESSION['APPLICATION'],
-            $_SESSION['TASK']
-        );
+        
+        if (isset($_REQUEST['PRO_UID']) && isset($_REQUEST['APP_UID']) && isset($_REQUEST['TAS_UID'])) {
+            $idHistory = sprintf(
+                '%s_%s_%s',
+                $_REQUEST['PRO_UID'],
+                $_REQUEST['APP_UID'],
+                $_REQUEST['TAS_UID']
+            );
+        } else {
+            $idHistory = sprintf(
+                '%s_%s_%s',
+                $_SESSION['PROCESS'],
+                $_SESSION['APPLICATION'],
+                $_SESSION['TASK']
+            );
+        }
 
         $oHeadPublisher = headPublisher::getSingleton();
         $conf = new Configurations();
@@ -571,11 +584,10 @@ class Ajax
                 $result->msg = $response->message;
                 // Register in cases notes
                 if (!empty($_POST['NOTE_REASON'])) {
-                    $appNotes = new AppNotes();
                     $noteContent = addslashes($_POST['NOTE_REASON']);
-                    $appNotes->postNewNote(
-                        $appUid, $usrUid, $noteContent, $_POST['NOTIFY_CANCEL']
-                    );
+                    // Define the Case for register a case note
+                    $cases = new BmCases();
+                    $response = $cases->addNote($appUid, $usrUid, $noteContent, $_POST['NOTIFY_CANCEL']);
                 }
             } else {
                 $result->status = false;
@@ -631,6 +643,13 @@ class Ajax
         echo G::json_encode($response);
     }
 
+    /**
+     * Reassign case from actions menu
+     *
+     * @link https://wiki.processmaker.com/3.3/Cases/Actions#Reassign_2
+     *
+     * @return void
+     */
     public function reassignCase()
     {
         $cases = new Cases();
@@ -674,6 +693,7 @@ class Ajax
             if (!empty($_POST['NOTE_REASON'])) {
                 $noteContent = addslashes($_POST['NOTE_REASON']);
                 $notifyReassign = $_POST['NOTIFY_REASSIGN'] === 'true' ? true: false;
+                // Define the Case for register a case note
                 $cases = new BmCases();
                 $response = $cases->addNote($_SESSION['APPLICATION'], $_SESSION['USER_LOGGED'], $noteContent, $notifyReassign);
             }
@@ -685,36 +705,47 @@ class Ajax
         print G::json_encode($result);
     }
 
+    /**
+     * Pause case from actions menu
+     *
+     * @link https://wiki.processmaker.com/3.3/Cases/Actions#Pause
+     *
+     * @return void
+     */
     public function pauseCase()
     {
         $result = new stdclass();
         try {
             $unpauseDate = $_REQUEST['unpauseDate'] . ' '. $_REQUEST['unpauseTime'];
-            $oCase = new Cases();
+
             if (isset($_POST['APP_UID']) && isset($_POST['DEL_INDEX'])) {
-                $APP_UID = $_POST['APP_UID'];
-                $DEL_INDEX = $_POST['DEL_INDEX'];
+                $appUid = $_POST['APP_UID'];
+                $delIndex = $_POST['DEL_INDEX'];
             } elseif (isset($_POST['sApplicationUID']) && isset($_POST['iIndex'])) {
-                $APP_UID = $_POST['sApplicationUID'];
-                $DEL_INDEX = $_POST['iIndex'];
+                $appUid = $_POST['sApplicationUID'];
+                $delIndex = $_POST['iIndex'];
             } else {
-                $APP_UID = $_SESSION['APPLICATION'];
-                $DEL_INDEX = $_SESSION['INDEX'];
+                $appUid = $_SESSION['APPLICATION'];
+                $delIndex = $_SESSION['INDEX'];
             }
 
             // Save the note pause reason
-            if ($_REQUEST['NOTE_REASON'] != '') {
-                require_once("classes/model/AppNotes.php");
-                $appNotes = new AppNotes();
+            if (!empty($_REQUEST['NOTE_REASON'])) {
                 $noteContent = addslashes($_REQUEST['NOTE_REASON']);
-                $appNotes->postNewNote($APP_UID, $_SESSION['USER_LOGGED'], $noteContent, $_REQUEST['NOTIFY_PAUSE']);
+                // Define the Case for register a case note
+                $cases = new BmCases();
+                $response = $cases->addNote($appUid, $_SESSION['USER_LOGGED'], $noteContent, $_REQUEST['NOTIFY_PAUSE']);
             }
             // End save
 
-
-            $oCase->pauseCase($APP_UID, $DEL_INDEX, $_SESSION['USER_LOGGED'], $unpauseDate);
+            $case = new WsBase();
+            $response = $case->pauseCase($appUid, $delIndex, $_SESSION['USER_LOGGED'], $unpauseDate, true);
+            $response = (object) $response;
+            if ($response->status_code == 100) {
+                throw new Exception($response->message);
+            }
             $app = new Application();
-            $caseData = $app->load($APP_UID);
+            $caseData = $app->load($appUid);
             $data['APP_NUMBER'] = $caseData['APP_NUMBER'];
             $data['UNPAUSE_DATE'] = $unpauseDate;
 

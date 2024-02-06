@@ -97,7 +97,12 @@ try {
     $oCriteria  = $oProcessMap->getStepTriggersCriteria(-2, $_SESSION['TASK'], 'AFTER');
     $iCantidad3 = StepTriggerPeer::doCount($oCriteria);
 
-    $oNode             = $oTree->addChild('-1', '&nbsp;&nbsp;<span onclick="tree.expand(this.parentNode);" style="cursor: pointer;">[<b> ' . G::LoadTranslation('ID_ASSIGN_TASK') . ' </b>] ' . ' - ' . G::LoadTranslation('ID_TRIGGERS'). ' (<span id="TRIG_'.$aRow['STEP_UID'] . '">' . ($iCantidad1 + $iCantidad2 + $iCantidad3) . '</span>)' . '</span>', array('nodeType'=>'parent'));
+    $step_uid = "";
+    if (isset($aRow)) {
+      $step_uid = $aRow['STEP_UID'];
+    }
+
+    $oNode             = $oTree->addChild('-1', '&nbsp;&nbsp;<span onclick="tree.expand(this.parentNode);" style="cursor: pointer;">[<b> ' . G::LoadTranslation('ID_ASSIGN_TASK') . ' </b>] ' . ' - ' . G::LoadTranslation('ID_TRIGGERS'). ' (<span id="TRIG_'. $step_uid . '">' . ($iCantidad1 + $iCantidad2 + $iCantidad3) . '</span>)' . '</span>', array('nodeType'=>'parent'));
     $oNode->contracted = true;
     $oAux1             = $oNode->addChild('before_node', '<span onclick="tree.expand(this.parentNode);showTriggers(\'-1\', \'BEFORE\');" style="cursor: pointer;">' . G::LoadTranslation('ID_BEFORE_ASSIGNMENT') . ' - ' . G::LoadTranslation('ID_TRIGGERS'). ' (<span id="TRIG_-1_BEFORE">'. $iCantidad1 .'</span>) </span>', array('nodeType'=>'parent'));
     $oAux1->plus       = "<span  style='cursor:pointer;display:block;width:15;height:10px;' onclick='tree.expand(this.parentNode);showTriggers(\"-1\", \"BEFORE\");'></span>";

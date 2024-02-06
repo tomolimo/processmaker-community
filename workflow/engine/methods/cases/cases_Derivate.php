@@ -97,11 +97,17 @@ try {
         $cases = new Cases();
         $cases->routeCase($processUid, $application, $postForm, $sStatus, $flagGmail, $tasUid, $index, $userLogged);
     };
-    JobsManager::getSingleton()->dispatch(RouteCase::class, $closure);
+    if (!DISABLE_TASK_MANAGER_ROUTING_ASYNC) {
+        // Routing the case asynchronically
+        JobsManager::getSingleton()->dispatch(RouteCase::class, $closure);
 
-    //We close the related threads.
-    $cases = new Cases();
-    $cases->CloseCurrentDelegation($application, $index);
+        // We close the related threads.
+        $cases = new Cases();
+        $cases->CloseCurrentDelegation($application, $index);
+    } else {
+        // Routing the case synchronically
+        $closure();
+    }
 
     $debuggerAvailable = true;
     $casesRedirector = 'casesListExtJsRedirector';
@@ -117,13 +123,42 @@ try {
         }
     }
 
-    $loc = $nextStep['PAGE'];
-
-    //Triggers After
+    // Triggers After
     $isIE = Bootstrap::isIE();
-    unset($_SESSION['TRIGGER_DEBUG']);
 
-    //close tab only if IE11 add a validation was added if the current skin is uxs 
+    // If the routing of cases asynchronically is disabled, use the old behaviour for debug option
+    if (DISABLE_TASK_MANAGER_ROUTING_ASYNC) {
+        // Determine the landing page
+        if (isset($_SESSION['PMDEBUGGER']) && $_SESSION['PMDEBUGGER'] && $debuggerAvailable) {
+            $_SESSION['TRIGGER_DEBUG']['BREAKPAGE'] = $nextStep['PAGE'];
+            $loc = 'cases_Step?' . 'breakpoint=triggerdebug';
+        } else {
+            $loc = $nextStep['PAGE'];
+        }
+        // If debug option is enabled for the process, load the debug template
+        if (isset($_SESSION['TRIGGER_DEBUG']['ISSET']) && !$isIE) {
+            if ($_SESSION['TRIGGER_DEBUG']['ISSET'] == 1) {
+                $templatePower = new TemplatePower(PATH_TPL . 'cases/cases_Step.html');
+                $templatePower->prepare();
+                $G_PUBLISH = new Publisher();
+                $G_PUBLISH->AddContent('template', '', '', '', $templatePower);
+                $_POST['NextStep'] = $loc;
+                $G_PUBLISH->AddContent('view', 'cases/showDebugFrameLoader');
+                $G_PUBLISH->AddContent('view', 'cases/showDebugFrameBreaker');
+                $_SESSION['TRIGGER_DEBUG']['ISSET'] == 0;
+                G::RenderPage('publish', 'blank');
+                exit();
+            } else {
+                unset($_SESSION['TRIGGER_DEBUG']);
+            }
+        }
+    } else {
+        // If the case is routed synchronically, always redirect to the next step
+        $loc = $nextStep['PAGE'];
+        unset($_SESSION['TRIGGER_DEBUG']);
+    }
+
+    // Close tab only if IE11 add a validation was added if the current skin is uxs
     if ($isIE && !isset($_SESSION['__OUTLOOK_CONNECTOR__']) && SYS_SKIN !== "uxs") {
         $script = "
             <script type='text/javascript'>

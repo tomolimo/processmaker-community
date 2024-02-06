@@ -17,6 +17,7 @@ use Applications;
 use AppNotes;
 use AppNotesPeer;
 use AppSolr;
+use AppTimeoutActionExecuted;
 use BasePeer;
 use Bootstrap;
 use BpmnEngineServicesSearchIndex;
@@ -25,6 +26,7 @@ use CasesPeer;
 use Configurations;
 use CreoleTypes;
 use Criteria;
+use DateTime;
 use DBAdapter;
 use EntitySolrRequestData;
 use Exception;
@@ -35,26 +37,38 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InputDocument;
 use InvalidIndexSearchTextException;
+use Luracast\Restler\RestException;
 use PmDynaform;
 use PmTable;
+use ProcessMaker\BusinessModel\Cases as BmCases;
 use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
 use ProcessMaker\BusinessModel\Task as BmTask;
 use ProcessMaker\BusinessModel\User as BmUser;
 use ProcessMaker\Core\System;
 use ProcessMaker\Exception\UploadException;
 use ProcessMaker\Exception\CaseNoteUploadFile;
+use ProcessMaker\Model\AppDelay as Delay;
 use ProcessMaker\Model\Application as ModelApplication;
 use ProcessMaker\Model\AppNotes as Notes;
+use ProcessMaker\Model\AppTimeoutAction;
 use ProcessMaker\Model\Delegation;
 use ProcessMaker\Model\Documents;
+use ProcessMaker\Model\Groupwf;
+use ProcessMaker\Model\GroupUser;
+use ProcessMaker\Model\ListUnassigned;
+use ProcessMaker\Model\Triggers;
+use ProcessMaker\Model\ProcessUser;
+use ProcessMaker\Model\StepSupervisor;
+use ProcessMaker\Model\Task;
+use ProcessMaker\Model\User;
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Services\Api;
 use ProcessMaker\Services\OAuth2\Server;
 use ProcessMaker\Util\DateTime as UtilDateTime;
 use ProcessMaker\Validation\ExceptionRestApi;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 use ProcessMaker\Validation\Validator as FileValidator;
 use ProcessPeer;
-use ProcessUser;
 use ProcessUserPeer;
 use RBAC;
 use ResultSet;
@@ -63,6 +77,7 @@ use Task as ModelTask;
 use TaskPeer;
 use Tasks as ClassesTasks;
 use TaskUserPeer;
+use uploadDocumentData;
 use Users as ModelUsers;
 use UsersPeer;
 use WsBase;
@@ -687,9 +702,14 @@ class Cases
             $response = [];
             $subApplication = new SubApplication();
             $data = $subApplication->loadByAppUidParent($applicationUid);
-            foreach ($data as $item) {
-                $response[] = $this->getCaseInfo($item['APP_UID'], $userUid);
+            if (!empty($data)) {
+                foreach ($data as $item) {
+                    $response[] = $this->getCaseInfo($item['APP_UID'], $userUid);
+                }
+            } else {
+                throw new Exception(G::LoadTranslation("ID_CASE_DOES_NOT_EXIST", [$applicationUid]));
             }
+
             return $response;
         } catch (Exception $e) {
             throw $e;
@@ -862,40 +882,102 @@ class Cases
             throw $e;
         }
     }
+    /**
+     * This function check if some user has participation over the case
+     *
+     * @param string $usrUid
+     * @param int $caseNumber
+     * @param int $index
+     *
+     * @return bool
+    */
+    public function participation($usrUid, $caseNumber, $index)
+    {
+        $userId = User::getId($usrUid);
+        $query = Delegation::query()->select(['APP_NUMBER'])->case($caseNumber)->index($index)->openAndPause();
+        $query1 = clone $query;
+        $result = $query->userId($userId)->limit(1)->get()->values()->toArray();
+        $permission = empty($result) ? false : true;
+        // Review if the user is supervisor
+        if (empty($result)) {
+            $processes = ProcessUser::getProcessesOfSupervisor($usrUid);
+            $query1->processInList($processes);
+            $result = $query1->get()->values()->toArray();
+            $permission = empty($result) ? false : true;
+        }
+
+        return $permission;
+    }
+
+    /**
+     * Review if the user is supervisor
+     *
+     * @param string $usrUid
+     * @param int $caseNumber
+     *
+     * @return bool
+    */
+    public function isSupervisor(string $usrUid, int $caseNumber)
+    {
+        $result = [];
+        $user = new BmUser();
+        if ($user->checkPermission($usrUid, 'PM_SUPERVISOR')) {
+            $processes = ProcessUser::getProcessesOfSupervisor($usrUid);
+            $query = Delegation::query()->select(['APP_NUMBER'])->case($caseNumber)->processInList($processes);
+            $result = $query->get()->values()->toArray();
+        }
+        return !empty($result);
+    }
 
     /**
      * Reassign Case
      *
-     * @param string $applicationUid Unique id of Case
-     * @param string $userUid Unique id of User
-     * @param string $delIndex
-     * @param string $userUidSource Unique id of User Source
-     * @param string $userUid $userUidTarget id of User Target
+     * @param string $appUid Unique id of Case
+     * @param string $usrUid Unique id of User
+     * @param int $delIndex
+     * @param string $userSource Unique id of User Source
+     * @param string $userTarget id of User Target
+     * @param string $reason
+     * @param boolean $sendMail
      *
      * @return void
      * @throws Exception
      */
-    public function updateReassignCase($applicationUid, $userUid, $delIndex, $userUidSource, $userUidTarget)
+    public function updateReassignCase($appUid, $usrUid, $delIndex, $userSource, $userTarget, $reason = '', $sendMail = false)
     {
         try {
             if (!$delIndex) {
-                $delIndex = AppDelegation::getCurrentIndex($applicationUid);
+                $delIndex = AppDelegation::getCurrentIndex($appUid);
             }
 
+            /** Reassign case */
             $ws = new WsBase();
-            $fields = $ws->reassignCase($userUid, $applicationUid, $delIndex, $userUidSource, $userUidTarget);
-            $array = json_decode(json_encode($fields), true);
-            if (array_key_exists("status_code", $array)) {
-                if ($array ["status_code"] != 0) {
-                    throw (new Exception($array ["message"]));
-                } else {
-                    unset($array['status_code']);
-                    unset($array['message']);
-                    unset($array['timestamp']);
+            $result = $ws->reassignCase($usrUid, $appUid, $delIndex, $userSource, $userTarget);
+            $result = (object)$result;
+            if (isset($result->status_code)) {
+                if ($result->status_code !== 0) {
+                    throw new Exception($result->message);
                 }
             } else {
-                throw new Exception(G::LoadTranslation("ID_CASES_INCORRECT_INFORMATION", array($applicationUid)));
+                throw new Exception(G::LoadTranslation("ID_CASES_INCORRECT_INFORMATION", [$appUid]));
             }
+
+            /** Add the note */
+            if (!empty($reason)) {
+                $this->sendMail($appUid, $usrUid, $reason, $sendMail, $userTarget);
+            }
+
+            // Log
+            $message = 'Reassign case';
+            $context = $data = [
+                "appUid" => $appUid,
+                "usrUidSupervisor" => $usrUid,
+                "userSource" => $userSource,
+                "userTarget" => $userTarget,
+                "reason" => $reason,
+                "delIndex" => $delIndex
+            ];
+            Log::channel(':ReassignCase')->info($message, Bootstrap::context($context));
         } catch (Exception $e) {
             throw $e;
         }
@@ -907,12 +989,12 @@ class Cases
      * @access public
      * @param string $appUid, Uid for case
      * @param string $usrUid, Uid for user
-     * @param bool|string $delIndex
+     * @param interger $delIndex
      *
      * @return void
      * @throws Exception
      */
-    public function putCancelCase($appUid, $usrUid, $delIndex = false)
+    public function putCancelCase($appUid, $usrUid, $delIndex = null, $reason = '', $sendMail = false)
     {
         Validator::isString($appUid, '$app_uid');
         Validator::appUid($appUid, '$app_uid');
@@ -924,7 +1006,7 @@ class Cases
         $supervisor = new BmProcessSupervisor();
         $isSupervisor = $supervisor->isUserProcessSupervisor($fields['PRO_UID'], $usrUid);
 
-        if ($delIndex === false) {
+        if (is_null($delIndex)) {
             $u = new ModelUsers();
             $usrId = $u->load($usrUid)['USR_ID'];
 
@@ -939,7 +1021,8 @@ class Cases
             //We will to validate when the case is TO_DO and the user does not have a index OPEN
             //The scenarios with COMPLETED, CANCELLED and DRAFT is considered in the WsBase::cancelCase
             if ($fields['APP_STATUS'] === 'TO_DO' && $delIndex === 0) {
-                throw (new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_CANCEL_CASE", [$usrUid])));
+                $invalidText = $_SERVER['HTTP_AUTHORIZATION'] ?? $usrUid;
+                throw (new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_CANCEL_CASE", [$invalidText])));
             }
         }
         Validator::isInteger($delIndex, '$del_index');
@@ -951,72 +1034,80 @@ class Cases
         if ($result->status_code !== 0) {
             throw new Exception($result->message);
         }
+        /** Add the note */
+        if (!empty($reason)) {
+            $noteContent = $reason;
+            // Define the Case for register a case note
+            $cases = new BmCases();
+            $response = $cases->addNote($appUid, $usrUid, $noteContent, $sendMail);
+        }
     }
 
     /**
      * Put pause case
      *
      * @access public
-     * @param string $app_uid , Uid for case
-     * @param string $usr_uid , Uid for user
-     * @param bool|string $del_index
-     * @param null|string $unpaused_date , Date for unpaused
+     * @param string $appUid , Uid for case
+     * @param string $usrUid , Uid for user
+     * @param bool|string $index
+     * @param null|string $date , Date for unpaused
+     * @param string $time , Time for unpaused
+     * @param string $reason
+     * @param bool $sendMail
      *
      * @return void
      * @throws Exception
      */
-    public function putPauseCase($app_uid, $usr_uid, $del_index = false, $unpaused_date = null)
+    public function putPauseCase($appUid, $usrUid, $index = 0, $date = null, $time = '00:00', $reason = '', $sendMail = false)
     {
-        Validator::isString($app_uid, '$app_uid');
-        Validator::isString($usr_uid, '$usr_uid');
-
-        Validator::appUid($app_uid, '$app_uid');
-        Validator::usrUid($usr_uid, '$usr_uid');
-
-        if ($del_index === false) {
-            $del_index = AppDelegation::getCurrentIndex($app_uid);
+        Validator::isString($appUid, '$app_uid');
+        Validator::isString($usrUid, '$usr_uid');
+        Validator::appUid($appUid, '$app_uid');
+        Validator::usrUid($usrUid, '$usr_uid');
+        Validator::isInteger($index, '$del_index');
+        // Get the last index
+        if ($index === 0) {
+            $index = AppDelegation::getCurrentIndex($appUid);
         }
-
-        Validator::isInteger($del_index, '$del_index');
-
+        // Get the case status
         $case = new ClassesCases();
-        $fields = $case->loadCase($app_uid);
+        $fields = $case->loadCase($appUid);
+        $caseNumber = $fields['APP_NUMBER'];
         if ($fields['APP_STATUS'] == 'CANCELLED') {
-            throw (new Exception(G::LoadTranslation("ID_CASE_IS_CANCELED", array($app_uid))));
+            throw new Exception(G::LoadTranslation("ID_CASE_IS_CANCELED", [$appUid]));
+        }
+        // Check if the case was not paused
+        $delay = new AppDelay();
+        if ($delay->isPaused($appUid, $index)) {
+            throw new Exception(G::LoadTranslation("ID_CASE_PAUSED", [$appUid]));
+        }
+        // Review if the user has participation or is supervisor
+        $permission = $this->participation($usrUid, $caseNumber, $index);
+        if (!$permission) {
+            $invalidText = $_SERVER['HTTP_AUTHORIZATION'] ?? $usrUid;
+            throw new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_PAUSED_CASE", [$invalidText]));
         }
 
-        $oDelay = new AppDelay();
-
-        if ($oDelay->isPaused($app_uid, $del_index)) {
-            throw (new Exception(G::LoadTranslation("ID_CASE_PAUSED", array($app_uid))));
+        if ($date != null) {
+            Validator::isDate($date, 'Y-m-d', '$unpaused_date');
         }
 
-        $processUser = new ProcessUser();
-        $arrayProcess = $processUser->getProUidSupervisor($usr_uid);
-
-        $criteria = new Criteria("workflow");
-
-        $criteria->addSelectColumn(AppDelegationPeer::APP_UID);
-        $criteria->add(AppDelegationPeer::APP_UID, $app_uid, Criteria::EQUAL);
-        $criteria->add(AppDelegationPeer::DEL_INDEX, $del_index, Criteria::EQUAL);
-        $criteria->add(
-            $criteria->getNewCriterion(AppDelegationPeer::USR_UID, $usr_uid, Criteria::EQUAL)->addOr(
-                $criteria->getNewCriterion(AppDelegationPeer::PRO_UID, $arrayProcess, Criteria::IN))
-        );
-        $criteria->add(AppDelegationPeer::DEL_THREAD_STATUS, "OPEN", Criteria::EQUAL);
-        $criteria->add(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
-
-        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
-
-        if (!$rsCriteria->next()) {
-            throw (new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_PAUSED_CASE", array($usr_uid))));
+        // Check if the case is unassigned
+        $classCases = new ClassesCases();
+        if ($classCases->isUnassignedPauseCase($appUid, $index)) {
+            throw new Exception(G::LoadTranslation("ID_CASE_NOT_PAUSED", [G::LoadTranslation("ID_UNASSIGNED_STATUS")]));
         }
 
-        if ($unpaused_date != null) {
-            Validator::isDate($unpaused_date, 'Y-m-d', '$unpaused_date');
-        }
+        /** Pause case */
+        $case->pauseCase($appUid, $index, $usrUid, $date . ' ' . $time);
 
-        $case->pauseCase($app_uid, $del_index, $usr_uid, $unpaused_date);
+        /** Add the note */
+        if (!empty($reason)) {
+            $noteContent = $reason;
+            // Define the Case for register a case note
+            $cases = new BmCases();
+            $response = $cases->addNote($appUid, $usrUid, $noteContent, $sendMail);
+        }
     }
 
     /**
@@ -1025,50 +1116,96 @@ class Cases
      * @access public
      * @param string $app_uid , Uid for case
      * @param string $usr_uid , Uid for user
-     * @param bool|string $del_index
+     * @param int $del_index
      *
      * @return void
      * @throws Exception
      */
-    public function putUnpauseCase($app_uid, $usr_uid, $del_index = false)
+    public function putUnpauseCase($appUid, $usrUid, $index = 0)
     {
-        Validator::isString($app_uid, '$app_uid');
-        Validator::isString($usr_uid, '$usr_uid');
+        Validator::isString($appUid, '$app_uid');
+        Validator::isString($usrUid, '$usr_uid');
+        Validator::appUid($appUid, '$app_uid');
+        Validator::usrUid($usrUid, '$usr_uid');
 
-        Validator::appUid($app_uid, '$app_uid');
-        Validator::usrUid($usr_uid, '$usr_uid');
-
-        if ($del_index === false) {
-            $del_index = AppDelegation::getCurrentIndex($app_uid);
+        if ($index === 0) {
+            $index = AppDelegation::getCurrentIndex($appUid);
         }
-        Validator::isInteger($del_index, '$del_index');
+        Validator::isInteger($index, '$del_index');
 
-        $oDelay = new AppDelay();
-
-        if (!$oDelay->isPaused($app_uid, $del_index)) {
-            throw (new Exception(G::LoadTranslation("ID_CASE_NOT_PAUSED", array($app_uid))));
+        $delay = new AppDelay();
+        if (!$delay->isPaused($appUid, $index)) {
+            throw new Exception(G::LoadTranslation("ID_CASE_NOT_PAUSED", [$appUid]));
         }
 
-        $processUser = new ProcessUser();
-        $arrayProcess = $processUser->getProUidSupervisor($usr_uid);
-
-        $criteria = new Criteria("workflow");
-        $criteria->addSelectColumn(AppDelegationPeer::APP_UID);
-        $criteria->add(AppDelegationPeer::APP_UID, $app_uid, Criteria::EQUAL);
-        $criteria->add(AppDelegationPeer::DEL_INDEX, $del_index, Criteria::EQUAL);
-        $criteria->add(
-            $criteria->getNewCriterion(AppDelegationPeer::USR_UID, $usr_uid, Criteria::EQUAL)->addOr(
-                $criteria->getNewCriterion(AppDelegationPeer::PRO_UID, $arrayProcess, Criteria::IN))
-        );
-
-        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
-
-        if (!$rsCriteria->next()) {
-            throw (new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_UNPAUSE_CASE", array($usr_uid))));
+        // Review if the user has participation or is supervisor
+        $caseNumber = ModelApplication::getCaseNumber($appUid);
+        $permission = $this->participation($usrUid, $caseNumber, $index);
+        if (!$permission) {
+            $invalidText = $_SERVER['HTTP_AUTHORIZATION'] ?? $usrUid;
+            throw new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_UNPAUSE_CASE", [$invalidText]));
         }
 
+        /** Unpause case */
         $case = new ClassesCases();
-        $case->unpauseCase($app_uid, $del_index, $usr_uid);
+        $case->unpauseCase($appUid, $index, $usrUid);
+    }
+
+    /**
+     * Put claim case
+     *
+     * @param string $appUid
+     * @param integer $index
+     * @param string $userUid
+     * @param string $action
+     * @param string $reason
+     *
+     * @return void
+     * @throws Exception
+     *
+     * @access public
+     */
+    public function putClaimCase($appUid, $index, $userUid, $action, $reason = '')
+    {
+        // Validate the parameters
+        Validator::isString($appUid, '$appUid');
+        Validator::isString($userUid, '$userUid');
+        Validator::isInteger($index, '$index');
+        Validator::appUid($appUid, '$appUid');
+        Validator::usrUid($userUid, '$userUid');
+
+        // Review if the user can claim the case
+        $appDelegation = new AppDelegation();
+        $delegation = $appDelegation->load($appUid, $index);
+        if (empty($delegation['USR_UID'])) {
+            $classesCase = new ClassesCases();
+            $case = $classesCase->loadCase($appUid);
+
+            //Review if the user can be claim the case
+            if (!$classesCase->isSelfService($userUid, $delegation['TAS_UID'], $appUid)) {
+                if (!$this->isSupervisor($userUid, $case['APP_NUMBER'])){
+                    $message = preg_replace("#<br\s*/?>#i", "", G::LoadTranslation("ID_NO_PERMISSION_NO_PARTICIPATED"));
+                    throw new Exception($message);
+                }
+            }
+            $classesCase->setCatchUser($appUid, $index, $userUid);
+        } else {
+            $invalidText = $_SERVER['HTTP_AUTHORIZATION'] ?? $userUid;
+            throw new Exception(G::LoadTranslation("ID_CASE_USER_INVALID_CLAIM_CASE", [$invalidText]));
+        }
+
+        $usrUidSupervisor = (Server::getUserId() === $userUid) ? '' : Server::getUserId();
+
+        // Log
+        $message = $action . ' case';
+        $context = $data = [
+            "appUid" => $appUid,
+            "usrUidSupervisor" => $usrUidSupervisor,
+            "userTarget" => $userUid,
+            "reason" => $reason,
+            "delIndex" => $index
+        ];
+        Log::channel(':' . $action . 'Case')->info($message, Bootstrap::context($context));
     }
 
     /**
@@ -1889,38 +2026,36 @@ class Cases
      * @return void
      * @throws Exception
      */
-    public function setCaseVariables($app_uid, $app_data, $dyn_uid = null, $usr_uid, $del_index = 0)
+    public function setCaseVariables($app_uid, $app_data, $dyn_uid = null, $usr_uid = '', $del_index = 0)
     {
         Validator::isString($app_uid, '$app_uid');
         Validator::appUid($app_uid, '$app_uid');
         Validator::isArray($app_data, '$app_data');
         Validator::isString($usr_uid, '$usr_uid');
         Validator::usrUid($usr_uid, '$usr_uid');
+        // Validate the system variables
+        $systemVars = G::getSystemConstants();
+        foreach ($systemVars as $key => $var) {
+            if (array_key_exists($key, $app_data)) {
+                throw new Exception(G::LoadTranslation("ID_CAN_NOT_CHANGE"));
+            }
+        }
 
         $arrayResult = $this->getStatusInfo($app_uid);
 
         if ($arrayResult["APP_STATUS"] == "CANCELLED") {
-            throw new Exception(G::LoadTranslation("ID_CASE_CANCELLED", array($app_uid)));
+            throw new Exception(G::LoadTranslation("ID_CASE_CANCELLED", [$app_uid]));
         }
 
         if ($arrayResult["APP_STATUS"] == "COMPLETED") {
-            throw new Exception(G::LoadTranslation("ID_CASE_IS_COMPLETED", array($app_uid)));
+            throw new Exception(G::LoadTranslation("ID_CASE_IS_COMPLETED", [$app_uid]));
         }
 
-        $processUser = new ProcessUser();
-        $listProcess = $processUser->getProUidSupervisor($usr_uid);
-        $criteria = new Criteria("workflow");
-        $criteria->addSelectColumn(AppDelegationPeer::APP_UID);
-        $criteria->add(AppDelegationPeer::APP_UID, $app_uid, Criteria::EQUAL);
-        $criteria->add(AppDelegationPeer::USR_UID, $usr_uid, Criteria::EQUAL);
-        $criteria->add(
-            $criteria->getNewCriterion(AppDelegationPeer::USR_UID, $usr_uid, Criteria::EQUAL)->addOr(
-                $criteria->getNewCriterion(AppDelegationPeer::PRO_UID, $listProcess, Criteria::IN))
-        );
-        $rsCriteria = AppDelegationPeer::doSelectRS($criteria);
-
-        if (!$rsCriteria->next()) {
-            throw (new Exception(G::LoadTranslation("ID_NO_PERMISSION_NO_PARTICIPATED", array($usr_uid))));
+        // Review if the user has participation or is supervisor
+        $caseNumber = ModelApplication::getCaseNumber($app_uid);
+        $permission = $this->participation($usr_uid, $caseNumber, $del_index);
+        if (!$permission) {
+            throw new Exception(G::LoadTranslation("ID_NO_PERMISSION_NO_PARTICIPATED", [$usr_uid]));
         }
 
         $_SESSION['APPLICATION'] = $app_uid;
@@ -1972,98 +2107,89 @@ class Cases
     /**
      * Get Case Notes
      *
-     * @access public
-     * @param string $app_uid , Uid for case
+     * @param string $appUid
+     * @param string $usrUid
+     * @param array $parameters
      *
      * @return array
-     * @throws Exception
+     * @throws \PropelException
+     * @access public
      */
-    public function getCaseNotes($app_uid, $usr_uid, $data_get)
+    public function getCaseNotes($appUid, $usrUid, $parameters = [])
     {
-        Validator::isString($app_uid, '$app_uid');
-        Validator::appUid($app_uid, '$app_uid');
-        Validator::isString($usr_uid, '$usr_uid');
-        Validator::usrUid($usr_uid, '$usr_uid');
-        Validator::isArray($data_get, '$data_get');
-
-        Validator::isArray($data_get, '$data_get');
-        $start = isset($data_get["start"]) ? $data_get["start"] : "0";
-        $limit = isset($data_get["limit"]) ? $data_get["limit"] : "";
-        $sort = isset($data_get["sort"]) ? $data_get["sort"] : "APP_NOTES.NOTE_DATE";
-        $dir = isset($data_get["dir"]) ? $data_get["dir"] : "DESC";
-        $user = isset($data_get["user"]) ? $data_get["user"] : "";
-        $dateFrom = (!empty($data_get["dateFrom"])) ? substr($data_get["dateFrom"], 0, 10) : "";
-        $dateTo = (!empty($data_get["dateTo"])) ? substr($data_get["dateTo"], 0, 10) : "";
-        $search = isset($data_get["search"]) ? $data_get["search"] : "";
-        $paged = isset($data_get["paged"]) ? $data_get["paged"] : true;
-
-        $case = new ClassesCases();
-        $caseLoad = $case->loadCase($app_uid);
-        $pro_uid = $caseLoad['PRO_UID'];
-        $tas_uid = AppDelegation::getCurrentTask($app_uid);
-        $respView = $case->getAllObjectsFrom($pro_uid, $app_uid, $tas_uid, $usr_uid, 'VIEW');
-        $respBlock = $case->getAllObjectsFrom($pro_uid, $app_uid, $tas_uid, $usr_uid, 'BLOCK');
-        if ($respView['CASES_NOTES'] == 0 && $respBlock['CASES_NOTES'] == 0) {
-            throw (new Exception(G::LoadTranslation("ID_CASES_NOTES_NO_PERMISSIONS")));
-        }
-
-        if ($sort != 'APP_NOTE.NOTE_DATE') {
-            $sort = G::toUpper($sort);
-            $columnsAppCacheView = AppNotesPeer::getFieldNames(BasePeer::TYPE_FIELDNAME);
-            if (!(in_array($sort, $columnsAppCacheView))) {
-                $sort = 'APP_NOTES.NOTE_DATE';
-            } else {
-                $sort = 'APP_NOTES.' . $sort;
-            }
-        }
-        if ((int)$start == 1 || (int)$start == 0) {
-            $start = 0;
-        }
-        $dir = G::toUpper($dir);
-        if (!($dir == 'DESC' || $dir == 'ASC')) {
-            $dir = 'DESC';
-        }
-        if ($user != '') {
+        // Validate parameters
+        Validator::isString($appUid, '$app_uid');
+        Validator::appUid($appUid, '$app_uid');
+        Validator::isString($usrUid, '$usr_uid');
+        Validator::usrUid($usrUid, '$usr_uid');
+        Validator::isArray($parameters, '$parameters');
+        Validator::isArray($parameters, '$parameters');
+        $start = isset($parameters["start"]) ? $parameters["start"] : "0";
+        $limit = isset($parameters["limit"]) ? $parameters["limit"] : "";
+        $sort = isset($parameters["sort"]) ? $parameters["sort"] : "NOTE_DATE";
+        $dir = isset($parameters["dir"]) ? $parameters["dir"] : "DESC";
+        $user = isset($parameters["user"]) ? $parameters["user"] : "";
+        $dateFrom = (!empty($parameters["dateFrom"])) ? substr($parameters["dateFrom"], 0, 10) : "";
+        $dateTo = (!empty($parameters["dateTo"])) ? substr($parameters["dateTo"], 0, 10) : "";
+        $search = isset($parameters["search"]) ? $parameters["search"] : "";
+        $paged = isset($parameters["paged"]) ? $parameters["paged"] : true;
+        $files = isset($parameters["files"]) ? $parameters["files"] : false;
+        if (!empty($user)) {
             Validator::usrUid($user, '$usr_uid');
         }
-        if ($dateFrom != '') {
+        if (!empty($dateFrom)) {
             Validator::isDate($dateFrom, 'Y-m-d', '$date_from');
         }
-        if ($dateTo != '') {
+        if (!empty($dateTo)) {
             Validator::isDate($dateTo, 'Y-m-d', '$date_to');
         }
-
-        $appNote = new \AppNotes();
-        $note_data = $appNote->getNotesList($app_uid, $user, $start, $limit, $sort, $dir, $dateFrom, $dateTo, $search);
-        $response = array();
-        if ($paged === true) {
-            $response['total'] = $note_data['array']['totalCount'];
-            $response['start'] = $start;
-            $response['limit'] = $limit;
-            $response['sort'] = $sort;
-            $response['dir'] = $dir;
-            $response['usr_uid'] = $user;
-            $response['date_to'] = $dateTo;
-            $response['date_from'] = $dateFrom;
-            $response['search'] = $search;
-            $response['data'] = array();
-            $con = 0;
-            foreach ($note_data['array']['notes'] as $value) {
-                $response['data'][$con]['app_uid'] = $value['APP_UID'];
-                $response['data'][$con]['usr_uid'] = $value['USR_UID'];
-                $response['data'][$con]['note_date'] = $value['NOTE_DATE'];
-                $response['data'][$con]['note_content'] = $value['NOTE_CONTENT'];
-                $con++;
+        // Review the process permissions
+        $case = new ClassesCases();
+        $caseLoad = $case->loadCase($appUid);
+        $proUid = $caseLoad['PRO_UID'];
+        $tasUid = AppDelegation::getCurrentTask($appUid);
+        $respView = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, 'VIEW');
+        $respBlock = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, 'BLOCK');
+        if ($respView['CASES_NOTES'] == 0 && $respBlock['CASES_NOTES'] == 0) {
+            throw new Exception(G::LoadTranslation("ID_THIS_USER_DOESNT_HAVE_PERMISSIONS_TO_SEE_CASE_NOTES"));
+        }
+        // Get the notes
+        $appNote = new Notes();
+        $notes = $appNote->getNotes($appUid, $start, $limit, $dir);
+        $notes = AppNotes::applyHtmlentitiesInNotes($notes);
+        // Add a the notes the files related
+        $documents = new Documents();
+        $iterator = 0;
+        $data = [];
+        foreach ($notes['notes'] as $value) {
+            $data[$iterator] = array_change_key_case($value, CASE_LOWER);
+            $data[$iterator]['note_date'] = UtilDateTime::convertUtcToTimeZone($value['NOTE_DATE']);
+            if ($files) {
+                $data[$iterator]['attachments'] = $documents->getFiles($value['NOTE_ID'], $appUid);
             }
+            $iterator++;
+        }
+        // If is paged will add the filters used
+        $filters = [];
+        if ($paged) {
+            $total = $appNote->getTotal($appUid);
+            $filters['total'] = $total;
+            $filters['start'] = $start;
+            $filters['limit'] = $limit;
+            $filters['sort'] = $sort;
+            $filters['dir'] = $dir;
+            $filters['usr_uid'] = $user;
+            $filters['date_to'] = $dateTo;
+            $filters['date_from'] = $dateFrom;
+            $filters['search'] = $search;
+        }
+        // Prepare the response
+        $response = [];
+        if ($paged) {
+            $response = $filters;
+            $response['data'] = $data;
         } else {
-            $con = 0;
-            foreach ($note_data['array']['notes'] as $value) {
-                $response[$con]['app_uid'] = $value['APP_UID'];
-                $response[$con]['usr_uid'] = $value['USR_UID'];
-                $response[$con]['note_date'] = $value['NOTE_DATE'];
-                $response[$con]['note_content'] = $value['NOTE_CONTENT'];
-                $con++;
-            }
+            $response = $data;
         }
 
         return $response;
@@ -2073,40 +2199,37 @@ class Cases
      * Save new case note
      *
      * @access public
-     * @param string $app_uid , Uid for case
-     * @param array $app_data , Data for case variables
+     * @param string $appUid, Uid for case
+     * @param string $usrUid, Uid for user
+     * @param string $noteContent
+     * @param boolean $sendMail
      *
      * @return void
      * @throws Exception
      */
-    public function saveCaseNote($app_uid, $usr_uid, $note_content, $send_mail = false)
+    public function saveCaseNote($appUid, $usrUid, $noteContent, $sendMail = false)
     {
-        Validator::isString($app_uid, '$app_uid');
-        Validator::appUid($app_uid, '$app_uid');
-
-        Validator::isString($usr_uid, '$usr_uid');
-        Validator::usrUid($usr_uid, '$usr_uid');
-
-        Validator::isString($note_content, '$note_content');
-        if (strlen($note_content) > 500) {
-            throw (new Exception(G::LoadTranslation("ID_INVALID_MAX_PERMITTED", array($note_content, '500'))));
+        Validator::isString($appUid, '$app_uid');
+        Validator::appUid($appUid, '$app_uid');
+        Validator::isString($usrUid, '$usr_uid');
+        Validator::usrUid($usrUid, '$usr_uid');
+        Validator::isString($noteContent, '$note_content');
+        if (strlen($noteContent) > 500) {
+            throw (new Exception(G::LoadTranslation("ID_INVALID_MAX_PERMITTED", [$noteContent, '500'])));
         }
-
-        Validator::isBoolean($send_mail, '$send_mail');
-
+        Validator::isBoolean($sendMail, '$send_mail');
+        // Review the process permissions
         $case = new ClassesCases();
-        $caseLoad = $case->loadCase($app_uid);
-        $pro_uid = $caseLoad['PRO_UID'];
-        $tas_uid = AppDelegation::getCurrentTask($app_uid);
-        $respView = $case->getAllObjectsFrom($pro_uid, $app_uid, $tas_uid, $usr_uid, 'VIEW');
-        $respBlock = $case->getAllObjectsFrom($pro_uid, $app_uid, $tas_uid, $usr_uid, 'BLOCK');
+        $caseLoad = $case->loadCase($appUid);
+        $proUid = $caseLoad['PRO_UID'];
+        $tasUid = AppDelegation::getCurrentTask($appUid);
+        $respView = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, 'VIEW');
+        $respBlock = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, 'BLOCK');
         if ($respView['CASES_NOTES'] == 0 && $respBlock['CASES_NOTES'] == 0) {
             throw (new Exception(G::LoadTranslation("ID_CASES_NOTES_NO_PERMISSIONS")));
         }
-
-        $note_content = addslashes($note_content);
-        $appNote = new \AppNotes();
-        $appNote->addCaseNote($app_uid, $usr_uid, $note_content, intval($send_mail));
+        // Save the notes
+        $response = $this->addNote($appUid, $usrUid, $noteContent, intval($sendMail));
     }
 
     /**
@@ -2141,7 +2264,7 @@ class Cases
     /**
      * Get all Tasks of Case
      * Based in: processmaker/workflow/engine/classes/class.processMap.php
-     * Method:   processMap::load()
+     * Method: processMap::load()
      *
      * @param string $applicationUid Unique id of Case
      *
@@ -2205,8 +2328,8 @@ class Cases
                     $rsCriteria2->next();
 
                     $row2 = $rsCriteria2->getRow();
-
-                    if ($process->exists($row2["PRO_UID"])) {
+                    $proUid = isset($row2["PRO_UID"]) ? $row2["PRO_UID"] : '';
+                    if (!empty($proUid) && $process->exists($proUid)) {
                         $row["TAS_TITLE"] = $row2["TAS_TITLE"];
                         $row["TAS_DESCRIPTION"] = $row2["TAS_DESCRIPTION"];
                     }
@@ -2410,33 +2533,24 @@ class Cases
     /**
      * This function get the status information
      *
-     * @param object $rsCriteria
+     * @param array $result
+     * @param string $status
      *
      * @return array
      * @throws Exception
     */
-    private function getStatusInfoDataByRsCriteria($rsCriteria)
+    private function getStatusInfoFormatted(array $result, string $status = '')
     {
         try {
-            $arrayData = [];
-
-            if ($rsCriteria->next()) {
-                $record = $rsCriteria->getRow();
-
-                $arrayData = [
-                    'APP_STATUS' => $record['APP_STATUS'],
-                    'DEL_INDEX' => [],
-                    'PRO_UID' => $record['PRO_UID']
-                ];
+            $record = head($result);
+            $arrayData = [
+                'APP_STATUS' => empty($status) ? $record['APP_STATUS'] : $status,
+                'DEL_INDEX' => [],
+                'PRO_UID' => $record['PRO_UID']
+            ];
+            foreach ($result as $record) {
                 $arrayData['DEL_INDEX'][] = $record['DEL_INDEX'];
-
-                while ($rsCriteria->next()) {
-                    $record = $rsCriteria->getRow();
-
-                    $arrayData['DEL_INDEX'][] = $record['DEL_INDEX'];
-                }
             }
-
             //Return
             return $arrayData;
         } catch (Exception $e) {
@@ -2447,8 +2561,8 @@ class Cases
     /**
      * Get status info Case
      *
-     * @param string $applicationUid Unique id of Case
-     * @param int $delIndex Delegation index
+     * @param string $appUid Unique id of Case
+     * @param int $index Delegation index
      * @param string $userUid Unique id of User
      *
      * @return array Return an array with status info Case, array empty otherwise
@@ -2456,179 +2570,120 @@ class Cases
      *
      * @see workflow/engine/methods/cases/main_init.php
      * @see workflow/engine/methods/cases/opencase.php
-     * @see ProcessMaker\BusinessModel\Cases->setCaseVariables()
-     * @see ProcessMaker\BusinessModel\Cases\InputDocument->getCasesInputDocuments()
-     * @see ProcessMaker\BusinessModel\Cases\InputDocument->throwExceptionIfHaventPermissionToDelete()
-     * @see ProcessMaker\BusinessModel\Cases\OutputDocument->throwExceptionIfCaseNotIsInInbox()
-     * @see ProcessMaker\BusinessModel\Cases\OutputDocument->throwExceptionIfHaventPermissionToDelete()
+     * @see \ProcessMaker\BusinessModel\Cases::setCaseVariables()
+     * @see \ProcessMaker\BusinessModel\Cases\InputDocument::getCasesInputDocuments()
+     * @see \ProcessMaker\BusinessModel\Cases\InputDocument::throwExceptionIfHaventPermissionToDelete()
+     * @see \ProcessMaker\BusinessModel\Cases\OutputDocument::throwExceptionIfCaseNotIsInInbox()
+     * @see \ProcessMaker\BusinessModel\Cases\OutputDocument::throwExceptionIfHaventPermissionToDelete()
      */
-    public function getStatusInfo($applicationUid, $delIndex = 0, $userUid = "")
+    public function getStatusInfo(string $appUid, int $index = 0, string $userUid = "")
     {
         try {
-            //Verify data
-            $this->throwExceptionIfNotExistsCase($applicationUid, $delIndex,
-                $this->getFieldNameByFormatFieldName("APP_UID"));
-
-            //Get data
-            //Status is PAUSED
-            $delimiter = DBAdapter::getStringDelimiter();
-
-            $criteria = new Criteria("workflow");
-
-            $criteria->setDistinct();
-            $criteria->addSelectColumn($delimiter . 'PAUSED' . $delimiter . ' AS APP_STATUS');
-            $criteria->addSelectColumn(AppDelayPeer::APP_DEL_INDEX . " AS DEL_INDEX");
-            $criteria->addSelectColumn(AppDelayPeer::PRO_UID);
-
-            $criteria->add(AppDelayPeer::APP_UID, $applicationUid, Criteria::EQUAL);
-            $criteria->add(AppDelayPeer::APP_TYPE, "PAUSE", Criteria::EQUAL);
-            $criteria->add(
-                $criteria->getNewCriterion(AppDelayPeer::APP_DISABLE_ACTION_USER, null, Criteria::ISNULL)->addOr(
-                    $criteria->getNewCriterion(AppDelayPeer::APP_DISABLE_ACTION_USER, 0, Criteria::EQUAL))
-            );
-
-            if ($delIndex != 0) {
-                $criteria->add(AppDelayPeer::APP_DEL_INDEX, $delIndex, Criteria::EQUAL);
+            $arrayData = [];
+            // Verify data
+            $this->throwExceptionIfNotExistsCase($appUid, $index, $this->getFieldNameByFormatFieldName("APP_UID"));
+            // Get the case number
+            $caseNumber = ModelApplication::getCaseNumber($appUid);
+            // Status is PAUSED
+            $result = Delay::getPaused($caseNumber, $index, $userUid);
+            if (!empty($result)) {
+                $arrayData = $this->getStatusInfoFormatted($result, 'PAUSED');
+                return $arrayData;
             }
 
-            if ($userUid != "") {
-                $criteria->add(AppDelayPeer::APP_DELEGATION_USER, $userUid, Criteria::EQUAL);
+            // Status is UNASSIGNED
+            $query = Delegation::query()->select([
+                'APP_DELEGATION.APP_NUMBER',
+                'APP_DELEGATION.DEL_INDEX',
+                'APP_DELEGATION.PRO_UID'
+            ]);
+            $query->taskAssignType('SELF_SERVICE');
+            $query->threadOpen()->withoutUserId();
+            // Filter specific user
+            if (!empty($userUid)) {
+                $delegation = new Delegation();
+                $delegation->casesUnassigned($query, $userUid);
+            }
+            // Filter specific case
+            $query->case($caseNumber);
+            // Filter specific index
+            if ($index > 0) {
+                $query->index($index);
+            }
+            $results = $query->get();
+            $arrayData = $results->values()->toArray();
+            if (!empty($arrayData)) {
+                $arrayData = $this->getStatusInfoFormatted($arrayData, 'UNASSIGNED');
+                return $arrayData;
             }
 
-            $rsCriteria = AppDelayPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            // Status is TO_DO, DRAFT
+            $query = Delegation::query()->select([
+                'APPLICATION.APP_STATUS',
+                'APP_DELEGATION.APP_NUMBER',
+                'APP_DELEGATION.DEL_INDEX',
+                'APP_DELEGATION.PRO_UID'
+            ]);
+            $query->joinApplication();
+            // Filter the status TO_DO and DRAFT
+            $query->casesInProgress([1, 2]);
+            // Filter the OPEN thread
+            $query->threadOpen();
+            // Filter specific case
+            $query->case($caseNumber);
+            // Filter specific index
+            if ($index > 0) {
+                $query->index($index);
+            }
+            //  Filter specific user
+            if (!empty($userUid)) {
+                $userId = !empty($userUid) ? User::getId($userUid) : 0;
+                $query->userId($userId);
+            }
+            $results = $query->get();
+            $arrayData = $results->values()->toArray();
 
-            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
+            if (!empty($arrayData)) {
+                $arrayData = $this->getStatusInfoFormatted($arrayData);
+                return $arrayData;
+            }
 
+            // Status is CANCELLED, COMPLETED
+            $query = Delegation::query()->select([
+                'APPLICATION.APP_STATUS',
+                'APP_DELEGATION.APP_NUMBER',
+                'APP_DELEGATION.DEL_INDEX',
+                'APP_DELEGATION.PRO_UID'
+            ]);
+            $query->joinApplication();
+            // Filter the status COMPLETED and CANCELLED
+            $query->casesDone([3, 4]);
+            // Filter specific case
+            $query->case($caseNumber);
+            // Filter specific index
+            if ($index > 0)  {
+                $query->index($index);
+            }
+            //  Filter specific user
+            if (!empty($userUid)) {
+                $userId = !empty($userUid) ? User::getId($userUid) : 0;
+                $query->userId($userId);
+            }
+            $query->lastThread();
+            $results = $query->get();
+            $arrayData = $results->values()->toArray();
+            if (!empty($arrayData)) {
+                $arrayData = $this->getStatusInfoFormatted($arrayData);
+                return $arrayData;
+            }
+
+            // Status is PARTICIPATED
+            $arrayData = Delegation::getParticipatedInfo($appUid);
             if (!empty($arrayData)) {
                 return $arrayData;
             }
 
-            //Status is UNASSIGNED
-            if ($userUid != '') {
-                $appCacheView = new AppCacheView();
-
-                $criteria = $appCacheView->getUnassignedListCriteria($userUid);
-            } else {
-                $criteria = new Criteria('workflow');
-
-                $criteria->add(AppCacheViewPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
-                $criteria->add(AppCacheViewPeer::USR_UID, '', Criteria::EQUAL);
-            }
-
-            $criteria->setDistinct();
-            $criteria->clearSelectColumns();
-            $criteria->addSelectColumn($delimiter . 'UNASSIGNED' . $delimiter . ' AS APP_STATUS');
-            $criteria->addSelectColumn(AppCacheViewPeer::DEL_INDEX);
-            $criteria->addSelectColumn(AppCacheViewPeer::PRO_UID);
-
-            $criteria->add(AppCacheViewPeer::APP_UID, $applicationUid, Criteria::EQUAL);
-
-            if ($delIndex != 0) {
-                $criteria->add(AppCacheViewPeer::DEL_INDEX, $delIndex, Criteria::EQUAL);
-            }
-
-            $rsCriteria = AppCacheViewPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
-
-            if (!empty($arrayData)) {
-                return $arrayData;
-            }
-
-            //Status is TO_DO, DRAFT
-            $criteria = new Criteria("workflow");
-
-            $criteria->setDistinct();
-            $criteria->addSelectColumn(ApplicationPeer::APP_STATUS);
-            $criteria->addSelectColumn(ApplicationPeer::PRO_UID);
-            $criteria->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-
-            $arrayCondition = array();
-            $arrayCondition[] = array(ApplicationPeer::APP_UID, AppDelegationPeer::APP_UID, Criteria::EQUAL);
-            $arrayCondition[] = array(
-                ApplicationPeer::APP_UID,
-                $delimiter . $applicationUid . $delimiter,
-                Criteria::EQUAL
-            );
-            $criteria->addJoinMC($arrayCondition, Criteria::LEFT_JOIN);
-
-            $criteria->add(
-                $criteria->getNewCriterion(ApplicationPeer::APP_STATUS, "TO_DO", Criteria::EQUAL)->addAnd(
-                    $criteria->getNewCriterion(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL))->addAnd(
-                    $criteria->getNewCriterion(AppDelegationPeer::DEL_THREAD_STATUS, "OPEN"))
-            )->addOr(
-                $criteria->getNewCriterion(ApplicationPeer::APP_STATUS, "DRAFT", Criteria::EQUAL)->addAnd(
-                    $criteria->getNewCriterion(AppDelegationPeer::DEL_THREAD_STATUS, "OPEN"))
-            );
-
-            if ($delIndex != 0) {
-                $criteria->add(AppDelegationPeer::DEL_INDEX, $delIndex, Criteria::EQUAL);
-            }
-
-            if ($userUid != "") {
-                $criteria->add(AppDelegationPeer::USR_UID, $userUid, Criteria::EQUAL);
-            }
-
-            $rsCriteria = ApplicationPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
-
-            if (!empty($arrayData)) {
-                return $arrayData;
-            }
-
-            //Status is CANCELLED, COMPLETED
-            $criteria = new Criteria("workflow");
-
-            $criteria->addSelectColumn(ApplicationPeer::APP_STATUS);
-            $criteria->addSelectColumn(ApplicationPeer::PRO_UID);
-            $criteria->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-
-            $arrayCondition = array();
-            $arrayCondition[] = array(ApplicationPeer::APP_UID, AppDelegationPeer::APP_UID, Criteria::EQUAL);
-            $arrayCondition[] = array(
-                ApplicationPeer::APP_UID,
-                $delimiter . $applicationUid . $delimiter,
-                Criteria::EQUAL
-            );
-            $criteria->addJoinMC($arrayCondition, Criteria::LEFT_JOIN);
-
-            if ($delIndex != 0) {
-                $criteria->add(AppDelegationPeer::DEL_INDEX, $delIndex, Criteria::EQUAL);
-            }
-
-            if ($userUid != "") {
-                $criteria->add(AppDelegationPeer::USR_UID, $userUid, Criteria::EQUAL);
-            }
-
-            $criteria2 = clone $criteria;
-
-            $criteria2->setDistinct();
-
-            $criteria2->add(ApplicationPeer::APP_STATUS, ['CANCELLED', 'COMPLETED'], Criteria::IN);
-            $criteria2->add(AppDelegationPeer::DEL_LAST_INDEX, 1, Criteria::EQUAL);
-
-            $rsCriteria2 = ApplicationPeer::doSelectRS($criteria2);
-            $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria2);
-
-            if (!empty($arrayData)) {
-                return $arrayData;
-            }
-
-            //Status is PARTICIPATED
-            $arrayData = Delegation::getParticipatedInfo($applicationUid);
-
-            if (!empty($arrayData)) {
-                return $arrayData;
-            }
-
-            //Return
-            return array();
+            return $arrayData;
         } catch (Exception $e) {
             throw $e;
         }
@@ -2641,7 +2696,7 @@ class Cases
      * @param string $typeView type of view
      *
      * @return array Return an array with process list that the user can start.
-     * @throws Exception
+     * @throws RestException
      */
     public function getCasesListStarCase($usrUid, $typeView)
     {
@@ -2738,6 +2793,70 @@ class Cases
         } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
+    }
+
+    /**
+     * Get Users to reassign
+     *
+     * @param string $userUid Unique id of User (User logged)
+     * @param string $taskUid Unique id of Task
+     * @param string $appUid Unique id of Application
+     *
+     * @return array Return Users to reassign
+     * @throws Exception
+     */
+    public function usersToReassign(
+        $userUid,
+        $taskUid,
+        $appUid
+    ) {
+        $task = Task::where('TAS_UID', '=', $taskUid)->first();
+        $type = $task->TAS_ASSIGN_TYPE;
+        $variable = $task->TAS_GROUP_VARIABLE;
+        $result = [];
+
+        if ($type === 'SELF_SERVICE' && $variable !== '') {
+            $variable = substr($variable, 2);
+            $fields = ModelApplication::where('APP_UID', '=', $appUid)->first();
+            $data = ClassesCases::unserializeData($fields->APP_DATA);
+
+            $row = [];
+            
+            if (!empty($data[$variable])) {
+                foreach ($data[$variable] as $uid) {
+                    $group = Groupwf::where('GRP_UID', '=', $uid)->first();
+                    if (!empty($group)) {
+                        $usersOfGroup = GroupUser::where('GRP_UID', '=', $uid)->get()->toArray();
+                        foreach ($usersOfGroup as $data) {
+                            $row[] = $data['USR_UID'];
+                        }
+                    } else {
+                        $row[] = $uid;
+                    }
+                }
+            }
+            
+            $users = [];
+            foreach ($row as $data) {
+                $obj = User::where('USR_UID', '=', $data)->Active()->first();
+                if (!is_null($obj) && $obj->USR_USERNAME !== "") {
+                    $users[] = $obj;
+                }
+            }
+
+            foreach ($users as $user) {
+                $result[] = [
+                    "USR_UID" => $user->USR_UID,
+                    "USR_USERNAME" => $user->USR_USERNAME,
+                    "USR_FIRSTNAME" => $user->USR_FIRSTNAME,
+                    "USR_LASTNAME"=> $user->USR_LASTNAME
+                ];
+            }
+
+        } else {
+            $result = $this->getUsersToReassign($userUid, $taskUid)['data'];
+        }
+        return ['data' => $result];
     }
 
     /**
@@ -3794,6 +3913,9 @@ class Cases
     public function uploadFiles($userUid, $appUid, $varName, $inpDocUid = -1, $appDocUid = null, $delegationIndex = null)
     {
         $response = [];
+        // Review the appUid
+        Validator::appUid($appUid, '$appUid');
+
         if (isset($_FILES["form"]["name"]) && count($_FILES["form"]["name"]) > 0) {
             // Get the delIndex related to the case
             $cases = new ClassesCases();
@@ -3844,6 +3966,41 @@ class Cases
                         ];
 
                         $i++;
+
+                        //Plugin Hook PM_UPLOAD_DOCUMENT for upload document
+                        $pluginRegistry = PluginRegistry::loadSingleton();
+
+                        // If the hook exists try to execute
+                        if ($pluginRegistry->existsTrigger(PM_UPLOAD_DOCUMENT) && class_exists('uploadDocumentData')) {
+                            // Get hook details
+                            $triggerDetail = $pluginRegistry->getTriggerInfo(PM_UPLOAD_DOCUMENT);
+
+                            // Build path file
+                            $info = pathinfo($arrayFileName['name']);
+                            $extension = (isset($info['extension'])) ? $info['extension'] : '';
+                            $pathCase = G::getPathFromUID($appUid);
+                            $pathFile = PATH_DOCUMENT . $pathCase . PATH_SEP . $objCreated->getAppDocUid() . '_' . $objCreated->getDocVersion() . '.' . $extension;
+
+                            // Instance object used by the hook
+                            $documentData = new uploadDocumentData($appUid, $userUid, $pathFile, $objCreated->getAppDocFilename(), $objCreated->getAppDocUid(), $objCreated->getDocVersion());
+
+                            // Execute hook
+                            try {
+                                $uploadReturn = $pluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
+                            } catch (Exception $error) {
+                                // Is expected an exception when the user tries to upload a versioned input document, the file is removed and the error bubbled
+                                 Documents::where('APP_DOC_UID', $objCreated->getAppDocUid())->where('DOC_VERSION', $objCreated->getDocVersion())->delete();
+                                throw $error;
+                            }
+
+                            // If the executions is correct, update the record related to the document
+                            if ($uploadReturn) {
+                                Documents::where('APP_DOC_UID', $objCreated->getAppDocUid())->update(['APP_DOC_PLUGIN' => $triggerDetail->getNamespace()]);
+
+                                // Remove the file from the server
+                                unlink($pathFile);
+                            }
+                        }
                     } else {
                         throw new UploadException($arrayFileName['error']);
                     }
@@ -3864,14 +4021,28 @@ class Cases
      * @param string $note
      * @param bool $sendMail
      * @param array $files
+     * @param int $appNUmber
+     *
+     * @see Ajax::cancelCase()
+     * @see Ajax::pauseCase()
+     * @see Ajax::reassignCase()
+     * @see AppProxy::postNote()
+     * @see WsBase::addCaseNote()
+     * @see Cases::saveCaseNote()
      *
      * @return array
      */
-    public function addNote($appUid, $userUid, $note, $sendMail = false, $files = [])
+    public function addNote($appUid, $userUid, $note, $sendMail = false, $files = [], $appNumber = 0)
     {
+        // Get the appNumber if was not send
+        if ($appNumber === 0) {
+            $appNumber = ModelApplication::getCaseNumber($appUid);
+        }
+
         // Register the note
         $attributes = [
             "APP_UID" => $appUid,
+            "APP_NUMBER" => $appNumber,
             "USR_UID" => $userUid,
             "NOTE_DATE" => date("Y-m-d H:i:s"),
             "NOTE_CONTENT" => $note,
@@ -3927,6 +4098,47 @@ class Cases
     }
 
     /**
+     * Send mail to notify and Add a case note
+     *
+     * @param string $appUid
+     * @param string $userUid
+     * @param string $note
+     * @param bool $sendMail
+     * @param string $toUser
+     *
+     */
+    public function sendMail($appUid, $userUid, $note, $sendMail = false, $toUser = '')
+    {
+        
+        $appNumber = ModelApplication::getCaseNumber($appUid);
+
+        // Register the note
+        $attributes = [
+            "APP_UID" => $appUid,
+            "APP_NUMBER" => $appNumber,
+            "USR_UID" => $userUid,
+            "NOTE_DATE" => date("Y-m-d H:i:s"),
+            "NOTE_CONTENT" => $note,
+            "NOTE_TYPE" => "USER",
+            "NOTE_AVAILABILITY" => "PUBLIC",
+            "NOTE_RECIPIENTS" => ""
+        ];
+        $newNote = Notes::create($attributes);
+        
+        // Send the email
+        if ($sendMail) {
+            // Get the FK
+            $noteId = $newNote->NOTE_ID;
+            
+            $note = G::LoadTranslation('ID_ASSIGN_NOTIFICATION', [$appNumber]) . '<br />' . G::LoadTranslation('ID_REASON') . ': ' . stripslashes($note);
+
+            // Send the notification
+            $appNote = new AppNotes();
+            $appNote->sendNoteNotification($appUid, $userUid, $note, $toUser, '', 0, $noteId);
+        }
+    }
+
+    /**
      * Upload file related to the case notes
      *
      * @param string $userUid
@@ -3969,7 +4181,7 @@ class Cases
             }
         }
 
-        //rules validation
+        // Rules validation
         foreach ($files as $key => $value) {
             $entry = [
                 "filename" => $value['name'],
@@ -4001,10 +4213,10 @@ class Cases
                     $appDocUid = G::generateUniqueID();
 
                     // Upload or move the file
-                    $isUploaded = saveAppDocument($fileName, $appUid, $appDocUid, 1, $upload);
+                    $pathFile = saveAppDocument($fileName, $appUid, $appDocUid, 1, $upload);
 
                     // If the file was uploaded correctly we will to register in the DB
-                    if ($isUploaded) {
+                    if (!empty($pathFile)) {
                         $attributes = [
                             "DOC_ID" => $noteId,
                             "APP_DOC_UID" => $appDocUid,
@@ -4021,6 +4233,29 @@ class Cases
 
                         // List of files uploaded or copy
                         $response['attachments'][$i++] = $attributes;
+
+                        //Plugin Hook PM_UPLOAD_DOCUMENT for upload document
+                        $pluginRegistry = PluginRegistry::loadSingleton();
+
+                        // If the hook exists try to execute
+                        if ($pluginRegistry->existsTrigger(PM_UPLOAD_DOCUMENT) && class_exists('uploadDocumentData')) {
+                            // Get hook details
+                            $triggerDetail = $pluginRegistry->getTriggerInfo(PM_UPLOAD_DOCUMENT);
+
+                            // Instance object used by the hook
+                            $documentData = new uploadDocumentData($appUid, $userUid, $pathFile, $attributes['APP_DOC_FILENAME'], $appDocUid, 1);
+
+                            // Execute hook
+                            $uploadReturn = $pluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
+
+                            // If the executions is correct, update the record related to the document
+                            if ($uploadReturn) {
+                                Documents::where('APP_DOC_UID', $appDocUid)->update(['APP_DOC_PLUGIN' => $triggerDetail->getNamespace()]);
+
+                                // Remove the file from the server
+                                unlink($pathFile);
+                            }
+                        }
                     } else {
                         $response['attachment_errors'][$j++] = [
                             'error' => 'error',
@@ -4131,25 +4366,18 @@ class Cases
                 $taskSelfServiceTimeUnit = $row["TAS_SELFSERVICE_TIME_UNIT"];
                 $triggerUid = $row["TAS_SELFSERVICE_TRIGGER_UID"];
 
-                /*----------------------------------********---------------------------------*/
-                $typeOfExecution = $row["TAS_SELFSERVICE_EXECUTION"];
-                $flagExecuteOnce = true;
-                // This option will be executed just once, can check if was executed before
-                if ($typeOfExecution == 'ONCE') {
-                    $appTimeout = new AppTimeoutAction();
-                    $appTimeout->setCaseUid($appUid);
-                    $appTimeout->setIndex($delIndex);
-                    $caseExecuted = $appTimeout->cases();
-                    $flagExecuteOnce = !empty($caseExecuted) ? false : true;
-                }
-                /*----------------------------------********---------------------------------*/
 
                 // Add the time in the corresponding unit to the delegation date
                 $delegateDate = calculateDate($delegateDate, $taskSelfServiceTimeUnit, $taskSelfServiceTime);
+                $datetime = new DateTime($delegateDate);
+                //please the seconds is variant not must be considered
+                $delegateDate = $datetime->format('Y-m-d H:i:00');
 
                 // Define the current time
                 $datetime = new DateTime('now');
-                $currentDate = $datetime->format('Y-m-d H:i:s');
+                //please the seconds is variant not must be considered
+                $currentDate = $datetime->format('Y-m-d H:i:00');
+                $currentDate = UtilDateTime::convertDataToUtc($currentDate);
 
                 // Check if the triggers to be executed
                 if ($currentDate >= $delegateDate && $flagExecuteOnce) {
@@ -4191,17 +4419,6 @@ class Cases
                         // Update the case
                         $case->updateCase($appUid, $fieldsCase);
 
-                        /*----------------------------------********---------------------------------*/
-                        if ($typeOfExecution == 'ONCE') {
-                            // Saving the case`s data if the 'Execution' is set in ONCE.
-                            $appTimeoutActionExecuted = new AppTimeoutActionExecuted();
-                            $dataSelf = [];
-                            $dataSelf["APP_UID"] = $appUid;
-                            $dataSelf["DEL_INDEX"] = $delIndex;
-                            $dataSelf["EXECUTION_DATE"] = time();
-                            $appTimeoutActionExecuted->create($dataSelf);
-                        }
-                        /*----------------------------------********---------------------------------*/
 
                         array_push($casesExecuted, $appNumber); // Register the cases executed
 
@@ -4214,8 +4431,10 @@ class Cases
                             'tasUid' => $taskUid,
                             'selfServiceTime' => $taskSelfServiceTime,
                             'selfServiceTimeUnit' => $taskSelfServiceTimeUnit,
+                            'currentDate' => $currentDate,
+                            'delegateDate' => $delegateDate
                         ];
-                        Log::channel(':TriggerExecution')->info('Timeout trigger execution', Bootstrap::context($context));
+                        Log::channel('taskScheduler:executeSelfServiceTimeout')->info('TriggerExecution', Bootstrap::context($context));
                     }
 
                     unset($_SESSION["PROCESS"]);
@@ -4256,7 +4475,7 @@ class Cases
         $query->where('APPLICATION.APP_UID', '=', $appUid);
 
         // Filter by source task
-        if ($caseStatus != 'COMPLETED' && $sourceTask != '' && (int)$sourceTask != 0) {
+        if (!empty($sourceTask) && (int)$sourceTask != 0) {
             $query->where('STEP.TAS_UID', '=', $sourceTask);
         }
 
@@ -4275,4 +4494,68 @@ class Cases
         // Return results
         return $dynaForms;
     }
+    
+    /**
+     * Get objects that they have send it.
+     * @param string $appUid
+     * @param string $typeObject
+     * @return array
+     */
+    public function getStepsToRevise(string $appUid, string $typeObject): array
+    {
+        $application = ModelApplication::where('APP_UID', '=', $appUid)
+                ->first();
+        $result = StepSupervisor::where('PRO_UID', '=', $application['PRO_UID'])->
+                where('STEP_TYPE_OBJ', '=', $typeObject)->
+                orderBy('STEP_POSITION', 'ASC')->
+                get()->
+                toArray();
+        return $result;
+    }
+
+    /**
+     * Get all url steps to revise.
+     * @param string $appUid
+     * @param int $delIndex
+     * @return array
+     */
+    public function getAllUrlStepsToRevise(string $appUid, int $delIndex): array
+    {
+        $result = [];
+        $dynaformStep = $this->getStepsToRevise($appUid, 'DYNAFORM');
+        $inputDocumentStep = $this->getStepsToRevise($appUid, 'INPUT_DOCUMENT');
+        $objects = array_merge($dynaformStep, $inputDocumentStep);
+        usort($objects, function ($a, $b) {
+            return $a['STEP_POSITION'] > $b['STEP_POSITION'];
+        });
+        $i = 0;
+        $endPoint = '';
+        $uidName = '';
+        foreach ($objects as $step) {
+            if ($step['STEP_TYPE_OBJ'] === 'DYNAFORM') {
+                $endPoint = 'cases_StepToRevise';
+                $uidName = 'DYN_UID';
+            }
+            if ($step['STEP_TYPE_OBJ'] === 'INPUT_DOCUMENT') {
+                $endPoint = 'cases_StepToReviseInputs';
+                $uidName = 'INP_DOC_UID';
+            }
+            $url = "{$endPoint}?"
+                    . "type={$step['STEP_TYPE_OBJ']}&"
+                    . "ex={$i}&"
+                    . "PRO_UID={$step["PRO_UID"]}&"
+                    . "{$uidName}={$step['STEP_UID_OBJ']}&"
+                    . "APP_UID={$appUid}&"
+                    . "position={$step['STEP_POSITION']}&"
+                    . "DEL_INDEX={$delIndex}";
+            $result[] = [
+                'uid' => $step['STEP_UID_OBJ'],
+                'type' => $step['STEP_TYPE_OBJ'],
+                'url' => $url
+            ];
+            $i++;
+        }
+        return $result;
+    }
+
 }

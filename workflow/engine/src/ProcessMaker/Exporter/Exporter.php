@@ -44,7 +44,6 @@ abstract class Exporter
             "vendor_version_code" => "Michelangelo",
             "export_timestamp" => date("U"),
             "export_datetime" => date("Y-m-d\TH:i:sP"),
-            "export_server_addr" => isset($_SERVER["SERVER_ADDR"]) ? $_SERVER["SERVER_ADDR"].":".$_SERVER["SERVER_PORT"] : "Unknown",
             "export_server_os" => PHP_OS ,
             "export_server_php_version" => PHP_VERSION_ID,
         );

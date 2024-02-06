@@ -63,7 +63,9 @@ class AppMessageMapBuilder
         $tMap = $this->dbMap->addTable('APP_MESSAGE');
         $tMap->setPhpName('AppMessage');
 
-        $tMap->setUseIdGenerator(false);
+        $tMap->setUseIdGenerator(true);
+
+        $tMap->addColumn('APP_MSG_ID', 'AppMsgId', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addPrimaryKey('APP_MSG_UID', 'AppMsgUid', 'string', CreoleTypes::VARCHAR, true, 32);
 

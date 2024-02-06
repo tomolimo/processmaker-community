@@ -1,4 +1,8 @@
 <?php
+
+use ProcessMaker\Model\Delegation;
+use ProcessMaker\Model\SubProcess;
+
 /**
  * processes_DeleteCases.php
  *
@@ -14,6 +18,15 @@ try {
     $uids = explode(',', $_POST['PRO_UIDS']);
     $process = new Process();
     foreach ($uids as $uid) {
+        $parents = SubProcess::getProParents($uid);
+        if (!empty($parents)) {
+            if (Delegation::hasActiveParentsCases($parents)) {
+                $resp->status = false;
+                $resp->msg = G::LoadTranslation('ID_CANT_DELETE_SUB_PROCESS_PARENT_HAS_ACTIVE_CASES');
+                echo G::json_encode($resp);
+                die();
+            }
+        }
         $process->deleteProcessCases($uid);
     }
 
@@ -21,11 +34,9 @@ try {
     $resp->msg = G::LoadTranslation('ID_ALL_RECORDS_DELETED_SUCESSFULLY');
 
     echo G::json_encode($resp);
-
 } catch (Exception $e) {
     $resp->status = false;
     $resp->msg = $e->getMessage();
     $resp->trace = $e->getTraceAsString();
     echo G::json_encode($resp);
 }
-

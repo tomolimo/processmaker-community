@@ -1,32 +1,6 @@
 <?php
-/**
- * Application.php
- * @package    workflow.engine.classes.model
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
 
-//require_once ('classes/model/om/BaseApplication.php');
-//require_once ('classes/model/Content.php');
-
+use ProcessMaker\Model\Process;
 
 /**
  * Skeleton subclass for representing a row from the 'APPLICATION' table.
@@ -207,30 +181,37 @@ class Application extends BaseApplication
     }
 
     /**
-     * Creates the Application
+     * Creates an Application
      *
-     * @param
-     *   $sProUid the process id
-     *   $sUsrUid the userid
-     * @return     void
+     * @param string $processUid
+     * @param string $userUid
+     * @param string $sequenceType
+     * @throws PropelException
+     * @throws Exception
+     * @return string
      */
-    public function create($sProUid, $sUsrUid)
+    public function create($processUid, $userUid, $sequenceType)
     {
-        require_once ("classes/model/AppSequence.php");
         $con = Propel::getConnection('workflow');
 
         try {
-            //fill the default values for new application row
+            // Fill the default values for new application row
             $this->setAppUid(G::generateUniqueID());
             $this->setAppParent('');
             $this->setAppStatus('DRAFT');
             $this->setAppStatusId(1);
-            $this->setProUid($sProUid);
+            $this->setProUid($processUid);
+            $process = Process::getIds($processUid, 'PRO_UID');
+            $this->setProId(head($process)['PRO_ID']);
             $this->setAppProcStatus('');
             $this->setAppProcCode('');
             $this->setAppParallel('N');
-            $this->setAppInitUser($sUsrUid);
-            $this->setAppCurUser($sUsrUid);
+            $this->setAppInitUser($userUid);
+            $user = UsersPeer::retrieveByPK($userUid);
+            if ($user) {
+                $this->setAppInitUserId($user->getUsrId());
+            }
+            $this->setAppCurUser($userUid);
             $this->setAppCreateDate('now');
             $this->setAppInitDate('now');
             $this->setAppUpdateDate('now');
@@ -241,8 +222,8 @@ class Application extends BaseApplication
             $c = new Criteria();
             $c->clearSelectColumns();
 
-            $oAppSequence = new AppSequence();
-            $maxNumber = $oAppSequence->sequenceNumber();
+            $appSequence = new AppSequence();
+            $maxNumber = $appSequence->sequenceNumber($sequenceType);
 
             $this->setAppNumber($maxNumber);
             $this->setAppData(serialize(['APP_NUMBER' => $maxNumber, 'PIN' => $pin]));
@@ -253,9 +234,7 @@ class Application extends BaseApplication
                 $con->begin();
                 $this->setAppTitleContent('#' . $maxNumber);
                 $this->setAppDescriptionContent('');
-                //to do: ID_CASE in translation $this->setAppTitle(G::LoadTranslation('ID_CASE') . $maxNumber);
-                //Content::insertContent('APP_PROC_CODE', '', $this->getAppUid(), $lang, '');
-                $res = $this->save();
+                $this->save();
                 $con->commit();
 
                 return $this->getAppUid();
@@ -381,6 +360,8 @@ class Application extends BaseApplication
         $this->setAppProcCode(isset($aData['APP_PROC_CODE'])? $aData['APP_PROC_CODE'] : '');
         $this->setAppParallel(isset($aData['APP_PARALLEL'])? $aData['APP_PARALLEL'] : 'N');
         $this->setAppInitUser($aData['USR_UID']);
+        $user = UsersPeer::retrieveByPK($aData['USR_UID']);
+        $this->setAppInitUserId($user->getUsrId());
         $this->setAppCurUser($aData['USR_UID']);
         $this->setAppCreateDate(isset($aData['APP_CREATE_DATE'])? $aData['APP_CREATE_DATE'] : 'now');
         $this->setAppInitDate(isset($aData['APP_INIT_DATE'])? $aData['APP_INIT_DATE'] : 'now');

@@ -43,7 +43,7 @@ foreach ($aAux1 as $aAux2) {
     }
 }
 
-$oProcessMap = new ProcessMap( new DBConnection() );
+$oProcessMap = new ProcessMap();
 $aTriggersList = $oProcessMap->getTriggers( $_GET['PRO_UID'] );
 
 $aTriggersFileds = array();

@@ -13,7 +13,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Stig Sæther Bakken <ssb@php.net>                             |
+  | Author: Stig Sï¿½ther Bakken <ssb@php.net>                             |
   +----------------------------------------------------------------------+
 
   $Id: CLI.php,v 1.31 2003/04/03 23:12:40 ssb Exp $
@@ -43,7 +43,7 @@ class PEAR_Frontend_CLI extends PEAR
 
     // {{{ constructor
 
-    function PEAR_Frontend_CLI()
+    function __construct()
     {
         parent::PEAR();
         $term = getenv('TERM'); //(cox) $_ENV is empty for me in 4.1.1

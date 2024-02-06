@@ -38,12 +38,15 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 
 namespace PDepend\Source\Language\PHP;
 
 use PDepend\Source\AST\ASTArray;
+use PDepend\Source\AST\ASTLiteral;
+use PDepend\Source\AST\ASTNode;
 use PDepend\Source\Parser\UnexpectedTokenException;
 use PDepend\Source\Tokenizer\Tokens;
 
@@ -57,6 +60,7 @@ use PDepend\Source\Tokenizer\Tokens;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 2.3
  */
 abstract class PHPParserVersion54 extends PHPParserVersion53
@@ -65,8 +69,10 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
      * Will return <b>true</b> if the given <b>$tokenType</b> is a valid class
      * name part.
      *
-     * @param  integer $tokenType The type of a parsed token.
-     * @return boolean
+     * @param int $tokenType The type of a parsed token.
+     *
+     * @return bool
+     *
      * @since  0.10.6
      */
     protected function isClassName($tokenType)
@@ -76,14 +82,17 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
             case Tokens::T_TRUE:
             case Tokens::T_FALSE:
             case Tokens::T_STRING:
+            case Tokens::T_READONLY:
                 return true;
         }
+
         return false;
     }
 
     /**
-     * @param integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
      */
     protected function isConstantName($tokenType)
     {
@@ -91,7 +100,8 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
     }
 
     /**
-     * @param integer $tokenType
+     * @param int $tokenType
+     *
      * @return bool
      */
     protected function isMethodName($tokenType)
@@ -103,8 +113,10 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
      * Tests if the give token is a valid function name in the supported PHP
      * version.
      *
-     * @param integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
+     *
      * @since 2.3
      */
     protected function isFunctionName($tokenType)
@@ -125,8 +137,9 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
      * Tests if the given token type is a reserved keyword in the supported PHP
      * version.
      *
-     * @param integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
      */
     protected function isKeyword($tokenType)
     {
@@ -145,8 +158,10 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
      * Tests if the given token type is a valid type hint in the supported
      * PHP version.
      *
-     * @param integer $tokenType
-     * @return boolean
+     * @param int $tokenType
+     *
+     * @return bool
+     *
      * @since 1.0.0
      */
     protected function isTypeHint($tokenType)
@@ -159,12 +174,6 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
         }
     }
 
-    /**
-     * Parses a type hint that is valid in the supported PHP version.
-     *
-     * @return \PDepend\Source\AST\ASTNode
-     * @since 1.0.0
-     */
     protected function parseTypeHint()
     {
         switch ($this->tokenizer->peek()) {
@@ -183,7 +192,8 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
      * Tests if the next token is a valid array start delimiter in the supported
      * PHP version.
      *
-     * @return boolean
+     * @return bool
+     *
      * @since 1.0.0
      */
     protected function isArrayStartDelimiter()
@@ -200,9 +210,10 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
     /**
      * Parses a php array declaration.
      *
-     * @param \PDepend\Source\AST\ASTArray $array
-     * @param boolean $static
-     * @return \PDepend\Source\AST\ASTArray
+     * @param bool $static
+     *
+     * @return ASTArray
+     *
      * @since 1.0.0
      */
     protected function parseArray(ASTArray $array, $static = false)
@@ -224,14 +235,22 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
     /**
      * Parses an integer value.
      *
-     * @return \PDepend\Source\AST\ASTLiteral
-     * @throws \PDepend\Source\Parser\UnexpectedTokenException
+     * @throws UnexpectedTokenException
+     *
+     * @return ASTLiteral
      */
     protected function parseIntegerNumber()
     {
         $token = $this->consumeToken(Tokens::T_LNUMBER);
+        $number = $token->image;
 
-        if ('0' !== substr($token->image, 0, 1)) {
+        while ($this->tokenizer->peek() === Tokens::T_STRING) {
+            $next = $this->tokenizer->next();
+            $this->tokenStack->add($next);
+            $number .= $next->image;
+        }
+
+        if ('0' !== substr($number, 0, 1)) {
             goto BUILD_LITERAL;
         }
 
@@ -240,20 +259,20 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
         }
 
         $token1 = $this->consumeToken(Tokens::T_STRING);
-        if (0 === preg_match('(^b[01]+$)', $token1->image)) {
+        if (0 === preg_match('(^b[01]+$)i', $token1->image)) {
             throw new UnexpectedTokenException(
                 $token1,
                 $this->tokenizer->getSourceFile()
             );
         }
 
-        $token->image = $token->image . $token1->image;
+        $number .= $token1->image;
         $token->endLine = $token1->endLine;
         $token->endColumn = $token1->endColumn;
 
         BUILD_LITERAL:
 
-        $literal = $this->builder->buildAstLiteral($token->image);
+        $literal = $this->builder->buildAstLiteral($number);
         $literal->configureLinesAndColumns(
             $token->startLine,
             $token->endLine,
@@ -267,7 +286,8 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
     /**
      * Parses the class expr syntax supported since PHP 5.4.
      *
-     * @return \PDepend\Source\AST\ASTNode
+     * @return ASTNode
+     *
      * @since 2.3
      */
     protected function parsePostfixIdentifier()
@@ -284,7 +304,7 @@ abstract class PHPParserVersion54 extends PHPParserVersion53
     }
 
     /**
-     * @return \PDepend\Source\AST\ASTNode
+     * @return ASTNode
      */
     protected function parseOptionalExpressionForVersion()
     {

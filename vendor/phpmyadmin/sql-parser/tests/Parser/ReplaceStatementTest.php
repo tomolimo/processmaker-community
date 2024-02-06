@@ -13,12 +13,12 @@ class ReplaceStatementTest extends TestCase
      *
      * @dataProvider replaceProvider
      */
-    public function testReplace($test)
+    public function testReplace($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function replaceProvider()
+    public function replaceProvider(): array
     {
         return [
             ['parser/parseReplace'],

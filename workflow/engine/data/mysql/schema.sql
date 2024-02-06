@@ -35,6 +35,8 @@ CREATE TABLE `APPLICATION`
 	`APP_DELAY_DURATION` DOUBLE default 0,
 	`APP_DRIVE_FOLDER_UID` VARCHAR(128) default '',
 	`APP_ROUTING_DATA` MEDIUMTEXT,
+	`PRO_ID` INTEGER default 0 NOT NULL,
+	`APP_INIT_USER_ID` INTEGER default 0 NOT NULL,
 	PRIMARY KEY (`APP_UID`),
 	UNIQUE KEY `INDEX_APP_NUMBER` (`APP_NUMBER`),
 	KEY `indexApp`(`PRO_UID`, `APP_STATUS`, `APP_UID`),
@@ -42,6 +44,7 @@ CREATE TABLE `APPLICATION`
 	KEY `indexAppStatus`(`APP_STATUS`),
 	KEY `indexAppCreateDate`(`APP_CREATE_DATE`),
 	KEY `indexAppStatusId`(`APP_STATUS_ID`),
+	KEY `indexAppInitUserId`(`APP_INIT_USER_ID`),
 	FULLTEXT `indexAppTitle`(`APP_TITLE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='The application';
 #-----------------------------------------------------------------------------
@@ -54,7 +57,7 @@ DROP TABLE IF EXISTS `APP_SEQUENCE`;
 CREATE TABLE `APP_SEQUENCE`
 (
 	`ID` INTEGER  NOT NULL,
-	PRIMARY KEY (`ID`)
+	`APP_TYPE` VARCHAR(20) default 'NORMAL' NOT NULL
 )ENGINE=InnoDB ;
 #-----------------------------------------------------------------------------
 #-- APP_DELEGATION
@@ -94,6 +97,8 @@ CREATE TABLE `APP_DELEGATION`
 	`USR_ID` INTEGER default 0,
 	`PRO_ID` INTEGER default 0,
 	`TAS_ID` INTEGER default 0,
+	`DEL_TITLE` VARCHAR(999)  NOT NULL,
+	`DEL_THREAD_STATUS_ID` INTEGER default 0 NOT NULL,
 	PRIMARY KEY (`APP_UID`,`DEL_INDEX`),
 	UNIQUE KEY `DELEGATION_ID` (`DELEGATION_ID`),
 	KEY `INDEX_APP_NUMBER`(`APP_NUMBER`),
@@ -101,7 +106,8 @@ CREATE TABLE `APP_DELEGATION`
 	KEY `INDEX_PRO_ID`(`PRO_ID`),
 	KEY `INDEX_TAS_ID`(`TAS_ID`),
 	KEY `INDEX_USR_UID`(`USR_UID`),
-	KEY `INDEX_THREAD_STATUS_APP_NUMBER`(`DEL_THREAD_STATUS`, `APP_NUMBER`)
+	KEY `INDEX_THREAD_STATUS_APP_NUMBER`(`DEL_THREAD_STATUS`, `APP_NUMBER`),
+	FULLTEXT `indexDelTitle`(`DEL_TITLE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Delegation a task to user';
 #-----------------------------------------------------------------------------
 #-- APP_DOCUMENT
@@ -138,6 +144,7 @@ CREATE TABLE `APP_DOCUMENT`
 	KEY `indexAppDocument`(`FOLDER_UID`, `APP_DOC_UID`),
 	KEY `indexAppUid`(`APP_UID`),
 	KEY `indexAppUidDocUidDocVersionDocType`(`APP_UID`, `DOC_UID`, `DOC_VERSION`, `APP_DOC_TYPE`),
+	KEY `indexDocId`(`DOC_ID`),
 	KEY `indexFolderUidDocStatus`(`FOLDER_UID`, `APP_DOC_STATUS`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Documents in an Application';
 #-----------------------------------------------------------------------------
@@ -149,6 +156,7 @@ DROP TABLE IF EXISTS `APP_MESSAGE`;
 
 CREATE TABLE `APP_MESSAGE`
 (
+	`APP_MSG_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`APP_MSG_UID` VARCHAR(32)  NOT NULL,
 	`MSG_UID` VARCHAR(32),
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
@@ -173,14 +181,17 @@ CREATE TABLE `APP_MESSAGE`
 	`TAS_ID` INTEGER default 0,
 	`APP_NUMBER` INTEGER default 0,
 	PRIMARY KEY (`APP_MSG_UID`),
+	UNIQUE KEY `APP_MSG_ID` (`APP_MSG_ID`),
+	KEY `indexAppMsgId`(`APP_MSG_ID`),
 	KEY `indexForAppUid`(`APP_UID`),
 	KEY `indexForMsgStatus`(`APP_MSG_STATUS`),
 	KEY `INDEX_PRO_ID`(`PRO_ID`),
 	KEY `INDEX_TAS_ID`(`TAS_ID`),
 	KEY `INDEX_APP_NUMBER`(`APP_NUMBER`),
-	KEY `INDEX_APP_MSG_TYPE_ID`(`APP_MSG_STATUS_ID`),
+	KEY `INDEX_APP_MSG_TYPE_ID`(`APP_MSG_TYPE_ID`),
 	KEY `INDEX_APP_MSG_STATUS_ID`(`APP_MSG_STATUS_ID`),
-	KEY `indexAppUidSendDate`(`APP_UID`, `APP_MSG_SEND_DATE`)
+	KEY `indexAppUidSendDate`(`APP_UID`, `APP_MSG_SEND_DATE`),
+	KEY `indexAppMsgDate`(`APP_MSG_DATE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Messages in an Application';
 #-----------------------------------------------------------------------------
 #-- APP_OWNER
@@ -211,8 +222,10 @@ CREATE TABLE `CONFIGURATION`
 	`PRO_UID` VARCHAR(32) default '' NOT NULL,
 	`USR_UID` VARCHAR(32) default '' NOT NULL,
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
-	PRIMARY KEY (`CFG_UID`,`OBJ_UID`,`PRO_UID`,`USR_UID`,`APP_UID`)
-)ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Stores the users, processes and/or applications configuratio';
+	PRIMARY KEY (`CFG_UID`,`OBJ_UID`,`PRO_UID`,`USR_UID`,`APP_UID`),
+	KEY `INDEX_CFG_UID`(`CFG_UID`),
+	KEY `INDEX_USR_UID`(`USR_UID`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Stores the users, processes and/or applications configuration';
 #-----------------------------------------------------------------------------
 #-- CONTENT
 #-----------------------------------------------------------------------------
@@ -466,6 +479,8 @@ CREATE TABLE `OUTPUT_DOCUMENT`
 	`OUT_DOC_PDF_SECURITY_OWNER_PASSWORD` VARCHAR(32) default '',
 	`OUT_DOC_PDF_SECURITY_PERMISSIONS` VARCHAR(150) default '',
 	`OUT_DOC_OPEN_TYPE` INTEGER default 1,
+	`OUT_DOC_HEADER` MEDIUMTEXT,
+	`OUT_DOC_FOOTER` MEDIUMTEXT,
 	PRIMARY KEY (`OUT_DOC_UID`),
 	UNIQUE KEY `INDEX_OUT_DOC_ID` (`OUT_DOC_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
@@ -523,6 +538,8 @@ CREATE TABLE `PROCESS`
 	`CATEGORY_ID` INTEGER default 0,
 	PRIMARY KEY (`PRO_UID`),
 	UNIQUE KEY `INDEX_PRO_ID` (`PRO_ID`),
+	KEY `indexProId`(`PRO_ID`),
+	KEY `indexProUid`(`PRO_UID`),
 	KEY `indexProStatus`(`PRO_STATUS`),
 	KEY `indexProStatusId`(`PRO_STATUS_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Store process Information';
@@ -639,7 +656,7 @@ CREATE TABLE `STEP_TRIGGER`
 	`TAS_UID` VARCHAR(32) default '' NOT NULL,
 	`TRI_UID` VARCHAR(32) default '' NOT NULL,
 	`ST_TYPE` VARCHAR(20) default '' NOT NULL,
-	`ST_CONDITION` VARCHAR(255) default '' NOT NULL,
+	`ST_CONDITION` MEDIUMTEXT  NOT NULL,
 	`ST_POSITION` INTEGER default 0 NOT NULL,
 	PRIMARY KEY (`STEP_UID`,`TAS_UID`,`TRI_UID`,`ST_TYPE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
@@ -839,6 +856,7 @@ CREATE TABLE `USERS`
 	`USR_TIME_ZONE` VARCHAR(100) default '',
 	`USR_DEFAULT_LANG` VARCHAR(10) default '',
 	`USR_LAST_LOGIN` DATETIME,
+	`USR_EXTENDED_ATTRIBUTES_DATA` MEDIUMTEXT,
 	PRIMARY KEY (`USR_UID`),
 	UNIQUE KEY `INDEX_USR_ID` (`USR_ID`),
 	KEY `indexUsrStatus`(`USR_STATUS`),
@@ -1586,6 +1604,7 @@ DROP TABLE IF EXISTS `APP_NOTES`;
 CREATE TABLE `APP_NOTES`
 (
 	`NOTE_ID` INTEGER  NOT NULL AUTO_INCREMENT,
+	`APP_NUMBER` INTEGER default 0,
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
 	`USR_UID` VARCHAR(32) default '' NOT NULL,
 	`NOTE_DATE` DATETIME  NOT NULL,
@@ -1598,7 +1617,8 @@ CREATE TABLE `APP_NOTES`
 	`NOTE_RECIPIENTS` MEDIUMTEXT,
 	UNIQUE KEY `NOTE_ID` (`NOTE_ID`),
 	KEY `indexAppNotesDate`(`APP_UID`, `NOTE_DATE`),
-	KEY `indexAppNotesUser`(`APP_UID`, `USR_UID`)
+	KEY `indexAppNotesUser`(`APP_UID`, `USR_UID`),
+	KEY `indexAppNumber`(`APP_NUMBER`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Application Notes';
 #-----------------------------------------------------------------------------
 #-- DASHLET
@@ -1728,6 +1748,7 @@ CREATE TABLE `WEB_ENTRY`
 	`WE_CUSTOM_TITLE` MEDIUMTEXT,
 	`WE_AUTHENTICATION` VARCHAR(14) default 'ANONYMOUS' NOT NULL,
 	`WE_HIDE_INFORMATION_BAR` CHAR(1) default '1',
+	`WE_HIDE_ACTIVE_SESSION_WARNING` CHAR(1) default '1',
 	`WE_CALLBACK` VARCHAR(13) default 'PROCESSMAKER' NOT NULL,
 	`WE_CALLBACK_URL` MEDIUMTEXT,
 	`WE_LINK_GENERATION` VARCHAR(8) default 'DEFAULT' NOT NULL,
@@ -1904,7 +1925,7 @@ CREATE TABLE `BPMN_ACTIVITY`
 	`ACT_INSTANTIATE` TINYINT default 0,
 	`ACT_SCRIPT_TYPE` VARCHAR(255),
 	`ACT_SCRIPT` MEDIUMTEXT,
-	`ACT_LOOP_TYPE` VARCHAR(20) default 'NONE' NOT NULL,
+	`ACT_LOOP_TYPE` VARCHAR(20) default 'EMPTY' NOT NULL,
 	`ACT_TEST_BEFORE` TINYINT default 0,
 	`ACT_LOOP_MAXIMUM` INTEGER default 0,
 	`ACT_LOOP_CONDITION` VARCHAR(100),
@@ -2293,7 +2314,7 @@ CREATE TABLE `PROCESS_VARIABLES`
 	`VAR_LABEL` VARCHAR(255) default '',
 	`VAR_DBCONNECTION` VARCHAR(32),
 	`VAR_SQL` MEDIUMTEXT,
-	`VAR_NULL` TINYINT(32) default 0,
+	`VAR_NULL` TINYINT default 0,
 	`VAR_DEFAULT` VARCHAR(32) default '',
 	`VAR_ACCEPTED_VALUES` MEDIUMTEXT,
 	`INP_DOC_UID` VARCHAR(32) default '',
@@ -2301,7 +2322,7 @@ CREATE TABLE `PROCESS_VARIABLES`
 	UNIQUE KEY `VAR_ID` (`VAR_ID`),
 	KEY `indexPrjUidVarName`(`PRJ_UID`, `VAR_NAME`),
 	KEY `INDEX_PRO_ID`(`PRO_ID`)
-)ENGINE=InnoDB ;
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
 #-- APP_TIMEOUT_ACTION_EXECUTED
 #-----------------------------------------------------------------------------
@@ -2314,7 +2335,7 @@ CREATE TABLE `APP_TIMEOUT_ACTION_EXECUTED`
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
 	`DEL_INDEX` INTEGER default 0 NOT NULL,
 	`EXECUTION_DATE` DATETIME,
-	PRIMARY KEY (`APP_UID`)
+	PRIMARY KEY (`APP_UID`,`DEL_INDEX`)
 )ENGINE=InnoDB ;
 #-----------------------------------------------------------------------------
 #-- ADDONS_STORE
@@ -2799,7 +2820,7 @@ CREATE TABLE `EMAIL_SERVER`
 	`MESS_DEFAULT` INTEGER default 0 NOT NULL,
 	`OAUTH_CLIENT_ID` VARCHAR(512) default '' NOT NULL,
 	`OAUTH_CLIENT_SECRET` VARCHAR(512) default '' NOT NULL,
-	`OAUTH_REFRESH_TOKEN` VARCHAR(512) default '' NOT NULL,
+	`OAUTH_REFRESH_TOKEN` MEDIUMTEXT,
 	PRIMARY KEY (`MESS_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
@@ -3305,10 +3326,10 @@ CREATE TABLE `JOBS_PENDING`
 	`id` BIGINT(20)  NOT NULL AUTO_INCREMENT,
 	`queue` VARCHAR(255)  NOT NULL,
 	`payload` MEDIUMTEXT  NOT NULL,
-	`attempts` TINYINT(3)  NOT NULL,
-	`reserved_at` BIGINT(10),
-	`available_at` BIGINT(10)  NOT NULL,
-	`created_at` BIGINT(10)  NOT NULL,
+	`attempts` TINYINT  NOT NULL,
+	`reserved_at` BIGINT(20),
+	`available_at` BIGINT(20)  NOT NULL,
+	`created_at` BIGINT(20)  NOT NULL,
 	PRIMARY KEY (`id`),
 	KEY `jobs_queue_index`(`queue`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
@@ -3350,12 +3371,70 @@ CREATE TABLE `SCHEDULER`
 	`body` VARCHAR(255),
 	`type` VARCHAR(255),
 	`category` VARCHAR(255),
-	`system` TINYINT(3),
+	`system` TINYINT,
 	`timezone` VARCHAR(255),
-	`enable` TINYINT(3),
+	`enable` TINYINT,
 	`creation_date` DATETIME,
 	`last_update` DATETIME,
 	PRIMARY KEY (`id`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
+#-----------------------------------------------------------------------------
+#-- USER_EXTENDED_ATTRIBUTES
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `USER_EXTENDED_ATTRIBUTES`;
+
+
+CREATE TABLE `USER_EXTENDED_ATTRIBUTES`
+(
+	`UEA_ID` BIGINT(20)  NOT NULL AUTO_INCREMENT,
+	`UEA_NAME` VARCHAR(255),
+	`UEA_ATTRIBUTE_ID` VARCHAR(255),
+	`UEA_HIDDEN` INTEGER,
+	`UEA_REQUIRED` INTEGER,
+	`UEA_PASSWORD` INTEGER,
+	`UEA_OPTION` VARCHAR(255),
+	`UEA_ROLES` MEDIUMTEXT,
+	`UEA_OWNER` BIGINT(20),
+	`UEA_DATE_CREATE` DATETIME,
+	PRIMARY KEY (`UEA_ID`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
+#-----------------------------------------------------------------------------
+#-- USER_CONFIG
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `USER_CONFIG`;
+
+
+CREATE TABLE `USER_CONFIG`
+(
+	`USR_ID` BIGINT(20)  NOT NULL,
+	`USC_NAME` VARCHAR(255)  NOT NULL,
+	`USC_SETTING` MEDIUMTEXT  NOT NULL,
+	PRIMARY KEY (`USR_ID`,`USC_NAME`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
+#-----------------------------------------------------------------------------
+#-- CASE_LIST
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `CASE_LIST`;
+
+
+CREATE TABLE `CASE_LIST`
+(
+	`CAL_ID` INTEGER  NOT NULL AUTO_INCREMENT,
+	`CAL_TYPE` VARCHAR(255)  NOT NULL,
+	`CAL_NAME` VARCHAR(255)  NOT NULL,
+	`CAL_DESCRIPTION` MEDIUMTEXT,
+	`ADD_TAB_UID` VARCHAR(32)  NOT NULL,
+	`CAL_COLUMNS` MEDIUMTEXT,
+	`USR_ID` BIGINT(20)  NOT NULL,
+	`CAL_ICON_LIST` MEDIUMTEXT,
+	`CAL_ICON_COLOR` VARCHAR(255),
+	`CAL_ICON_COLOR_SCREEN` VARCHAR(255),
+	`CAL_CREATE_DATE` DATETIME  NOT NULL,
+	`CAL_UPDATE_DATE` DATETIME  NOT NULL,
+	PRIMARY KEY (`CAL_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 # This restores the fkey checks, after having unset them earlier
 SET FOREIGN_KEY_CHECKS = 1;

@@ -109,7 +109,7 @@ abstract class BaseBpmnActivity extends BaseObject implements Persistent
      * The value for the act_loop_type field.
      * @var        string
      */
-    protected $act_loop_type = 'NONE';
+    protected $act_loop_type = 'EMPTY';
 
     /**
      * The value for the act_test_before field.
@@ -870,7 +870,7 @@ abstract class BaseBpmnActivity extends BaseObject implements Persistent
             $v = (string) $v;
         }
 
-        if ($this->act_loop_type !== $v || $v === 'NONE') {
+        if ($this->act_loop_type !== $v || $v === 'EMPTY') {
             $this->act_loop_type = $v;
             $this->modifiedColumns[] = BpmnActivityPeer::ACT_LOOP_TYPE;
         }

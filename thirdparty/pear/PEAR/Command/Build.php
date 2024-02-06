@@ -51,7 +51,7 @@ Builds one or more extensions contained in a package.'
      *
      * @access public
      */
-    function PEAR_Command_Build(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
         parent::PEAR_Command_Common($ui, $config);
     }
@@ -65,7 +65,7 @@ Builds one or more extensions contained in a package.'
         if (sizeof($params) < 1) {
             $params[0] = 'package.xml';
         }
-        $builder = &new PEAR_Builder($this->ui);
+        $builder = new PEAR_Builder($this->ui);
         $this->verbose = $this->config->get('verbose');
         $err = $builder->build($params[0], array(&$this, 'buildCallback'));
         if (PEAR::isError($err)) {

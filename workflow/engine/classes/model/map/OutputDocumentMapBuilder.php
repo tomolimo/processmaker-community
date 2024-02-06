@@ -117,6 +117,10 @@ class OutputDocumentMapBuilder
 
         $tMap->addColumn('OUT_DOC_OPEN_TYPE', 'OutDocOpenType', 'int', CreoleTypes::INTEGER, false, null);
 
+        $tMap->addColumn('OUT_DOC_HEADER', 'OutDocHeader', 'string', CreoleTypes::LONGVARCHAR, false, null);
+
+        $tMap->addColumn('OUT_DOC_FOOTER', 'OutDocFooter', 'string', CreoleTypes::LONGVARCHAR, false, null);
+
         $tMap->addValidator('OUT_DOC_UID', 'maxLength', 'propel.validator.MaxLengthValidator', '32', 'Output Document UID can be no larger than 32 in size');
 
         $tMap->addValidator('OUT_DOC_UID', 'required', 'propel.validator.RequiredValidator', '', 'Output Document UID is required.');

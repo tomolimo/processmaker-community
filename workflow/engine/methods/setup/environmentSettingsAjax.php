@@ -1,10 +1,14 @@
 <?php
-/**
- *
- * @author Erik A.O. <erik@colosa.com>
- * @date Sept 13th, 2010
- *
- */
+
+use ProcessMaker\Exception\RBACException;
+
+// Include global object RBAC
+global $RBAC;
+
+// Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+if ($RBAC->userCanAccess('PM_SETUP') !== 1 || $RBAC->userCanAccess('PM_SETUP_ENVIRONMENT') !== 1) {
+    throw new RBACException('ID_ACCESS_DENIED', 403);
+}
 
 $request = isset( $_POST["request"] ) ? $_POST["request"] : (isset( $_GET["request"] ) ? $_GET["request"] : null);
 $result = new stdclass();
@@ -50,7 +54,7 @@ switch ($request) {
         if (isset($_POST["casesListDateFormat"])) {
             $config['casesListDateFormat'] = $_POST["casesListDateFormat"]; 
         }
-        if (isset($_POST["casesListDateFormat"])) {
+        if (isset($_POST["casesListRowNumber"])) {
             $config['casesListRowNumber'] = intval( $_POST["casesListRowNumber"] );
         }
         if (isset($_POST["txtCasesRefreshTime"])) {

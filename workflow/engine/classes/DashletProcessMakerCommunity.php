@@ -117,7 +117,7 @@ class DashletProcessMakerCommunity implements DashletInterface
 
       <div class=\"icon\"><img src=\"/images/dashlets/community_blog.png\" style=\"border: medium none;\"></div>
       <div class=\"description\">
-        <strong>BLOG - </strong><a href=\"http://blog.processmaker.com/\" target=\"_blank\" title=\"http://blog.processmaker.com\">http://processmakerblog.com</a>
+        <strong>BLOG - </strong><a href=\"https://www.processmaker.com/blog/\" target=\"_blank\" title=\"https://www.processmaker.com/blog\">https://www.processmaker.com/blog</a>
         <br />
         Get our BPM tips in the ProcessMaker blog.
       </div>

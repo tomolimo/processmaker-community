@@ -19,7 +19,7 @@ class PmDashlet extends DashletInstance implements DashletInterface
      * @param string $type CORE or PLUGIN
      * @return stdClass information of file
      */
-    private function verifyExistsFile($name, $type = 'CORE')
+    private static function verifyExistsFile($name, $type = 'CORE')
     {
         $response = new stdClass();
         $response->exists = false;

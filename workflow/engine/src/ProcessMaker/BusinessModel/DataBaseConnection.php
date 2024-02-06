@@ -198,9 +198,9 @@ class DataBaseConnection
                 $dataDBConnection['DBS_PASSWORD'] = '';
             } else {
                 if ($flagTns == 0) {
-                    $pass = G::encrypt( $dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_DATABASE_NAME"]) . "_2NnV3ujj3w";
+                    $pass = G::encrypt( $dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_DATABASE_NAME"], false, false) . "_2NnV3ujj3w";
                 } else {
-                    $pass = G::encrypt($dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_TNS"]) . "_2NnV3ujj3w";
+                    $pass = G::encrypt($dataDBConnection["DBS_PASSWORD"], $dataDBConnection["DBS_TNS"], false, false) . "_2NnV3ujj3w";
                 }
 
                 $dataDBConnection['DBS_PASSWORD'] = $pass;

@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class AbeRequest extends Model
 {
+    use HasFactory;
+
     protected $table = "ABE_REQUESTS";
 
     public $timestamps = false;

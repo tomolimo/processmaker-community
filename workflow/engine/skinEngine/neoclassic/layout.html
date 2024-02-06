@@ -7,7 +7,7 @@
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
     {$header}
   </head>
-  {if ($user_logged neq '' or $tracker neq '') and $timezone_status neq 'failed'}
+  {if ((isset($user_logged) && $user_logged neq '') or (isset($tracker) && $tracker neq '')) and $timezone_status neq 'failed'}
     <body>
       <table width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" id="pm_main_table">
         <tr>

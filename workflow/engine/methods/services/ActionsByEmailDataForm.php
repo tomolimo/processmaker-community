@@ -34,6 +34,22 @@ if (isset($_GET['BROWSER_TIME_ZONE_OFFSET'])) {
 
             $caseFields = $case->loadCase($applicationUid, $delIndex);
 
+            //this value is only important for Propel::getConnection()
+            $_SESSION['PROCESS'] = $caseFields['PRO_UID'];
+
+            // Updating case variables with system constants
+            $systemConstants = G::getSystemConstants();
+            $caseFields['APP_DATA']['USER_LOGGED'] = $systemConstants['USER_LOGGED'];
+            $caseFields['APP_DATA']['USR_USERNAME'] = $systemConstants['USR_USERNAME'];
+            $caseFields['APP_DATA']['SYS_LANG'] = $systemConstants['SYS_LANG'];
+            $caseFields['APP_DATA']['SYS_SKIN'] = $systemConstants['SYS_SKIN'];
+            $caseFields['APP_DATA']['SYS_SYS'] = $systemConstants['SYS_SYS'];
+            $caseFields['APP_DATA']['APPLICATION'] = $caseFields['APP_UID'];
+            $caseFields['APP_DATA']['PROCESS'] = $caseFields['PRO_UID'];
+            $caseFields['APP_DATA']['TASK'] = $caseFields['TASK'];
+            $caseFields['APP_DATA']['INDEX'] = $caseFields['INDEX'];
+            $case->updateCase($applicationUid, $caseFields);
+
             $criteria = new Criteria();
             $criteria->addSelectColumn(DynaformPeer::DYN_CONTENT);
             $criteria->addSelectColumn(DynaformPeer::PRO_UID);

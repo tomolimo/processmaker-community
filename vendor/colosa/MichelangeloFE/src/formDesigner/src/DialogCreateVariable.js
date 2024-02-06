@@ -177,7 +177,7 @@
             width: 500,
             height: 195,
             resizable: false,
-            position: ["center", 50],
+            position: { my: "center top+50", at: "center top", of: window },
             close: function (event, ui) {
                 that.onClose(event, ui);
                 that.dialog.remove();

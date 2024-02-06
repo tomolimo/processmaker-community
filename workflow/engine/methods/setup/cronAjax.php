@@ -1,6 +1,15 @@
 <?php
 
 use ProcessMaker\BusinessModel\Files\Cron;
+use ProcessMaker\Exception\RBACException;
+
+// Include global object RBAC
+global $RBAC;
+
+// Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+if ($RBAC->userCanAccess('PM_SETUP') !== 1 || $RBAC->userCanAccess('PM_SETUP_LOGS') !== 1) {
+    throw new RBACException('ID_ACCESS_DENIED', 403);
+}
 
 $option = isset($_REQUEST["option"]) ? $_REQUEST["option"] : null;
 

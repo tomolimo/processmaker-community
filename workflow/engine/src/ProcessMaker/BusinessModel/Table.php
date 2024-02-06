@@ -6,39 +6,43 @@ use DynaformHandler;
 use Exception;
 use Fields;
 use G;
+use PmTable;
 use ProcessMaker\BusinessModel\ReportTable as BusinessModelRpt;
+use ProcessMaker\Model\AdditionalTables as ModelAdditionalTables;
+use stdClass;
 
 class Table
 {
+    const RESERVE_WORDS = ['ALTER','CLOSE','COMMIT','CREATE','DECLARE','DELETE',
+        'DROP','FETCH','FUNCTION','GRANT','INDEX','INSERT','OPEN','REVOKE','ROLLBACK',
+        'SELECT','SYNONYM','TABLE','UPDATE','VIEW','APP_UID','ROW','PMTABLE'];
+
+    const RESERVE_WORDS_PHP = ['case','catch','cfunction','class','clone','const','continue',
+        'declare','default','do','else','elseif','enddeclare','endfor','endforeach','endif',
+        'endswitch','endwhile','extends','final','for','foreach','function','global','goto',
+        'if','implements','interface','instanceof','private','namespace','new','old_function',
+        'or','throw','protected','public','static','switch','xor','try','use','var','while'];
+        
     /**
-     * List of Tables in process
-     * @var string $pro_uid. Uid for process
-     * @var string $reportFlag. If is report table
-     *
-     * @author Brayan Pereyra (Cochalo) <brayan@colosa.com>
-     * @copyright Colosa - Bolivia
-     *
+     * List of Tables in process.
+     * @param string $proUid
+     * @param bool $reportFlag
+     * @param bool $offline
+     * @param string $search
      * @return array
      */
-    public function getTables($pro_uid = '', $reportFlag = false, $offline = false)
+    public function getTables(string $proUid = '', bool $reportFlag = false, bool $offline = false, string $search = ''): array
     {
-        //VALIDATION
         if ($reportFlag) {
-            $pro_uid = $this->validateProUid($pro_uid);
+            $proUid = $this->validateProUid($proUid);
         }
-
-        $reportTables = array();
-        $oCriteria = new \Criteria('workflow');
-        $oCriteria->addSelectColumn(\AdditionalTablesPeer::ADD_TAB_UID);
-        $oCriteria->add(\AdditionalTablesPeer::PRO_UID, $pro_uid, \Criteria::EQUAL);
-        $oDataset = \AdditionalTablesPeer::doSelectRS($oCriteria);
-        $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-        while ($oDataset->next()) {
-            $row = $oDataset->getRow();
-            $reportTables[] = $this->getTable($row['ADD_TAB_UID'], $pro_uid, $reportFlag, false);
-        }
-
-        return $reportTables;
+        $additionalTables = ModelAdditionalTables::where('PRO_UID', '=', $proUid)
+            ->where('ADD_TAB_NAME', 'LIKE', "%{$search}%")
+            ->get();
+        $additionalTables->transform(function ($object) use ($proUid, $reportFlag) {
+            return $this->getTable($object->ADD_TAB_UID, $proUid, $reportFlag, false);
+        });
+        return $additionalTables->toArray();
     }
 
     /**
@@ -82,14 +86,14 @@ class Table
             $tabData['REP_TAB_CONNECTION']  = $table['DBS_UID'];
             $tabData['REP_TAB_TYPE']        = $table['ADD_TAB_TYPE'];
             $tabData['REP_TAB_GRID']        = $table['ADD_TAB_GRID'];
-            $tabData['REP_NUM_ROWS']        = $tableData['count'];
+            $tabData['REP_NUM_ROWS']        = isset($tableData['count']) ? $tableData['count'] : 0;
         } else {
             $tabData['PMT_UID']             = $tab_uid;
             $tabData['PMT_TAB_NAME']        = $table['ADD_TAB_NAME'];
             $tabData['PMT_TAB_DESCRIPTION'] = $table['ADD_TAB_DESCRIPTION'];
             $tabData['PMT_TAB_OFFLINE'] = $table['ADD_TAB_OFFLINE'];
             $tabData['PMT_TAB_CLASS_NAME']  = $table['ADD_TAB_CLASS_NAME'];
-            $tabData['PMT_NUM_ROWS']        = $tableData['count'];
+            $tabData['PMT_NUM_ROWS']        = isset($tableData['count']) ? $tableData['count'] : 0;
         }
 
         // TABLE FIELDS
@@ -375,7 +379,9 @@ class Table
         }
         $pmTable->build();
         $buildResult = ob_get_contents();
-        ob_end_clean();
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
         unset($buildResult);
 
         // Updating additional table struture information
@@ -453,6 +459,178 @@ class Table
             $tab_uid   = $addTabUid;
             return $this->getTable($tab_uid, $pro_uid, $reportFlag, false);
         }
+    }
+
+    /**
+     * Create a PM Table
+     *
+     * @var array $tab_data
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function createPmTable($tab_data)
+    {
+        $validateData = array_change_key_case($tab_data, CASE_UPPER);
+        $additionalTables = new AdditionalTables();
+        $validateData['TAB_UID'] = (isset($validateData['PMT_UID'])) ? $validateData['PMT_UID'] : '';
+        $validateData['PMT_TAB_NAME'] = $this->validateTabName($validateData['PMT_TAB_NAME']);
+        $validateData['PMT_TAB_CONNECTION'] = 'workflow';
+        $repTabClassName = $additionalTables->getPHPName($validateData['PMT_TAB_NAME']);
+        $tableName = $validateData['PMT_TAB_NAME'];
+        $tableCon = $validateData['PMT_TAB_CONNECTION'];
+
+        $fields = new Fields();
+        $columns = $validateData['FIELDS'];
+
+        $reservedWords = self::RESERVE_WORDS;
+
+        $reservedWordsPhp = self::RESERVE_WORDS_PHP;
+
+        $reservedWordsSql = G::reservedWordsSql();
+        
+        if ($additionalTables->loadByName($tableName)) {
+            throw new Exception(G::loadTranslation('ID_PMTABLE_ALREADY_EXISTS', [$tableName]));
+        }
+        
+        if (in_array(strtoupper($tableName), $reservedWords) || in_array(strtoupper($tableName), $reservedWordsSql)) {
+            throw (new Exception(G::LoadTranslation("ID_PMTABLE_INVALID_NAME", [$tableName])));
+        }
+
+        $flagKey = false;
+        $columnsStd = [];
+        foreach ($columns as $i => $column) {
+            if (isset($columns[$i]['fld_dyn'])) {
+                $columns[$i]['field_dyn'] = '';
+                unset($columns[$i]['fld_dyn']);
+            } else {
+                $columns[$i]['fld_dyn'] = '';
+            }
+
+            if (isset($columns[$i]['fld_name'])) {
+                $columns[$i]['field_name'] = G::toUpper($columns[$i]['fld_name']);
+                unset($columns[$i]['fld_name']);
+            }
+            if (isset($columns[$i]['fld_description'])) {
+                $columns[$i]['field_label'] = $columns[$i]['fld_description'];
+                unset($columns[$i]['fld_description']);
+            }
+            if (isset($columns[$i]['fld_type'])) {
+                $columns[$i]['field_type'] = $columns[$i]['fld_type'];
+                unset($columns[$i]['fld_type']);
+            }
+            if (isset($columns[$i]['fld_size'])) {
+                $columns[$i]['field_size'] = $columns[$i]['fld_size'];
+                if (!is_int($columns[$i]['field_size'])) {
+                    throw (new Exception("The property fld_size: '". $columns[$i]['field_size'] . "' is incorrect numeric value."));
+                } else {
+                    $columns[$i]['field_size'] = (int)$columns[$i]['field_size'];
+                }
+                unset($columns[$i]['fld_size']);
+            }
+            if (isset($columns[$i]['fld_key'])) {
+                $columns[$i]['field_key'] = $columns[$i]['fld_key'];
+                unset($columns[$i]['fld_key']);
+            }
+            if (isset($columns[$i]['fld_null'])) {
+                $columns[$i]['field_null'] = $columns[$i]['fld_null'];
+                unset($columns[$i]['fld_null']);
+            }
+            if (isset($columns[$i]['fld_auto_increment'])) {
+                $columns[$i]['field_autoincrement'] = $columns[$i]['fld_auto_increment'];
+                unset($columns[$i]['fld_auto_increment']);
+            }
+
+            if (in_array(strtoupper($columns[$i]['field_name']), $reservedWordsSql) ||
+                in_array( strtolower( $columns[$i]['field_name']), $reservedWordsPhp ) ||
+                $columns[$i]['field_name'] == '') {
+                throw (new Exception("The property fld_name: '". $columns[$i]['field_name'] . "' is incorrect value."));
+            }
+            if ($columns[$i]['field_label'] == '') {
+                throw (new Exception("The property fld_label: '". $columns[$i]['field_label'] . "' is incorrect value."));
+            }
+            $columns[$i]['field_type'] = $this->validateFldType($columns[$i]['field_type']);
+            if (isset($columns[$i]['field_autoincrement']) && $columns[$i]['field_autoincrement']) {
+                $typeCol = $columns[$i]['field_type'];
+                if (! ($typeCol === 'INTEGER' || $typeCol === 'TINYINT' || $typeCol === 'SMALLINT' || $typeCol === 'BIGINT')) {
+                    $columns[$i]['field_autoincrement'] = false;
+                }
+            }
+
+            $temp = new stdClass();
+            foreach ($columns[$i] as $key => $col) {
+                eval('$temp->' . str_replace('fld', 'field', $key) . " = '" . $col . "';");
+            }
+            $temp->uid = (isset($temp->uid)) ? $temp->uid : '';
+            $temp->_index = (isset($temp->_index)) ? $temp->_index : '';
+            $temp->field_uid = (isset($temp->field_uid)) ? $temp->field_uid : '';
+            $temp->field_dyn = (isset($temp->field_dyn)) ? $temp->field_dyn : '';
+
+            $temp->field_key = (isset($temp->field_key)) ? $temp->field_key : 0;
+            $temp->field_null = (isset($temp->field_null)) ? $temp->field_null : 1;
+            $temp->field_dyn = (isset($temp->field_dyn)) ? $temp->field_dyn : '';
+            $temp->field_filter = (isset($temp->field_filter)) ? $temp->field_filter : 0;
+            $temp->field_autoincrement = (isset($temp->field_autoincrement)) ? $temp->field_autoincrement : 0;
+
+            if ($temp->field_key == 1 || $temp->field_key == true) {
+                $flagKey = true;
+            }
+            $columnsStd[$i] = $temp;
+        }
+        if (!$flagKey) {
+            throw (new Exception("The fields must have a key 'fld_key'"));
+        }
+
+        $pmTable = new PmTable($tableName);
+        $pmTable->setDataSource($tableCon);
+        $pmTable->setColumns($columnsStd);
+        $pmTable->setAlterTable(true);
+
+        $pmTable->build();
+        $buildResult = ob_get_contents();
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
+        unset($buildResult);
+
+        $addTabData = [
+            'ADD_TAB_UID' => $validateData['TAB_UID'],
+            'ADD_TAB_NAME' => $validateData['PMT_TAB_NAME'],
+            'ADD_TAB_CLASS_NAME' => $repTabClassName,
+            'ADD_TAB_DESCRIPTION' => isset($validateData['PMT_TAB_DESCRIPTION']) ? $validateData['PMT_TAB_DESCRIPTION'] : null,
+            'ADD_TAB_OFFLINE' => !empty($validateData['PMT_TAB_OFFLINE']) ?? 0,
+            'ADD_TAB_UPDATE_DATE' => date('Y-m-d H:i:s'),
+            'ADD_TAB_PLG_UID' => '',
+            'DBS_UID' => ($validateData['PMT_TAB_CONNECTION'] ? $validateData['PMT_TAB_CONNECTION'] : 'workflow'),
+            'PRO_UID' => '',
+            'ADD_TAB_TYPE' => '',
+            'ADD_TAB_GRID' => ''
+        ];
+
+        $addTabUid = $additionalTables->create($addTabData);
+
+        foreach ($columnsStd as $i => $column) {
+            $column = (array)$column;
+            $field = [
+                'FLD_UID' => $column['uid'],
+                'FLD_INDEX' => $i,
+                'ADD_TAB_UID' => $addTabUid,
+                'FLD_NAME' => $column['field_name'],
+                'FLD_DESCRIPTION' => $column['field_label'],
+                'FLD_TYPE' => $column['field_type'],
+                'FLD_SIZE' => (!isset($column['field_size']) || $column['field_size'] == '') ? null : $column['field_size'],
+                'FLD_NULL' => $column['field_null'] ? 1 : 0,
+                'FLD_AUTO_INCREMENT' => $column['field_autoincrement'] ? 1 : 0,
+                'FLD_KEY' => $column['field_key'] ? 1 : 0,
+                'FLD_FOREIGN_KEY' => 0,
+                'FLD_FOREIGN_KEY_TABLE' => '',
+                'FLD_DYN_NAME' => $column['field_dyn'],
+                'FLD_DYN_UID' => $column['field_uid'],
+                'FLD_FILTER' => (isset($column['field_filter']) && $column['field_filter']) ? 1 : 0
+            ];
+            $fields->create($field);
+        }
+        return $this->getTable($addTabUid, '', false, false);
     }
 
     /**

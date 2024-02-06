@@ -210,7 +210,7 @@ class User
 
             $this->throwExceptionIfNotItsAssignedUserToRole($roleUid, $userUid, $this->arrayFieldNameForException["userUid"]);
 
-            if ($userUid == "00000000000000000000000000000001") {
+            if (RBAC::isAdminUserUid($userUid)) {
                 throw new Exception(G::LoadTranslation("ID_ADMINISTRATOR_ROLE_CANT_CHANGED"));
             }
 

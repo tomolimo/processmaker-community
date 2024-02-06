@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
+use PHPMailer\PHPMailer\PHPMailer;
 use ProcessMaker\Core\System;
+use ProcessMaker\Log\AuditLog;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services\OAuth2\Server;
 use ProcessMaker\Validation\ValidationUploadedFiles;
@@ -330,11 +332,18 @@ class G
             $ip = getenv('HTTP_CLIENT_IP');
         } elseif (getenv('HTTP_X_FORWARDED_FOR')) {
             $ip = getenv('HTTP_X_FORWARDED_FOR');
-        } else {
+        } elseif (getenv('HTTP_X_FORWARDED')) {
+            $ip = getenv('HTTP_X_FORWARDED');
+        } elseif (getenv('HTTP_FORWARDED_FOR')) {
+            $ip = getenv('HTTP_FORWARDED_FOR');
+        } elseif (getenv('HTTP_FORWARDED')) {
+            $ip = getenv('HTTP_FORWARDED');
+        } elseif (getenv('REMOTE_ADDR')) {
             $ip = getenv('REMOTE_ADDR');
-        }
-        if ($ip === false) {
+        } elseif (class_exists('Request')) {
             $ip = Request::ip();
+        } else {
+            $ip = gethostbyname(gethostname());
         }
         return $ip;
     }
@@ -378,12 +387,12 @@ class G
      * @param string $string
      * @param string $key
      * @param bool $urlSafe if it is used in url
-     *
+     * @param bool $verifyPipe
      * @return string
      */
-    public static function encrypt($string, $key, $urlSafe = false)
+    public static function encrypt($string, $key, $urlSafe = false, $verifyPipe = true)
     {
-        if (strpos($string, '|', 0) !== false) {
+        if ($verifyPipe === true && strpos($string, '|', 0) !== false) {
             return $string;
         }
         $result = '';
@@ -783,12 +792,6 @@ class G
      */
     public static function parseURI($uri, $isRestRequest = false)
     {
-        //*** process the $_POST with magic_quotes enabled
-        // The magic_quotes_gpc feature has been DEPRECATED as of PHP 5.3.0.
-        if (get_magic_quotes_gpc() === 1) {
-            $_POST = G::strip_slashes($_POST);
-        }
-
         $aRequestUri = explode('/', $uri);
         if ($isRestRequest) {
             $args = self::parseRestUri($aRequestUri);
@@ -944,7 +947,7 @@ class G
     public static function streamCSSBigFile($filename)
     {
         header('Content-Type: text/css');
-
+        header('X-Content-Type-Options: nosniff');
         //First get Skin info
         $filenameParts = explode("-", $filename);
         $skinName = $filenameParts[0];
@@ -1249,7 +1252,7 @@ class G
             header('Content-Disposition: inline; filename="' . $downloadFileName . '"');
         }
         header('Content-Type: ' . $contentType);
-
+        header('X-Content-Type-Options: nosniff');
         //if userAgent (BROWSER) is MSIE we need special headers to avoid MSIE behaivor.
         $userAgent = strtolower($_SERVER['HTTP_USER_AGENT']);
         if (preg_match("/msie/i", $userAgent)) {
@@ -2602,7 +2605,7 @@ class G
             }
         }
         $dirArray[] = $uid;
-        $newfileStructure = implode($dirArray, '/');
+        $newfileStructure = implode('/', $dirArray);
         return $newfileStructure;
     }
 
@@ -2664,7 +2667,7 @@ class G
                     $fileUid = substr($fileUid, $splitSize, $len);
                 }
             }
-            $response[] = implode($dirArray, '/') . '/';
+            $response[] = implode('/', $dirArray) . '/';
             $response[] = $fileUid;
         } else {
             $response[] = '';
@@ -5613,23 +5616,28 @@ class G
                     }
                 }
 
+                $pathSep = getConstant('PATH_SEP');
+                $pathSkinEngine = getConstant('PATH_SKIN_ENGINE');
+                $pathSkins = getConstant('PATH_SKINS');
+                $pathCustomSkins = getConstant('PATH_CUSTOM_SKINS');
+
                 $arrayAux = explode("?", $strAux);
                 $fileTemplate = $arrayAux[0];
 
-                if (file_exists(PATH_SKIN_ENGINE . "base" . PATH_SEP . $fileTemplate)) {
-                    $path = PATH_SKIN_ENGINE . "base" . PATH_SEP;
+                if (file_exists($pathSkinEngine . "base" . $pathSep . $fileTemplate)) {
+                    $path = $pathSkinEngine . "base" . $pathSep;
                 }
 
-                if (file_exists(PATH_SKIN_ENGINE . $skin . PATH_SEP . $fileTemplate)) {
-                    $path = PATH_SKIN_ENGINE . $skin . PATH_SEP;
+                if (file_exists($pathSkinEngine . $skin . $pathSep . $fileTemplate)) {
+                    $path = $pathSkinEngine . $skin . $pathSep;
                 }
 
-                if (file_exists(PATH_SKINS . $skin . PATH_SEP . $fileTemplate)) {
-                    $path = PATH_SKINS . $skin . PATH_SEP;
+                if (file_exists($pathSkins . $skin . $pathSep . $fileTemplate)) {
+                    $path = $pathSkins . $skin . $pathSep;
                 }
 
-                if (file_exists(PATH_CUSTOM_SKINS . $skin . PATH_SEP . $fileTemplate)) {
-                    $path = PATH_CUSTOM_SKINS . $skin . PATH_SEP;
+                if (file_exists($pathCustomSkins . $skin . $pathSep . $fileTemplate)) {
+                    $path = $pathCustomSkins . $skin . $pathSep;
                 }
             }
         }
@@ -5756,7 +5764,7 @@ class G
         return $from;
     }
 
-    public function getRealExtension($extensionInpDoc)
+    public static function getRealExtension($extensionInpDoc)
     {
         $aux = explode('.', strtolower($extensionInpDoc));
         return isset($aux[1]) ? $aux[1] : '';
@@ -5946,7 +5954,7 @@ class G
         if ($browser == null || $version == null) {
             $info = G::getBrowser();
             $browser = $info['name'];
-            $version = $info['version'];
+            $version = intval($info['version']);
         }
 
         if (
@@ -6130,6 +6138,8 @@ class G
         define('PM_HASH_PASSWORD', 1018);
         define('PM_SCHEDULER_CREATE_CASE_BEFORE', 1019);
         define('PM_SCHEDULER_CREATE_CASE_AFTER', 1020);
+        define('PM_SWAP_TEMPORARY_APP_NUMBER', 1021);
+        define('PM_REDIRECT', 1022);
     }
 
     /**

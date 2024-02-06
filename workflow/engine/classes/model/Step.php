@@ -230,8 +230,8 @@ class Step extends BaseStep
             $oDataset->next();
             $aRow = $oDataset->getRow();
             return (int) $aRow['POSITION'];
-        } catch (Exception $oException) {
-            throw $Exception;
+        } catch (Exception $exception) {
+            throw $exception;
         }
     }
 
@@ -413,7 +413,7 @@ class Step extends BaseStep
      *
      * @return array
      */
-    public function verifyDynaformAssigStep ($dynUid, $proUid)
+    public static function verifyDynaformAssigStep ($dynUid, $proUid)
     {
         $res = array();
         $oCriteria = new Criteria();
@@ -432,7 +432,7 @@ class Step extends BaseStep
         return $res;
     }
 
-    public function getAttribute ($node, $attName)
+    public static function getAttribute ($node, $attName)
     {
 
         foreach ($node->attributes as $attribute) {

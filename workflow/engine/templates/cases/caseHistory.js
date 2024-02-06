@@ -89,11 +89,18 @@
     );
 
     Ext.onReady(function(){
+      var i;
       Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
       Ext.QuickTips.init();
-
       historyGridList();
-
+      if (document.getElementsByTagName('input')) {
+        document.getElementsByTagName('input')[0].ariaLabel = "pagination";
+      }
+      if (document.getElementsByTagName('button')) {
+        for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+          document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].getAttribute('id');
+        } 
+      }
     });
 
     //!historyGridList|
@@ -192,15 +199,15 @@
               {name : 'TAS_TITLE'},
               {name : 'PRO_STATUS'},
               {name : 'PRO_STATUS_LABEL'},
-              {name : 'DEL_INIT_DATE'},
+              {name : 'DEL_INIT_DATE_LABEL'},
               {name : 'PRO_DEBUG'},
               {name : 'PRO_DEBUG_LABEL'},
-              {name : 'DEL_DELEGATE_DATE'},
+              {name : 'DEL_DELEGATE_DATE_LABEL'},
               {name : 'CASES_COUNT', type:'float'},
               {name : 'APP_TYPE'},
-              {name : 'DEL_FINISH_DATE'},
-              {name : 'APP_ENABLE_ACTION_DATE'},
-              {name : 'APP_DISABLE_ACTION_DATE'}
+              {name : 'DEL_FINISH_DATE_LABEL'},
+              {name : 'APP_ENABLE_ACTION_DATE_LABEL'},
+              {name : 'APP_DISABLE_ACTION_DATE_LABEL'}
             ]
           }
         )
@@ -278,18 +285,12 @@
             {header: "", dataIndex: 'PRO_STATUS', width: 50, hidden:true, hideable:false},
             {header: _("ID_CASESLIST_APP_TAS_TITLE"), dataIndex: 'TAS_TITLE', width: 100},
             {header: _("ID_DELEGATE_USER"), dataIndex: 'USR_NAME', width: 60, hidden:false},
-            /*{header: TRANSLATIONS.ID_STATUS, dataIndex: 'PRO_STATUS_LABEL', width: 50, renderer:function(v,p,r){
-              color = r.get('PRO_STATUS') == 'ACTIVE'? 'green': 'red';
-              return String.format("<font color='{0}'>{1}</font>", color, v);
-            }},*/
-            {header: _("ID_TASK_TRANSFER"), dataIndex: 'DEL_DELEGATE_DATE', width: 60, renderer:startDateRender},
-            {header: _("ID_START_DATE"), dataIndex: 'DEL_INIT_DATE', width: 60, renderer: startDateRender},
-            {header: _("ID_END_DATE"), dataIndex: 'DEL_FINISH_DATE', width: 60, renderer:startDateRender},
+            {header: _("ID_TASK_TRANSFER"), dataIndex: 'DEL_DELEGATE_DATE_LABEL', width: 60},
+            {header: _("ID_START_DATE"), dataIndex: 'DEL_INIT_DATE_LABEL', width: 60},
+            {header: _("ID_END_DATE"), dataIndex: 'DEL_FINISH_DATE_LABEL', width: 60},
             {header: _("ID_ACTION"), dataIndex: 'APP_TYPE', width: 50, renderer: actionRenderingTranslation},
-            {header: _("ID_ENABLE_ACTION"), dataIndex: 'APP_ENABLE_ACTION_DATE', width: 70, renderer:startDateRender},
-            {header: _("ID_DISABLE_ACTION"), dataIndex: 'APP_DISABLE_ACTION_DATE', width: 70, renderer:startDateRender}
-            //{header: TRANSLATIONS.ID_TOTAL_CASES, dataIndex: 'CASES_COUNT', width: 80,renderer:function(v){return "<b>"+v+"</b>";}, align:'right'},
-            //{header: TRANSLATIONS.ID_PRO_DEBUG, dataIndex: 'PRO_DEBUG_LABEL', width: 50, align:'center'}
+            {header: _("ID_ENABLE_ACTION"), dataIndex: 'APP_ENABLE_ACTION_DATE_LABEL', width: 70, renderer:startDateRender},
+            {header: _("ID_DISABLE_ACTION"), dataIndex: 'APP_DISABLE_ACTION_DATE_LABEL', width: 70, renderer:startDateRender}
           ]
         }),
         store: store,

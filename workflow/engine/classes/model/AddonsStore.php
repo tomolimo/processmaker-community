@@ -566,7 +566,7 @@ class AddonsStore extends BaseAddonsStore
 
             try {
                 //Add each item to this stores addons
-                $addons = @get_object_vars($serverData->addons);
+                $addons = !is_array($serverData->addons) ? get_object_vars($serverData->addons) : $serverData->addons;
 
                 if (!empty($addons)) {
                     foreach (get_object_vars($serverData->addons) as $addonId => $addonInfo) {

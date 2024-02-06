@@ -1,6 +1,7 @@
 <?php
 
-use \ProcessMaker\BusinessModel\Cases;
+use Cases as ClassesCases;
+use ProcessMaker\BusinessModel\Cases;
 
 class adhocUserProxy extends HttpProxyController
 {
@@ -41,13 +42,19 @@ class adhocUserProxy extends HttpProxyController
         $this->data = $aData;
 
     }
-    //assign user adhoc
-    function reassignCase ($params)
+    
+    /**
+     * Reassign a user adhoc to the case
+     * 
+     * @return void
+     */
+    function reassignCase()
     {
-        $cases = new Cases();
-        $cases->reassignCase( $_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['USER_LOGGED'], $_POST['USR_UID'], $_POST['THETYPE'] );
+        $cases = new ClassesCases();
+        $cases->reassignCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['USER_LOGGED'], $_POST['USR_UID'], $_POST['THETYPE']);
         $this->success = true;
     }
+
     /**
      * Delete case from the actions menu
      *

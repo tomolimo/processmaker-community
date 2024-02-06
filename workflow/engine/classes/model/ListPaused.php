@@ -13,6 +13,7 @@ use ProcessMaker\BusinessModel\Cases as BmCases;
  * long as it does not already exist in the output directory.
  *
  * @package    classes.model
+ * @deprecated Class deprecated in Release 3.6.0
  */
 
 class ListPaused extends BaseListPaused implements ListInterface
@@ -76,7 +77,7 @@ class ListPaused extends BaseListPaused implements ListInterface
         $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         $dataset->next();
         $aRow = $dataset->getRow();
-        $data['DEL_PREVIOUS_USR_UID'] = $aRow['USR_UID'];
+        $data['DEL_PREVIOUS_USR_UID'] = isset($aRow['USR_UID']) ? $aRow['USR_UID'] : null ;
 
         $criteria = new Criteria();
         $criteria->addSelectColumn(UsersPeer::USR_USERNAME);
@@ -87,9 +88,9 @@ class ListPaused extends BaseListPaused implements ListInterface
         $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         $dataset->next();
         $aRow = $dataset->getRow();
-        $data['DEL_PREVIOUS_USR_USERNAME']  = $aRow['USR_USERNAME'];
-        $data['DEL_PREVIOUS_USR_FIRSTNAME'] = $aRow['USR_FIRSTNAME'];
-        $data['DEL_PREVIOUS_USR_LASTNAME']  = $aRow['USR_LASTNAME'];
+        $data['DEL_PREVIOUS_USR_USERNAME']  = isset($aRow['USR_USERNAME']) ? $aRow['USR_USERNAME'] : null;
+        $data['DEL_PREVIOUS_USR_FIRSTNAME'] = isset($aRow['USR_FIRSTNAME']) ? $aRow['USR_FIRSTNAME'] : null;
+        $data['DEL_PREVIOUS_USR_LASTNAME']  = isset($aRow['USR_LASTNAME']) ? $aRow['USR_LASTNAME'] : null;
 
         $criteria = new Criteria();
         $criteria->addSelectColumn(TaskPeer::TAS_TITLE);

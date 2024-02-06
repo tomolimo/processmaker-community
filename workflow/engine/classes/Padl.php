@@ -504,7 +504,7 @@ class Padl
         mt_srand($seed);
 
         for ($i = 0; $length > $i; $i++) {
-            $str .= $seeds{mt_rand(0, $seeds_count - 1)};
+            $str .= $seeds[mt_rand(0, $seeds_count - 1)];
         }
         return $str;
     }

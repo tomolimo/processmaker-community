@@ -137,15 +137,29 @@ function deleteDocuments($aDocuments, $opt)
     }
     return true;
 }
-/////////////////////////////////////////////
-function getExtJSParams()
+/**
+ * Get the default menu
+ */
+function getExtJSParams ()
 {
-    $validParams = array('callback' => '', 'dir' => 'DESC', 'sort' => '', 'start' => 0, 'limit' => 25, 'filter' => '',
-        'search' => '', 'action' => '', 'xaction' => '', 'data' => '', 'status' => '', 'query' => '', 'fields' => "");
-    $result = array();
-    foreach ($validParams as $paramName => $paramDefault) {
-        $result[$paramName] = isset($_REQUEST[$paramName]) ?
-        $_REQUEST[$paramName] : isset($_REQUEST[$paramName]) ? $_REQUEST[$paramName] : $paramDefault;
+    $validParams = [
+        'callback' => '',
+        'dir' => 'DESC',
+        'sort' => '',
+        'start' => 0,
+        'limit' => 25,
+        'filter' => '',
+        'search' => '',
+        'action' => '',
+        'xaction' => '',
+        'data' => '',
+        'status' => '',
+        'query' => '',
+        'fields' => ''
+    ];
+    $result = [];
+    foreach ($validParams as $param => $default) {
+        $result[$param] = ($request[$param] ?? isset($request[$param])) ? $request[$param] : $default;
     }
     return $result;
 }
@@ -169,6 +183,7 @@ function sendJsonResultGeneric($response, $callback)
 function expandNode()
 {
     extract(getExtJSParams());
+    $search = isset($_REQUEST['search']) ? $_REQUEST['search'] : null;
     $pmFolder = new AppFolder();
     $rootFolder = "/";
 
@@ -187,6 +202,8 @@ function expandNode()
     if (isset($_POST['renderTree'])) {
         $limit = 1000000;
     }
+
+    $start = $_POST['start'] ?? 0;
 
     $totalItems = 0;
     $totalFolders = 0;
@@ -1618,14 +1635,16 @@ function newFolder()
     $formNewFolder["items"]= array();
 
     $field=array();
-    $field["xtype"]= "label";
+    $field["xtype"]= "textfield";
     $field["fieldLabel"]= G::LoadTranslation('ID_CREATE_FOLDER_PATH_FOLDER');
-    $field["name"]= "form[FOLDER_PATH]";
-    $field["id"]= "form[FOLDER_PATH]";
+    $field["name"]= "FOLDER_PATH";
+    $field["id"]= "FOLDER_PATH";
     $field["width"]=175;
     $field["allowBlank"]=false;
     $field["value"]=$folderPath;
     $field["text"]=$folderPath;
+    $field["readOnly"]= true;
+    $field["style"] = "{'border': 'none'}";
     $formNewFolder["items"][]= $field;
 
     $field=array();

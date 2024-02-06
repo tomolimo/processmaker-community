@@ -25,7 +25,7 @@ abstract class BaseWebEntryPeer
     const CLASS_DEFAULT = 'classes.model.WebEntry';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 23;
+    const NUM_COLUMNS = 24;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -79,6 +79,9 @@ abstract class BaseWebEntryPeer
     /** the column name for the WE_HIDE_INFORMATION_BAR field */
     const WE_HIDE_INFORMATION_BAR = 'WEB_ENTRY.WE_HIDE_INFORMATION_BAR';
 
+    /** the column name for the WE_HIDE_ACTIVE_SESSION_WARNING field */
+    const WE_HIDE_ACTIVE_SESSION_WARNING = 'WEB_ENTRY.WE_HIDE_ACTIVE_SESSION_WARNING';
+
     /** the column name for the WE_CALLBACK field */
     const WE_CALLBACK = 'WEB_ENTRY.WE_CALLBACK';
 
@@ -111,10 +114,10 @@ abstract class BaseWebEntryPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('WeUid', 'ProUid', 'TasUid', 'DynUid', 'UsrUid', 'WeMethod', 'WeInputDocumentAccess', 'WeData', 'WeCreateUsrUid', 'WeUpdateUsrUid', 'WeCreateDate', 'WeUpdateDate', 'WeType', 'WeCustomTitle', 'WeAuthentication', 'WeHideInformationBar', 'WeCallback', 'WeCallbackUrl', 'WeLinkGeneration', 'WeLinkSkin', 'WeLinkLanguage', 'WeLinkDomain', 'WeShowInNewCase', ),
-        BasePeer::TYPE_COLNAME => array (WebEntryPeer::WE_UID, WebEntryPeer::PRO_UID, WebEntryPeer::TAS_UID, WebEntryPeer::DYN_UID, WebEntryPeer::USR_UID, WebEntryPeer::WE_METHOD, WebEntryPeer::WE_INPUT_DOCUMENT_ACCESS, WebEntryPeer::WE_DATA, WebEntryPeer::WE_CREATE_USR_UID, WebEntryPeer::WE_UPDATE_USR_UID, WebEntryPeer::WE_CREATE_DATE, WebEntryPeer::WE_UPDATE_DATE, WebEntryPeer::WE_TYPE, WebEntryPeer::WE_CUSTOM_TITLE, WebEntryPeer::WE_AUTHENTICATION, WebEntryPeer::WE_HIDE_INFORMATION_BAR, WebEntryPeer::WE_CALLBACK, WebEntryPeer::WE_CALLBACK_URL, WebEntryPeer::WE_LINK_GENERATION, WebEntryPeer::WE_LINK_SKIN, WebEntryPeer::WE_LINK_LANGUAGE, WebEntryPeer::WE_LINK_DOMAIN, WebEntryPeer::WE_SHOW_IN_NEW_CASE, ),
-        BasePeer::TYPE_FIELDNAME => array ('WE_UID', 'PRO_UID', 'TAS_UID', 'DYN_UID', 'USR_UID', 'WE_METHOD', 'WE_INPUT_DOCUMENT_ACCESS', 'WE_DATA', 'WE_CREATE_USR_UID', 'WE_UPDATE_USR_UID', 'WE_CREATE_DATE', 'WE_UPDATE_DATE', 'WE_TYPE', 'WE_CUSTOM_TITLE', 'WE_AUTHENTICATION', 'WE_HIDE_INFORMATION_BAR', 'WE_CALLBACK', 'WE_CALLBACK_URL', 'WE_LINK_GENERATION', 'WE_LINK_SKIN', 'WE_LINK_LANGUAGE', 'WE_LINK_DOMAIN', 'WE_SHOW_IN_NEW_CASE', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, )
+        BasePeer::TYPE_PHPNAME => array ('WeUid', 'ProUid', 'TasUid', 'DynUid', 'UsrUid', 'WeMethod', 'WeInputDocumentAccess', 'WeData', 'WeCreateUsrUid', 'WeUpdateUsrUid', 'WeCreateDate', 'WeUpdateDate', 'WeType', 'WeCustomTitle', 'WeAuthentication', 'WeHideInformationBar', 'WeHideActiveSessionWarning', 'WeCallback', 'WeCallbackUrl', 'WeLinkGeneration', 'WeLinkSkin', 'WeLinkLanguage', 'WeLinkDomain', 'WeShowInNewCase', ),
+        BasePeer::TYPE_COLNAME => array (WebEntryPeer::WE_UID, WebEntryPeer::PRO_UID, WebEntryPeer::TAS_UID, WebEntryPeer::DYN_UID, WebEntryPeer::USR_UID, WebEntryPeer::WE_METHOD, WebEntryPeer::WE_INPUT_DOCUMENT_ACCESS, WebEntryPeer::WE_DATA, WebEntryPeer::WE_CREATE_USR_UID, WebEntryPeer::WE_UPDATE_USR_UID, WebEntryPeer::WE_CREATE_DATE, WebEntryPeer::WE_UPDATE_DATE, WebEntryPeer::WE_TYPE, WebEntryPeer::WE_CUSTOM_TITLE, WebEntryPeer::WE_AUTHENTICATION, WebEntryPeer::WE_HIDE_INFORMATION_BAR, WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING, WebEntryPeer::WE_CALLBACK, WebEntryPeer::WE_CALLBACK_URL, WebEntryPeer::WE_LINK_GENERATION, WebEntryPeer::WE_LINK_SKIN, WebEntryPeer::WE_LINK_LANGUAGE, WebEntryPeer::WE_LINK_DOMAIN, WebEntryPeer::WE_SHOW_IN_NEW_CASE, ),
+        BasePeer::TYPE_FIELDNAME => array ('WE_UID', 'PRO_UID', 'TAS_UID', 'DYN_UID', 'USR_UID', 'WE_METHOD', 'WE_INPUT_DOCUMENT_ACCESS', 'WE_DATA', 'WE_CREATE_USR_UID', 'WE_UPDATE_USR_UID', 'WE_CREATE_DATE', 'WE_UPDATE_DATE', 'WE_TYPE', 'WE_CUSTOM_TITLE', 'WE_AUTHENTICATION', 'WE_HIDE_INFORMATION_BAR', 'WE_HIDE_ACTIVE_SESSION_WARNING', 'WE_CALLBACK', 'WE_CALLBACK_URL', 'WE_LINK_GENERATION', 'WE_LINK_SKIN', 'WE_LINK_LANGUAGE', 'WE_LINK_DOMAIN', 'WE_SHOW_IN_NEW_CASE', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, )
     );
 
     /**
@@ -124,10 +127,10 @@ abstract class BaseWebEntryPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('WeUid' => 0, 'ProUid' => 1, 'TasUid' => 2, 'DynUid' => 3, 'UsrUid' => 4, 'WeMethod' => 5, 'WeInputDocumentAccess' => 6, 'WeData' => 7, 'WeCreateUsrUid' => 8, 'WeUpdateUsrUid' => 9, 'WeCreateDate' => 10, 'WeUpdateDate' => 11, 'WeType' => 12, 'WeCustomTitle' => 13, 'WeAuthentication' => 14, 'WeHideInformationBar' => 15, 'WeCallback' => 16, 'WeCallbackUrl' => 17, 'WeLinkGeneration' => 18, 'WeLinkSkin' => 19, 'WeLinkLanguage' => 20, 'WeLinkDomain' => 21, 'WeShowInNewCase' => 22, ),
-        BasePeer::TYPE_COLNAME => array (WebEntryPeer::WE_UID => 0, WebEntryPeer::PRO_UID => 1, WebEntryPeer::TAS_UID => 2, WebEntryPeer::DYN_UID => 3, WebEntryPeer::USR_UID => 4, WebEntryPeer::WE_METHOD => 5, WebEntryPeer::WE_INPUT_DOCUMENT_ACCESS => 6, WebEntryPeer::WE_DATA => 7, WebEntryPeer::WE_CREATE_USR_UID => 8, WebEntryPeer::WE_UPDATE_USR_UID => 9, WebEntryPeer::WE_CREATE_DATE => 10, WebEntryPeer::WE_UPDATE_DATE => 11, WebEntryPeer::WE_TYPE => 12, WebEntryPeer::WE_CUSTOM_TITLE => 13, WebEntryPeer::WE_AUTHENTICATION => 14, WebEntryPeer::WE_HIDE_INFORMATION_BAR => 15, WebEntryPeer::WE_CALLBACK => 16, WebEntryPeer::WE_CALLBACK_URL => 17, WebEntryPeer::WE_LINK_GENERATION => 18, WebEntryPeer::WE_LINK_SKIN => 19, WebEntryPeer::WE_LINK_LANGUAGE => 20, WebEntryPeer::WE_LINK_DOMAIN => 21, WebEntryPeer::WE_SHOW_IN_NEW_CASE => 22, ),
-        BasePeer::TYPE_FIELDNAME => array ('WE_UID' => 0, 'PRO_UID' => 1, 'TAS_UID' => 2, 'DYN_UID' => 3, 'USR_UID' => 4, 'WE_METHOD' => 5, 'WE_INPUT_DOCUMENT_ACCESS' => 6, 'WE_DATA' => 7, 'WE_CREATE_USR_UID' => 8, 'WE_UPDATE_USR_UID' => 9, 'WE_CREATE_DATE' => 10, 'WE_UPDATE_DATE' => 11, 'WE_TYPE' => 12, 'WE_CUSTOM_TITLE' => 13, 'WE_AUTHENTICATION' => 14, 'WE_HIDE_INFORMATION_BAR' => 15, 'WE_CALLBACK' => 16, 'WE_CALLBACK_URL' => 17, 'WE_LINK_GENERATION' => 18, 'WE_LINK_SKIN' => 19, 'WE_LINK_LANGUAGE' => 20, 'WE_LINK_DOMAIN' => 21, 'WE_SHOW_IN_NEW_CASE' => 22, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, )
+        BasePeer::TYPE_PHPNAME => array ('WeUid' => 0, 'ProUid' => 1, 'TasUid' => 2, 'DynUid' => 3, 'UsrUid' => 4, 'WeMethod' => 5, 'WeInputDocumentAccess' => 6, 'WeData' => 7, 'WeCreateUsrUid' => 8, 'WeUpdateUsrUid' => 9, 'WeCreateDate' => 10, 'WeUpdateDate' => 11, 'WeType' => 12, 'WeCustomTitle' => 13, 'WeAuthentication' => 14, 'WeHideInformationBar' => 15, 'WeHideActiveSessionWarning' => 16, 'WeCallback' => 17, 'WeCallbackUrl' => 18, 'WeLinkGeneration' => 19, 'WeLinkSkin' => 20, 'WeLinkLanguage' => 21, 'WeLinkDomain' => 22, 'WeShowInNewCase' => 23, ),
+        BasePeer::TYPE_COLNAME => array (WebEntryPeer::WE_UID => 0, WebEntryPeer::PRO_UID => 1, WebEntryPeer::TAS_UID => 2, WebEntryPeer::DYN_UID => 3, WebEntryPeer::USR_UID => 4, WebEntryPeer::WE_METHOD => 5, WebEntryPeer::WE_INPUT_DOCUMENT_ACCESS => 6, WebEntryPeer::WE_DATA => 7, WebEntryPeer::WE_CREATE_USR_UID => 8, WebEntryPeer::WE_UPDATE_USR_UID => 9, WebEntryPeer::WE_CREATE_DATE => 10, WebEntryPeer::WE_UPDATE_DATE => 11, WebEntryPeer::WE_TYPE => 12, WebEntryPeer::WE_CUSTOM_TITLE => 13, WebEntryPeer::WE_AUTHENTICATION => 14, WebEntryPeer::WE_HIDE_INFORMATION_BAR => 15, WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING => 16, WebEntryPeer::WE_CALLBACK => 17, WebEntryPeer::WE_CALLBACK_URL => 18, WebEntryPeer::WE_LINK_GENERATION => 19, WebEntryPeer::WE_LINK_SKIN => 20, WebEntryPeer::WE_LINK_LANGUAGE => 21, WebEntryPeer::WE_LINK_DOMAIN => 22, WebEntryPeer::WE_SHOW_IN_NEW_CASE => 23, ),
+        BasePeer::TYPE_FIELDNAME => array ('WE_UID' => 0, 'PRO_UID' => 1, 'TAS_UID' => 2, 'DYN_UID' => 3, 'USR_UID' => 4, 'WE_METHOD' => 5, 'WE_INPUT_DOCUMENT_ACCESS' => 6, 'WE_DATA' => 7, 'WE_CREATE_USR_UID' => 8, 'WE_UPDATE_USR_UID' => 9, 'WE_CREATE_DATE' => 10, 'WE_UPDATE_DATE' => 11, 'WE_TYPE' => 12, 'WE_CUSTOM_TITLE' => 13, 'WE_AUTHENTICATION' => 14, 'WE_HIDE_INFORMATION_BAR' => 15, 'WE_HIDE_ACTIVE_SESSION_WARNING' => 16, 'WE_CALLBACK' => 17, 'WE_CALLBACK_URL' => 18, 'WE_LINK_GENERATION' => 19, 'WE_LINK_SKIN' => 20, 'WE_LINK_LANGUAGE' => 21, 'WE_LINK_DOMAIN' => 22, 'WE_SHOW_IN_NEW_CASE' => 23, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, )
     );
 
     /**
@@ -259,6 +262,8 @@ abstract class BaseWebEntryPeer
         $criteria->addSelectColumn(WebEntryPeer::WE_AUTHENTICATION);
 
         $criteria->addSelectColumn(WebEntryPeer::WE_HIDE_INFORMATION_BAR);
+
+        $criteria->addSelectColumn(WebEntryPeer::WE_HIDE_ACTIVE_SESSION_WARNING);
 
         $criteria->addSelectColumn(WebEntryPeer::WE_CALLBACK);
 

@@ -90,7 +90,7 @@ class Zimbra
     {
         if ($this->_username) {
             if (PHP_VERSION < 5.2) {
-                setcookie("ZM_SKIN", "plymouth", time() + (60 * 60 * 24 * 30), "/", ".plymouth.edu");
+                setcookie("ZM_SKIN", "plymouth", time() + (60 * 60 * 24 * 30), "/", ".plymouth.edu", "; HttpOnly");
             } else {
                 setcookie("ZM_SKIN", "plymouth", time() + (60 * 60 * 24 * 30), "/", ".plymouth.edu", false, true);
             }

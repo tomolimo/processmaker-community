@@ -3,6 +3,7 @@
 namespace ProcessMaker\Project;
 
 use BasePeer;
+use Bootstrap;
 use BpmnActivity as Activity;
 use BpmnArtifact as Artifact;
 use BpmnActivityPeer as ActivityPeer;
@@ -31,11 +32,12 @@ use Criteria as Criteria;
 use Exception;
 use G;
 use Illuminate\Support\Facades\Log;
-use ResultSet as ResultSet;
-use ProcessMaker\Util\Common;
+use pmTablesProxy;
+use Processes;
 use ProcessMaker\Exception\ProjectNotFound;
 use ProcessMaker\Project\Adapter\BpmnWorkflow;
-use Bootstrap;
+use ProcessMaker\Util\Common;
+use ResultSet as ResultSet;
 
 /**
  * Class Bpmn
@@ -286,7 +288,14 @@ class Bpmn extends Handler
         return $response;
     }
 
-    public function exists($projectUid)
+    /**
+     * This method verifies if a project exists
+     * 
+     * @param string $projectUid Unique id of Project
+     * 
+     * return boolean  
+     */
+    public static function exists($projectUid)
     {
         try {
             $obj = ProjectPeer::retrieveByPK($projectUid);
@@ -405,6 +414,22 @@ class Bpmn extends Handler
         if ($project = $this->getProject("object")) {
             $project->delete();
         }
+
+        if (!$force) {
+            $process = new Processes();
+            $repTable = $process->getReportTables($this->getUid());
+            $rows = [];
+            foreach ($repTable as $table) {
+                array_push($rows, ["id" => $table["ADD_TAB_UID"], "type" => ""]);
+            }
+            if (!empty($rows)) {
+                $httpData = (object)[];
+                $httpData->rows = json_encode($rows);
+                $repTable = new pmTablesProxy();
+                $repTable->delete($httpData);
+            }
+        }
+
         self::log("Remove Project Success!");
     }
 
@@ -697,14 +722,6 @@ class Bpmn extends Handler
 
     public function updateEvent($evnUid, array $data)
     {
-        /*if (array_key_exists("EVN_CANCEL_ACTIVITY", $data)) {
-            $data["EVN_CANCEL_ACTIVITY"] = $data["EVN_CANCEL_ACTIVITY"] ? 1 : 0;
-        }
-
-        if (array_key_exists("EVN_WAIT_FOR_COMPLETION", $data)) {
-            $data["EVN_WAIT_FOR_COMPLETION"] = $data["EVN_WAIT_FOR_COMPLETION"] ? 1 : 0;
-        }*/
-
         try {
             self::log("Update Event: $evnUid", "With data: ", $data);
 
@@ -1673,5 +1690,4 @@ class Bpmn extends Handler
             throw $e;
         }
     }
-
 }

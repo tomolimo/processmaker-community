@@ -221,7 +221,7 @@ class IntrospectionHelper {
                     
                     $classname = null;
                     
-                    if (($hint = $params[0]->getClass()) !== null) { 
+                    if (($hint = $this->getClass($params[0])) !== null) { 
                         $classname = $hint->getName();    
                     }                    
                     
@@ -249,7 +249,7 @@ class IntrospectionHelper {
 
                     $classname = null;
                     
-                    if (($hint = $params[0]->getClass()) !== null) { 
+                    if (($hint = $this->getClass($params[0])) !== null) { 
                         $classname = $hint->getName();    
                     }                    
                     
@@ -325,8 +325,8 @@ class IntrospectionHelper {
                 $params = $method->getParameters();
 
                 $classname = null;
-                
-                if (($hint = $params[0]->getClass()) !== null) { 
+
+                if (($hint = $this->getClass($params[0])) !== null) { 
                     $classname = $hint->getName();    
                 }
                 
@@ -412,7 +412,7 @@ class IntrospectionHelper {
 
                 $classname = null;
             
-                if (($hint = $params[0]->getClass()) !== null) { 
+                if (($hint = $this->getClass($params[0])) !== null) { 
                     $classname = $hint->getName();    
                 }                
                 
@@ -539,4 +539,17 @@ class IntrospectionHelper {
         }
     }
 
+    /**
+     * Get class
+     * @param object $param
+     * @return mixed
+     */
+    private function getClass(object $param)
+    {
+        $name = null;
+        if ($param->getType() && !$param->getType()->isBuiltin()) {
+            $name = new ReflectionClass($param->getType()->getName());
+        }
+        return $name;
+    }
 }

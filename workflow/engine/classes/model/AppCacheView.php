@@ -1,33 +1,8 @@
 <?php
+
 /**
  * AppCacheView.php
- * @package    workflow.engine.classes.model
- */
-
-//require_once ('classes/model/om/BaseAppCacheView.php');
-
-
-/**
- * Skeleton subclass for representing a row from the 'APP_CACHE_VIEW' table.
- *
- *
- *
- * You should add additional methods to this class to meet the
- * application requirements.  This class will only be generated as
- * long as it does not already exist in the output directory.
- *
- */
-
-//require_once ('classes/model/Application.php');
-//require_once ('classes/model/AppDelegation.php');
-//require_once ('classes/model/AppDelay.php');
-//require_once ('classes/model/Task.php');
-//require_once ('classes/model/AdditionalTables.php');
-
-
-/**
- * @package    workflow.engine.classes.model
- * @access public
+ * @deprecated Class deprecated in Release 3.6.x
  */
 class AppCacheView extends BaseAppCacheView
 {

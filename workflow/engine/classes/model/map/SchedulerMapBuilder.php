@@ -89,11 +89,11 @@ class SchedulerMapBuilder
 
         $tMap->addColumn('CATEGORY', 'Category', 'string', CreoleTypes::VARCHAR, false, 255);
 
-        $tMap->addColumn('SYSTEM', 'System', 'int', CreoleTypes::TINYINT, false, 3);
+        $tMap->addColumn('SYSTEM', 'System', 'int', CreoleTypes::TINYINT, false, null);
 
         $tMap->addColumn('TIMEZONE', 'Timezone', 'string', CreoleTypes::VARCHAR, false, 255);
 
-        $tMap->addColumn('ENABLE', 'Enable', 'int', CreoleTypes::TINYINT, false, 3);
+        $tMap->addColumn('ENABLE', 'Enable', 'int', CreoleTypes::TINYINT, false, null);
 
         $tMap->addColumn('CREATION_DATE', 'CreationDate', 'int', CreoleTypes::TIMESTAMP, false, null);
 

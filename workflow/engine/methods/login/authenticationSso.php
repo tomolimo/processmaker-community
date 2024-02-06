@@ -58,8 +58,8 @@ try {
         }
     }
 
-
-    setcookie('singleSignOn', '1', time() + (24 * 60 * 60), '/');
+    $cookieOptions = Bootstrap::buildCookieOptions(['expires' => time() + (24 * 60 * 60)]);
+    setcookie('singleSignOn', '1', $cookieOptions);
 
     initUserSession(
         $_SESSION['__USER_LOGGED_SSO__'],

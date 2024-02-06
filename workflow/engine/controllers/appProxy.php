@@ -12,7 +12,9 @@
 use ProcessMaker\BusinessModel\Cases as BmCases;
 use ProcessMaker\Exception\CaseNoteUploadFile;
 use ProcessMaker\Model\AppNotes as Notes;
+use ProcessMaker\Model\Delegation;
 use ProcessMaker\Model\Documents;
+use ProcessMaker\Model\User;
 use ProcessMaker\Util\DateTime;
 
 if (!isset($_SESSION['USER_LOGGED'])) {
@@ -126,7 +128,7 @@ class AppProxy extends HttpProxyController
         $iterator = 0;
         foreach ($response['notes'] as $value) {
             $response['notes'][$iterator]['NOTE_DATE'] = DateTime::convertUtcToTimeZone($value['NOTE_DATE']);
-            $response['notes'][$iterator]['attachments'] = $documents->getFiles($value['NOTE_ID']);
+            $response['notes'][$iterator]['attachments'] = $documents->getFiles($value['NOTE_ID'], $appUid);
             $iterator++;
         }
         // Get the total of cases notes by case
@@ -164,10 +166,10 @@ class AppProxy extends HttpProxyController
         //Disabling the controller response because we handle a special behavior
         $this->setSendResponse(false);
 
-        //Add note case
-        $cases = new BmCases();
         try {
             $sendMail = intval($httpData->swSendMail);
+            // Define the Case for register a case note
+            $cases = new BmCases();
             $response = $cases->addNote($appUid, $usrUid, $noteContent, $sendMail);
         } catch (CaseNoteUploadFile $e) {
             $response = new stdclass();
@@ -197,7 +199,7 @@ class AppProxy extends HttpProxyController
         @ob_flush();
         @flush();
         @ob_end_flush();
-        ob_implicit_flush(1);
+        ob_implicit_flush(true);
     }
 
     /**
@@ -256,90 +258,183 @@ class AppProxy extends HttpProxyController
     }
 
     /**
-     * get the case summary data
+     * Get the case summary data
      *
-     * @param string $httpData->appUid
-     * @param string $httpData->delIndex
-     * @return array containg the case summary data
+     * @param object $httpData
+     *
+     * @return array contain the case summary data
      */
     function getSummary ($httpData)
     {
-        $labelsCaseProperties = array ();
-        $labelsCurrentTaskProperties = array ();
-        $labelTitleCurrentTasks = array ();
-
-        $formCaseProperties = new Form( 'cases/cases_Resume', PATH_XMLFORM, SYS_LANG );
-        $formCaseTitle = new Form( 'cases/cases_Resume_Current_Task_Title', PATH_XMLFORM, SYS_LANG ); 
-        $formCurrentTaskProperties = new Form( 'cases/cases_Resume_Current_Task', PATH_XMLFORM, SYS_LANG ); 
-
         $case = new Cases();
-
-        foreach ($formCaseProperties->fields as $fieldName => $field) {
-            $labelsCaseProperties[$fieldName] = $field->label;
-        }
-
-        foreach ($formCaseTitle->fields as $fieldName => $field) {
-            $labelTitleCurrentTasks[$fieldName] = $field->label;
-        }
-
-        foreach ($formCurrentTaskProperties->fields as $fieldName => $field) {
-            $labelsCurrentTaskProperties[$fieldName] = $field->label;
-        }
-
-        if (isset( $_SESSION['_applicationFields'] ) && $_SESSION['_processData']) {
-            $applicationFields = $_SESSION['_applicationFields'];
-            unset( $_SESSION['_applicationFields'] );
-            $processData = $_SESSION['_processData'];
-            unset( $_SESSION['_processData'] );
-        } else {
-            if ($httpData->action == 'sent') { // Get the last valid delegation for participated list
-                $criteria = new Criteria();
-                $criteria->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-                $criteria->add(AppDelegationPeer::APP_UID, $httpData->appUid);
-                $criteria->add(AppDelegationPeer::DEL_FINISH_DATE, null, Criteria::ISNULL);
-                $criteria->addDescendingOrderByColumn(AppDelegationPeer::DEL_INDEX);
-                if (AppDelegationPeer::doCount($criteria) > 0) {
-                    $dataset = AppDelegationPeer::doSelectRS($criteria, Propel::getDbConnection('workflow_ro') );
-                    $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                    $dataset->next();
-                    $row = $dataset->getRow();
-                    $httpData->delIndex = $row['DEL_INDEX'];
-                }
+        $appFields = $case->loadCase($httpData->appUid, $httpData->delIndex);
+        // Get the process
+        $process = new Process();
+        $processInfo = $process->load($appFields['PRO_UID']);
+        // Apply mask
+        $createDateLabel = applyMaskDateEnvironment($appFields['CREATE_DATE'],'', false);
+        $updateDateLabel = applyMaskDateEnvironment($appFields['UPDATE_DATE'],'', false);
+        $delegateDateLabel = applyMaskDateEnvironment($appFields['DEL_DELEGATE_DATE'],'', false);
+        // Get the duration
+        $endDate = !empty($appFields['APP_FINISH_DATE']) ? $appFields['APP_FINISH_DATE'] : date("Y-m-d H:i:s");
+        $threadDuration = getDiffBetweenDates($appFields['DEL_DELEGATE_DATE'], $endDate);
+        // Get case properties
+        $i = 0;
+        $caseProperties = [
+            $i++ => [
+                'id' => 'TITLE',
+                'label' => G::LoadTranslation('ID_CASE_PROPERTIES'),
+                'value' => '',
+            ],
+            $i++ => [ // Case Number
+                'id' => 'APP_NUMBER',
+                'label' => G::LoadTranslation('ID_CASE_NUMBER') . ': ',
+                'value' => $appFields['APP_NUMBER'],
+            ],
+            $i++ => [ // Case Description
+                'id' => 'CASE_DESCRIPTION',
+                'label' => G::LoadTranslation('ID_CASE_DESCRIPTION') . ': ',
+                'value' => $appFields["DESCRIPTION"],
+            ],
+            $i++ => [ // Case Status
+                'id' => 'CASE_STATUS',
+                'label' => G::LoadTranslation('ID_CASE_STATUS') . ': ',
+                'value' => $appFields['STATUS'],
+            ],
+            $i++ => [ // Case Uid
+                'id' => 'APP_UID',
+                'label' => G::LoadTranslation('ID_CASE_UID') . ': ',
+                'value' => $appFields['APP_UID'],
+            ],
+            $i++ => [ // Creator
+                'id' => 'CREATOR',
+                'label' => G::LoadTranslation('ID_CREATOR') . ': ',
+                'value' => $appFields['CREATOR'],
+            ],
+            $i++ => [ // Create Date
+                'id' => 'CREATE_DATE',
+                'label' => G::LoadTranslation('ID_CREATE_DATE') . ': ',
+                'value' => DateTime::convertUtcToTimeZone($createDateLabel),
+            ],
+            $i++ => [ // Last Update
+                'id' => 'UPDATE_DATE',
+                'label' => G::LoadTranslation('ID_LAST_DATE') . ': ',
+                'value' => DateTime::convertUtcToTimeZone($updateDateLabel),
+            ],
+        ];
+        // Get the pending threads
+        $delegation = new Delegation();
+        $threads = $delegation::getPendingThreads($appFields['APP_NUMBER']);
+        $i = 0;
+        $taskProperties[$i] = [
+            'id' => 'TITLE',
+            'label' => G::LoadTranslation('ID_CURRENT_TASKS'),
+            'value' => '',
+        ];
+        foreach ($threads as $row) {
+            $j = 0;
+            $delegateDateLabel = applyMaskDateEnvironment($row['DEL_DELEGATE_DATE'],'', false);
+            $initDateLabel = applyMaskDateEnvironment($row['DEL_INIT_DATE'],'', false);
+            $dueDateLabel = applyMaskDateEnvironment($row['DEL_TASK_DUE_DATE'],'', false);
+            // Get thread duration
+            $endDate = !empty($appFields['APP_FINISH_DATE']) ? $appFields['APP_FINISH_DATE'] : date("Y-m-d H:i:s");
+            $threadDuration = getDiffBetweenDates($appFields['DEL_DELEGATE_DATE'], $endDate);
+            // Get user information
+            if (!empty($row['USR_ID'])) {
+                $userInfo = User::getInformation($row['USR_ID']);
+                $currentUser = $userInfo['usr_lastname'] .' '. $userInfo['usr_firstname'];
+            } else {
+                $currentUser = G::LoadTranslation('ID_UNASSIGNED');
             }
-            $applicationFields = $case->loadCase( $httpData->appUid, $httpData->delIndex );
-            $process = new Process();
-            $processData = $process->load( $applicationFields['PRO_UID'] );
+            $threadProperties = [
+                $j++ => [ // Task
+                    'id' => 'TASK_TITLE',
+                    'label' => G::LoadTranslation('ID_TASK') . ': ',
+                    'value' => $row['TAS_TITLE'],
+                ],
+                $j++ => [ // Case Title per thread
+                    'id' => 'CASE_TITLE',
+                    'label' => G::LoadTranslation('ID_CASE_THREAD_TITLE') . ': ',
+                    'value' => $row['DEL_TITLE'],
+                ],
+                $j++ => [ // Current User
+                    'id' => 'CURRENT_USER',
+                    'label' => G::LoadTranslation('ID_CURRENT_USER') . ': ',
+                    'value' => $currentUser,
+                ],
+                $j++ => [ // Task Delegate Date
+                    'id' => 'DEL_DELEGATE_DATE',
+                    'label' => G::LoadTranslation('ID_TASK_DELEGATE_DATE') . ': ',
+                    'value' => DateTime::convertUtcToTimeZone($delegateDateLabel),
+                ],
+                $j++ => [ // Task Init Date
+                    'id' => 'DEL_INIT_DATE',
+                    'label' => G::LoadTranslation('ID_TASK_INIT_DATE') . ': ',
+                    'value' => DateTime::convertUtcToTimeZone($initDateLabel),
+                ],
+                $j++ => [ // Task Due Date
+                    'id' => 'DEL_TASK_DUE_DATE',
+                    'label' => G::LoadTranslation('ID_TASK_DUE_DATE') . ': ',
+                    'value' => DateTime::convertUtcToTimeZone($dueDateLabel),
+                ],
+            ];
+            $taskProperties[++$i] = $threadProperties;
         }
+        // Get summary
+        $i = 0;
+        $summary = [
+            $i++ => [
+                'id' => 'TITLE',
+                'label' => G::LoadTranslation('ID_SUMMARY'),
+                'value' => '',
+            ],
+            $i++ => [ // Process
+                'id' => 'PRO_TITLE',
+                'label' => G::LoadTranslation('ID_PROCESS_NAME') . ': ',
+                'value' => $processInfo['PRO_TITLE'],
+            ],
+            $i++ => [ // Process Category
+                'id' => 'CATEGORY',
+                'label' => G::LoadTranslation('ID_CATEGORY_PROCESS') . ': ',
+                'value' => $processInfo['PRO_CATEGORY_LABEL'],
+            ],
+            $i++ => [ // Process description
+                'id' => 'PRO_DESCRIPTION',
+                'label' => G::LoadTranslation('ID_PRO_DESCRIPTION') . ': ',
+                'value' => $processInfo['PRO_DESCRIPTION'],
+            ],
+            $i++ => [ // Case Number
+                'id' => 'APP_NUMBER',
+                'label' => G::LoadTranslation('ID_CASE_NUMBER') . ': ',
+                'value' => $appFields['APP_NUMBER'],
+            ],
+            $i++ => [ // Case Status
+                'id' => 'CASE_STATUS',
+                'label' => G::LoadTranslation('ID_CASE_STATUS') . ': ',
+                'value' => $appFields['STATUS'],
+            ],
+            $i++ => [ // Create Date
+                'id' => 'CREATE_DATE',
+                'label' => G::LoadTranslation('ID_CREATE_DATE') . ': ',
+                'value' => DateTime::convertUtcToTimeZone($createDateLabel),
+            ],
+            $i++ => [ // Delegate Date
+                'id' => 'DEL_DELEGATE_DATE',
+                'label' => G::LoadTranslation('ID_TASK_DELEGATE_DATE') . ': ',
+                'value' => DateTime::convertUtcToTimeZone($delegateDateLabel),
+            ],
+            $i++ => [ // Duration
+                'id' => 'DURATION',
+                'label' => G::LoadTranslation('ID_DURATION') . ': ',
+                'value' => $threadDuration,
+            ]
+        ];
+        // Prepare the result
+        $data = [];
+        $data['summary'] = $summary;
+        $data['caseProperties'] = $caseProperties;
+        $data['taskProperties'] = $taskProperties;
 
-        $data = array ();
-        $task = new Task();
-        $taskData = $task->load( $applicationFields['TAS_UID'] );
-        $currentUser = $applicationFields['CURRENT_USER'] != '' ? $applicationFields['CURRENT_USER'] : '[' . G::LoadTranslation( 'ID_UNASSIGNED' ) . ']';
-
-        $data[] = array ('label' => $labelsCaseProperties['PRO_TITLE'],'value' => $processData['PRO_TITLE'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ("label" => $labelsCaseProperties["TITLE"], "value" => htmlentities($applicationFields["TITLE"], ENT_QUOTES, "UTF-8"), "section" => $labelsCaseProperties["TITLE1"]);
-        $data[] = array ('label' => $labelsCaseProperties['APP_NUMBER'],'value' => $applicationFields['APP_NUMBER'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ('label' => $labelsCaseProperties['STATUS'],'value' => $applicationFields['STATUS'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ('label' => $labelsCaseProperties['APP_UID'],'value' => $applicationFields['APP_UID'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ('label' => $labelsCaseProperties['CREATOR'],'value' => $applicationFields['CREATOR'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ('label' => $labelsCaseProperties['CREATE_DATE'],'value' => $applicationFields['CREATE_DATE'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ('label' => $labelsCaseProperties['UPDATE_DATE'],'value' => $applicationFields['UPDATE_DATE'],'section' => $labelsCaseProperties['TITLE1']);
-        $data[] = array ("label" => $labelsCaseProperties["DESCRIPTION"], "value" => htmlentities($applicationFields["DESCRIPTION"], ENT_QUOTES, "UTF-8"), "section" => $labelsCaseProperties["TITLE1"]);
-
-        // note added by krlos pacha carlos[at]colosa[dot]com
-        //getting this field if it doesn't exist. Related 7994 bug
-        $oTask = new \Task();
-        $aTasks = $oTask->load($applicationFields['TAS_UID']);
-        $taskData['TAS_TITLE'] = (array_key_exists( 'TAS_TITLE', $taskData )) ? $taskData['TAS_TITLE'] : $aTasks["TAS_TITLE"];
-        $data[] = array ("label" => $labelsCurrentTaskProperties["TAS_TITLE"], "value" => htmlentities($taskData["TAS_TITLE"], ENT_QUOTES, "UTF-8"), "section" => $labelTitleCurrentTasks["TITLE2"]);
-        $data[] = array ('label' => $labelsCurrentTaskProperties['CURRENT_USER'],'value' => $currentUser,'section' => $labelTitleCurrentTasks['TITLE2']);
-        $data[] = array ('label' => $labelsCurrentTaskProperties['DEL_DELEGATE_DATE'],'value' => $applicationFields['DEL_DELEGATE_DATE'],'section' => $labelTitleCurrentTasks['TITLE2']);
-        $data[] = array ('label' => $labelsCurrentTaskProperties['DEL_INIT_DATE'],'value' => $applicationFields['DEL_INIT_DATE'],'section' => $labelTitleCurrentTasks['TITLE2']);
-        $data[] = array ('label' => $labelsCurrentTaskProperties['DEL_TASK_DUE_DATE'],'value' => $applicationFields['DEL_TASK_DUE_DATE'],'section' => $labelTitleCurrentTasks['TITLE2']);
-        $data[] = array ('label' => $labelsCurrentTaskProperties['DEL_FINISH_DATE'],'value' => $applicationFields['DEL_FINISH_DATE'],'section' => $labelTitleCurrentTasks['TITLE2']);
-        //$data[] = array('label'=>$labelsCurrentTaskProperties['DYN_UID'] ,           'value' => $processData['PRO_DYNAFORMS']['PROCESS'];, 'section'=>$labelsCurrentTaskProperties['DYN_UID']);
-        
-        $data = \ProcessMaker\Util\DateTime::convertUtcToTimeZone($data);
         return $data;
     }
 }

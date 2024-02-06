@@ -799,41 +799,45 @@ class Calendar extends CalendarDefinition
         return $return;
     }
 
+    /**
+	 * Calculate date adding a duration, will considerate the calendar
+	 *
+	 * @param string $initialDate
+	 * @param string $duration
+	 * @param string $formatDuration
+	 * @param array $calendarData
+	 *
+	 * @return string
+    */
+	public function dashCalculateDate($initialDate, $duration, $formatDuration, $calendarData = [])
+	{
+		if (G::toUpper($formatDuration) == 'DAYS') {
+			$duration = $duration * $calendarData['HOURS_FOR_DAY'];
+		}
+		if (G::toUpper($formatDuration) == 'MINUTES') {
+			$duration = $duration / 60;
+		}
+		$hoursDuration = (float)$duration;
+		$newDate = $initialDate;
 
-
-
-
-    /**************SLA classes***************/
-    public function dashCalculateDate ($iniDate, $duration, $formatDuration, $calendarData = array())
-    {
-    	if ( G::toUpper($formatDuration) == 'DAYS' ) {
-    		$duration = $duration*$calendarData['HOURS_FOR_DAY'];
-    	}
-      if ( G::toUpper($formatDuration) == 'MINUTES' ) {
-          $duration = $duration/60;
-      }
-    	$hoursDuration = (float)$duration;
-    	$newDate = $iniDate;
-    
-    	while ($hoursDuration > 0) {
-    		$newDate = $this->dashGetIniDate($newDate, $calendarData);
-    
-    		$rangeWorkHour = $this->dashGetRangeWorkHours($newDate, $calendarData['BUSINESS_DAY']);
-    		$onlyDate = (date('Y-m-d',strtotime($newDate))) . ' ' . $rangeWorkHour['END'];
-    
-    		if ( (((float)$hoursDuration) >= ((float)$rangeWorkHour['TOTAL'])) ||
-    				((strtotime($onlyDate) - strtotime($newDate)) < (((float)$hoursDuration)*3600))
-    		) {
-    			$secondRes = (float)(strtotime($onlyDate) - strtotime($newDate));
-    			$newDate = $onlyDate;
-    			$hoursDuration -= (float)($secondRes/3600);
-    		} else {
-    			$newDate = date('Y-m-d H:i:s', strtotime('+' . round((((float)$hoursDuration)*3600), 5) . ' seconds', strtotime($newDate)));
-    			$hoursDuration = 0;
-    		}
-    	}
-    	return $newDate;
-    }
+		while ($hoursDuration > 0) {
+			$newDate = $this->dashGetIniDate($newDate, $calendarData);
+			$rangeWorkHour = $this->dashGetRangeWorkHours($newDate, $calendarData['BUSINESS_DAY']);
+			$onlyDate = (date('Y-m-d', strtotime($newDate))) . ' ' . $rangeWorkHour['END'];
+			$rangeWorkHourTotal = (float)$rangeWorkHour['TOTAL'];
+			if ($hoursDuration >= $rangeWorkHourTotal ||
+				((strtotime($onlyDate) - strtotime($newDate)) < (($hoursDuration) * 3600))
+			) {
+				$secondRes = (float)(strtotime($onlyDate) - strtotime($newDate));
+				$newDate = $onlyDate;
+				$hoursDuration -= (float)($secondRes / 3600);
+			} else {
+				$newDate = date('Y-m-d H:i:s', strtotime('+' . round((($hoursDuration) * 3600), 5) . ' seconds', strtotime($newDate)));
+				$hoursDuration = 0;
+			}
+		}
+		return $newDate;
+	}
     
     //Calculate the duration betwen two dates with a calendar
     public function dashCalculateDurationWithCalendar ($iniDate, $finDate = null, $calendarData = array())

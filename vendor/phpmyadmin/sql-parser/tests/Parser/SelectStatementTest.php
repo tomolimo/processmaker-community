@@ -9,7 +9,7 @@ use PhpMyAdmin\SqlParser\Tests\TestCase;
 
 class SelectStatementTest extends TestCase
 {
-    public function testSelectOptions()
+    public function testSelectOptions(): void
     {
         $data = $this->getData('parser/parseSelect');
         $parser = new Parser($data['query']);
@@ -22,12 +22,12 @@ class SelectStatementTest extends TestCase
      *
      * @dataProvider selectProvider
      */
-    public function testSelect($test)
+    public function testSelect($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function selectProvider()
+    public function selectProvider(): array
     {
         return [
             ['parser/parseSelect2'],
@@ -82,6 +82,7 @@ class SelectStatementTest extends TestCase
             ['parser/parseSelectEndOptionsErr'],
             ['parser/parseSelectUnion'],
             ['parser/parseSelectUnion2'],
+            ['parser/parseSelectWhere'],
             ['parser/parseSelectIndexHint1'],
             ['parser/parseSelectIndexHint2'],
             ['parser/parseSelectIndexHintErr1'],
@@ -89,6 +90,8 @@ class SelectStatementTest extends TestCase
             ['parser/parseSelectIndexHintErr3'],
             ['parser/parseSelectIndexHintErr4'],
             ['parser/parseSelectWithParenthesis'],
+            ['parser/parseSelectOrderByComment'],
+            ['parser/parseSelectOverAlias_mariadb_100600'],
         ];
     }
 }

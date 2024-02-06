@@ -243,5 +243,15 @@ class OutputDocumentStructure
      * @var int {@from body} {@choice 0,1}
      */
     public $out_doc_open_type;
+
+    /**
+     * @var array {@from body}
+     */
+    public $out_doc_header;
+
+    /**
+     * @var array {@from body}
+     */
+    public $out_doc_footer;
 }
 

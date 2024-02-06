@@ -172,7 +172,10 @@ class Installer
 
             if ($this->cc_status == 1) {
                 $host = ($islocal) ? "localhost" : "%";
-                $this->run_query("GRANT ALL PRIVILEGES ON `$wf`.* TO {$this->wf_user_db}@'$host' IDENTIFIED BY '{$this->options['password']}' WITH GRANT OPTION", "Grant privileges for user {$this->wf_user_db} on database $wf", self::CONNECTION_TEST_INSTALL);
+                $query = "CREATE USER '{$this->wf_user_db}'@'$host' IDENTIFIED WITH mysql_native_password BY '{$this->options['password']}'";
+                $this->run_query($query, "Create user {$this->wf_user_db} for database $wf", self::CONNECTION_TEST_INSTALL);
+                $query = "GRANT ALL PRIVILEGES ON `$wf`.* TO '{$this->wf_user_db}'@'$host' WITH GRANT OPTION";
+                $this->run_query($query, "Grant privileges for user {$this->wf_user_db} on database $wf", self::CONNECTION_TEST_INSTALL);
             }
 
 
@@ -799,7 +802,11 @@ class Installer
                     $rt['message'] = 'Successful connection';
                 } else {
                     $usrTest = 'wfrbtest';
-                    $chkG = "GRANT ALL PRIVILEGES ON `" . $dbNameTest . "`.* TO " . $usrTest . "@'%' IDENTIFIED BY '!Sample123' WITH GRANT OPTION";
+
+                    $chkG = "CREATE USER '$usrTest'@'%' IDENTIFIED WITH mysql_native_password BY '!Sample123'";
+                    DB::connection($nameConnection)
+                        ->statement($chkG);
+                    $chkG = "GRANT ALL PRIVILEGES ON `$dbNameTest`.* TO '$usrTest'@'%' WITH GRANT OPTION";
                     $ch = DB::connection($nameConnection)
                         ->statement($chkG);
 

@@ -2738,8 +2738,17 @@ Ext.onReady ( function() {
         }
     });
 // Add the additional 'advanced' VTypes -- [End]
-
-
+    var i;
+    if (document.getElementsByTagName('input')) {
+        for (i = 0; i < document.getElementsByTagName('input').length; i+= 1) {
+            document.getElementsByTagName('input')[i].ariaLabel = document.getElementsByTagName('input')[i].id;
+        }
+    }
+    if (document.getElementsByTagName('button')) {
+        for (i = 0; i < document.getElementsByTagName('button').length; i+= 1) {
+            document.getElementsByTagName('button')[i].ariaLabel = document.getElementsByTagName('button')[i].id;
+        }
+    }
 });
 
 function msgBox(title, msg, type){

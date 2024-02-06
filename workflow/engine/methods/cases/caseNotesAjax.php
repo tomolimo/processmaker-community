@@ -22,12 +22,29 @@ $functionParams = isset( $_REQUEST['params'] ) ? $_REQUEST['params'] : array ();
 
 $functionName( $functionParams );
 
+/**
+ * Get the default menu
+*/
 function getExtJSParams ()
 {
-    $validParams = array ('callback' => '','dir' => 'DESC','sort' => '','start' => 0,'limit' => 25,'filter' => '','search' => '','action' => '','xaction' => '','data' => '','status' => '','query' => '','fields' => "");
-    $result = array ();
-    foreach ($validParams as $paramName => $paramDefault) {
-        $result[$paramName] = isset( $_REQUEST[$paramName] ) ? $_REQUEST[$paramName] : isset( $_REQUEST[$paramName] ) ? $_REQUEST[$paramName] : $paramDefault;
+    $validParams = [
+        'callback' => '',
+        'dir' => 'DESC',
+        'sort' => '',
+        'start' => 0,
+        'limit' => 25,
+        'filter' => '',
+        'search' => '',
+        'action' => '',
+        'xaction' => '',
+        'data' => '',
+        'status' => '',
+        'query' => '',
+        'fields' => ''
+    ];
+    $result = [];
+    foreach ($validParams as $param => $default) {
+        $result[$param] = ($request[$param] ?? isset($request[$param])) ? $request[$param] : $default;
     }
     return $result;
 }

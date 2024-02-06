@@ -130,8 +130,8 @@ class CaseTrackerObject extends BaseCaseTrackerObject
                 ) );
                 $oDataset->next();
             }
-        } catch (Exception $oException) {
-            throw $Exception;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 
@@ -169,7 +169,7 @@ class CaseTrackerObject extends BaseCaseTrackerObject
      *
      * @return array
      */
-    public function verifyDynaformAssigCaseTracker ($dynUid, $proUid)
+    public static function verifyDynaformAssigCaseTracker ($dynUid, $proUid)
     {
         $res = array();
         $oCriteria = new Criteria();

@@ -1,31 +1,43 @@
 <?php
-/**
- * Model factory for a process
- */
-use Faker\Generator as Faker;
 
-$factory->define(\ProcessMaker\Model\DbSource::class, function(Faker $faker) {
+namespace Database\Factories;
+
+use App\Factories\Factory;
+use G;
+use Illuminate\Support\Str;
+
+class DbSourceFactory extends Factory
+{
 
     /**
-     * @todo Determine if we need more base columns populated
+     * Define the model's default state.
+     *
+     * @return array
      */
-    $dbName = $faker->word;
-    return [
-        'DBS_UID' => G::generateUniqueID(),
-        'PRO_UID' => function() {
-            return factory(\ProcessMaker\Model\Process::class)->create()->PRO_UID;
-        },
-        'DBS_TYPE' => 'mysql',
-        'DBS_SERVER' => $faker->localIpv4,
-        'DBS_DATABASE_NAME' => $faker->word,
-        'DBS_USERNAME' => $faker->userName,
+    public function definition()
+    {
         /**
-         * @todo WHY figure out there's a magic value to the encryption here
+         * @todo Determine if we need more base columns populated
          */
-        'DBS_PASSWORD' => \G::encrypt( $faker->password, $dbName) . "_2NnV3ujj3w",
-        'DBS_PORT' => $faker->numberBetween(1000, 9000),
-        'DBS_ENCODE' => 'utf8', // @todo Perhaps grab this from our definitions in DbConnections
-        'DBS_CONNECTION_TYPE' => 'NORMAL', // @todo Determine what this value means
-        'DBS_TNS' => null // @todo Determine what this value means
-    ];
-});
+        $dbName = $this->faker->word;
+        return [
+            'DBS_UID' => G::generateUniqueID(),
+            'PRO_UID' => function () {
+                return \ProcessMaker\Model\Process::factory()->create()->PRO_UID;
+            },
+            'DBS_TYPE' => 'mysql',
+            'DBS_SERVER' => $this->faker->localIpv4,
+            'DBS_DATABASE_NAME' => $this->faker->word,
+            'DBS_USERNAME' => $this->faker->userName,
+            /**
+             * @todo WHY figure out there's a magic value to the encryption here
+             */
+            'DBS_PASSWORD' => \G::encrypt($this->faker->password, $dbName, false, false) . "_2NnV3ujj3w",
+            'DBS_PORT' => $this->faker->numberBetween(1000, 9000),
+            'DBS_ENCODE' => 'utf8', // @todo Perhaps grab this from our definitions in DbConnections
+            'DBS_CONNECTION_TYPE' => 'NORMAL', // @todo Determine what this value means
+            'DBS_TNS' => null // @todo Determine what this value means
+        ];
+    }
+
+}

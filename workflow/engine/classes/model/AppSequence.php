@@ -16,27 +16,34 @@ require_once 'classes/model/om/BaseAppSequence.php';
  */
 class AppSequence extends BaseAppSequence {
 
+    const APP_TYPE_NORMAL = 'NORMAL';
+    const APP_TYPE_WEB_ENTRY = 'WEB_ENTRY';
+
     /**
      * Get an Set new sequence number
      *
+     * @param string $sequenceType
      * @return mixed
      * @throws Exception
      */
-    public function sequenceNumber()
+    public function sequenceNumber($sequenceType)
     {
         try {
             $con = Propel::getConnection('workflow');
             $stmt = $con->createStatement();
-            //UPDATE SEQUENCES SET SEQ_VALUE = LAST_INSERT_ID(SEQ_VALUE + 1);
-            $sql = "UPDATE APP_SEQUENCE SET ID=LAST_INSERT_ID(ID+1)";
+            $sql = "UPDATE APP_SEQUENCE SET ID=LAST_INSERT_ID(ID+1) WHERE APP_TYPE = '{$sequenceType}'";
             $stmt->executeQuery($sql, ResultSet::FETCHMODE_ASSOC);
-            //SELECT LAST_INSERT_ID()
             $sql = "SELECT LAST_INSERT_ID()";
             $rs = $stmt->executeQuery($sql, ResultSet::FETCHMODE_ASSOC);
             $rs->next();
             $row = $rs->getRow();
             $result = $row['LAST_INSERT_ID()'];
-        } catch (\Exception $e) {
+
+            // If the type is WEB_ENTRY, we need to change to negative
+            if ($sequenceType === 'WEB_ENTRY') {
+                $result *= -1;
+            }
+        } catch (Exception $e) {
             throw ($e);
         }
         return $result;
@@ -46,26 +53,36 @@ class AppSequence extends BaseAppSequence {
     /**
      * Update sequence number
      *
-     * @return mixed
+     * @param int $number
+     * @param string $sequenceType
+     *
      * @throws Exception
      */
-    public function updateSequenceNumber($number)
+    public function updateSequenceNumber($number, $sequenceType = AppSequence::APP_TYPE_NORMAL)
     {
         try {
-            $con = Propel::getConnection('workflow');
-            $stmt = $con->createStatement();
-            $c = new Criteria();
-            $rs = AppSequencePeer::doSelectRS($c);
-            $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $rs->next();
-            $row = $rs->getRow();
+            // Get the current connection
+            $connection = Propel::getConnection('workflow');
+
+            // Create a statement instance
+            $statement = $connection->createStatement();
+
+            // Get the record according to the sequence type
+            $criteria = new Criteria();
+            $criteria->add(AppSequencePeer::APP_TYPE, $sequenceType);
+            $rsCriteria = AppSequencePeer::doSelectRS($criteria);
+            $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $rsCriteria->next();
+            $row = $rsCriteria->getRow();
+
+            // Insert/Update sequence table with the number sent
             if ($row) {
-                $sql = "UPDATE APP_SEQUENCE SET ID=LAST_INSERT_ID('$number')";
+                $sql = "UPDATE APP_SEQUENCE SET ID=LAST_INSERT_ID('{$number}') WHERE APP_TYPE = '{$sequenceType}'";
             } else {
-                $sql = "INSERT INTO APP_SEQUENCE (ID) VALUES ('$number');";
+                $sql = "INSERT INTO APP_SEQUENCE (ID, APP_TYPE) VALUES ('{$number}', '{$sequenceType}')";
             }
-            $stmt->executeQuery($sql, ResultSet::FETCHMODE_ASSOC);
-        } catch (\Exception $e) {
+            $statement->executeQuery($sql, ResultSet::FETCHMODE_ASSOC);
+        } catch (Exception $e) {
             throw ($e);
         }
     }

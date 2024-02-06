@@ -43,7 +43,9 @@ switch ($request) {
         }
 
         $x = ob_get_contents();
-        ob_end_clean();
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
 
         ///////
         if ($_GET["menu"] == "plugins") {

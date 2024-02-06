@@ -13,7 +13,7 @@
 // | obtain it through the world-wide-web, please send a note to          |
 // | license@php.net so we can mail you a copy immediately.               |
 // +----------------------------------------------------------------------+
-// | Author: Stig Sæther Bakken <ssb@php.net>                             |
+// | Author: Stig Sï¿½ther Bakken <ssb@php.net>                             |
 // +----------------------------------------------------------------------+
 //
 // $Id: Common.php,v 1.22 2003/03/18 12:06:07 ssb Exp $
@@ -68,7 +68,7 @@ class PEAR_Command_Common extends PEAR
      *
      * @access public
      */
-    function PEAR_Command_Common(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
         parent::PEAR();
         $this->config = &$config;
@@ -131,10 +131,10 @@ class PEAR_Command_Common extends PEAR
             return;
         }
         reset($this->commands[$command]);
-        while (list($option, $info) = each($this->commands[$command]['options'])) {
+        foreach ($this->commands[$command]['options'] as $option => $info) {
             $larg = $sarg = '';
             if (isset($info['arg'])) {
-                if ($info['arg']{0} == '(') {
+                if ($info['arg'][0] == '(') {
                     $larg = '==';
                     $sarg = '::';
                     $arg = substr($info['arg'], 1, -1);
@@ -195,7 +195,7 @@ class PEAR_Command_Common extends PEAR
             $help = "Options:\n";
             foreach ($this->commands[$command]['options'] as $k => $v) {
                 if (isset($v['arg'])) {
-                    if ($v['arg']{0} == '(') {
+                    if ($v['arg'][0] == '(') {
                         $arg = substr($v['arg'], 1, -1);
                         $sapp = " [$arg]";
                         $lapp = "[=$arg]";

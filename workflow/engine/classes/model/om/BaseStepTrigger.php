@@ -55,7 +55,7 @@ abstract class BaseStepTrigger extends BaseObject implements Persistent
      * The value for the st_condition field.
      * @var        string
      */
-    protected $st_condition = '';
+    protected $st_condition;
 
     /**
      * The value for the st_position field.
@@ -246,7 +246,7 @@ abstract class BaseStepTrigger extends BaseObject implements Persistent
             $v = (string) $v;
         }
 
-        if ($this->st_condition !== $v || $v === '') {
+        if ($this->st_condition !== $v) {
             $this->st_condition = $v;
             $this->modifiedColumns[] = StepTriggerPeer::ST_CONDITION;
         }

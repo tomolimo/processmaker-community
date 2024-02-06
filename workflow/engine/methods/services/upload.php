@@ -1,12 +1,13 @@
 <?php
 
+use ProcessMaker\Model\Documents;
 use ProcessMaker\Plugins\PluginRegistry;
 
 /**
  * The point of this application is upload the file and create the input document record
  * if the post attached file has error code 0 continue in other case nothing to do.
  */
-if (isset($_FILES) && $_FILES["ATTACH_FILE"]["error"] == 0) {
+if (isset($_FILES["ATTACH_FILE"]) && $_FILES["ATTACH_FILE"]["error"] == 0) {
     try {
         $application = new Application();
         if (!$application->exists($_POST["APPLICATION"])) {
@@ -120,7 +121,13 @@ if (isset($_FILES) && $_FILES["ATTACH_FILE"]["error"] == 0) {
         if ($oPluginRegistry->existsTrigger(PM_UPLOAD_DOCUMENT) && class_exists("uploadDocumentData")) {
             $triggerDetail = $oPluginRegistry->getTriggerInfo(PM_UPLOAD_DOCUMENT);
             $documentData = new uploadDocumentData($_POST["APPLICATION"], $_POST["USR_UID"], $sPathName . $sFileName, $aFields["APP_DOC_FILENAME"], $sAppDocUid, $iDocVersion);
-            $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
+            try {
+                $uploadReturn = $oPluginRegistry->executeTriggers(PM_UPLOAD_DOCUMENT, $documentData);
+            } catch (Exception $error) {
+                // Is expected an exception when the user tries to upload a versioned input document, the file is removed and the error bubbled
+                Documents::where('APP_DOC_UID', $sAppDocUid)->where('DOC_VERSION', $iDocVersion)->delete();
+                throw $error;
+            }
 
             if ($uploadReturn) {
                 $aFields["APP_DOC_PLUGIN"] = $triggerDetail->getNamespace();

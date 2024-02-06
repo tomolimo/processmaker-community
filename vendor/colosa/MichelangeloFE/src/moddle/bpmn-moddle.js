@@ -1446,7 +1446,7 @@ function getSerializableProperties(element) {
             return false;
         }
 
-        return p.isMany ? value.length : true;
+        return p.isMany ? value ? value.length : true : true;
     });
 }
 

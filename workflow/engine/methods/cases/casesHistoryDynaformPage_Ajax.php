@@ -48,7 +48,7 @@ if ($actionAjax == 'historyDynaformGrid_Ajax') {
     $c = $oCase->getallDynaformsCriteria(
         $_SESSION['PROCESS'],
         $_SESSION['APPLICATION'],
-        $_SESSION['CURRENT_TASK'],
+        $_SESSION['TASK'],
         $_SESSION['USER_LOGGED'],
         $_SESSION['INDEX']
     );

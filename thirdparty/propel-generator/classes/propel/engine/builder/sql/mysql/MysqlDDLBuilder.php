@@ -148,7 +148,11 @@ CREATE TABLE ".$this->quoteIdentifier($table->getName())."
 //			$script .= " DEFAULT CHARSET='". $platform->escapeText( $vendorSpecific['Collation'] )."'";
 			$script .= " DEFAULT CHARSET='utf8'";
 		}
-		if($vendorSpecific['Comment'] ) {
+                $value = null;
+                if (array_key_exists('Comment', $vendorSpecific)) {
+                    $value = $vendorSpecific['Comment'];
+                }
+		if($value) {
 			$script .= " COMMENT='". $platform->escapeText( $vendorSpecific['Comment'] )."'";
 		}
 //		if($table->getDescription()) {

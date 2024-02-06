@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @deprecated Class deprecated in Release 3.6.x
+ */
 class Content extends BaseContent
 {
     public $langs;

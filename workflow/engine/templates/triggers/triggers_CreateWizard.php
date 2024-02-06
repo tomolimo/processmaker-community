@@ -32,7 +32,7 @@ try {
     $libraryO = $triggerLibrary->getLibraryDefinition ( $libraryClassName );
 
     $libraryName = $libraryO->info ['name'];
-    $libraryDescription = trim ( str_replace ( "*", "", implode ( " ", $libraryO->info ['description'] ) ) );
+    $libraryDescription = trim ( str_replace ( "*", "", implode ( " ", isset($libraryO->info ['description'])?$libraryO->info ['description']:[] ) ) );
     $libraryIcon = isset ( $libraryO->info ['icon'] ) && ($libraryO->info ['icon'] != "")
                    ? $libraryO->info ['icon'] : "/images/browse.gif";
     $aDataTrigger = $_GET;
@@ -44,7 +44,7 @@ try {
 
     $methodName = $methodObject->info ['name'];
     $methodLabel = $methodObject->info ['label'];
-    $methodDescription = trim ( str_replace ( "*", "", implode ( " ", $methodObject->info ['description'] ) ) );
+    $methodDescription = trim ( str_replace ( "*", "", implode ( " ", isset($methodObject->info ['description'])?$methodObject->info ['description']:[] ) ) );
     $methodReturn = $methodObject->info ['return'];
     $methodParameters = array_keys ( $methodObject->params );
     $methodLink = isset ( $methodObject->info ['link'] ) && ($methodObject->info ['link'] != "")

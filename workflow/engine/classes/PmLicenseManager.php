@@ -30,8 +30,8 @@ class PmLicenseManager
             $licenseFile = $activeLicenseSetting[config("system.workspace")];
         } else {
             $activeLicense = $this->getActiveLicense();
-            $oServerConf->setProperty('ACTIVE_LICENSE', [config("system.workspace") => $activeLicense['LICENSE_PATH']]);
-            $licenseFile = $activeLicense['LICENSE_PATH'];
+            $oServerConf->setProperty('ACTIVE_LICENSE', [config("system.workspace") => isset($activeLicense['LICENSE_PATH']) ? $activeLicense['LICENSE_PATH'] : null]);
+            $licenseFile = isset($activeLicense['LICENSE_PATH']) ? $activeLicense['LICENSE_PATH'] : null;
         }
 
         $application = new license_application($licenseFile, false, true, false, true);

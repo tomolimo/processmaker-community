@@ -339,7 +339,7 @@ class pagedTable
         // Config attributes from XMLFORM file
         $myAttributes = get_class_vars(get_class($this));
         foreach ($this->xmlForm->xmlform->tree->attribute as $atrib => $value) {
-            if (array_key_exists($atrib, $myAttributes)) {
+            if (is_array($myAttributes) && array_key_exists($atrib, $myAttributes)) {
                 eval('settype($value,gettype($this->' . $atrib . '));');
                 if ($value !== '') {
                     eval('$this->' . $atrib . '=$value;');

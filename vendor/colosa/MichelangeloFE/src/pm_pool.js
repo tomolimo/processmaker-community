@@ -548,8 +548,10 @@ PMPool.prototype.updateAllLaneDimension = function(avoidWeight) {
             dx: 0,
             dy: lane.y - laneOldY
         };
-        lane.fixConnectionsOnResize(lane.resizing, true);
-        lane.laneRefreshConnections(delta);
+        if (delta.dx > 0 || delta.dy >0){
+            lane.fixConnectionsOnResize(lane.resizing, true);
+            lane.laneRefreshConnections(delta);
+        }
     }
     newWidth = newWidth && !avoidWeight ? newWidth + this.headLineCoord + 2.1: this.getWidth();
     this.setDimension(newWidth, parentHeight);

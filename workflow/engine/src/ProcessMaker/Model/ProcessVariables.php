@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class ProcessVariables extends Model
 {
+    use HasFactory;
+
     // Set our table name
     protected $table = 'PROCESS_VARIABLES';
     // No timestamps
@@ -85,6 +88,23 @@ class ProcessVariables extends Model
     public function scopeTypeId($query, int $typeId)
     {
         return $query->where('VAR_FIELD_TYPE_ID', $typeId);
+    }
+
+    /**
+     * Return the variable information
+     *
+     * @param string $varUid
+     *
+     * @return array
+     */
+    public static function getVariable(string $varUid)
+    {
+        $query = ProcessVariables::query()->select();
+        $query->where('VAR_UID', $varUid)->limit(1);
+        $result = $query->get()->values()->toArray();
+        $result = head($result);
+
+        return $result;
     }
 
     /**

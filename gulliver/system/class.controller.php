@@ -1,10 +1,11 @@
 <?php
 
+use ProcessMaker\Exception\RBACException;
+
 /**
  * Controller Class
  * Implementing MVC Pattern
  *
- * @author Erik Amaru Ortiz <erik@colosa.com, aortiz.erik@gmail.com>
  * @package gulliver.system
  * @access private
  */
@@ -129,6 +130,8 @@ class Controller
             if ($this->responseType == 'json') {
                 print G::json_encode($result);
             }
+        } catch (RBACException $e) {
+            throw $e;
         } catch (Exception $e) {
             $result = new StdClass();
             if ($this->responseType != 'json') {

@@ -61,11 +61,11 @@
             </tr>
             {/if}
             {if $PROCESS.ERROR eq '' }
-                {if ($data.NEXT_TASK.TAS_TYPE == "INTERMEDIATE-CATCH-MESSAGE-EVENT")}
+                {if (isset($data.NEXT_TASK.TAS_TYPE) && $data.NEXT_TASK.TAS_TYPE == "INTERMEDIATE-CATCH-MESSAGE-EVENT")}
                     <tr>
                         <td class="FormFieldContent" colspan="2" style="text-align: center">{$data.NEXT_TASK.TAS_TITLE}{$data.NEXT_TASK.TAS_HIDDEN_FIELD}</td>
                     </tr>
-                {elseif ($data.NEXT_TASK.TAS_TYPE == "INTERMEDIATE-CATCH-TIMER-EVENT")}
+                {elseif (isset($data.NEXT_TASK.TAS_TYPE) && $data.NEXT_TASK.TAS_TYPE == "INTERMEDIATE-CATCH-TIMER-EVENT")}
                     <tr style="display: none;">
                         <td class="FormFieldContent" colspan="2">{$data.NEXT_TASK.TAS_HIDDEN_FIELD}</td>
                     </tr>

@@ -87,7 +87,7 @@ class ProcessVariablesMapBuilder
 
         $tMap->addColumn('VAR_SQL', 'VarSql', 'string', CreoleTypes::LONGVARCHAR, false, null);
 
-        $tMap->addColumn('VAR_NULL', 'VarNull', 'int', CreoleTypes::TINYINT, false, 32);
+        $tMap->addColumn('VAR_NULL', 'VarNull', 'int', CreoleTypes::TINYINT, false, null);
 
         $tMap->addColumn('VAR_DEFAULT', 'VarDefault', 'string', CreoleTypes::VARCHAR, false, 32);
 

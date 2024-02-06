@@ -427,7 +427,7 @@ DoNothing = function(){};
 
 //Open New User Form
 NewUserAction = function(){
-  location.href = 'usersNew?MODE=new';
+  location.href = 'usersNew?MODE=new&userInterface=v2';
 };
 
 //Change user status
@@ -572,7 +572,7 @@ SummaryTabOpen = function(){
 EditUserAction = function(){
   var uid = infoGrid.getSelectionModel().getSelected();
   if (uid) {
-    location.href = 'usersEdit?USR_UID=' + uid.data.USR_UID+'&USR_AUTH_SOURCE=' + uid.data.USR_AUTH_SOURCE+'&MODE=edit';
+    location.href = 'usersEdit?USR_UID=' + uid.data.USR_UID+'&USR_AUTH_SOURCE=' + uid.data.USR_AUTH_SOURCE+'&MODE=edit&userInterface=v2';
   }
 };
 

@@ -3,9 +3,6 @@
  * Class SkinEngine
  *
  * This class load and dispatch the main systems layouts
- *
- * @author Erik Amaru Ortiz <erik@colosa.com>
- * @author Hugo Loza
  */
 
 use ProcessMaker\Core\System;
@@ -36,6 +33,7 @@ class SkinEngine
     private $layoutFileRaw = array();
     private $layoutFileTracker = array();
     private $layoutFileSubmenu = array();
+    private $layoutFileViena = array();
 
     private $cssFileName = '';
 
@@ -93,7 +91,7 @@ class SkinEngine
         $layoutFileRaw = $this->skinsBasePath . 'base' . PATH_SEP . 'layout-raw.html';
         $layoutFileTracker = $this->skinsBasePath . 'base' . PATH_SEP . 'layout-tracker.html';
         $layoutFileSubmenu = $this->skinsBasePath . 'base' . PATH_SEP . 'layout-submenu.html';
-
+        $layoutFileViena = $this->skinsBasePath . 'base' . PATH_SEP . 'layout-viena.html';
 
         //Based on requested Skin look if there is any registered with that name
         if (strtolower($this->mainSkin) != "classic") {
@@ -137,6 +135,9 @@ class SkinEngine
             if (file_exists($skinObject . PATH_SEP . 'layout-submenu.html')) {
                 $layoutFileSubmenu = $skinObject . PATH_SEP . 'layout-submenu.html';
             }
+            if (file_exists($skinObject . PATH_SEP . 'layout-viena.html')) {
+                $layoutFileViena = $skinObject . PATH_SEP . 'layout-viena.html';
+            }
         }
 
         $this->layoutFile = pathInfo($layoutFile);
@@ -145,6 +146,7 @@ class SkinEngine
         $this->layoutFileTracker = pathInfo($layoutFileTracker);
         $this->layoutFileRaw = pathInfo($layoutFileRaw);
         $this->layoutFileSubmenu = pathInfo($layoutFileSubmenu);
+        $this->layoutFileViena = pathInfo($layoutFileViena);
 
         $this->cssFileName = $this->mainSkin;
 
@@ -328,6 +330,28 @@ class SkinEngine
         $template->assign("dirBody", $dirBody);
 
         echo $template->getOutputContent();
+    }
+
+    /**
+     * Render "viena" view
+     */
+    private function _viena()
+    {
+        $templateFile = $this->layoutFile['dirname'] . PATH_SEP . $this->layoutFileViena['basename'];
+        if (file_exists($templateFile)) {
+            $oHeadPublisher = headPublisher::getSingleton();
+            $header = $oHeadPublisher->getExtJsStylesheets($this->cssFileName . '-viena');
+            $body = $oHeadPublisher->getExtJsVariablesScript('');
+
+            $template = new TemplatePower($templateFile);
+            $template->prepare();
+            $template->assign('header', $header);
+            $template->assign('bodyTemplate', $body);
+            echo $template->getOutputContent();
+        } else {
+            $userCanAccess = 1;
+            echo View::make('Views::home.home', compact('userCanAccess'))->render();
+        }
     }
 
     private function _blank()
@@ -683,6 +707,9 @@ class SkinEngine
         $smarty->cache_dir = PATH_SMARTY_CACHE;
         $smarty->config_dir = PATH_THIRDPARTY . 'smarty/configs';
 
+        // Initializing template variables
+        $smarty->assign('userfullname', null);
+
         //To setup en extJS Theme for this Skin
 
         $oServerConf = ServerConf::getSingleton();
@@ -822,6 +849,7 @@ class SkinEngine
                 $smarty->assign('workspace', !empty(config("system.workspace")) ? config("system.workspace") : '');
                 $uws = (isset($_SESSION['USR_ROLENAME']) && $_SESSION['USR_ROLENAME'] != '') ? strtolower(G::LoadTranslation('ID_WORKSPACE_USING')) : G::LoadTranslation('ID_WORKSPACE_USING');
                 $smarty->assign('workspace_label', $uws);
+                $smarty->assign('msgVer', null);
 
                 $conf = new Configurations();
                 $conf->getFormats();

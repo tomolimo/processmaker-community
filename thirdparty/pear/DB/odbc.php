@@ -50,9 +50,9 @@ class DB_odbc extends DB_common
     // }}}
     // {{{ constructor
 
-    function DB_odbc()
+    function __construct()
     {
-        $this->DB_common();
+        parent::__construct();
         $this->phptype = 'odbc';
         $this->dbsyntax = 'sql92';
         $this->features = array(

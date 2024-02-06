@@ -48,5 +48,8 @@
             <cssFile file="sprite.css" enabledBrowsers="ALL" disabledBrowsers="ie7"></cssFile>
             <cssFile file="rtl.css" enabledBrowsers="ALL" disabledBrowsers=""></cssFile>
         </extjs>
+        <viena>
+            <cssFile file="app.css" enabledBrowsers="ALL" disabledBrowsers=""></cssFile>
+        </viena>
     </cssFiles>
 </skinConfiguration>

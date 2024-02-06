@@ -189,39 +189,52 @@
                 cellValue[0].style.paddingRight = n + "px";
             }
             if (propertiesGot[property].type === "datepicker") {
-                // init jQuery datepicker
-                that.datepicker = that.dateComponentFactory(cellValue, {
-                    minDate: minDate,
-                    maxDate: maxDate,
-                    onSelect: function (dateText, inst) {
-                        properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
-                    },
-                    onClose: function (dateText, inst) {
-                        $("#ui-datepicker-div").hide();
-                    },
-                    beforeShow: function () {
-                        var params = null;
-                        switch (property) {
-                            case "maxDate":
-                                params = {
-                                    minDate: that.getDateByParam(cellValue, "minDate")
-                                }
-                                break;
-                            case "minDate":
-                                params = {
-                                    maxDate: that.getDateByParam(cellValue, "maxDate")
-                                }
-                                break;
-                            case "defaultDate":
-                                params = {
-                                    maxDate: that.getDateByParam(cellValue, "maxDate"),
-                                    minDate: that.getDateByParam(cellValue, "minDate")
-                                }
-                                break;
-                        }
-                        return params;
+                button = $("<img src='" + $.imgUrl + "fd-calendar.png' style='cursor:pointer;position:absolute;top:0;right:" + n + "px;' title='" + "datepicker".translate() + "'>");
+                button.on("click", function (e) {
+                    e.stopPropagation();
+                    if ($(e.target).data("disabled") === true) {
+                        return;
                     }
+                    if ($(e.target).data("disabledTodayOption") === true) {
+                        return;
+                    }
+                    // init jQyery datepicker
+                    that.datepicker = that.dateComponentFactory(cellValue, {
+                        minDate: minDate,
+                        maxDate: maxDate,
+                        onSelect: function (dateText, inst) {
+                            properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
+                        },
+                        onClose: function (dateText, inst) {
+                            that.datepicker.datepicker("destroy");
+                            $("#ui-datepicker-div").remove();
+                        },
+                        beforeShow: function () {
+                            var params = null;
+                            switch (property) {
+                                case "maxDate":
+                                    params = {
+                                        minDate: that.getDateByParam(cellValue, "minDate")
+                                    }
+                                    break;
+                                case "minDate":
+                                    params = {
+                                        maxDate: that.getDateByParam(cellValue, "maxDate")
+                                    }
+                                    break;
+                                case "defaultDate":
+                                    params = {
+                                        maxDate: that.getDateByParam(cellValue, "maxDate"),
+                                        minDate: that.getDateByParam(cellValue, "minDate")
+                                    }
+                                    break;
+                            }
+                            return params;
+                        }
+                    });
+                    cellValue.find(".ui-datepicker-trigger").hide();
                 });
+                cellValue.append(button);
                 n = n + 16;
                 cellValue[0].style.paddingRight = n + "px";
                 // init jQuery autocomplete
@@ -292,6 +305,7 @@
                     return;
                 }
                 cellValue.find("input[type='text']").datepicker('hide');
+                $("#ui-datepicker-div").remove();
                 if (cachekey in that.cache) {
                     response(that.cache[cachekey]);
                     return;
@@ -368,6 +382,7 @@
                 onClose: defaults.onClose,
                 beforeShow: defaults.beforeShow
             }).next(".ui-datepicker-trigger").addClass("datetime-gadget-class");
+        datePicker.datepicker("show");
         return datePicker;
     };
     /**

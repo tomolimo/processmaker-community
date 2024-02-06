@@ -109,12 +109,12 @@ class PEAR_Installer extends PEAR_Common
      *
      * @access public
      */
-    function PEAR_Installer(&$ui)
+    function __construct(&$ui)
     {
         parent::PEAR_Common();
         $this->setFrontendObject($ui);
         $this->debug = $this->config->get('verbose');
-        $this->registry = &new PEAR_Registry($this->config->get('php_dir'));
+        $this->registry = new PEAR_Registry($this->config->get('php_dir'));
     }
 
     // }}}
@@ -500,7 +500,7 @@ class PEAR_Installer extends PEAR_Common
                 $options['installroot'] = substr($options['installroot'], 0, -1);
             }
             $php_dir = $this->_prependPath($php_dir, $options['installroot']);
-            $this->registry = &new PEAR_Registry($php_dir);
+            $this->registry = new PEAR_Registry($php_dir);
             $this->installroot = $options['installroot'];
         } else {
             $registry = &$this->registry;
@@ -578,7 +578,7 @@ class PEAR_Installer extends PEAR_Common
                 $dp = opendir($tmpdir);
                 do {
                     $pkgdir = readdir($dp);
-                } while ($pkgdir{0} == '.');
+                } while ($pkgdir[0] == '.');
 
                 $descfile = $tmpdir . DIRECTORY_SEPARATOR . $pkgdir . DIRECTORY_SEPARATOR . 'package.xml';
                 $flag_old_format = true;
@@ -681,8 +681,8 @@ class PEAR_Installer extends PEAR_Common
             }
 
             // don't want strange characters
-            $pkgname    = ereg_replace ('[^a-zA-Z0-9._]', '_', $pkginfo['package']);
-            $pkgversion = ereg_replace ('[^a-zA-Z0-9._\-]', '_', $pkginfo['version']);
+            $pkgname    = preg_replace ('/[^a-zA-Z0-9._]/', '_', $pkginfo['package']);
+            $pkgversion = preg_replace ('/[^a-zA-Z0-9._\-]/', '_', $pkginfo['version']);
             $tmp_path = dirname($descfile);
             if (substr($pkgfile, -4) != '.xml') {
                 $tmp_path .= DIRECTORY_SEPARATOR . $pkgname . '-' . $pkgversion;
@@ -714,7 +714,7 @@ class PEAR_Installer extends PEAR_Common
 
             if ($this->source_files > 0 && empty($options['nobuild'])) {
                 $this->log(1, "$this->source_files source files, building");
-                $bob = &new PEAR_Builder($this->ui);
+                $bob = new PEAR_Builder($this->ui);
                 $bob->debug = $this->debug;
                 $built = $bob->build($descfile, array(&$this, '_buildCallback'));
                 if (PEAR::isError($built)) {
@@ -778,7 +778,7 @@ class PEAR_Installer extends PEAR_Common
         } else {
             $this->installroot = '';
         }
-        $this->registry = &new PEAR_Registry($php_dir);
+        $this->registry = new PEAR_Registry($php_dir);
 
         // Delete the files
         if (PEAR::isError($err = $this->_deletePackageFiles($package))) {
@@ -799,7 +799,7 @@ class PEAR_Installer extends PEAR_Common
 
     function checkDeps(&$pkginfo)
     {
-        $depchecker = &new PEAR_Dependency($this->registry);
+        $depchecker = new PEAR_Dependency($this->registry);
         $error = $errors = '';
         $failed_deps = array();
         if (is_array($pkginfo['release_deps'])) {
@@ -811,7 +811,7 @@ class PEAR_Installer extends PEAR_Common
             }
             $n = count($failed_deps);
             if ($n > 0) {
-                $depinstaller =& new PEAR_Installer($this->ui);
+                $depinstaller = new PEAR_Installer($this->ui);
                 $to_install = array();
                 for ($i = 0; $i < $n; $i++) {
                     if (isset($failed_deps[$i]['type'])) {

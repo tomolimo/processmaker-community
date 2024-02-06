@@ -166,6 +166,34 @@ class Pmtable extends Api
     }
 
     /**
+     * Create a new PM Table
+     *
+     * @url POST /pmtables
+     * @status 201
+     *
+     * @param array $request_data
+     *
+     * @return array
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_SETUP_PM_TABLES}
+     */
+    public function doPostPmTables($request_data) 
+    {
+        try {
+            $reportTable = new BusinessModelTable();
+            $response = $reportTable->createPmTable($request_data);
+            if (isset($response['pro_uid'])) {
+                unset($response['pro_uid']);
+            }
+            return $response;
+        } catch (Exception $e) {
+            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        }
+    }
+
+    /**
      * Add a new record to a PM Table
      *
      * @url POST /:pmt_uid/data

@@ -110,7 +110,7 @@ try {
         $resultProcess = $infoProcess->getProcessRow($proUid);
     }
 
-    $oProcessMap = new ProcessMap(new DBConnection());
+    $oProcessMap = new ProcessMap();
 
     switch ($_REQUEST['action']) {
         case 'load':

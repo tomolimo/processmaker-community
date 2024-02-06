@@ -99,7 +99,8 @@ try {
         fclose( $templateHd1 );
     }
 
-    $criteria = ProcessMap::getDynaformsCriteria($PRO_UID);
+    $processMap = new ProcessMap();
+    $criteria = $processMap->getDynaformsCriteria($PRO_UID);
     //FROM
     //WHERE
     //QUERY

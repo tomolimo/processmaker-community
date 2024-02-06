@@ -324,7 +324,8 @@ class CaseTrackerObject
      */
     public function moveCaseTrackerObject($cto_uid, $pro_uid, $cto_pos)
     {
-        $aCaseTrackerObject = CaseTracker::getCaseTrackerObjects($pro_uid);
+        $caseTracker = new CaseTracker();
+        $aCaseTrackerObject = $caseTracker->getCaseTrackerObjects($pro_uid);
 
         foreach ($aCaseTrackerObject as $dataCaseTracker) {
             if ($dataCaseTracker['cto_uid'] == $cto_uid) {

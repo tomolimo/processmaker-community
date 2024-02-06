@@ -13,17 +13,18 @@ class BugsTest extends TestCase
      *
      * @dataProvider bugProvider
      */
-    public function testBug($test)
+    public function testBug($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function bugProvider()
+    public function bugProvider(): array
     {
         return [
             ['bugs/gh9'],
             ['bugs/gh14'],
             ['bugs/gh16'],
+            ['bugs/gh317'],
             ['bugs/pma11800'],
             ['bugs/pma11836'],
             ['bugs/pma11843'],

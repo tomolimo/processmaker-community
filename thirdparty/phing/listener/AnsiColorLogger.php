@@ -155,7 +155,7 @@ final class AnsiColorLogger extends DefaultLogger {
      * Set the colors to use from a property file specified by the
      * special ant property ant.logger.defaults
      */
-    private final function setColors() {
+    private function setColors() {
     
         $userColorFile = Phing::getProperty("phing.logger.defaults");
         $systemColorFile = new PhingFile(Phing::getResourcePath("phing/listener/defaults.properties"));

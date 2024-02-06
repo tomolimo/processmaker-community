@@ -63,6 +63,13 @@
                 {value: "MB", label: "MB".translate()}
             ]
         };
+        this.maxFileNumber = {
+            label: "Max file number".translate(),
+            value: "0",
+            type: "text",
+            regExpNumber: /^\d*$/,
+            regExpString: /^[@][@%=]+[a-zA-Z\_]{1}\w+$/
+        };
         this.enableVersioning = {
             label: "versioning".translate(),
             value: false,
@@ -438,7 +445,7 @@
         if (type === FormDesigner.main.TypesControl.multipleFile) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex", "ariaLabel",
                 "inputDocument", "required", "requiredFieldErrorMessage", "dnd", "extensions", "size", "sizeUnity",
-                'enableVersioning', "mode", "multiple", "inp_doc_uid"];
+                "maxFileNumber", "enableVersioning", "mode", "multiple", "inp_doc_uid"];
             this.name.type = "hidden";
             this.label.type = "text";
             if (this.owner instanceof FormDesigner.main.GridItem) {

@@ -68,20 +68,20 @@ Ext.onReady(function(){
 
   newButton = new Ext.Action({
     text: _('ID_NEW'),
-    iconCls: 'button_menu_ext ss_sprite ss_add',
+    icon: '/images/add_18.png',
     handler: NewCategoryWindow
   });
 
   editButton = new Ext.Action({
     text: _('ID_EDIT'),
-    iconCls: 'button_menu_ext ss_sprite  ss_pencil',
+    icon: '/images/pencil.png',
     handler: EditCategory,
     disabled: true
   });
 
   deleteButton = new Ext.Action({
     text: _('ID_DELETE'),
-    iconCls: 'button_menu_ext ss_sprite  ss_delete',
+    icon: '/images/delete-16x16.gif',
     handler: DeleteCategory,
     disabled: true
   });
@@ -181,7 +181,7 @@ Ext.onReady(function(){
     },
     columns: [
               {id:'CATEGORY_UID', dataIndex: 'CATEGORY_UID', hidden:true, hideable:false},
-              {header: _('ID_CATEGORY_NAME'), dataIndex: 'CATEGORY_NAME', width: 500, hidden:false, align:'left'},
+              {header: _('ID_CATEGORY_NAME'), dataIndex: 'CATEGORY_NAME', width: 500, hidden:false, renderer: categoryNameRenderer, align:'left'},
               {header: _('ID_PROCESSES'), dataIndex: 'TOTAL_PROCESSES', width: 100, hidden: false, align: 'center'}
               ]
   });
@@ -281,6 +281,11 @@ Ext.onReady(function(){
             ]
   });
 });
+
+//Sanitize output
+categoryNameRenderer = function (value) {
+  return Ext.util.Format.htmlEncode(value);
+};
 
 //Funtion Handles Context Menu Opening
 onMessageContextMenu = function (grid, rowIndex, e) {

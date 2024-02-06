@@ -828,12 +828,32 @@ ConnectValidator.prototype.bpmnValidator = function () {
     return this;
 };
 /**
+ * Validate un update a bpmn element
+ * @param {*} updatedElement 
+ */
+ConnectValidator.prototype.bpmnValidateOnUpdate = function (updatedElement) {
+    for (i = 0; i < updatedElement.length; i += 1) {
+        if(updatedElement[i].type === "Connection") {
+            if (updatedElement[i].relatedObject.type === "Port") {
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.parent);
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.oldParent);
+            } else {
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.destPort.parent);
+                this.bpmnValidatorShape(updatedElement[i].relatedObject.srcPort.parent);
+            }
+            
+        }
+    }
+    return this;
+};
+
+/**
  * Validate Shape
  * @param shape
  * @returns {ConnectValidator}
  */
 ConnectValidator.prototype.bpmnValidatorShape = function (shape) {
-    if (shape.validatorMarker) {
+    if (shape && shape.validatorMarker) {
         this.bpmnFlowValidator(shape);
         shape.validatorMarker.hide();
         if (shape.getNumErrors() > 0 && shape.validatorMarker) {

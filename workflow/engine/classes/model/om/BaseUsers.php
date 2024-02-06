@@ -238,6 +238,12 @@ abstract class BaseUsers extends BaseObject implements Persistent
     protected $usr_last_login;
 
     /**
+     * The value for the usr_extended_attributes_data field.
+     * @var        string
+     */
+    protected $usr_extended_attributes_data;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -739,6 +745,17 @@ abstract class BaseUsers extends BaseObject implements Persistent
         } else {
             return date($format, $ts);
         }
+    }
+
+    /**
+     * Get the [usr_extended_attributes_data] column value.
+     * 
+     * @return     string
+     */
+    public function getUsrExtendedAttributesData()
+    {
+
+        return $this->usr_extended_attributes_data;
     }
 
     /**
@@ -1541,6 +1558,28 @@ abstract class BaseUsers extends BaseObject implements Persistent
     } // setUsrLastLogin()
 
     /**
+     * Set the value of [usr_extended_attributes_data] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setUsrExtendedAttributesData($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->usr_extended_attributes_data !== $v) {
+            $this->usr_extended_attributes_data = $v;
+            $this->modifiedColumns[] = UsersPeer::USR_EXTENDED_ATTRIBUTES_DATA;
+        }
+
+    } // setUsrExtendedAttributesData()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -1627,12 +1666,14 @@ abstract class BaseUsers extends BaseObject implements Persistent
 
             $this->usr_last_login = $rs->getTimestamp($startcol + 34, null);
 
+            $this->usr_extended_attributes_data = $rs->getString($startcol + 35);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 35; // 35 = UsersPeer::NUM_COLUMNS - UsersPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 36; // 36 = UsersPeer::NUM_COLUMNS - UsersPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating Users object", $e);
@@ -1941,6 +1982,9 @@ abstract class BaseUsers extends BaseObject implements Persistent
             case 34:
                 return $this->getUsrLastLogin();
                 break;
+            case 35:
+                return $this->getUsrExtendedAttributesData();
+                break;
             default:
                 return null;
                 break;
@@ -1996,6 +2040,7 @@ abstract class BaseUsers extends BaseObject implements Persistent
             $keys[32] => $this->getUsrTimeZone(),
             $keys[33] => $this->getUsrDefaultLang(),
             $keys[34] => $this->getUsrLastLogin(),
+            $keys[35] => $this->getUsrExtendedAttributesData(),
         );
         return $result;
     }
@@ -2131,6 +2176,9 @@ abstract class BaseUsers extends BaseObject implements Persistent
                 break;
             case 34:
                 $this->setUsrLastLogin($value);
+                break;
+            case 35:
+                $this->setUsrExtendedAttributesData($value);
                 break;
         } // switch()
     }
@@ -2295,6 +2343,10 @@ abstract class BaseUsers extends BaseObject implements Persistent
             $this->setUsrLastLogin($arr[$keys[34]]);
         }
 
+        if (array_key_exists($keys[35], $arr)) {
+            $this->setUsrExtendedAttributesData($arr[$keys[35]]);
+        }
+
     }
 
     /**
@@ -2446,6 +2498,10 @@ abstract class BaseUsers extends BaseObject implements Persistent
             $criteria->add(UsersPeer::USR_LAST_LOGIN, $this->usr_last_login);
         }
 
+        if ($this->isColumnModified(UsersPeer::USR_EXTENDED_ATTRIBUTES_DATA)) {
+            $criteria->add(UsersPeer::USR_EXTENDED_ATTRIBUTES_DATA, $this->usr_extended_attributes_data);
+        }
+
 
         return $criteria;
     }
@@ -2567,6 +2623,8 @@ abstract class BaseUsers extends BaseObject implements Persistent
         $copyObj->setUsrDefaultLang($this->usr_default_lang);
 
         $copyObj->setUsrLastLogin($this->usr_last_login);
+
+        $copyObj->setUsrExtendedAttributesData($this->usr_extended_attributes_data);
 
 
         $copyObj->setNew(true);

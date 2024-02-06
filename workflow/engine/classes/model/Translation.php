@@ -1,43 +1,9 @@
 <?php
-/**
- * Translation.php
- *
- * @package workflow.engine.classes.model
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2011 Colosa Inc.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- *
- */
 
-//require_once 'classes/model/om/BaseTranslation.php';
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use ProcessMaker\Model\Translation as ModelTranslation;
 
-/**
- * Skeleton subclass for representing a row from the 'TRANSLATION' table.
- *
- *
- *
- * You should add additional methods to this class to meet the
- * application requirements. This class will only be generated as
- * long as it does not already exist in the output directory.
- *
- * @package workflow.engine.classes.model
- */
 class Translation extends BaseTranslation
 {
 
@@ -198,52 +164,44 @@ class Translation extends BaseTranslation
         }
     }
 
-    /* Load strings from a Database for labels MAFE.
-     *
-    */
-    public function generateFileTranslationMafe ()
+    /**
+     * Load strings from a Database for labels MAFE.
+     * @return array
+     */
+    public function generateFileTranslationMafe()
     {
-        $translation = Array ();
-
-        $c = new Criteria();
-        $c->add( TranslationPeer::TRN_ID, '%ID_MAFE_%', Criteria::LIKE );
-        $c->addAscendingOrderByColumn( 'TRN_CATEGORY' );
-        $c->addAscendingOrderByColumn( 'TRN_ID' );
-        //$c->addAscendingOrderByColumn( 'TRN_LANG' );
-        $tranlations = TranslationPeer::doSelect( $c );
-
-        $mafeFolder = PATH_HTML . "translations";
-        $cacheFileMafe = PATH_HTML . "translations" . PATH_SEP. 'translationsMafe' . ".js";
-
-        foreach ($tranlations as $key => $row) {
-            if ($row->getTrnCategory() === 'LABEL') {
-                $translation[$row->getTrnLang()][$row->getTrnId()] = $row->getTrnValue();
-            }
-        }
-
         try {
+            $translation = [];
+            $result = ModelTranslation::select()
+                    ->where('TRN_ID', 'LIKE', '%ID_MAFE_%')
+                    ->where('TRN_CATEGORY', '=', 'LABEL')
+                    ->orderBy('TRN_CATEGORY', 'asc')
+                    ->orderBy('TRN_ID', 'asc')
+                    ->get();
+            foreach ($result as $object) {
+                $translation[$object->TRN_LANG][$object->TRN_ID] = $object->TRN_VALUE;
+            }
 
+            $mafeFolder = PATH_HTML . "translations";
             G::verifyPath($mafeFolder, true);
-            if (! is_dir( dirname( $cacheFileMafe ) )) {
-                G::mk_dir( dirname( $cacheFileMafe ) );
+            if (!is_dir($mafeFolder)) {
+                G::mk_dir($mafeFolder);
             }
 
-            $f = fopen( $cacheFileMafe, 'w' );
-            if ($f == false) {
-                error_log("Error: Cannot write into cacheFileMafe: $cacheFileMafe\n");
-            } else {
-                fwrite( $f, "var __TRANSLATIONMAFE = " . Bootstrap::json_encode( $translation ) . ";\n");
-                fclose( $f );
+            $cacheFileMafe = PATH_HTML . "translations" . PATH_SEP . 'translationsMafe' . ".js";
+            $status = file_put_contents($cacheFileMafe, "var __TRANSLATIONMAFE = " . Bootstrap::json_encode($translation) . ";\n");
+            if ($status === false) {
+                Log::channel(':generateFileTranslationMafe')->error("Cannot write into cacheFileMafe: {$cacheFileMafe}", Bootstrap::context());
             }
 
-            $res['cacheFileMafe'] = $cacheFileMafe;
-            $res['languague'] = (is_array($cacheFileMafe) || $cacheFileMafe instanceof Countable) ? count($cacheFileMafe) : 0;
-            $res['rowsMafeJS'] = count( $translation );
-            return $res;
+            return [
+                'cacheFileMafe' => $cacheFileMafe,
+                'languague' => 0, //must be deprecated
+                'rowsMafeJS' => count($translation)
+            ];
         } catch (Exception $e) {
-            $token = strtotime("now");
-            PMException::registerErrorLog($e, $token);
-            G::outRes( G::LoadTranslation("ID_EXCEPTION_LOG_INTERFAZ", array($token)) );
+            Log::channel(':generateFileTranslationMafe')->error($e->getMessage(), Bootstrap::context());
+            G::outRes(G::LoadTranslation("ID_EXCEPTION_LOG_INTERFAZ", [strtotime("now")]));
         }
     }
 

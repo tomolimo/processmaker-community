@@ -61,6 +61,14 @@ return [
             'level' => 'debug',
             'days' => $app->make('config')->get('app.log_max_files', 60),
         ],
+        
+        'taskScheduler' => [
+            'driver' => 'daily',
+            'tap' => [App\Logging\CustomizeFormatter::class],
+            'path' => storage_path('logs/taskScheduler.log'),
+            'level' => 'debug',
+            'days' => $app->make('config')->get('app.log_max_files', 60),
+        ],
 
         'slack' => [
             'driver' => 'slack',

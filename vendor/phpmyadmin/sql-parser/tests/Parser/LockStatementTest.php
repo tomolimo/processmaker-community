@@ -13,12 +13,12 @@ class LockStatementTest extends TestCase
      *
      * @dataProvider lockProvider
      */
-    public function testLock($test)
+    public function testLock($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function lockProvider()
+    public function lockProvider(): array
     {
         return [
             ['parser/parseLock1'],

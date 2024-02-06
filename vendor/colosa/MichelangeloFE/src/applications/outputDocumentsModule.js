@@ -28,8 +28,27 @@
             gridOutput,
             winMainOutputDocument,
             btnSaveTiny,
-            listOutputDocs;
-
+            listOutputDocs,
+            headerSettings,
+            footerSettings,
+            changeType,
+            setMinValue,
+            getFieldById;
+    
+        /**
+         * Get field by id string, if not found return null.
+         * @param {string} id
+         * @returns {object}
+         */
+        getFieldById = function (id) {
+            var fields = formOutput.getFields();
+            for (var i in fields) {
+                if (fields[i].id === id) {
+                    return fields[i];
+                }
+            }
+            return null;
+        };
 
         setDataRow = function (row) {
             dataOutPutDocument = row.getData();
@@ -155,11 +174,14 @@
             btnCloseWindowOutputDoc.setVisible(true);
             winMainOutputDocument.footer.getItems()[2].setVisible(true);
             password.setVisible(false);
+            headerSettings.setVisible(false);
+            footerSettings.setVisible(false);
+            footerSettings.getField('total_number_page_footer').disable();
+            headerSettings.getField('total_number_page_header').disable();
             winMainOutputDocument.setTitle("Create Output Document".translate());
             winMainOutputDocument.setHeight(520);
             formOutput.panel.style.addProperties({padding: '20px 10px'});
             formOutput.setFocus();
-
         };
 
         openFormForEditInMainWindow = function (outputDocumentData) {
@@ -179,40 +201,101 @@
             }
 
             password.setVisible(false);
+            headerSettings.setVisible(false);
+            footerSettings.setVisible(false);
             if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                 var dataEdit = formOutput.getFields();
-                dataEdit[0].setValue(dataOutPutDocument['out_doc_title']);
-                dataEdit[1].setValue(dataOutPutDocument['out_doc_filename']);
-                dataEdit[2].setValue(dataOutPutDocument['out_doc_description']);
-                dataEdit[3].setValue(dataOutPutDocument['out_doc_report_generator']);
-                dataEdit[4].setValue(dataOutPutDocument['out_doc_media']);
-                dataEdit[5].setValue(dataOutPutDocument['out_doc_landscape']);
-                dataEdit[6].setValue(dataOutPutDocument['out_doc_left_margin']);
-                dataEdit[7].setValue(dataOutPutDocument['out_doc_right_margin']);
-                dataEdit[8].setValue(dataOutPutDocument['out_doc_top_margin']);
-                dataEdit[9].setValue(dataOutPutDocument['out_doc_bottom_margin']);
-                dataEdit[10].setValue(dataOutPutDocument['out_doc_generate']);
+                getFieldById('outputDocTitle').setValue(dataOutPutDocument['out_doc_title']);
+                getFieldById('outputDocFilenameGenerated').setValue(dataOutPutDocument['out_doc_filename']);
+                getFieldById('outputDocDescription').setValue(dataOutPutDocument['out_doc_description']);
+                getFieldById('outputDocReportGenerator').setValue(dataOutPutDocument['out_doc_report_generator']);
+                getFieldById('outputDocMedia').setValue(dataOutPutDocument['out_doc_media']);
+                getFieldById('outputDocOrientation').setValue(dataOutPutDocument['out_doc_landscape']);
+                getFieldById('outputDocMarginLeft').setValue(dataOutPutDocument['out_doc_left_margin']);
+                getFieldById('outputDocMarginRight').setValue(dataOutPutDocument['out_doc_right_margin']);
+                getFieldById('outputDocMarginTop').setValue(dataOutPutDocument['out_doc_top_margin']);
+                getFieldById('outputDocMarginBottom').setValue(dataOutPutDocument['out_doc_bottom_margin']);
+                getFieldById('outputDocToGenerate').setValue(dataOutPutDocument['out_doc_generate']);
 
-                if (dataOutPutDocument["out_doc_generate"] != "DOC") {
-                    dataEdit[11].setVisible(true);
-                } else {
-                    dataEdit[11].setVisible(false);
+                //Set data in header settings
+                if (dataOutPutDocument['out_doc_header'] !== "[]") {
+                    getFieldById('enableHeader').setValue(dataOutPutDocument['out_doc_header'].enableHeader ? '["1"]' : '0');
+                    dataOutPutDocument['out_doc_header'].enableHeader ? headerSettings.setVisible(true) : headerSettings.setVisible(false);
+                    getFieldById('headerTitle').setValue(dataOutPutDocument['out_doc_header'].title);
+                    getFieldById('fontSizeHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontSize);
+                    getFieldById('positionXTitleHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontPositionX);
+                    getFieldById('positionYTitleHeader').setValue(dataOutPutDocument['out_doc_header'].titleFontPositionY);
+                    getFieldById('headerLogo').setValue(dataOutPutDocument['out_doc_header'].logo);
+                    getFieldById('logoWidthHeader').setValue(dataOutPutDocument['out_doc_header'].logoWidth);
+                    getFieldById('positionXLogoHeader').setValue(dataOutPutDocument['out_doc_header'].logoPositionX);
+                    getFieldById('positionYLogoHeader').setValue(dataOutPutDocument['out_doc_header'].logoPositionY);
+                    getFieldById('pageNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumber ? '["1"]' : '0');
+                    getFieldById('paginationTitleHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberTitle);
+                    getFieldById('totalNumberPageHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberTotal ? '["1"]' : '0');
+                    getFieldById('positionXNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberPositionX);
+                    getFieldById('positionYNumberHeader').setValue(dataOutPutDocument['out_doc_header'].pageNumberPositionY);
+                    if (getFieldById('pageNumberHeader').getValue() === '["1"]') {
+                        getFieldById('paginationTitleHeader').enable();
+                        getFieldById('totalNumberPageHeader').enable();
+                        getFieldById('positionXNumberHeader').enable();
+                        getFieldById('positionYNumberHeader').enable();
+                    } else {
+                        getFieldById('paginationTitleHeader').disable();
+                        getFieldById('totalNumberPageHeader').disable();
+                        getFieldById('positionXNumberHeader').disable();
+                        getFieldById('positionYNumberHeader').disable();
+                    }
+                }
+                //Set data in footer settings
+                if (dataOutPutDocument['out_doc_header'] !== "[]") {
+                    getFieldById('enableFooter').setValue(dataOutPutDocument['out_doc_footer'].enableFooter ? '["1"]' : '0');
+                    dataOutPutDocument['out_doc_footer'].enableFooter ? footerSettings.setVisible(true) : footerSettings.setVisible(false);
+                    getFieldById('footerTitle').setValue(dataOutPutDocument['out_doc_footer'].title);
+                    getFieldById('fontSizeFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontSize);
+                    getFieldById('positionXTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontPositionX);
+                    getFieldById('positionYTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].titleFontPositionY);
+                    getFieldById('footerLogo').setValue(dataOutPutDocument['out_doc_footer'].logo);
+                    getFieldById('logoWidthFooter').setValue(dataOutPutDocument['out_doc_footer'].logoWidth);
+                    getFieldById('positionXLogoFooter').setValue(dataOutPutDocument['out_doc_footer'].logoPositionX);
+                    getFieldById('positionYLogoFooter').setValue(dataOutPutDocument['out_doc_footer'].logoPositionY);
+                    getFieldById('pageNumerFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumber ? '["1"]' : '0');
+                    getFieldById('paginationTitleFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberTitle);
+                    getFieldById('totalNumberPageFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberTotal ? '["1"]' : '0');
+                    getFieldById('positionXNumberFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberPositionX);
+                    getFieldById('positionYNumberFooter').setValue(dataOutPutDocument['out_doc_footer'].pageNumberPositionY);
+                    if (getFieldById('pageNumerFooter').getValue() === '["1"]') {
+                        getFieldById('paginationTitleFooter').enable();
+                        getFieldById('totalNumberPageFooter').enable();
+                        getFieldById('positionXNumberFooter').enable();
+                        getFieldById('positionYNumberFooter').enable();
+                    } else {
+                        getFieldById('paginationTitleFooter').disable();
+                        getFieldById('totalNumberPageFooter').disable();
+                        getFieldById('positionXNumberFooter').disable();
+                        getFieldById('positionYNumberFooter').disable();
+                    }
                 }
 
-                dataEdit[11].setValue(dataOutPutDocument['out_doc_pdf_security_enabled']);
+                if (dataOutPutDocument["out_doc_generate"] != "DOC") {
+                    getFieldById('outputDocDPFSecurity').setVisible(true);
+                } else {
+                    getFieldById('outputDocDPFSecurity').setVisible(false);
+                }
+
+                getFieldById('outputDocDPFSecurity').setValue(dataOutPutDocument['out_doc_pdf_security_enabled']);
                 if (dataOutPutDocument['out_doc_pdf_security_enabled'] != 0) {
                     password.setVisible(true);
                 }
-                dataEdit[12].setValue(dataOutPutDocument['out_doc_pdf_security_open_password']);
-                dataEdit[13].setValue(dataOutPutDocument['out_doc_pdf_security_owner_password']);
+                getFieldById('outputFormDocPdfSecurityOpen').setValue(dataOutPutDocument['out_doc_pdf_security_open_password']);
+                getFieldById('outputFormDocPdfSecurityOwner').setValue(dataOutPutDocument['out_doc_pdf_security_owner_password']);
 
                 dataOutPutDocument['out_doc_pdf_security_permissions'] = dataOutPutDocument['out_doc_pdf_security_permissions'].split("|");
-                dataEdit[14].setValue(JSON.stringify(dataOutPutDocument['out_doc_pdf_security_permissions']));
+                getFieldById('outputFormDocPdfSecurityPermissions').setValue(JSON.stringify(dataOutPutDocument['out_doc_pdf_security_permissions']));
 
-                dataEdit[15].setValue(dataOutPutDocument['out_doc_versioning']);
-                dataEdit[16].setValue(dataOutPutDocument['out_doc_destination_path']);
-                dataEdit[17].setValue(dataOutPutDocument['out_doc_tags']);
-                dataEdit[18].setValue(dataOutPutDocument["out_doc_open_type"]);
+                getFieldById('outputDocEnableVersioning').setValue(dataOutPutDocument['out_doc_versioning']);
+                getFieldById('outputDocDestinationPath').setValue(dataOutPutDocument['out_doc_destination_path']);
+                getFieldById('outputDocTags').setValue(dataOutPutDocument['out_doc_tags']);
+                getFieldById('outputDocGenerateFileLink').setValue(dataOutPutDocument["out_doc_open_type"]);
             }
             winMainOutputDocument.setHeight(520);
             formOutput.panel.style.addProperties({padding: '20px 10px'});
@@ -231,8 +314,8 @@
             disableAllItems();
             winMainOutputDocument.showFooter();
             tinyEditorField = 13;
-            winMainOutputDocument.getItems()[1].setVisible(true);
-            winMainOutputDocument.getItems()[1].getItems()[tinyEditorField].setVisible(true);
+            formOutput.setVisible(true);
+            formOutput.getItems()[tinyEditorField].setVisible(true);
             formOutput.setWidth(890);
             btnSaveTiny.setVisible(true);
             btnCancelTiny.setVisible(true);
@@ -247,12 +330,12 @@
             winMainOutputDocument.setTitle("Edit Output Document".translate());
             if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                 dataOutPutDocument['out_doc_template'] = (dataOutPutDocument['out_doc_template'] != null) ? dataOutPutDocument['out_doc_template'] : ' ';
-                dataEdit[19].setValue(dataOutPutDocument['out_doc_template']);
-                dataEdit[19].setValueTiny(dataOutPutDocument['out_doc_template']);
-                dataEdit[19].setHeight(425);
+                dataEdit[47].setValue(dataOutPutDocument['out_doc_template']);
+                dataEdit[47].setValueTiny(dataOutPutDocument['out_doc_template']);
+                dataEdit[47].setHeight(425);
 
-                dataEdit[18].setVisible(false);
-                dataEdit[19].setVisible(true);
+                formOutput.getItems()[13].setVisible(false)
+                dataEdit[47].setVisible(true);
             }
             formOutput.panel.style.addProperties({padding: '0px 10px'});
             winMainOutputDocument.setHeight(520);
@@ -352,10 +435,20 @@
             layout: 'hbox',
             legend: "Margin".translate(),
             items: [
-                {
-                    pmType: 'panel',
-                    proportion: 0.7
-                },
+                new PMUI.form.FormPanel({
+                    fieldset: true,
+                    layout: "box",
+                    proportion: 0.6,
+                    padding: "5px 5px",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: true,
+                            height: 200,
+                            width: 170,
+                            borderWidth : "3px",
+                        })
+                    ]
+                }),
                 {
                     pmType: "panel",
                     layout: 'vbox',
@@ -488,6 +581,472 @@
             ],
             layout: "vbox"
         });
+
+        /**
+         * Header Settings
+         */
+        headerSettings = new PMUI.form.FormPanel({
+            fieldset: true,
+            layout: 'vbox',
+            name: "header_settings",
+            legend: "Header Settings".translate(),
+            items: [
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'headerTitle',
+                            pmType: "text",
+                            name: 'header_title',
+                            label: "Header Title".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'fontSizeHeader',
+                            pmType: "text",
+                            label: "Font Size".translate(),
+                            required: false,
+                            value: 8,
+                            name: "font_size_header",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2,
+                            onChange: function (newVal, oldVal) {
+                                if (newVal <= 7 || newVal >= 73) {
+                                    this.setValue(oldVal);
+                                }
+                            }
+                        },
+                        {
+                            id: 'positionXTitleHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_title_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYTitleHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_title_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'headerLogo',
+                            pmType: "text",
+                            name: 'header_logo',
+                            label: "Header Logo".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'logoWidthHeader',
+                            pmType: "text",
+                            label: "Logo Width".translate(),
+                            required: false,
+                            value: 0,
+                            name: "logo_width_header",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2
+                        },
+                        {
+                            id: 'positionXLogoHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_logo_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYLogoHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_logo_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: "hbox",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: false,
+                            layout: 'hbox',
+                            legend: "Header Settings".translate(),
+                            proportion: 3,
+                            fontSize: 10,
+                            padding: 0,
+                            items: [
+                                new SwitchField({
+                                    id: 'pageNumberHeader',
+                                    labelWidth: "50%",
+                                    label: "Page Number".translate(),
+                                    name: "page_number_header",
+                                    value: '1',
+                                    controlsWidth: 54,
+                                    proportion: 0.45,
+                                    controlPositioning: 'vertical',
+                                    options: [
+                                        {
+                                            id: 'pageNumberOptionHeader',
+                                            disabled: false,
+                                            value: '1',
+                                            selected: false
+                                        }
+                                    ],
+                                    onChange: function (newVal, oldVal) {
+                                        if (newVal === '["1"]') {
+                                            headerSettings.getField('pagination_title_header').updateDisabled(false);
+                                            headerSettings.getField('total_number_page_header').enable();
+                                            getFieldById('totalNumberPageHeader').enable();
+                                            getFieldById('positionXNumberHeader').enable();
+                                            getFieldById('positionYNumberHeader').enable();
+                                        } else {
+                                            headerSettings.getField('pagination_title_header').updateDisabled(true);
+                                            headerSettings.getField('total_number_page_header').disable();
+                                            getFieldById('totalNumberPageHeader').disable();
+                                            getFieldById('positionXNumberHeader').disable();
+                                            getFieldById('positionYNumberHeader').disable();
+                                        }
+                                    }
+                                }),
+                                new CriteriaField({
+                                    id: 'paginationTitleHeader',
+                                    pmType: "text",
+                                    name: 'pagination_title_header',
+                                    label: "Pagination Title".translate(),
+                                    labelWidth: '27%',
+                                    controlsWidth: 170,
+                                    required: false,
+                                    disabled: true
+                                }),
+                            ]
+                        }),
+                        new SwitchField({
+                            id: 'totalNumberPageHeader',
+                            labelWidth: "60%",
+                            label: "Total Number of Pages".translate(),
+                            name: "total_number_page_header",
+                            value: '1',
+                            controlPositioning: 'vertical',
+                            controlsWidth: 54,
+                            proportion: 1.2,
+                            options: [
+                                {
+                                    id: 'totalNumberPageOptionHeader',
+                                    disabled: false,
+                                    value: '1',
+                                    selected: false
+                                }
+                            ],
+                            onChange: function (newVal, oldVal) {
+                            }
+                        }),
+                        {
+                            id: 'positionXNumberHeader',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_number_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                        {
+                            id: 'positionYNumberHeader',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_number_header",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                    ]
+                }
+            ]
+        });
+
+        /**
+         * Footer settings
+         */
+        footerSettings = new PMUI.form.FormPanel({
+            fieldset: true,
+            layout: 'vbox',
+            name: "footer_settings",
+            legend: "Footer Settings".translate(),
+            items: [
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'footerTitle',
+                            pmType: "text",
+                            name: 'footer_title',
+                            label: "Footer Title".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'fontSizeFooter',
+                            pmType: "text",
+                            label: "Font Size".translate(),
+                            required: false,
+                            value: 8,
+                            name: "font_size_footer",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2,
+                            onChange: function (newVal, oldVal) {
+                                if (newVal <= 7 || newVal >= 73) {
+                                    this.setValue(oldVal);
+                                }
+                            }
+                        },
+                        {
+                            id: 'positionXTitleFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_title_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYTitleFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_title_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: 'hbox',
+                    items: [
+                        new CriteriaField({
+                            id: 'footerLogo',
+                            pmType: "text",
+                            name: 'footer_logo',
+                            label: "Footer Logo".translate(),
+                            labelWidth: '26%',
+                            controlsWidth: 285,
+                            required: false,
+                            proportion: 3
+                        }),
+                        {
+                            id: 'logoWidthFooter',
+                            pmType: "text",
+                            label: "Logo Width".translate(),
+                            required: false,
+                            value: 0,
+                            name: "logo_width_footer",
+                            controlsWidth: 50,
+                            labelWidth: '51%',
+                            proportion: 1.2
+                        },
+                        {
+                            id: 'positionXLogoFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_logo_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                        {
+                            id: 'positionYLogoFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_logo_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%'
+                        },
+                    ]
+                },
+                {
+                    pmType: "panel",
+                    layout: "hbox",
+                    items: [
+                        new PMUI.form.FormPanel({
+                            fieldset: false,
+                            layout: 'hbox',
+                            legend: "Footer Settings".translate(),
+                            proportion: 3,
+                            fontSize: 10,
+                            padding: 0,
+                            items: [
+                                new SwitchField({
+                                    id: 'pageNumerFooter',
+                                    labelWidth: "50%",
+                                    label: "Page Number".translate(),
+                                    name: "page_number_footer",
+                                    value: '1',
+                                    controlsWidth: 54,
+                                    proportion: 0.45,
+                                    controlPositioning: 'vertical',
+                                    options: [
+                                        {
+                                            id: 'pageNumberOptionFooter',
+                                            disabled: false,
+                                            value: '1',
+                                            selected: false
+                                        }
+                                    ],
+                                    onChange: function (newVal, oldVal) {
+                                        if (newVal === '["1"]') {
+                                            footerSettings.getField('pagination_title_footer').updateDisabled(false);
+                                            footerSettings.getField('total_number_page_footer').enable();
+                                            getFieldById('totalNumberPageFooter').enable();
+                                            getFieldById('positionXNumberFooter').enable();
+                                            getFieldById('positionYNumberFooter').enable();
+                                        } else {
+                                            footerSettings.getField('pagination_title_footer').updateDisabled(true);
+                                            footerSettings.getField('total_number_page_footer').disable();
+                                            getFieldById('totalNumberPageFooter').disable();
+                                            getFieldById('positionXNumberFooter').disable();
+                                            getFieldById('positionYNumberFooter').disable();
+                                        }
+                                    }
+                                }),
+                                new CriteriaField({
+                                    id: 'paginationTitleFooter',
+                                    pmType: "text",
+                                    name: 'pagination_title_footer',
+                                    label: "Pagination Title".translate(),
+                                    labelWidth: '27%',
+                                    controlsWidth: 170,
+                                    required: false,
+                                    disabled: true
+                                }),
+                            ]
+                        }),
+                        new SwitchField({
+                            id: 'totalNumberPageFooter',
+                            labelWidth: "60%",
+                            label: "Total Number of Pages".translate(),
+                            name: "total_number_page_footer",
+                            value: '1',
+                            controlPositioning: 'vertical',
+                            controlsWidth: 54,
+                            proportion: 1.2,
+                            options: [
+                                {
+                                    id: 'totalNumberPageOptionFooter',
+                                    disabled: false,
+                                    value: '1',
+                                    selected: false
+                                }
+                            ],
+                            onChange: function (newVal, oldVal) {
+                            }
+                        }),
+                        {
+                            id: 'positionXNumberFooter',
+                            pmType: "text",
+                            label: "Position X".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_x_number_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                        {
+                            id: 'positionYNumberFooter',
+                            pmType: "text",
+                            label: "Position Y".translate(),
+                            required: false,
+                            value: 0,
+                            name: "position_y_number_footer",
+                            controlsWidth: 50,
+                            labelWidth: '62%',
+                            disabled: true
+                        },
+                    ]
+                }
+            ]
+        });
+
+        /**
+         * Change the type of control
+         */
+        changeType = function () {
+            headerSettings.getField('font_size_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_title_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_title_header').getControl().getHTML().type = "number";
+            headerSettings.getField('logo_width_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_logo_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_logo_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_x_number_header').getControl().getHTML().type = "number";
+            headerSettings.getField('position_y_number_header').getControl().getHTML().type = "number";
+            footerSettings.getField('font_size_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_title_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_title_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('logo_width_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_logo_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_logo_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_x_number_footer').getControl().getHTML().type = "number";
+            footerSettings.getField('position_y_number_footer').getControl().getHTML().type = "number";
+        };
+
+        /**
+         * Set a minimum value to avoid entering negative numbers
+         */
+        setMinValue = function () {
+            headerSettings.getField('position_x_title_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_title_header').getControl().getHTML().min = "0";
+            headerSettings.getField('logo_width_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_x_logo_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_logo_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_x_number_header').getControl().getHTML().min = "0";
+            headerSettings.getField('position_y_number_header').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_title_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_title_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('logo_width_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_logo_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_logo_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_x_number_footer').getControl().getHTML().min = "0";
+            footerSettings.getField('position_y_number_footer').getControl().getHTML().min = "0";
+        };
 
         //Field "PDF security"
         outputFormDocPdfSecurityEnabled = new PMUI.field.DropDownListField({
@@ -635,6 +1194,56 @@
                     valueType: 'number'
                 },
                 docMargin,
+                new SwitchField({
+                    id: 'enableHeader',
+                    labelWidth: "6%",
+                    label: "Header".translate(),
+                    name: "enableHeader",
+                    value: '0',
+                    controlsWidth: 54,
+                    controlPositioning: 'vertical',
+                    options: [
+                        {
+                            id: 'enableHeader',
+                            disabled: false,
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    onChange: function (newVal, oldVal) {
+                        if (newVal === '["1"]') {
+                            headerSettings.setVisible(true);
+                        } else {
+                            headerSettings.setVisible(false);
+                        }
+                    }
+                }),
+                headerSettings,
+                new SwitchField({
+                    id: 'enableFooter',
+                    labelWidth: "6%",
+                    label: "Footer".translate(),
+                    name: "enableFooter",
+                    value: '0',
+                    controlsWidth: 54,
+                    controlPositioning: 'vertical',
+                    options: [
+                        {
+                            id: 'enableFooter',
+                            disabled: false,
+                            value: '1',
+                            selected: false
+                        }
+                    ],
+                    onChange: function (newVal, oldVal) {
+                        if (newVal === '["1"]') {
+                            footerSettings.setVisible(true);
+                        } else {
+                            footerSettings.setVisible(false);
+                        }
+                    }
+                }),
+                footerSettings,
                 {
                     id: 'outputDocToGenerate',
                     pmType: "dropdown",
@@ -659,14 +1268,13 @@
                     value: "BOTH",
                     onChange: function (newValue, prevValue) {
                         if (newValue == "DOC") {
-                            formOutput.getFields()[11].setVisible(false);
                             outputFormDocPdfSecurityEnabled.setVisible(false);
                             outputFormDocPdfSecurityEnabled.setValue(0);
                             password.setVisible(false);
                             outputFormDocPdfSecurityOpen.setValue("");
                             outputFormDocPdfSecurityOwner.setValue("");
                         } else {
-                            formOutput.getFields()[11].setVisible(true);
+                            outputFormDocPdfSecurityEnabled.setVisible(true);
                         }
                     }
                 },
@@ -837,17 +1445,97 @@
             ]
         });
 
+        /**
+         * Filter data of header settings
+         * @param {Array} data
+         * @return {Array}
+         */
+        setDataHeaderSettings = function (data) {
+            var headerData = {
+                "logo": data.header_logo,
+                "logoWidth": data.logo_width_header,
+                "logoPositionX": data.position_x_logo_header,
+                "logoPositionY": data.position_y_logo_header,
+                "title": data.header_title,
+                "titleFontSize": data.font_size_header,
+                "titleFontPositionX": data.position_x_title_header,
+                "titleFontPositionY": data.position_y_title_header,
+                "pageNumber": headerSettings.getField('page_number_header').value === '["1"]',
+                "pageNumberTitle": headerSettings.getField('pagination_title_header').value,
+                "pageNumberTotal": headerSettings.getField('total_number_page_header').value === '["1"]',
+                "pageNumberPositionX": headerSettings.getField('position_x_number_header').value,
+                "pageNumberPositionY": headerSettings.getField('position_y_number_header').value,
+                "enableHeader": data.enableHeader === '["1"]'
+            };
+            //it is necessary to clean the data because it is already in the json
+            delete data.header_logo;
+            delete data.logo_width_header;
+            delete data.position_x_logo_header;
+            delete data.position_y_logo_header;
+            delete data.header_title;
+            delete data.font_size_header;
+            delete data.position_x_title_header;
+            delete data.position_y_title_header;
+            delete data.page_number_header;
+            delete data.pagination_title_header;
+            delete data.total_number_page_header;
+            delete data.position_x_number_header;
+            delete data.position_y_number_header;
+            delete data.enableHeader;
+            return headerData;
+        };
+
+        /**
+         * Filter data of footer settings
+         * @param {Array} data
+         * @return {Array}
+         */
+         setDataFooterSettings = function (data) {
+            var footerData = {
+                "logo": data.footer_logo,
+                "logoWidth": data.logo_width_footer,
+                "logoPositionX": data.position_x_logo_footer,
+                "logoPositionY": data.position_y_logo_footer,
+                "title": data.footer_title,
+                "titleFontSize": data.font_size_footer,
+                "titleFontPositionX": data.position_x_title_footer,
+                "titleFontPositionY": data.position_y_title_footer,
+                "pageNumber": footerSettings.getField('page_number_footer').value === '["1"]',
+                "pageNumberTitle": footerSettings.getField('pagination_title_footer').value,
+                "pageNumberTotal": footerSettings.getField('total_number_page_footer').value === '["1"]',
+                "pageNumberPositionX": footerSettings.getField('position_x_number_footer').value,
+                "pageNumberPositionY": footerSettings.getField('position_y_number_footer').value,
+                "enableFooter": data.enableFooter === '["1"]'
+            };
+            //it is necessary to clean the data because it is already in the json
+            delete data.footer_logo;
+            delete data.logo_width_footer;
+            delete data.position_x_logo_footer;
+            delete data.position_y_logo_footer;
+            delete data.footer_title;
+            delete data.font_size_footer;
+            delete data.position_x_title_footer;
+            delete data.position_y_title_footer;
+            delete data.page_number_footer;
+            delete data.pagination_title_footer;
+            delete data.total_number_page_footer;
+            delete data.position_x_number_footer;
+            delete data.position_y_number_footer;
+            delete data.enableFooter;
+            return footerData;
+        };
+
         btnSaveWindowOutputDoc = new PMUI.ui.Button({
             id: 'btnSaveWindowOutputDoc',
             text: "Save".translate(),
             handler: function () {
-                var dataAux = getData2PMUI(formOutput.html);
-                if (dataAux.out_doc_title != "" && dataAux.out_doc_filename != "") {
-                    if ((navigator.userAgent.indexOf("MSIE") != -1) || (navigator.userAgent.indexOf("Trident") != -1)) {
-                        itemOutPut = getData2PMUI(formOutput.html);
-                    } else {
-                        itemOutPut = formOutput.getData();
-                    }
+                var itemOutPut;
+                if ((navigator.userAgent.indexOf("MSIE") != -1) || (navigator.userAgent.indexOf("Trident") != -1)) {
+                    itemOutPut = getData2PMUI(formOutput.html);
+                } else {
+                    itemOutPut = formOutput.getData();
+                }
+                if (itemOutPut.out_doc_title != "" && itemOutPut.out_doc_filename != "") {
 
                     itemOutPut['out_doc_type'] = "HTML";
 
@@ -861,7 +1549,8 @@
                     itemOutPut["out_doc_pdf_security_enabled"] = parseInt(itemOutPut["out_doc_pdf_security_enabled"]);
                     itemOutPut["out_doc_versioning"] = parseInt(itemOutPut["out_doc_versioning"]);
                     itemOutPut["out_doc_open_type"] = parseInt(getData2PMUI(formOutput.html).cboByGeneratedFile);
-
+                    itemOutPut["out_doc_header"] = setDataHeaderSettings(itemOutPut);
+                    itemOutPut["out_doc_footer"] = setDataFooterSettings(itemOutPut);
                     if (dataOutPutDocument != '' && dataOutPutDocument != undefined) {
                         itemOutPut['out_doc_uid'] = dataOutPutDocument.out_doc_uid;
                         restClient = new PMRestClient({
@@ -881,7 +1570,7 @@
                         });
                         restClient.executeRestClient();
                     } else {
-                        if (1 === parseInt(dataAux.out_doc_pdf_security_enabled) && (dataAux.out_doc_pdf_security_open_password.trim() === "" || dataAux.out_doc_pdf_security_owner_password.trim() === "")) {
+                        if (1 === parseInt(itemOutPut.out_doc_pdf_security_enabled) && (itemOutPut.out_doc_pdf_security_open_password.trim() === "" || itemOutPut.out_doc_pdf_security_owner_password.trim() === "")) {
                             password.getItems()[0].getItems()[0].isValid();
                             password.getItems()[0].getItems()[1].isValid();
                             return false;
@@ -1001,6 +1690,8 @@
         validateKeysField(docMargin.getField('out_doc_right_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
         validateKeysField(docMargin.getField('out_doc_top_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
         validateKeysField(docMargin.getField('out_doc_bottom_margin').getControls()[0].getHTML(), ['isbackspace', 'isnumber']);
+        changeType();
+        setMinValue();
 
         if (typeof listOutputDocs !== "undefined") {
             winMainOutputDocument.open();

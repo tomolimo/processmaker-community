@@ -2,10 +2,13 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Fields extends Model
 {
+    use HasFactory;
+
     protected $table = 'FIELDS';
     public $timestamps = false;
 
@@ -33,6 +36,39 @@ class Fields extends Model
     }
 
     /**
+     * Scope a query to get the field name
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @param string $name
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeField($query, $name)
+    {
+        return $query->where('FLD_NAME', $name);
+    }
+
+    /**
+     * Scope a query to get the field name or label name
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @param string $field
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeFieldOrLabel($query, $field)
+    {
+        $query->where(function ($query) use ($field) {
+            $query->field($field);
+            $fieldLabel = $field . '_label';
+            $query->orWhere(function ($query) use ($fieldLabel) {
+                $query->field($fieldLabel);
+            });
+        });
+        return $query;
+    }
+
+    /**
      * Get the offline tables
      *
      * @param string $tabUid
@@ -51,5 +87,23 @@ class Fields extends Model
         });
 
         return $data;
+    }
+
+    /**
+     * Search a field related to the table
+     *
+     * @param string $tabUid
+     * @param string $field
+     *
+     * @return bool
+     */
+    public static function searchVariable(string $tabUid, string $field)
+    {
+        $query = Fields::query();
+        $query->table($tabUid);
+        $query->fieldOrLabel($field);
+        $result = $query->get()->values()->toArray();
+
+        return !empty($result);
     }
 }

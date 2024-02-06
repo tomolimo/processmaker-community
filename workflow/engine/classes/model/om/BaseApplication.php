@@ -166,6 +166,18 @@ abstract class BaseApplication extends BaseObject implements Persistent
     protected $app_routing_data;
 
     /**
+     * The value for the pro_id field.
+     * @var        int
+     */
+    protected $pro_id = 0;
+
+    /**
+     * The value for the app_init_user_id field.
+     * @var        int
+     */
+    protected $app_init_user_id = 0;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -514,6 +526,28 @@ abstract class BaseApplication extends BaseObject implements Persistent
     {
 
         return $this->app_routing_data;
+    }
+
+    /**
+     * Get the [pro_id] column value.
+     * 
+     * @return     int
+     */
+    public function getProId()
+    {
+
+        return $this->pro_id;
+    }
+
+    /**
+     * Get the [app_init_user_id] column value.
+     * 
+     * @return     int
+     */
+    public function getAppInitUserId()
+    {
+
+        return $this->app_init_user_id;
     }
 
     /**
@@ -1039,6 +1073,50 @@ abstract class BaseApplication extends BaseObject implements Persistent
     } // setAppRoutingData()
 
     /**
+     * Set the value of [pro_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setProId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->pro_id !== $v || $v === 0) {
+            $this->pro_id = $v;
+            $this->modifiedColumns[] = ApplicationPeer::PRO_ID;
+        }
+
+    } // setProId()
+
+    /**
+     * Set the value of [app_init_user_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setAppInitUserId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->app_init_user_id !== $v || $v === 0) {
+            $this->app_init_user_id = $v;
+            $this->modifiedColumns[] = ApplicationPeer::APP_INIT_USER_ID;
+        }
+
+    } // setAppInitUserId()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -1101,12 +1179,16 @@ abstract class BaseApplication extends BaseObject implements Persistent
 
             $this->app_routing_data = $rs->getString($startcol + 22);
 
+            $this->pro_id = $rs->getInt($startcol + 23);
+
+            $this->app_init_user_id = $rs->getInt($startcol + 24);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 23; // 23 = ApplicationPeer::NUM_COLUMNS - ApplicationPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 25; // 25 = ApplicationPeer::NUM_COLUMNS - ApplicationPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating Application object", $e);
@@ -1379,6 +1461,12 @@ abstract class BaseApplication extends BaseObject implements Persistent
             case 22:
                 return $this->getAppRoutingData();
                 break;
+            case 23:
+                return $this->getProId();
+                break;
+            case 24:
+                return $this->getAppInitUserId();
+                break;
             default:
                 return null;
                 break;
@@ -1422,6 +1510,8 @@ abstract class BaseApplication extends BaseObject implements Persistent
             $keys[20] => $this->getAppDelayDuration(),
             $keys[21] => $this->getAppDriveFolderUid(),
             $keys[22] => $this->getAppRoutingData(),
+            $keys[23] => $this->getProId(),
+            $keys[24] => $this->getAppInitUserId(),
         );
         return $result;
     }
@@ -1521,6 +1611,12 @@ abstract class BaseApplication extends BaseObject implements Persistent
                 break;
             case 22:
                 $this->setAppRoutingData($value);
+                break;
+            case 23:
+                $this->setProId($value);
+                break;
+            case 24:
+                $this->setAppInitUserId($value);
                 break;
         } // switch()
     }
@@ -1637,6 +1733,14 @@ abstract class BaseApplication extends BaseObject implements Persistent
             $this->setAppRoutingData($arr[$keys[22]]);
         }
 
+        if (array_key_exists($keys[23], $arr)) {
+            $this->setProId($arr[$keys[23]]);
+        }
+
+        if (array_key_exists($keys[24], $arr)) {
+            $this->setAppInitUserId($arr[$keys[24]]);
+        }
+
     }
 
     /**
@@ -1740,6 +1844,14 @@ abstract class BaseApplication extends BaseObject implements Persistent
             $criteria->add(ApplicationPeer::APP_ROUTING_DATA, $this->app_routing_data);
         }
 
+        if ($this->isColumnModified(ApplicationPeer::PRO_ID)) {
+            $criteria->add(ApplicationPeer::PRO_ID, $this->pro_id);
+        }
+
+        if ($this->isColumnModified(ApplicationPeer::APP_INIT_USER_ID)) {
+            $criteria->add(ApplicationPeer::APP_INIT_USER_ID, $this->app_init_user_id);
+        }
+
 
         return $criteria;
     }
@@ -1837,6 +1949,10 @@ abstract class BaseApplication extends BaseObject implements Persistent
         $copyObj->setAppDriveFolderUid($this->app_drive_folder_uid);
 
         $copyObj->setAppRoutingData($this->app_routing_data);
+
+        $copyObj->setProId($this->pro_id);
+
+        $copyObj->setAppInitUserId($this->app_init_user_id);
 
 
         $copyObj->setNew(true);

@@ -1,8 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Log;
+use ProcessMaker\BusinessModel\DynaForm;
 use ProcessMaker\Core\System;
+use ProcessMaker\Exception\RBACException;
 use ProcessMaker\Model\AdditionalTables as AdditionalTablesModel;
+use ProcessMaker\Model\Dynaform as DynaformModel;
+use ProcessMaker\Model\ProcessVariables;
+use ProcessMaker\Project\Bpmn;
 use ProcessMaker\Validation\ExceptionRestApi;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 
@@ -22,6 +27,14 @@ class pmTablesProxy extends HttpProxyController
      */
     public function getList($httpData)
     {
+        // Include global object RBAC
+        global $RBAC;
+
+        // Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+        if ($RBAC->userCanAccess('PM_FACTORY') !== 1 && ($RBAC->userCanAccess('PM_SETUP') !== 1 || $RBAC->userCanAccess('PM_SETUP_PM_TABLES') !== 1)) {
+            throw new RBACException('ID_ACCESS_DENIED', 403);
+        }
+
         $configurations = new Configurations();
         $processMap = new ProcessMap();
 
@@ -950,7 +963,9 @@ class pmTablesProxy extends HttpProxyController
         }
 
         //ob_end_clean is used to close the ob_start opening at the beginning of this method.
-        ob_end_clean();
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
         return $result;
     }
 
@@ -1292,90 +1307,61 @@ class pmTablesProxy extends HttpProxyController
         return $fields;
     }
 
-    public function _getDynafields ($proUid, $type = 'xmlform', $start = null, $limit = null, $filter = null)
+    /**
+     * Get fields from all forms in a process
+     *
+     * @param string $proUid
+     * @param string $type
+     * @param int $start
+     * @param int $limit
+     * @param string $filter
+     * @return array
+     */
+    public function _getDynafields($proUid, $type = 'xmlform', $start = null, $limit = null, $filter = null)
     {
-
+        // Cache session flag
         $cache = 1;
-        if (! isset( $_SESSION['_cache_pmtables'] ) || (isset( $_SESSION['_cache_pmtables'] ) && $_SESSION['_cache_pmtables']['pro_uid'] != $proUid) || (isset( $_SESSION['_cache_pmtables'] ) && $_SESSION['_cache_pmtables']['dyn_uid'] != $this->dynUid)) {
 
-            require_once 'classes/model/Dynaform.php';
+        // If the fields aren't in session cache, we need to get them
+        if (!isset($_SESSION['_cache_pmtables']) || (isset($_SESSION['_cache_pmtables']) && $_SESSION['_cache_pmtables']['pro_uid'] != $proUid) ||
+            (isset($_SESSION['_cache_pmtables']) && $_SESSION['_cache_pmtables']['dyn_uid'] != $this->dynUid)
+        ) {
+            // Initialize variables
             $cache = 0;
-            $fields = array ();
-            $fieldsNames = array ();
+            $fields = [];
+            $fieldsNames = [];
 
-            $oCriteria = new Criteria( 'workflow' );
-            $oCriteria->addSelectColumn( DynaformPeer::DYN_FILENAME );
-            $oCriteria->add( DynaformPeer::PRO_UID, $proUid );
-            $oCriteria->add( DynaformPeer::DYN_TYPE, $type );
-
-            if (isset( $this->dynUid )) {
-                $oCriteria->add( DynaformPeer::DYN_UID, $this->dynUid );
-            }
-
-            $oDataset = DynaformPeer::doSelectRS( $oCriteria );
-            $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $oDataset->next();
-
-            $excludeFieldsList = array ('multipleFile','title','subtitle','link','file','button','reset','submit','listbox','checkgroup','grid','javascript','location','scannerCode','array'
-            );
-
-            $labelFieldsTypeList = array ('dropdown','radiogroup');
-
-            $index = 0;
-
-            while ($aRow = $oDataset->getRow()) {
-                if (file_exists( PATH_DYNAFORM . PATH_SEP . $aRow['DYN_FILENAME'] . '.xml' )) {
-                    $dynaformHandler = new DynaformHandler( PATH_DYNAFORM . $aRow['DYN_FILENAME'] . '.xml' );
-                    $nodeFieldsList = $dynaformHandler->getFields();
-
-                    foreach ($nodeFieldsList as $node) {
-                        $arrayNode = $dynaformHandler->getArray( $node );
-                        $fieldName = $arrayNode['__nodeName__'];
-                        $fieldType = isset($arrayNode['type']) ? $arrayNode['type']: '';
-                        $fieldValidate = ( isset($arrayNode['validate'])) ? $arrayNode['validate'] : '';
-
-                        if (! in_array( $fieldType, $excludeFieldsList ) && ! in_array( $fieldName, $fieldsNames ) ) {
-                            $fields[] = array (
-                                'FIELD_UID' => $fieldName . '-' . $fieldType,
-                                'FIELD_NAME' => $fieldName,
-                                'FIELD_VALIDATE'=>$fieldValidate,
-                                '_index' => $index ++,
-                                '_isset' => true
-                            );
-                            $fieldsNames[] = $fieldName;
-
-                            if (in_array( $fieldType, $labelFieldsTypeList ) && ! in_array( $fieldName . '_label', $fieldsNames )) {
-                                $fields[] = array (
-                                    'FIELD_UID' => $fieldName . '_label' . '-' . $fieldType,
-                                    'FIELD_NAME' => $fieldName . '_label',
-                                    'FIELD_VALIDATE'=>$fieldValidate,
-                                    '_index' => $index ++,
-                                    '_isset' => true
-                                );
-                                $fieldsNames[] = $fieldName;
-                            }
-                        }
-                    }
-                }
-                $oDataset->next();
-            }
-
-            // getting bpmn projects
-            $bpmn = new \ProcessMaker\Project\Bpmn();
-
+            // If exist the process in BPMN Projects table, is a process created in version 3.x
+            $bpmn = new Bpmn();
             if ($bpmn->exists($proUid)) {
                 switch ($type) {
                     case 'xmlform':
+                        // Initialize variables
                         $arrayDataTypeToExclude = ['array', 'grid'];
-                        $arrayTypeToExclude = ['multipleFile', 'title', 'subtitle', 'link', 'file', 'button', 'reset', 'submit', 'listbox', 'grid', 'array', 'javascript', 'location', 'scannerCode'];
-
+                        $arrayTypeToExclude = [
+                            'multipleFile',
+                            'title',
+                            'subtitle',
+                            'link',
+                            'file',
+                            'button',
+                            'reset',
+                            'submit',
+                            'listbox',
+                            'grid',
+                            'array',
+                            'javascript',
+                            'location',
+                            'scannerCode'
+                        ];
                         $arrayControlSupported = [];
+                        $dynaFormNotAllowedVariables = $this->getDynaformVariables($proUid, $arrayTypeToExclude, false);
+                        $index = 0;
 
-                        $dynaformAllControl = $this->getDynaformVariables($proUid, $arrayTypeToExclude, true, 'DATA');
-
-                        foreach ($dynaformAllControl as $value) {
+                        // Get all supported controls
+                        $dynaFormAllControl = $this->getDynaformVariables($proUid, $arrayTypeToExclude, true, 'DATA');
+                        foreach ($dynaFormAllControl as $value) {
                             $arrayControl = array_change_key_case($value, CASE_UPPER);
-
                             if (isset($arrayControl['DATATYPE']) && isset($arrayControl['TYPE'])) {
                                 if (!in_array($arrayControl['DATATYPE'], $arrayDataTypeToExclude) &&
                                     !in_array($arrayControl['TYPE'], $arrayTypeToExclude)
@@ -1385,29 +1371,16 @@ class pmTablesProxy extends HttpProxyController
                             }
                         }
 
-                        $dynaformNotAllowedVariables = $this->getDynaformVariables($proUid, $arrayTypeToExclude, false);
-
-                        $criteria = new Criteria('workflow');
-
-                        $criteria->addSelectColumn(ProcessVariablesPeer::VAR_UID);
-                        $criteria->addSelectColumn(ProcessVariablesPeer::VAR_NAME);
-                        $criteria->addSelectColumn(ProcessVariablesPeer::VAR_FIELD_TYPE);
-                        $criteria->add(ProcessVariablesPeer::PRJ_UID, $proUid, Criteria::EQUAL);
-
-                        $rsCriteria = ProcessVariablesPeer::doSelectRS($criteria);
-                        $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-                        $index = 0;
-
-                        while ($rsCriteria->next()) {
-                            $record = $rsCriteria->getRow();
-
-                            if (!in_array($record['VAR_NAME'], $dynaformNotAllowedVariables) &&
+                        // Get all process variables
+                        $records = ProcessVariables::query()->select(['VAR_UID', 'VAR_NAME', 'VAR_FIELD_TYPE'])
+                            ->where('PRJ_UID', '=', $proUid)->get()->toArray();
+                        foreach ($records as $record) {
+                            if (!in_array($record['VAR_NAME'], $dynaFormNotAllowedVariables) &&
                                 !in_array($record['VAR_FIELD_TYPE'], $arrayTypeToExclude) &&
                                 !in_array($record['VAR_NAME'], $fieldsNames)
                             ) {
                                 $fields[] = [
-                                    'FIELD_UID'  => $record['VAR_NAME'] . '-' . $record['VAR_FIELD_TYPE'],
+                                    'FIELD_UID' => $record['VAR_NAME'] . '-' . $record['VAR_FIELD_TYPE'],
                                     'FIELD_NAME' => $record['VAR_NAME'],
                                     'FIELD_VALIDATE' => 'any',
                                     '_index' => $index++,
@@ -1421,7 +1394,7 @@ class pmTablesProxy extends HttpProxyController
                                 !in_array($record['VAR_NAME'] . '_label', $fieldsNames)
                             ) {
                                 $fields[] = [
-                                    'FIELD_UID'  => $record['VAR_NAME'] . '_label' . '-' . $arrayControlSupported[$record['VAR_UID']],
+                                    'FIELD_UID' => $record['VAR_NAME'] . '_label' . '-' . $arrayControlSupported[$record['VAR_UID']],
                                     'FIELD_NAME' => $record['VAR_NAME'] . '_label',
                                     'FIELD_VALIDATE' => 'any',
                                     '_index' => $index++,
@@ -1433,13 +1406,15 @@ class pmTablesProxy extends HttpProxyController
                         }
                         break;
                     case 'grid':
-                        $dynaForm = new \ProcessMaker\BusinessModel\DynaForm();
-
+                        // Initialize variables
                         $dynaFormUid = $this->dynUid;
                         $gridId = $this->gridId;
 
+                        // Get form information
+                        $dynaForm = new DynaForm();
                         $arrayDynaFormData = $dynaForm->getDynaFormRecordByPk($dynaFormUid, [], false);
 
+                        // If form exists, get grids and fields
                         if ($arrayDynaFormData !== false) {
                             $arrayGrid = PmDynaform::getGridsAndFields($arrayDynaFormData['DYN_CONTENT']);
 
@@ -1447,13 +1422,13 @@ class pmTablesProxy extends HttpProxyController
                                 $grid = $arrayGrid[$gridId];
 
                                 $arrayValidTypes = [
-                                    'text'     => ['type' => 'text',     'label' => false],
+                                    'text' => ['type' => 'text', 'label' => false],
                                     'textarea' => ['type' => 'textarea', 'label' => false],
                                     'dropdown' => ['type' => 'dropdown', 'label' => true],
                                     'checkbox' => ['type' => 'checkbox', 'label' => false],
-                                    'datetime' => ['type' => 'date',     'label' => false],
-                                    'suggest'  => ['type' => 'suggest',  'label' => false],
-                                    'hidden'   => ['type' => 'hidden',   'label' => false]
+                                    'datetime' => ['type' => 'date', 'label' => false],
+                                    'suggest' => ['type' => 'suggest', 'label' => false],
+                                    'hidden' => ['type' => 'hidden', 'label' => false]
                                 ];
 
                                 $index = 0;
@@ -1466,7 +1441,7 @@ class pmTablesProxy extends HttpProxyController
                                     ) {
                                         if (!in_array($field->id, $fieldsNames)) {
                                             $fields[] = [
-                                                'FIELD_UID'  => $field->id . '-' . $arrayValidTypes[$field->type]['type'],
+                                                'FIELD_UID' => $field->id . '-' . $arrayValidTypes[$field->type]['type'],
                                                 'FIELD_NAME' => $field->id,
                                                 'FIELD_VALIDATE' => 'any',
                                                 '_index' => $index++,
@@ -1480,7 +1455,7 @@ class pmTablesProxy extends HttpProxyController
                                             !in_array($field->id . '_label', $fieldsNames)
                                         ) {
                                             $fields[] = [
-                                                'FIELD_UID'  => $field->id . '_label' . '-' . $arrayValidTypes[$field->type]['type'],
+                                                'FIELD_UID' => $field->id . '_label' . '-' . $arrayValidTypes[$field->type]['type'],
                                                 'FIELD_NAME' => $field->id . '_label',
                                                 'FIELD_VALIDATE' => 'any',
                                                 '_index' => $index++,
@@ -1495,47 +1470,115 @@ class pmTablesProxy extends HttpProxyController
                         }
                         break;
                 }
+            } else {
+                // Initialize variables
+                $excludeFieldsList = [
+                    'multipleFile',
+                    'title',
+                    'subtitle',
+                    'link',
+                    'file',
+                    'button',
+                    'reset',
+                    'submit',
+                    'listbox',
+                    'checkgroup',
+                    'grid',
+                    'javascript',
+                    'location',
+                    'scannerCode',
+                    'array'
+                ];
+                $labelFieldsTypeList = ['dropdown', 'radiogroup'];
+                $index = 0;
+
+                // Get all forms from the process
+                $query = DynaformModel::query()->select(['DYN_FILENAME'])->where('PRO_UID', '=', $proUid)
+                    ->where('DYN_TYPE', '=', $type);
+                if (isset($this->dynUid)) {
+                    $query->where('DYN_UID', '=', $this->dynUid);
+                }
+                $rows = $query->get()->toArray();
+
+                foreach ($rows as $row) {
+                    // If exists the XML file related exist, we need to parse to extract all fields
+                    if (file_exists(PATH_DYNAFORM . PATH_SEP . $row['DYN_FILENAME'] . '.xml')) {
+                        $dynaFormHandler = new DynaformHandler(PATH_DYNAFORM . $row['DYN_FILENAME'] . '.xml');
+                        $nodeFieldsList = $dynaFormHandler->getFields();
+
+                        foreach ($nodeFieldsList as $node) {
+                            $arrayNode = $dynaFormHandler->getArray($node);
+                            $fieldName = $arrayNode['__nodeName__'];
+                            $fieldType = isset($arrayNode['type']) ? $arrayNode['type'] : '';
+                            $fieldValidate = (isset($arrayNode['validate'])) ? $arrayNode['validate'] : '';
+
+                            if (!in_array($fieldType, $excludeFieldsList) && !in_array($fieldName, $fieldsNames)) {
+                                $fields[] = [
+                                    'FIELD_UID' => $fieldName . '-' . $fieldType,
+                                    'FIELD_NAME' => $fieldName,
+                                    'FIELD_VALIDATE' => $fieldValidate,
+                                    '_index' => $index++,
+                                    '_isset' => true
+                                ];
+                                $fieldsNames[] = $fieldName;
+
+                                if (in_array($fieldType, $labelFieldsTypeList) && !in_array($fieldName . '_label',
+                                        $fieldsNames)
+                                ) {
+                                    $fields[] = [
+                                        'FIELD_UID' => $fieldName . '_label' . '-' . $fieldType,
+                                        'FIELD_NAME' => $fieldName . '_label',
+                                        'FIELD_VALIDATE' => $fieldValidate,
+                                        '_index' => $index++,
+                                        '_isset' => true
+                                    ];
+                                    $fieldsNames[] = $fieldName;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            sort( $fields );
+            // Sort fields
+            sort($fields);
 
-            // if is a editing
-            $fieldsEdit = array ();
-            if (isset( $_SESSION['ADD_TAB_UID'] )) {
-                require_once 'classes/model/AdditionalTables.php';
-
+            // If the report table already exists, get all information of the report table
+            $fieldsEdit = [];
+            if (isset($_SESSION['ADD_TAB_UID'])) {
                 $additionalTables = new AdditionalTables();
-                $table = $additionalTables->load( $_SESSION['ADD_TAB_UID'], true );
+                $table = $additionalTables->load($_SESSION['ADD_TAB_UID'], true);
 
                 foreach ($table['FIELDS'] as $i => $field) {
-                    array_push( $fieldsEdit, $field['FLD_DYN_NAME'] );
+                    array_push($fieldsEdit, $field['FLD_DYN_NAME']);
                 }
-            } //end editing
+            }
 
-            $indexes = array();
+            // Map response array
+            $indexes = [];
             foreach ($fields as $i => $field) {
                 $fields[$i]['_index'] = $i;
                 $indexes[$field['FIELD_NAME']] = $i;
 
-                if (in_array( $field['FIELD_NAME'], $fieldsEdit )) {
+                if (in_array($field['FIELD_NAME'], $fieldsEdit)) {
                     $fields[$i]['_isset'] = false;
                 }
             }
 
+            // Build the cache session (only for processes created in version 2.x)
+            $_SESSION['_cache_pmtables'] = [];
             $_SESSION['_cache_pmtables']['pro_uid'] = $proUid;
             $_SESSION['_cache_pmtables']['dyn_uid'] = $this->dynUid;
             $_SESSION['_cache_pmtables']['rows'] = $fields;
-            $_SESSION['_cache_pmtables']['count'] = count( $fields );
+            $_SESSION['_cache_pmtables']['count'] = count($fields);
             $_SESSION['_cache_pmtables']['indexes'] = $indexes;
-        } //end reload
+        }
 
-
-        $fields = array ();
-        $tmp = array ();
-
+        // Filter the fields
+        $tmp = [];
         foreach ($_SESSION['_cache_pmtables']['rows'] as $i => $row) {
-            if (isset( $filter ) && $filter != '') {
-                if ($row['_isset'] && stripos( $row['FIELD_NAME'], $filter ) !== false) {
+            if (isset($filter) && $filter != '') {
+                if ($row['_isset'] && stripos($row['FIELD_NAME'], $filter) !== false) {
                     $tmp[] = $row;
                 }
             } else {
@@ -1545,10 +1588,15 @@ class pmTablesProxy extends HttpProxyController
             }
         }
 
-        $fields = array_slice( $tmp, $start, $limit );
+        // Get the slice requested
+        $fields = array_slice($tmp, $start, $limit);
 
-        return array ('cache' => $cache,'count' => count( $tmp ),'rows' => $fields
-        );
+        // Return data
+        return [
+            'cache' => $cache,
+            'count' => count($tmp),
+            'rows' => $fields
+        ];
     }
 
     /**

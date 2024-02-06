@@ -1,16 +1,28 @@
 <?php
-/**
- * Model factory for a APP_THREAD
- */
 
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(\ProcessMaker\Model\AppThread::class, function (Faker $faker) {
-    return [
-        'APP_UID' => G::generateUniqueID(),
-        'APP_THREAD_INDEX' => $faker->unique()->numberBetween(1, 2000),
-        'APP_THREAD_PARENT' => $faker->unique()->numberBetween(1, 2000),
-        'APP_THREAD_STATUS' => $faker->randomElement(['OPEN', 'CLOSED']),
-        'DEL_INDEX' => $faker->unique()->numberBetween(1, 2000)
-    ];
-});
+use App\Factories\Factory;
+use G;
+use Illuminate\Support\Str;
+
+class AppThreadFactory extends Factory
+{
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        return [
+            'APP_UID' => G::generateUniqueID(),
+            'APP_THREAD_INDEX' => $this->faker->unique()->numberBetween(1, 2000),
+            'APP_THREAD_PARENT' => $this->faker->unique()->numberBetween(1, 2000),
+            'APP_THREAD_STATUS' => $this->faker->randomElement(['OPEN', 'CLOSED']),
+            'DEL_INDEX' => $this->faker->unique()->numberBetween(1, 2000)
+        ];
+    }
+
+}

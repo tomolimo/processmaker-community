@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class AbeConfiguration extends model
 {
+    use HasFactory;
+
     protected $table = "ABE_CONFIGURATION";
     // We do not have create/update timestamps for this table
     public $timestamps = false;

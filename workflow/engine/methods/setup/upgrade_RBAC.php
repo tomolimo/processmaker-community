@@ -38,6 +38,7 @@ $aRequiredPermissions = array('PM_LOGIN',
                               'PM_EDITPERSONALINFO',
                               'PM_FOLDERS_VIEW',
                               'PM_FOLDERS_ADD_FOLDER',
-                              'PM_FOLDERS_ADD_FILE'
+                              'PM_FOLDERS_ADD_FILE',
+                              'TASK_METRICS_VIEW'
                               );
 

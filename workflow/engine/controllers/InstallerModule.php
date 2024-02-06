@@ -13,8 +13,8 @@ include PATH_LANGUAGECONT . "translation." . SYS_LANG;
 class InstallerModule extends Controller
 {
     const MYSQL_VERSION_MAXIMUM_SUPPORTED = "5.7";
-    const PHP_VERSION_MINIMUM_SUPPORTED = "7.1";
-    const PHP_VERSION_NOT_SUPPORTED = "7.4";
+    const PHP_VERSION_MINIMUM_SUPPORTED = "7.3";
+    const PHP_VERSION_NOT_SUPPORTED = "8.2";
     public $path_config;
     public $path_languages;
     public $path_plugins;
@@ -203,7 +203,6 @@ class InstallerModule extends Controller
         $info->multibyte = new stdclass();
         $info->soap = new stdclass();
         $info->ldap = new stdclass();
-        $info->mcrypt = new stdclass();
         $info->memory = new stdclass();
 
         $info->php->version = $phpVer;
@@ -271,10 +270,6 @@ class InstallerModule extends Controller
             $info->soap->result = true;
             $info->soap->version = G::LoadTranslation('ID_ENABLED');
         }
-
-        //mcrypt  info
-        $info->mcrypt->result = extension_loaded('mcrypt');
-        $info->mcrypt->version = $info->mcrypt->result ? G::LoadTranslation('ID_ENABLED') : G::LoadTranslation('ID_NOT_ENABLED');
 
         // ldap info
         $info->ldap->result = false;
@@ -618,10 +613,14 @@ class InstallerModule extends Controller
         try {
             $host = $host === 'localhost' || $host === '127.0.0.1' ? 'localhost' : '%';
 
-            $query = "GRANT ALL PRIVILEGES ON `$psDatabase`.* TO $psUser@'$host' IDENTIFIED BY '$psPassword' WITH GRANT OPTION";
+            $query = "CREATE USER '$psUser'@'$host' IDENTIFIED WITH mysql_native_password BY '$psPassword'";
             DB::connection(self::CONNECTION_INSTALL)
                 ->statement($query);
 
+            $query = "GRANT ALL PRIVILEGES ON `$psDatabase`.* TO '$psUser'@'$host' WITH GRANT OPTION";
+            DB::connection(self::CONNECTION_INSTALL)
+                ->statement($query);
+            
             $this->installLog($query);
 
         } catch (QueryException $e) {
@@ -725,9 +724,10 @@ class InstallerModule extends Controller
             $dbText .= sprintf("  define ('DB_REPORT_USER', '%s' );\n", $wfGrantUser);
             $dbText .= sprintf("  define ('DB_REPORT_PASS', '%s' );\n", $wfPass);
 
-            if (defined('PARTNER_FLAG') || isset($_REQUEST['PARTNER_FLAG'])) {
+            $requestFlag = $_REQUEST['PARTNER_FLAG'];
+            if (defined('PARTNER_FLAG') || isset($requestFlag)) {
                 $dbText .= "\n";
-                $dbText .= "  define ('PARTNER_FLAG', " . (defined('PARTNER_FLAG') ? PARTNER_FLAG : isset($_REQUEST['PARTNER_FLAG']) ? $_REQUEST['PARTNER_FLAG'] : 'false') . ");\n";
+                $dbText .= "  define ('PARTNER_FLAG', " . (defined('PARTNER_FLAG') ? PARTNER_FLAG : (isset($requestFlag) ? $requestFlag : 'false') ) . ");\n";
                 if (!empty($this->systemName)) {
                     $dbText .= "  define ('SYSTEM_NAME', '" . $this->systemName . "');\n";
                 }
@@ -984,7 +984,13 @@ class InstallerModule extends Controller
                 $info->wfDatabaseExists = count($response) > 0;
                 break;
             case 'sqlsrv':
-                $arguments = array("UID" => $db_username, "PWD" => $db_password);
+                $arguments = [
+                    'UID' => $db_username,
+                    'PWD' => $db_password,
+                    'CharacterSet' => 'UTF-8',
+                    'Encrypt' => true,
+                    'TrustServerCertificate' => true
+                ];
                 $link = @sqlsrv_connect($db_hostname, $arguments);
                 $wfDatabase = $filter->validateInput($_REQUEST['wfDatabase'], 'nosql');
                 $query = "select * from sys.databases where name = '%s' ";

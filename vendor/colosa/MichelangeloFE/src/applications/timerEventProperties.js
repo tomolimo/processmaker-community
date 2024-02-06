@@ -142,11 +142,6 @@
                                 tmrevn_option: "ONE-DATE-TIME",
                                 tmrevn_next_run_date: $("#oneDateTime").find("input:eq(0)").val()
                             };
-                            for (var i in ENABLED_FEATURES) {
-                                if (ENABLED_FEATURES[i] == 'oq3S29xemxEZXJpZEIzN01qenJUaStSekY4cTdJVm5vbWtVM0d4S2lJSS9qUT0=') {
-                                    dataTimer.tmrevn_next_run_date = convertDatetimeToIso8601(dataTimer.tmrevn_next_run_date);
-                                }
-                            }
                             break;
                         case "5": /*every*/
                             dataTimer = {
@@ -184,6 +179,7 @@
                             };
                             break;
                     }
+                    dataTimer.caseTitle = formData.txtCaseTitle;
                     if (formTimerEvent.getField("tmrevn_uid").getValue() == "") {
                         restClientNewTimerEvent(dataTimer);
                     } else {
@@ -265,12 +261,14 @@
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showDailyItems = function () {
@@ -286,12 +284,14 @@
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showMonthlyItems = function () {
@@ -306,12 +306,14 @@
             formTimerEvent.getField('monthsGroup').setVisible(true);
             formTimerEvent.getField('monthsGroup').setRequired(true);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
 
         showOneDateTimeItems = function () {
@@ -326,12 +328,14 @@
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(false);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(false);
+            }
         };
 
         showEveryItems = function () {
@@ -346,12 +350,14 @@
             formTimerEvent.getField('monthsGroup').setVisible(false);
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('dayType').setRequired(false);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('hourType').setRequired(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+                formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setRequired(true);
+            }
         };
         /*intermediate*/
         showWaitForItems = function () {
@@ -365,9 +371,11 @@
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(false);
             formTimerEvent.getField('dateTimeVariablePicker').setRequired(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(true);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[1].items.get(4).getField('dayType').setVisible(true);
+                formTimerEvent.getItems()[1].items.get(4).getField('hourType').setVisible(true);
+                formTimerEvent.getItems()[1].items.get(4).getField('minuteType').setVisible(true);
+            }
         };
 
         showWaitUntilItems = function () {
@@ -381,10 +389,22 @@
             formTimerEvent.getField('monthsGroup').setRequired(false);
             formTimerEvent.getField('dateTimeVariablePicker').setVisible(true);
             formTimerEvent.getField('dateTimeVariablePicker').setRequired(true);
-            formTimerEvent.getItems()[0].items.get(4).getField('dayType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('hourType').setVisible(false);
-            formTimerEvent.getItems()[0].items.get(4).getField('minuteType').setVisible(false);
+            if (formTimerEvent.getItems()[0].items !== undefined) {
+                formTimerEvent.getItems()[1].items.get(4).getField('dayType').setVisible(false);
+                formTimerEvent.getItems()[1].items.get(4).getField('hourType').setVisible(false);
+                formTimerEvent.getItems()[1].items.get(4).getField('minuteType').setVisible(false);
+            }
         };
+
+        this.txtCaseTitle = new CriteriaField({
+            id: "txtCaseTitle",
+            name: "txtCaseTitle",
+            valueType: "string",
+            label: "Case Title".translate(),
+            maxLength: 200,
+            value: "",
+            controlsWidth: 500
+        });
 
         radioGroup = new PMUI.field.RadioButtonGroupField({
             id: 'radioGroup',
@@ -641,6 +661,7 @@
             name: "formTimerEvent",
             title: '',
             items: [
+                this.txtCaseTitle,
                 {
                     id: "panelDetailsCustom",
                     pmType: "panel",
@@ -783,7 +804,11 @@
                 typeRequest: 'get',
                 functionSuccess: function (xhr, response) {
                     if (typeof response === "object" && JSON.stringify(response).length > 2) {
-                        var opt = response.tmrevn_option.toUpperCase();
+                        var opt = "";
+                        if (typeof response.tmrevn_option !== 'undefined') {
+                            opt = response.tmrevn_option.toUpperCase();
+                        }
+                        formTimerEvent.getField("txtCaseTitle").setValue(response.tas_def_title);
                         switch (opt) {
                             case "HOURLY":
                                 $("#radioGroup").find("input:eq(0)").trigger("click");

@@ -11,6 +11,7 @@ use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\Condition;
 use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Components\FunctionCall;
+use PhpMyAdmin\SqlParser\Components\GroupKeyword;
 use PhpMyAdmin\SqlParser\Components\IndexHint;
 use PhpMyAdmin\SqlParser\Components\IntoKeyword;
 use PhpMyAdmin\SqlParser\Components\JoinKeyword;
@@ -72,6 +73,7 @@ class SelectStatement extends Statement
         'SQL_CALC_FOUND_ROWS' => 9,
     ];
 
+    /** @var array<string,int> */
     public static $END_OPTIONS = [
         'FOR UPDATE' => 1,
         'LOCK IN SHARE MODE' => 1,
@@ -256,7 +258,7 @@ class SelectStatement extends Statement
     /**
      * Conditions used for grouping the result set.
      *
-     * @var OrderKeyword[]
+     * @var GroupKeyword[]
      */
     public $group;
 

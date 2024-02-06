@@ -2,11 +2,14 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use AdditionalTables as ModelAdditionalTables;
 use Illuminate\Database\Eloquent\Model;
 
 class AdditionalTables extends Model
 {
+    use HasFactory;
+
     protected $table = 'ADDITIONAL_TABLES';
     public $timestamps = false;
 
@@ -30,6 +33,34 @@ class AdditionalTables extends Model
     public function scopeOffline($query)
     {
         return $query->where('ADD_TAB_OFFLINE', '=', 1);
+    }
+
+    /**
+     * Scope a query to get the tables related to the process
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @param string $proUid
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeProcess($query, string $proUid)
+    {
+        return $query->where('PRO_UID', $proUid);
+    }
+
+    /**
+     * Get tables related to the process
+     * 
+     * @param string $proUid
+     * @return array
+     */
+    public static function getTables(string $proUid)
+    {
+        $query = AdditionalTables::query()->select();
+        $query->process($proUid);
+        $result = $query->get()->values()->toArray();
+
+        return $result;
     }
 
     /**

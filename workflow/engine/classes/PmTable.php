@@ -821,7 +821,7 @@ class PmTable
      *
      * @return array contains all supported columns types provided by propel
      */
-    public function getPropelSupportedColumnTypes()
+    public static function getPropelSupportedColumnTypes()
     {
         /**
          * http://www.propelorm.org/wiki/Documentation/1.2/Schema
@@ -926,7 +926,8 @@ class PmTable
             $args[] = $target;
         }
 
-        if (DIRECTORY_SEPARATOR != '\\' && (function_exists('posix_isatty') && @posix_isatty(STDOUT))) {
+        $fd = defined('STDOUT') ? STDOUT : fopen('php://stdout', 'w');
+        if (DIRECTORY_SEPARATOR != '\\' && (function_exists('posix_isatty') && posix_isatty($fd))) {
             $args[] = '-logger';
             $args[] = 'phing.listener.AnsiColorLogger';
         }

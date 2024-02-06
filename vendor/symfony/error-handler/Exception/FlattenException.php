@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\ErrorHandler\Exception;
 
-use Symfony\Component\Debug\Exception\FatalThrowableError;
-use Symfony\Component\Debug\Exception\FlattenException as LegacyFlattenException;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -24,26 +22,55 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class FlattenException extends LegacyFlattenException
+class FlattenException
 {
+    /** @var string */
     private $message;
+
+    /** @var int|string */
     private $code;
+
+    /** @var self|null */
     private $previous;
+
+    /** @var array */
     private $trace;
+
+    /** @var string */
     private $traceAsString;
+
+    /** @var string */
     private $class;
+
+    /** @var int */
     private $statusCode;
+
+    /** @var string */
     private $statusText;
+
+    /** @var array */
     private $headers;
+
+    /** @var string */
     private $file;
+
+    /** @var int */
     private $line;
+
+    /** @var string|null */
     private $asString;
 
-    public static function create(\Exception $exception, $statusCode = null, array $headers = []): self
+    /**
+     * @return static
+     */
+    public static function create(\Exception $exception, int $statusCode = null, array $headers = []): self
     {
         return static::createFromThrowable($exception, $statusCode, $headers);
     }
 
+    /**
+     * @return static
+     */
     public static function createFromThrowable(\Throwable $exception, int $statusCode = null, array $headers = []): self
     {
         $e = new static();
@@ -71,7 +98,7 @@ class FlattenException extends LegacyFlattenException
         $e->setStatusCode($statusCode);
         $e->setHeaders($headers);
         $e->setTraceFromThrowable($exception);
-        $e->setClass($exception instanceof FatalThrowableError ? $exception->getOriginalClassName() : get_debug_type($exception));
+        $e->setClass(\get_class($exception));
         $e->setFile($exception->getFile());
         $e->setLine($exception->getLine());
 
@@ -106,7 +133,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setStatusCode($code): self
+    public function setStatusCode(int $code): self
     {
         $this->statusCode = $code;
 
@@ -136,7 +163,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setClass($class): self
+    public function setClass(string $class): self
     {
         $this->class = false !== strpos($class, "@anonymous\0") ? (get_parent_class($class) ?: key(class_implements($class)) ?: 'class').'@anonymous' : $class;
 
@@ -151,7 +178,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setFile($file): self
+    public function setFile(string $file): self
     {
         $this->file = $file;
 
@@ -166,7 +193,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setLine($line): self
+    public function setLine(int $line): self
     {
         $this->line = $line;
 
@@ -178,6 +205,9 @@ class FlattenException extends LegacyFlattenException
         return $this->statusText;
     }
 
+    /**
+     * @return $this
+     */
     public function setStatusText(string $statusText): self
     {
         $this->statusText = $statusText;
@@ -193,7 +223,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setMessage($message): self
+    public function setMessage(string $message): self
     {
         if (false !== strpos($message, "@anonymous\0")) {
             $message = preg_replace_callback('/[a-zA-Z_\x7f-\xff][\\\\a-zA-Z0-9_\x7f-\xff]*+@anonymous\x00.*?\.php(?:0x?|:[0-9]++\$)[0-9a-fA-F]++/', function ($m) {
@@ -215,6 +245,8 @@ class FlattenException extends LegacyFlattenException
     }
 
     /**
+     * @param int|string $code
+     *
      * @return $this
      */
     public function setCode($code): self
@@ -224,10 +256,7 @@ class FlattenException extends LegacyFlattenException
         return $this;
     }
 
-    /**
-     * @return self|null
-     */
-    public function getPrevious()
+    public function getPrevious(): ?self
     {
         return $this->previous;
     }
@@ -235,7 +264,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    final public function setPrevious(LegacyFlattenException $previous): self
+    public function setPrevious(?self $previous): self
     {
         $this->previous = $previous;
 
@@ -262,16 +291,6 @@ class FlattenException extends LegacyFlattenException
     }
 
     /**
-     * @deprecated since 4.1, use {@see setTraceFromThrowable()} instead.
-     */
-    public function setTraceFromException(\Exception $exception)
-    {
-        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.1, use "setTraceFromThrowable()" instead.', __METHOD__), \E_USER_DEPRECATED);
-
-        $this->setTraceFromThrowable($exception);
-    }
-
-    /**
      * @return $this
      */
     public function setTraceFromThrowable(\Throwable $throwable): self
@@ -284,7 +303,7 @@ class FlattenException extends LegacyFlattenException
     /**
      * @return $this
      */
-    public function setTrace($trace, $file, $line): self
+    public function setTrace(array $trace, ?string $file, ?int $line): self
     {
         $this->trace = [];
         $this->trace[] = [
@@ -309,11 +328,11 @@ class FlattenException extends LegacyFlattenException
             $this->trace[] = [
                 'namespace' => $namespace,
                 'short_class' => $class,
-                'class' => isset($entry['class']) ? $entry['class'] : '',
-                'type' => isset($entry['type']) ? $entry['type'] : '',
-                'function' => isset($entry['function']) ? $entry['function'] : null,
-                'file' => isset($entry['file']) ? $entry['file'] : null,
-                'line' => isset($entry['line']) ? $entry['line'] : null,
+                'class' => $entry['class'] ?? '',
+                'type' => $entry['type'] ?? '',
+                'function' => $entry['function'] ?? null,
+                'file' => $entry['file'] ?? null,
+                'line' => $entry['line'] ?? null,
                 'args' => isset($entry['args']) ? $this->flattenArgs($entry['args']) : [],
             ];
         }
@@ -329,7 +348,6 @@ class FlattenException extends LegacyFlattenException
                 return ['array', '*SKIPPED over 10000 entries*'];
             }
             if ($value instanceof \__PHP_Incomplete_Class) {
-                // is_object() returns false on PHP<=7.1
                 $result[$key] = ['incomplete-object', $this->getClassNameFromIncomplete($value)];
             } elseif (\is_object($value)) {
                 $result[$key] = ['object', \get_class($value)];

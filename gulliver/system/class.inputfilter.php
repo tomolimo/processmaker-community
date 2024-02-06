@@ -340,10 +340,6 @@ class InputFilter
      */
     public function quoteSmart($source, &$connection)
     {
-        // strip slashes
-        if (get_magic_quotes_gpc()) {
-            $source = stripslashes($source);
-        }
         // quote both numeric and text
         $source = $this->escapeString($source, $connection);
         return $source;
@@ -434,7 +430,7 @@ class InputFilter
         if (is_array($input)) {
             if (count($input)) {
                 foreach ($input as $i => $val) {
-                    if (is_array($val) || is_object($val) && count($val)) {
+                    if (is_array($val) || is_object($val) && is_countable($val) && count($val)) {
                         $input[$i] = $this->xssFilterHard($val);
                     } else {
                         if (!empty($val)) {
@@ -536,11 +532,6 @@ class InputFilter
                 $values[$k1] = mysqli_real_escape_string($con, $val1);
             }
 
-            if (get_magic_quotes_gpc()) {
-                foreach ($values as $k => $val) {
-                    $values[$k] = stripslashes($val);
-                }
-            }
             $newQuery = vsprintf($query, $values);
         } else {
             $newQuery = $this->quoteSmart($this->decode($query), $con);

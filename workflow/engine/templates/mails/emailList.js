@@ -1,7 +1,3 @@
-/*
- * @author: Marco Antonio
- * Agos 17st, 2012
- */
 new Ext.KeyMap(document, [{
     key: Ext.EventObject.F5,
     fn: function(keycode, e) {
@@ -35,22 +31,22 @@ Ext.onReady(function(){
     );
     var columnRenderer = function(data, metadata, record, rowIndex,columnIndex, store) {
         if(metadata.id == PMExt.emailConst.taskColumn.name){
-            if((PMExt.emailConst.appMsgTypeWithoutTask.includes(record.data.APP_MSG_TYPE)) || (PMExt.emailConst.appMsgTypeWithConditionalTask.includes(record.data.APP_MSG_TYPE) && record.data.DEL_INDEX == 0)){
+            if (record.data.TAS_ID == '0') {
                 data = PMExt.emailConst.taskColumn.defaultValue;
             }
         }
         if(metadata.id == PMExt.emailConst.caseColumn.name){
-            if(PMExt.emailConst.appMsgTypeWithoutCase.includes(record.data.APP_MSG_TYPE)){
+            if (record.data.APP_NUMBER == '0') {
                 data = PMExt.emailConst.caseColumn.defaultValue;
             }
         }
-        if(metadata.id == PMExt.emailConst.processColumn.name){
-            if(PMExt.emailConst.appMsgTypeWithoutProcess.includes(record.data.APP_MSG_TYPE)){
+        if(metadata.id == PMExt.emailConst.processColumn.name) {
+            if (record.data.PRO_ID == '0') {
                 data = PMExt.emailConst.processColumn.defaultValue;
             }
         }
         if(metadata.id == PMExt.emailConst.numberColumn.name){
-            if(PMExt.emailConst.appMsgTypeWithoutNumber.includes(record.data.APP_MSG_TYPE)){
+            if (record.data.APP_NUMBER == '0') {
                 data = PMExt.emailConst.numberColumn.defaultValue;
             }
         }
@@ -292,8 +288,8 @@ Ext.onReady(function(){
             {name : 'APP_MSG_UID'},
             {name : 'APP_UID'},
             {name : 'DEL_INDEX'},
-            {name : 'PRO_UID'},
-            {name : 'TAS_UID'},
+            {name : 'PRO_ID'},
+            {name : 'TAS_ID'},
             {name : 'APP_NUMBER'},
             {name : 'PRO_TITLE'},
             {name : 'TAS_TITLE'},
@@ -350,10 +346,10 @@ Ext.onReady(function(){
             {id: "TAS_TITLE", header: _('ID_TASK'), dataIndex: 'TAS_TITLE', width: 100, hidden: false,renderer: columnRenderer, sortable: false},
             {id: "APP_MSG_TYPE", header: _('ID_TYPE'), dataIndex: 'APP_MSG_TYPE', width: 50,  hidden: false,renderer: columnRenderer, sortable: true},
             {id: "APP_MSG_DATE", header: _('ID_DATE_LABEL'), dataIndex: 'APP_MSG_DATE', width: 80, hidden: false, renderer: columnRenderer, sortable: true},
-            {id: "APP_MSG_SUBJECT", header: _('ID_SUBJECT'), dataIndex: 'APP_MSG_SUBJECT', width: 80, hidden: false, renderer: columnRenderer, sortable: true},
+            {id: "APP_MSG_SUBJECT", header: _('ID_SUBJECT'), dataIndex: 'APP_MSG_SUBJECT', width: 80, hidden: false, renderer: columnRenderer, sortable: false},
             {id: "APP_MSG_FROM", header: _('ID_FROM'), dataIndex: 'APP_MSG_FROM', width: 80, hidden: false,renderer: columnRenderer, sortable: true},
             {id: "APP_MSG_TO", header: _('ID_TO'), dataIndex: 'APP_MSG_TO', width: 80, hidden: false,renderer: columnRenderer, sortable: true},
-            {id: "APP_MSG_ERROR", header: _('ID_ERROR_EMAIL'), dataIndex: 'APP_MSG_ERROR', width: 80, hidden: false,renderer: columnRenderer, sortable: true},
+            {id: "APP_MSG_ERROR", header: _('ID_ERROR_EMAIL'), dataIndex: 'APP_MSG_ERROR', width: 80, hidden: false,renderer: columnRenderer, sortable: false},
 
             {
                 header:  _('ID_STATUS'),

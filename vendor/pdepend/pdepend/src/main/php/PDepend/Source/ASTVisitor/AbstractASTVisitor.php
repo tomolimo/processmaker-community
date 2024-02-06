@@ -42,8 +42,12 @@
 
 namespace PDepend\Source\ASTVisitor;
 
+use ArrayIterator;
+use Iterator;
+use PDepend\Source\AST\AbstractASTClassOrInterface;
 use PDepend\Source\AST\ASTClass;
 use PDepend\Source\AST\ASTCompilationUnit;
+use PDepend\Source\AST\ASTEnum;
 use PDepend\Source\AST\ASTFunction;
 use PDepend\Source\AST\ASTInterface;
 use PDepend\Source\AST\ASTMethod;
@@ -51,6 +55,7 @@ use PDepend\Source\AST\ASTNamespace;
 use PDepend\Source\AST\ASTParameter;
 use PDepend\Source\AST\ASTProperty;
 use PDepend\Source\AST\ASTTrait;
+use RuntimeException;
 
 /**
  * This abstract visitor implementation provides a default traversal algorithm
@@ -64,24 +69,23 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * List of all registered listeners.
      *
-     * @var \PDepend\Source\ASTVisitor\ASTVisitListener[]
+     * @var ASTVisitListener[]
      */
     private $listeners = array();
 
     /**
      * Returns an iterator with all registered visit listeners.
      *
-     * @return \Iterator
+     * @return Iterator<ASTVisitListener>
      */
     public function getVisitListeners()
     {
-        return new \ArrayIterator($this->listeners);
+        return new ArrayIterator($this->listeners);
     }
 
     /**
      * Adds a new listener to this node visitor.
      *
-     * @param  \PDepend\Source\ASTVisitor\ASTVisitListener $listener
      * @return void
      */
     public function addVisitListener(ASTVisitListener $listener)
@@ -94,7 +98,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a class node.
      *
-     * @param  ASTClass $class
      * @return void
      */
     public function visitClass(ASTClass $class)
@@ -114,10 +117,31 @@ abstract class AbstractASTVisitor implements ASTVisitor
     }
 
     /**
+     * Visits a class node.
+     *
+     * @return void
+     */
+    public function visitEnum(ASTEnum $enum)
+    {
+        $this->fireStartEnum($enum);
+
+        $enum->getCompilationUnit()->accept($this);
+
+        foreach ($enum->getProperties() as $property) {
+            $property->accept($this);
+        }
+        foreach ($enum->getMethods() as $method) {
+            $method->accept($this);
+        }
+
+        $this->fireEndEnum($enum);
+    }
+
+    /**
      * Visits a trait node.
      *
-     * @param  \PDepend\Source\AST\ASTTrait $trait
      * @return void
+     *
      * @since  1.0.0
      */
     public function visitTrait(ASTTrait $trait)
@@ -136,7 +160,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a file node.
      *
-     * @param  \PDepend\Source\AST\ASTCompilationUnit $compilationUnit
      * @return void
      */
     public function visitCompilationUnit(ASTCompilationUnit $compilationUnit)
@@ -148,7 +171,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a function node.
      *
-     * @param  ASTFunction $function
      * @return void
      */
     public function visitFunction(ASTFunction $function)
@@ -167,7 +189,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a code interface object.
      *
-     * @param  ASTInterface $interface
      * @return void
      */
     public function visitInterface(ASTInterface $interface)
@@ -186,7 +207,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a method node.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     public function visitMethod(ASTMethod $method)
@@ -203,7 +223,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a namespace node.
      *
-     * @param  ASTNamespace $namespace
      * @return void
      */
     public function visitNamespace(ASTNamespace $namespace)
@@ -219,6 +238,9 @@ abstract class AbstractASTVisitor implements ASTVisitor
         foreach ($namespace->getTraits() as $trait) {
             $trait->accept($this);
         }
+        foreach ($namespace->getEnums() as $enum) {
+            $enum->accept($this);
+        }
         foreach ($namespace->getFunctions() as $function) {
             $function->accept($this);
         }
@@ -229,7 +251,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a parameter node.
      *
-     * @param  \PDepend\Source\AST\ASTParameter $parameter
      * @return void
      */
     public function visitParameter(ASTParameter $parameter)
@@ -241,7 +262,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Visits a property node.
      *
-     * @param  \PDepend\Source\AST\ASTProperty $property
      * @return void
      */
     public function visitProperty(ASTProperty $property)
@@ -268,16 +288,15 @@ abstract class AbstractASTVisitor implements ASTVisitor
      * The return value of this method is the second input argument, modified
      * by the concrete visit method.
      *
-     * @param string $method Name of the called method.
-     * @param array  $args   Array with method argument.
+     * @param string            $method Name of the called method.
+     * @param array<int, mixed> $args   Array with method argument.
      *
-     * @return mixed
      * @since  0.9.12
      */
     public function __call($method, $args)
     {
         if (!isset($args[1])) {
-            throw new \RuntimeException("No node to visit provided for $method.");
+            throw new RuntimeException("No node to visit provided for $method.");
         }
 
         $value = $args[1];
@@ -290,7 +309,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start class event.
      *
-     * @param  \PDepend\Source\AST\ASTClass $class
      * @return void
      */
     protected function fireStartClass(ASTClass $class)
@@ -303,7 +321,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end class event.
      *
-     * @param  \PDepend\Source\AST\ASTClass $class
      * @return void
      */
     protected function fireEndClass(ASTClass $class)
@@ -314,9 +331,32 @@ abstract class AbstractASTVisitor implements ASTVisitor
     }
 
     /**
+     * Sends a start enum event.
+     *
+     * @return void
+     */
+    protected function fireStartEnum(ASTEnum $enum)
+    {
+        foreach ($this->listeners as $listener) {
+            $listener->startVisitEnum($enum);
+        }
+    }
+
+    /**
+     * Sends an end enum event.
+     *
+     * @return void
+     */
+    protected function fireEndEnum(ASTEnum $enum)
+    {
+        foreach ($this->listeners as $listener) {
+            $listener->endVisitEnum($enum);
+        }
+    }
+
+    /**
      * Sends a start trait event.
      *
-     * @param  \PDepend\Source\AST\ASTTrait $trait
      * @return void
      */
     protected function fireStartTrait(ASTTrait $trait)
@@ -329,7 +369,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end trait event.
      *
-     * @param  \PDepend\Source\AST\ASTTrait $trait
      * @return void
      */
     protected function fireEndTrait(ASTTrait $trait)
@@ -342,7 +381,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start file event.
      *
-     * @param  \PDepend\Source\AST\ASTCompilationUnit $compilationUnit
      * @return void
      */
     protected function fireStartFile(ASTCompilationUnit $compilationUnit)
@@ -355,7 +393,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end file event.
      *
-     * @param  \PDepend\Source\AST\ASTCompilationUnit $compilationUnit
      * @return void
      */
     protected function fireEndFile(ASTCompilationUnit $compilationUnit)
@@ -368,7 +405,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start function event.
      *
-     * @param  ASTFunction $function
      * @return void
      */
     protected function fireStartFunction(ASTFunction $function)
@@ -381,7 +417,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end function event.
      *
-     * @param  \PDepend\Source\AST\ASTFunction $function
      * @return void
      */
     protected function fireEndFunction(ASTFunction $function)
@@ -394,7 +429,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start interface event.
      *
-     * @param  \PDepend\Source\AST\ASTInterface $interface
      * @return void
      */
     protected function fireStartInterface(ASTInterface $interface)
@@ -407,7 +441,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end interface event.
      *
-     * @param  \PDepend\Source\AST\ASTInterface $interface
      * @return void
      */
     protected function fireEndInterface(ASTInterface $interface)
@@ -420,7 +453,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start method event.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     protected function fireStartMethod(ASTMethod $method)
@@ -433,7 +465,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end method event.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
      * @return void
      */
     protected function fireEndMethod(ASTMethod $method)
@@ -446,7 +477,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start namespace event.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespace
      * @return void
      */
     protected function fireStartNamespace(ASTNamespace $namespace)
@@ -459,7 +489,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end namespace event.
      *
-     * @param  \PDepend\Source\AST\ASTNamespace $namespace
      * @return void
      */
     protected function fireEndNamespace(ASTNamespace $namespace)
@@ -472,7 +501,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start parameter event.
      *
-     * @param  \PDepend\Source\AST\ASTParameter $parameter
      * @return void
      */
     protected function fireStartParameter(ASTParameter $parameter)
@@ -485,7 +513,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a end parameter event.
      *
-     * @param  \PDepend\Source\AST\ASTParameter $parameter
      * @return void
      */
     protected function fireEndParameter(ASTParameter $parameter)
@@ -498,7 +525,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends a start property event.
      *
-     * @param  \PDepend\Source\AST\ASTProperty $property
      * @return void
      */
     protected function fireStartProperty(ASTProperty $property)
@@ -511,7 +537,6 @@ abstract class AbstractASTVisitor implements ASTVisitor
     /**
      * Sends an end property event.
      *
-     * @param  \PDepend\Source\AST\ASTProperty $property
      * @return void
      */
     protected function fireEndProperty(ASTProperty $property)

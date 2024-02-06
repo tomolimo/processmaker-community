@@ -6,7 +6,9 @@ use ProcessMaker\Core\System;
 use ProcessMaker\BusinessModel\DynaForm\SuggestTrait;
 use ProcessMaker\BusinessModel\Cases;
 use ProcessMaker\BusinessModel\DynaForm\ValidatorFactory;
+use ProcessMaker\Model\Documents;
 use ProcessMaker\Model\Dynaform as ModelDynaform;
+use ProcessMaker\Plugins\PluginRegistry;
 
 /**
  * Implementing pmDynaform library in the running case.
@@ -25,6 +27,7 @@ class PmDynaform
     private $propertiesToExclude = [];
     private $sysSys = null;
     private $fieldsAppData;
+    private $filesFromPlugin = [Documents::DOC_TYPE_ATTACHED => null, Documents::DOC_TYPE_INPUT => null];
     public $credentials = null;
     public $displayMode = null;
     public $fields = null;
@@ -567,6 +570,7 @@ class PmDynaform
                     $oCriteriaAppDocument = new Criteria("workflow");
                     $oCriteriaAppDocument->addSelectColumn(AppDocumentPeer::APP_DOC_UID);
                     $oCriteriaAppDocument->addSelectColumn(AppDocumentPeer::DOC_VERSION);
+                    $oCriteriaAppDocument->addSelectColumn(AppDocumentPeer::APP_DOC_TYPE);
                     $oCriteriaAppDocument->add(AppDocumentPeer::APP_UID, $this->fields["APP_DATA"]["APPLICATION"]);
                     $oCriteriaAppDocument->add(AppDocumentPeer::APP_DOC_FIELDNAME, $json->name);
                     $oCriteriaAppDocument->add(AppDocumentPeer::APP_DOC_STATUS, 'ACTIVE');
@@ -582,8 +586,44 @@ class PmDynaform
                     $oAppDocument = new AppDocument();
 
                     if ($row = $rs->getRow()) {
+                        // Only get the information from the plugin once
+                        if (is_null($this->filesFromPlugin[$row['APP_DOC_TYPE']])) {
+                            // Plugin Hook PM_CASE_DOCUMENT_LIST to get the files uploaded as attachments
+                            $pluginRegistry = PluginRegistry::loadSingleton();
+
+                            // If the hook exists try to execute
+                            if ($pluginRegistry->existsTrigger(PM_CASE_DOCUMENT_LIST) && class_exists('folderData')) {
+                                // Build the required object
+                                $folderData = new folderData(null, null, $this->fields['APP_DATA']['APPLICATION'], null, null);
+                                $folderData->PMType = $row['APP_DOC_TYPE'];
+                                $folderData->returnList = true;
+
+                                // Get elements
+                                $this->filesFromPlugin[$row['APP_DOC_TYPE']] = $pluginRegistry->executeTriggers(PM_CASE_DOCUMENT_LIST, $folderData);
+                            } else {
+                                // If not exist, set an empty array
+                                $this->filesFromPlugin[$row['APP_DOC_TYPE']] = [];
+                            }
+                        }
+                        // Load document data
                         $oAppDocument->load($row["APP_DOC_UID"], $row["DOC_VERSION"]);
-                        $links[] = "../cases/cases_ShowDocument?a=" . $row["APP_DOC_UID"] . "&v=" . $row["DOC_VERSION"];
+
+                        // Build the default link
+                        $link = "../cases/cases_ShowDocument?a=" . $row["APP_DOC_UID"] . "&v=" . $row["DOC_VERSION"];
+
+                        // If exist related file in the plugin, check if the file is the same
+                        if (is_array($this->filesFromPlugin[$row['APP_DOC_TYPE']])) {
+                            foreach ($this->filesFromPlugin[$row['APP_DOC_TYPE']] as $file) {
+                                // If exists the same file, replace the download link
+                                if ($file->filename === $row['APP_DOC_UID']) {
+                                    $link = $file->downloadScript;
+                                    continue;
+                                }
+                            }
+                        }
+
+                        // Set the link and another related information
+                        $links[] = $link;
                         $labelsFromDb[] = $oAppDocument->getAppDocFilename();
                         $appDocUids[] = $row["APP_DOC_UID"];
                     }
@@ -1377,8 +1417,16 @@ class PmDynaform
         exit();
     }
 
-    public function printEditSupervisor()
+    /**
+     * Print edit supervisor forms.
+     * @param array $param
+     */
+    public function printEditSupervisor(array $param = [])
     {
+        $navbar = '';
+        if (isset($param['DEL_INDEX'])) {
+            $navbar = self::navigationBarForStepsToRevise($this->fields["APP_UID"], $this->fields["CURRENT_DYNAFORM"], $param['DEL_INDEX']);
+        }
         ob_clean();
         $json = G::json_decode($this->record["DYN_CONTENT"]);
         $this->jsonr($json);
@@ -1405,6 +1453,7 @@ class PmDynaform
             " . $this->getTheStringVariableForGoogleMaps() . "
         </script>
         <script type=\"text/javascript\" src=\"/jscore/cases/core/pmDynaform.js\"></script>
+        {$navbar}
         <div>
             " . $this->getSessionMessageForSupervisor() . "
             <div style=\"display: none;\">
@@ -1596,7 +1645,7 @@ class PmDynaform
         $this->record["DYN_CONTENT"] = G::json_encode($json);
     }
 
-    private function jsonReplace(&$json, $id, $for = "id", $update)
+    private function jsonReplace(&$json, $id, $for = "id", $update = null)
     {
         foreach ($json as $key => &$value) {
             $sw1 = is_array($value);
@@ -2533,13 +2582,13 @@ class PmDynaform
         $message = "";
         if (isset($_SESSION['G_MESSAGE_TYPE']) && isset($_SESSION['G_MESSAGE'])) {
             $color = "green";
-            if ($_SESSION['G_MESSAGE_TYPE'] === "ERROR") {
+            if (strtoupper($_SESSION['G_MESSAGE_TYPE']) === "ERROR") {
                 $color = "red";
             }
-            if ($_SESSION['G_MESSAGE_TYPE'] === "WARNING") {
+            if (strtoupper($_SESSION['G_MESSAGE_TYPE']) === "WARNING") {
                 $color = "#C3C380";
             }
-            if ($_SESSION['G_MESSAGE_TYPE'] === "INFO") {
+            if (strtoupper($_SESSION['G_MESSAGE_TYPE']) === "INFO") {
                 $color = "green";
             }
             $message = "<div style='background-color:" . $color . ";color: white;padding: 1px 2px 1px 5px;' class='userGroupTitle'>" . $_SESSION['G_MESSAGE_TYPE'] . ": " . $_SESSION['G_MESSAGE'] . "</div>";
@@ -2628,5 +2677,55 @@ class PmDynaform
                 $this->onAfterPropertyRead = $backup;
             }
         };
+    }
+
+    /**
+     * Get html navigation bar for steps to revise.
+     * @param string $appUid
+     * @param string $uid
+     * @param int $delIndex
+     * @return string
+     */
+    public static function navigationBarForStepsToRevise(string $appUid, string $uid, int $delIndex): string
+    {
+        $navbar = '';
+        $cases = new Cases();
+        $steps = $cases->getAllUrlStepsToRevise($appUid, $delIndex);
+        $n = count($steps);
+        foreach ($steps as $key => $step) {
+            if ($step['uid'] === $uid) {
+                $previousLabel = '';
+                $previousUrl = '';
+                $nextLabel = '';
+                $nextUrl = '';
+                if ($key - 1 >= 0) {
+                    $previousLabel = G::LoadTranslation('ID_PREVIOUS');
+                    $previousUrl = $steps[$key - 1]['url'];
+                }
+                if ($key + 1 < $n) {
+                    $nextLabel = G::LoadTranslation('ID_NEXT');
+                    $nextUrl = $steps[$key + 1]['url'];
+                }
+                if (empty($nextUrl)) {
+                    $nextLabel = G::LoadTranslation('ID_FINISH');
+                    $nextUrl = 'javascript:if(window.parent && window.parent.parent){window.parent.parent.postMessage("redirect=MyCases","*");}';
+                }
+                //this condition modify the next Url for submit action
+                if ($step['type'] === 'DYNAFORM') {
+                    $nextUrl = 'javascript:document.querySelector(".pmdynaform-container .pmdynaform-form").submit();';
+                }
+                $navbar = "<div style='width:100%;padding:0px 10px 0px 10px;margin:15px 0px 0px 0px;'>" .
+                        "    <img src='/images/bulletButtonLeft.gif' style='float:left;'>&nbsp;" .
+                        "    <a href='{$previousUrl}' style='float:left;font-size:12px;line-height:1;margin:0px 0px 1px 5px;text-decoration:none;!important;'>" .
+                        "    {$previousLabel}" .
+                        "    </a>" .
+                        "    <img src='/images/bulletButton.gif' style='float:right;'>&nbsp;" .
+                        "    <a href='{$nextUrl}' style='float:right;font-size:12px;line-height:1;margin:0px 5px 1px 0px;text-decoration:none;!important;'>" .
+                        "    {$nextLabel}" .
+                        "    </a>" .
+                        "</div>";
+            }
+        }
+        return $navbar;
     }
 }

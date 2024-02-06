@@ -1,0 +1,22 @@
+[
+    {
+        "item": "STARTED",
+        "name": "Started by Me",
+        "count": 28
+    },
+    {
+        "item": "IN_PROGRESS",
+        "count": 40,
+        "name": "In progress"
+    },
+    {
+        "item": "COMPLETED",
+        "count": 10,
+        "name": "Completed"
+    },
+    {
+        "item": "SUPERVISING",
+        "count": 18,
+        "name": "Supervising"
+    }
+]

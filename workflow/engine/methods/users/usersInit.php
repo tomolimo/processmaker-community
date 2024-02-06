@@ -47,6 +47,19 @@ $languageManagement = 0;
 
 $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
 
+if (isset($_REQUEST['userInterface']) && $_REQUEST['userInterface'] === "v2") {
+    $lang = defined("SYS_LANG") ? SYS_LANG : "en";
+
+    $html = file_get_contents(PATH_HTML . "lib/userPersonalInformation/index.html");
+    $html = str_replace("var USR_UID='';", "var USR_UID='{$aFields['USR_UID']}';", $html);
+    $html = str_replace("translation.en.js", "translation.{$lang}.js", $html);
+    $html = str_replace("csrfToken", csrfToken(), $html);
+    $html = str_replace("var canEdit=true;", ($canEdit === false ? "var canEdit=true;" : "var canEdit=false;"), $html);
+    $html = str_replace("var modeOfForm=1;", "var modeOfForm=2;", $html);
+    echo $html;
+    exit();
+}
+
 $oHeadPublisher = headPublisher::getSingleton();
 $oHeadPublisher->addExtJsScript('users/users', true); //adding a javascript file .js
 // $oHeadPublisher->addContent('users/users'); //adding a html file  .html.

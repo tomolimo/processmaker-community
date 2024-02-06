@@ -195,7 +195,7 @@ class DynaformEditor extends WebResource
      * @param string $file
      * @return string
      */
-    public function _getFilename($file)
+    public static function _getFilename($file)
     {
         return (strcasecmp(substr($file, - 5), '_tmp0') == 0) ? substr($file, 0, strlen($file) - 5) : $file;
     }
@@ -234,7 +234,7 @@ class DynaformEditor extends WebResource
      * @param $data
      * @return void
      */
-    public function _setTmpData($data)
+    public static function _setTmpData($data)
     {
         G::verifyPath(PATH_C . 'dynEditor/', true);
         $fp = fopen(PATH_C . 'dynEditor/' . session_id() . '.php', 'w');
@@ -248,7 +248,7 @@ class DynaformEditor extends WebResource
      * @param string $filename
      * @return array
      */
-    public function _getTmpData()
+    public static function _getTmpData()
     {
         $tmpData = array();
         $file = PATH_C . 'dynEditor/' . session_id() . '.php';

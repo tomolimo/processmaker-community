@@ -38,11 +38,13 @@
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.9.6
  */
 
 namespace PDepend\Source\AST;
 
+use InvalidArgumentException;
 use PDepend\Source\ASTVisitor\ASTVisitor;
 
 /**
@@ -61,17 +63,62 @@ use PDepend\Source\ASTVisitor\ASTVisitor;
  *
  * @copyright 2008-2017 Manuel Pichler. All rights reserved.
  * @license http://www.opensource.org/licenses/bsd-license.php BSD License
+ *
  * @since 0.9.6
  */
 class ASTArguments extends AbstractASTNode
 {
     /**
+     * This method will return true if the argument list is declared as foo(...)
+     *
+     * @return bool
+     *
+     * @since 2.11.0
+     */
+    public function isVariadicPlaceholder()
+    {
+        return $this->getMetadataBoolean(4);
+    }
+
+    /**
+     * This method can be used to mark the argument list as variadic placeholder
+     *
+     * @return void
+     * @since 2.11.0
+     */
+    public function setVariadicPlaceholder()
+    {
+        $this->setMetadataBoolean(4, true);
+    }
+
+    /**
+     * Rather the given arguments list can still take one more argument.
+     *
+     * @return bool
+     */
+    public function acceptsMoreArguments()
+    {
+        return true;
+    }
+
+    /**
+     * This method adds a new child node to this node instance.
+     *
+     * @return void
+     */
+    public function addChild(ASTNode $node)
+    {
+        if (!$this->acceptsMoreArguments()) {
+            throw new InvalidArgumentException('No more arguments allowed.');
+        }
+
+        parent::addChild($node);
+    }
+
+    /**
      * Accept method of the visitor design pattern. This method will be called
      * by a visitor during tree traversal.
      *
-     * @param \PDepend\Source\ASTVisitor\ASTVisitor $visitor
-     * @param mixed $data
-     * @return mixed
      * @since 0.9.12
      */
     public function accept(ASTVisitor $visitor, $data = null)

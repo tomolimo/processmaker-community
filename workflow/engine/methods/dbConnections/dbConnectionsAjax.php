@@ -1,36 +1,5 @@
 <?php
 
-/**
- * upgrade.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
-
-/*
- * Data base connections routines for ajax request
- * @Author Erik Amaru Ortiz <erik@colosa.com>
- * @Last update May 20th, 2009
- * @Param  var action from POST request
- */
-
-
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
 
@@ -139,45 +108,90 @@ switch ($action) {
         G::RenderPage( 'publish', 'raw' );
         break;
     case 'saveEditConnection':
-        $oDBSource = new DbSource();
-        $oContent = new Content();
-        if (strpos( $_POST['server'], "\\" )) {
+        $dBSource = new DbSource();
+        $content = new Content();
+        if (strpos($_POST['server'], "\\")) {
             $_POST['port'] = 'none';
         }
 
-        $flagTns = ($_POST["type"] == "oracle" && $_POST["connectionType"] == "TNS")? 1 : 0;
+        $flagTns = ($_POST["type"] == "oracle" && $_POST["connectionType"] == "TNS") ? 1 : 0;
 
         if ($flagTns == 0) {
             $_POST["connectionType"] = "NORMAL";
 
-            $aData = array("DBS_UID" => $_POST["dbs_uid"], "PRO_UID" => $_SESSION["PROCESS"], "DBS_TYPE" => $_POST["type"], "DBS_SERVER" => $_POST["server"], "DBS_DATABASE_NAME" => $_POST["db_name"], "DBS_USERNAME" => $_POST["user"], "DBS_PASSWORD" => (($_POST["passwd"] == "none")? "" : G::encrypt($_POST["passwd"], $_POST["db_name"])) . "_2NnV3ujj3w", "DBS_PORT" => (($_POST["port"] == "none")? "" : $_POST["port"]), "DBS_ENCODE" => $_POST["enc"], "DBS_CONNECTION_TYPE" => $_POST["connectionType"], "DBS_TNS" => "");
+            $data = [
+                "DBS_UID" => $_POST["dbs_uid"],
+                "PRO_UID" => $_SESSION["PROCESS"], "DBS_TYPE" => $_POST["type"],
+                "DBS_SERVER" => $_POST["server"],
+                "DBS_DATABASE_NAME" => $_POST["db_name"],
+                "DBS_USERNAME" => $_POST["user"],
+                "DBS_PASSWORD" => (($_POST["passwd"] == "none") ? "" : G::encrypt($_POST["passwd"], $_POST["db_name"], false, false)) . "_2NnV3ujj3w",
+                "DBS_PORT" => (($_POST["port"] == "none") ? "" : $_POST["port"]),
+                "DBS_ENCODE" => $_POST["enc"],
+                "DBS_CONNECTION_TYPE" => $_POST["connectionType"],
+                "DBS_TNS" => ""
+            ];
         } else {
-            $aData = array("DBS_UID" => $_POST["dbs_uid"], "PRO_UID" => $_SESSION["PROCESS"], "DBS_TYPE" => $_POST["type"], "DBS_SERVER" => "", "DBS_DATABASE_NAME" => "", "DBS_USERNAME" => $_POST["user"], "DBS_PASSWORD" => (($_POST["passwd"] == "none")? "" : G::encrypt($_POST["passwd"], $_POST["tns"])) . "_2NnV3ujj3w", "DBS_PORT" => "", "DBS_ENCODE" => "", "DBS_CONNECTION_TYPE" => $_POST["connectionType"], "DBS_TNS" => $_POST["tns"]);
+            $data = [
+                "DBS_UID" => $_POST["dbs_uid"],
+                "PRO_UID" => $_SESSION["PROCESS"],
+                "DBS_TYPE" => $_POST["type"],
+                "DBS_SERVER" => "",
+                "DBS_DATABASE_NAME" => "",
+                "DBS_USERNAME" => $_POST["user"],
+                "DBS_PASSWORD" => (($_POST["passwd"] == "none") ? "" : G::encrypt($_POST["passwd"], $_POST["tns"], false, false)) . "_2NnV3ujj3w",
+                "DBS_PORT" => "",
+                "DBS_ENCODE" => "",
+                "DBS_CONNECTION_TYPE" => $_POST["connectionType"],
+                "DBS_TNS" => $_POST["tns"]
+            ];
         }
 
-        $oDBSource->update( $aData );
-        $oContent->addContent( 'DBS_DESCRIPTION', '', $_POST['dbs_uid'], SYS_LANG, $_POST['desc'] );
+        $dBSource->update($data);
+        $content->addContent('DBS_DESCRIPTION', '', $_POST['dbs_uid'], SYS_LANG, $_POST['desc']);
         break;
     case 'saveConnection':
-        $oDBSource = new DbSource();
-        $oContent = new Content();
-        if (strpos( $_POST['server'], "\\" )) {
+        $dBSource = new DbSource();
+        $content = new Content();
+        if (strpos($_POST['server'], "\\")) {
             $_POST['port'] = 'none';
         }
 
-        $flagTns = ($_POST["type"] == "oracle" && $_POST["connectionType"] == "TNS")? 1 : 0;
+        $flagTns = ($_POST["type"] == "oracle" && $_POST["connectionType"] == "TNS") ? 1 : 0;
 
         if ($flagTns == 0) {
             $_POST["connectionType"] = "NORMAL";
 
-            $aData = array("PRO_UID" => $_SESSION["PROCESS"], "DBS_TYPE" => $_POST["type"], "DBS_SERVER" => $_POST["server"], "DBS_DATABASE_NAME" => $_POST["db_name"], "DBS_USERNAME" => $_POST["user"], "DBS_PASSWORD" => (($_POST["passwd"] == "none")? "" : G::encrypt($_POST["passwd"], $_POST["db_name"])) . "_2NnV3ujj3w", "DBS_PORT" => (($_POST["port"] == "none") ? "" : $_POST["port"]), "DBS_ENCODE" => $_POST["enc"], "DBS_CONNECTION_TYPE" => $_POST["connectionType"], "DBS_TNS" => "");
+            $data = [
+                "PRO_UID" => $_SESSION["PROCESS"],
+                "DBS_TYPE" => $_POST["type"],
+                "DBS_SERVER" => $_POST["server"],
+                "DBS_DATABASE_NAME" => $_POST["db_name"],
+                "DBS_USERNAME" => $_POST["user"],
+                "DBS_PASSWORD" => (($_POST["passwd"] == "none") ? "" : G::encrypt($_POST["passwd"], $_POST["db_name"], false, false)) . "_2NnV3ujj3w",
+                "DBS_PORT" => (($_POST["port"] == "none") ? "" : $_POST["port"]),
+                "DBS_ENCODE" => $_POST["enc"],
+                "DBS_CONNECTION_TYPE" => $_POST["connectionType"],
+                "DBS_TNS" => ""
+            ];
         } else {
-            $aData = array("PRO_UID" => $_SESSION["PROCESS"], "DBS_TYPE" => $_POST["type"], "DBS_SERVER" => "", "DBS_DATABASE_NAME" => "", "DBS_USERNAME" => $_POST["user"], "DBS_PASSWORD" => (($_POST["passwd"] == "none")? "" : G::encrypt($_POST["passwd"], $_POST["tns"])) . "_2NnV3ujj3w", "DBS_PORT" => "", "DBS_ENCODE" => "", "DBS_CONNECTION_TYPE" => $_POST["connectionType"], "DBS_TNS" => $_POST["tns"]);
+            $data = [
+                "PRO_UID" => $_SESSION["PROCESS"],
+                "DBS_TYPE" => $_POST["type"],
+                "DBS_SERVER" => "",
+                "DBS_DATABASE_NAME" => "",
+                "DBS_USERNAME" => $_POST["user"],
+                "DBS_PASSWORD" => (($_POST["passwd"] == "none") ? "" : G::encrypt($_POST["passwd"], $_POST["tns"], false, false)) . "_2NnV3ujj3w",
+                "DBS_PORT" => "",
+                "DBS_ENCODE" => "",
+                "DBS_CONNECTION_TYPE" => $_POST["connectionType"],
+                "DBS_TNS" => $_POST["tns"]
+            ];
         }
 
-        $newid = $oDBSource->create( $aData );
+        $newId = $dBSource->create($data);
         $sDelimiter = DBAdapter::getStringDelimiter();
-        $oContent->addContent( 'DBS_DESCRIPTION', '', $newid, SYS_LANG, $_POST['desc'] );
+        $content->addContent('DBS_DESCRIPTION', '', $newId, SYS_LANG, $_POST['desc']);
         break;
     case 'deleteDbConnection':
         $result = new stdclass();

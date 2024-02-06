@@ -1,12 +1,14 @@
-<?php if (function_exists("http_response_code")) {
+<?php 
+
+if (function_exists("http_response_code")) {
     http_response_code(404);
 }
 
 $http = G::is_https() ? "https" : "http";
-$host = $_SERVER["SERVER_NAME"] . (($_SERVER["SERVER_PORT"] != "80")? ":" . $_SERVER["SERVER_PORT"] : "");
+$host = $_SERVER["SERVER_NAME"] . (($_SERVER["SERVER_PORT"] != "80") ? ":" . $_SERVER["SERVER_PORT"] : "");
 
 $urlLogin = $http . "://" . $host . "/sys/en/neoclassic/login/login";
-$urlHome =  $urlLogin;
+$urlHome = $urlLogin;
 
 if (isset($_GET["url"]) && $_GET["url"] != "") {
 
@@ -16,31 +18,34 @@ if (isset($_GET["url"]) && $_GET["url"] != "") {
     $sysSys = "";
     $sysLang = "";
     $sysSkin = "";
-    
+
     if (isset($url[1]) && preg_match("/^sys(.+)$/", $url[1], $match)) {
         $sysSys = $match[1];
 
         // Check if sys path exists
-        $checkDir = PATH_DATA."sites/".$sysSys;
-        if(!is_dir($checkDir)) { 
+        $pathData = getConstant('PATH_DATA');
+        $checkDir = $pathData . "sites/" . $sysSys;
+        if (!is_dir($checkDir)) {
             $sysSys = '';
         }
     }
 
-    
+
     if (isset($url[2])) {
         $sysLang = $url[2];
     }
 
     if (isset($url[3])) {
         $sysSkin = $url[3];
-        
+
         // Check if sys path exists
-        $checkDir = PATH_SKIN_ENGINE.$sysSkin;
-        if(!is_dir($checkDir)) { 
+        $pathSkinEngine = getConstant('PATH_SKIN_ENGINE');
+        $checkDir = $pathSkinEngine . $sysSkin;
+        if (!is_dir($checkDir)) {
             // Try this again
-            $checkDir = PATH_CUSTOM_SKINS.$sysSkin;
-            if(!is_dir($checkDir)) { 
+            $pathCustomSkins = getConstant('PATH_CUSTOM_SKINS');
+            $checkDir = $pathCustomSkins . $sysSkin;
+            if (!is_dir($checkDir)) {
                 $sysSkin = '';
             }
         }
@@ -48,10 +53,9 @@ if (isset($_GET["url"]) && $_GET["url"] != "") {
 
     if ($sysSys != "" && $sysLang != "" && $sysSkin != "") {
         $urlLogin = $http . "://" . $host . "/sys" . $sysSys . "/" . $sysLang . "/" . $sysSkin . "/login/login";
-        $urlHome =  $http . "://" . $host . "/sys" . $sysSys . "/" . $sysLang . "/" . $sysSkin . "/cases/main";
+        $urlHome = $http . "://" . $host . "/sys" . $sysSys . "/" . $sysLang . "/" . $sysSkin . "/cases/main";
     }
 }
-
 ?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>

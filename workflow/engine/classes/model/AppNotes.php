@@ -227,7 +227,7 @@ class AppNotes extends BaseAppNotes
 
             // Get the files related to the specific case note
             if ($noteId !== 0) {
-                $attachFileLinks = $this->getAttachedFilesFromTheCaseNote($noteId);
+                $attachFileLinks = $this->getAttachedFilesFromTheCaseNote($noteId, $appUid);
             }
 
             if (!empty($attachFileLinks)) {
@@ -282,15 +282,16 @@ class AppNotes extends BaseAppNotes
     /**
      * Get attached files from a specific case note
      * @param int $docId
+     * @param string $appUid
      * @return array
      */
-    public function getAttachedFilesFromTheCaseNote(int $docId): array
+    public function getAttachedFilesFromTheCaseNote(int $docId, string $appUid): array
     {
         $attachFileLinks = [];
         $url = System::getServerMainPath();
-        $result = Documents::getFiles($docId);
+        $result = Documents::getFiles($docId, $appUid);
         foreach ($result as $item) {
-            $href = $url . "/cases/casesShowCaseNotes?a={$item['APP_DOC_UID']}&v={$item['DOC_VERSION']}";
+            $href = $url . str_replace('../', '/', $item['LINK']);
             $attachFileLinks[] = "<a href='{$href}'>{$item['APP_DOC_FILENAME']}</a>";
         }
 

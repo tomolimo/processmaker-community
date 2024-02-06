@@ -411,14 +411,16 @@ NewGroupWindow = function(){
 };
 
 //Load Grid By Default
-GridByDefault = function(){
+GridByDefault = function () {
   searchText.reset();
-  infoGrid.store.load();
+  store.setBaseParam('textFilter', '');
+  store.load();
 };
 
 //Do Search Function
-DoSearch = function(){
-  infoGrid.store.load({params: {textFilter: searchText.getValue()}});
+DoSearch = function () {
+  store.setBaseParam('textFilter', searchText.getValue());
+  store.load();
 };
 
 //Close Popup Window

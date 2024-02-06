@@ -13,12 +13,12 @@ class DropStatementTest extends TestCase
      *
      * @dataProvider dropProvider
      */
-    public function testDrop($test)
+    public function testDrop($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function dropProvider()
+    public function dropProvider(): array
     {
         return [
             ['parser/parseDrop'],

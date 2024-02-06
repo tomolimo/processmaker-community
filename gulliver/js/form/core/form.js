@@ -1249,7 +1249,7 @@ function G_Text(form, element, name)
 
         if ((pressKey == 8 || pressKey == 46) && (me.validate != 'Login' && me.validate != 'NodeName')) me.sendOnChange();
         me.checkBrowser();
-        if (me.browser.name == 'Chrome' || me.browser.name == 'Safari'){
+        if (me.browser.name == 'Chrome' || me.browser.name == 'Safari' || me.browser.name == 'Firefox'){
           event.returnValue = false;
         }
         else{
@@ -1338,7 +1338,7 @@ function G_Text(form, element, name)
 
     //if ((me.browser.name == 'Firefox') && (keyCode == 8 || keyCode == 46)) {
     if ((me.browser.name == 'Firefox') && (keyCode == 8) && (me.validate != 'NodeName')) {
-      if (me.browser.name == 'Chrome' || me.browser.name == 'Safari'){
+      if (me.browser.name == 'Chrome' || me.browser.name == 'Safari' || me.browser.name == 'Firefox'){
         event.returnValue = false;
       }
       else{
@@ -1480,7 +1480,7 @@ function G_Text(form, element, name)
     		}
       }
 
-      if (me.browser.name == 'Chrome' || me.browser.name == 'Safari'){
+      if (me.browser.name == 'Chrome' || me.browser.name == 'Safari' || me.browser.name == 'Firefox'){
         event.returnValue = false;
       }
       else{

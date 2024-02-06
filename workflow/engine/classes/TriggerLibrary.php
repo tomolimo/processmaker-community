@@ -1,4 +1,6 @@
 <?php
+
+use ProcessMaker\PHPReflectionClass\ClassStructure;
 use ProcessMaker\Plugins\PluginRegistry;
 
 class TriggerLibrary
@@ -50,7 +52,7 @@ class TriggerLibrary
      *
      * @return self::$instance;
      */
-    public function &getSingleton()
+    public static function &getSingleton()
     {
         if (self::$instance == null) {
             self::$instance = new TriggerLibrary();
@@ -105,14 +107,13 @@ class TriggerLibrary
      * getMethodsFromLibraryFile
      *
      * @param string $file
-     * @return object(PHPClass) $parsedLibrary
+     * @return ClassStructure $parsedLibrary
      */
     public function getMethodsFromLibraryFile($file)
     {
         // parse class comments from file
-        $parsedLibrary = new PHPClass();
+        $parsedLibrary = new ClassStructure();
         $success = $parsedLibrary->parseFromFile($file);
-
         return $parsedLibrary;
     }
 

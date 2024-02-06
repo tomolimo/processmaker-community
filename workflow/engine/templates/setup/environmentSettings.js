@@ -175,36 +175,7 @@ Ext.onReady(function() {
       {name : 'id'},
       {name : 'name'}
     ]
-  }),
-  listeners:{
-      load: function ()
-      {
-          cmbCasesRowNumber.setValue(FORMATS.casesListRowNumber + "");
-      }
-  }
-  });
-
-  cmbCasesRowNumber = new Ext.form.ComboBox({
-    fieldLabel : _('ID_CASES_ROW_NUMBER'),
-    hiddenName : 'casesListRowNumber',
-    store : storeCasesRowNumber,
-    valueField : 'id',
-    displayField : 'name',
-    triggerAction : 'all',
-    emptyText : _('ID_SELECT'),
-    editable : false,
-    allowBlank : false,
-    allowBlankText : _('ID_ENVIRONMENT_SETTINGS_MSG_1'),
-    mode:'local',
-    listeners:{
-      afterrender:function(){
-        cmbCasesRowNumber.store.load();
-      },
-      select: function ()
-      {
-          changeSettings(5);
-      }
-    }
+  })
   });
 
   txtCasesRefreshTime = new Ext.form.NumberField({
@@ -285,7 +256,7 @@ Ext.onReady(function() {
       new Ext.form.FieldSet({
           title: _("ID_CASES_LIST_SETUP"),
           labelAlign: "right",
-          items: [cmbCasesDateFormat, cmbCasesRowNumber, txtCasesRefreshTime]
+          items: [cmbCasesDateFormat, txtCasesRefreshTime]
       })
     ]
   });

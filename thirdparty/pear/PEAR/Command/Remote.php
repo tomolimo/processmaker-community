@@ -108,9 +108,9 @@ parameter.
      *
      * @access public
      */
-    function PEAR_Command_Remote(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
-        parent::PEAR_Command_Common($ui, $config);
+        parent::__construct($ui, $config);
     }
 
     // }}}
@@ -281,7 +281,7 @@ parameter.
             return PEAR::raiseError("download expects one argument: the package to download");
         }
         $server = $this->config->get('master_server');
-        if (!ereg('^http://', $params[0])) {
+        if (!preg_match('/^http:\/\//', $params[0])) {
             $pkgfile = "http://$server/get/$params[0]";
         } else {
             $pkgfile = $params[0];

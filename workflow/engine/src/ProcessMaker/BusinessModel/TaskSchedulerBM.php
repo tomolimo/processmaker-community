@@ -2,6 +2,8 @@
 
 namespace ProcessMaker\BusinessModel;
 
+use Bootstrap;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\TaskScheduler;
 
@@ -84,6 +86,21 @@ class TaskSchedulerBM
             "description" => "ID_TIMER_EVENT_DESC"
         ],
         [
+            "title" => "ID_CLEAN_WEBENTRIES",
+            "enable" => "0",
+            "service" => "",
+            "category" => "case_actions",
+            "file" => "workflow/engine/bin/webentriescron.php",
+            "filew" => "workflow\\engine\bin\\webentriescron.php",
+            "startingTime" => null,
+            "endingTime" => null,
+            "timezone" => null,
+            "everyOn" => "1",
+            "interval" => "week",
+            "expression" => "0 20 * * 5",
+            "description" => "ID_CLEAN_WEBENTRIES_DESC"
+        ],
+        [
             "title" => "ID_TASK_SCHEDULER_CASE_EMAILS",
             "enable" => "1",
             "service" => "emails",
@@ -114,13 +131,14 @@ class TaskSchedulerBM
             "description" => "ID_TASK_SCHEDULER_MESSAGE_EVENTS_DESC"
         ]
     ];
+
     /**
      * Return the records in Schedule Table by category
      */
     public static function getSchedule($category)
     {
         $tasks = TaskScheduler::all();
-        $count =  $tasks->count();
+        $count = $tasks->count();
         if ($count == 0) {
             TaskSchedulerBM::generateInitialData();
             $tasks = TaskScheduler::all();
@@ -135,6 +153,7 @@ class TaskSchedulerBM
             return $tasks;
         }
     }
+
     /**
      * Save the record Schedule in Schedule Table
      */
@@ -142,55 +161,121 @@ class TaskSchedulerBM
     {
         $task = TaskScheduler::find($request['id']);
         if (isset($request['enable'])) {
-            $task->enable =  $request['enable'];
+            $task->enable = $request['enable'];
         }
         if (isset($request['expression'])) {
             $task->expression = $request['expression'];
-            $task->startingTime =  $request['startingTime'];
-            $task->endingTime =  $request['endingTime'];
-            $task->timezone =  $request['timezone'];
-            $task->everyOn =  $request['everyOn'];
-            $task->interval =  $request['interval'];
+            $task->startingTime = $request['startingTime'];
+            $task->endingTime = $request['endingTime'];
+            $task->timezone = $request['timezone'];
+            $task->everyOn = $request['everyOn'];
+            $task->interval = $request['interval'];
         }
         $task->save();
         return $task;
     }
+
     /**
      * Initial data for Schedule Table, with default values
      */
     public static function generateInitialData()
     {
-        $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
-        $toSave = [];
-        $win = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
         foreach (TaskSchedulerBM::$services as $service) {
-            $task = new TaskScheduler;
-            $task->title = $service["title"];
-            $task->category = $service["category"];
-            $task->description = $service["description"];
-            $task->startingTime = $service["startingTime"];
-            $task->endingTime = $service["endingTime"];
-            if ($win) {
-                $task->body = 'php "' . PATH_TRUNK . $service["filew"] . '" ' . $service["service"] . ' +w' . config("system.workspace") . ' +force +async';
-            } else {
-                $task->body = 'su -s /bin/sh -c "php ' . PATH_TRUNK . $service["file"] . " " . $service["service"] . ' +w' . config("system.workspace") . ' +force +async"';
-            }
-            $task->expression = $service["expression"];
-            $task->type = "shell";
-            $task->system = 1;
-            $task->enable = $service["enable"];
-            $task->everyOn = $service["everyOn"];
-            $task->interval = $service["interval"];
-            $task->timezone = $service["timezone"] == "default" ? date_default_timezone_get() : null;
-            $task->default_value = json_encode([
-                "startingTime" => $service["startingTime"],
-                "endingTime" => $service["endingTime"],
-                "everyOn" => $service["everyOn"],
-                "interval" => $service["interval"],
-                "expression" => $service["expression"],
-                "timezone" => $task->timezone
-            ]);
-            $task->save();
+            self::registerScheduledTask($service);
         }
+    }
+
+    /**
+     * Register scheduled task.
+     * @param array $service
+     * @return TaskScheduler
+     */
+    private static function registerScheduledTask(array $service)
+    {
+        $task = new TaskScheduler;
+        $task->title = $service["title"];
+        $task->category = $service["category"];
+        $task->description = $service["description"];
+        $task->startingTime = $service["startingTime"];
+        $task->endingTime = $service["endingTime"];
+        $task->body = self::buildBody($service);
+        $task->expression = $service["expression"];
+        $task->type = "shell";
+        $task->system = 1;
+        $task->enable = $service["enable"];
+        $task->everyOn = $service["everyOn"];
+        $task->interval = $service["interval"];
+        $task->timezone = $service["timezone"] == "default" ? date_default_timezone_get() : null;
+        $task->default_value = json_encode([
+            "startingTime" => $service["startingTime"],
+            "endingTime" => $service["endingTime"],
+            "everyOn" => $service["everyOn"],
+            "interval" => $service["interval"],
+            "expression" => $service["expression"],
+            "timezone" => $task->timezone
+        ]);
+        $task->save();
+        return $task;
+    }
+
+    /**
+     * Build body parameter.
+     * @param array $service
+     * @return string
+     */
+    private static function buildBody(array $service): string
+    {
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            return 'php "' . PATH_TRUNK . $service["filew"] . '" ' . $service["service"] . ' +w' . config("system.workspace") . ' +force +async';
+        } else {
+            return 'su -s /bin/sh -c "php ' . PATH_TRUNK . $service["file"] . " " . $service["service"] . ' +w' . config("system.workspace") . ' +force +async"';
+        }
+    }
+
+    /**
+     * Check data integrity.
+     * @return array
+     */
+    public static function checkDataIntegrity(): array
+    {
+        $beforeChanges = TaskScheduler::select()->get();
+
+        //remove missing register
+        $titleCondition = [];
+        $descriptionCondition = [];
+        foreach (self::$services as $service) {
+            $titleCondition[] = $service['title'];
+            $descriptionCondition[] = $service['description'];
+        }
+        TaskScheduler::whereNotIn('title', $titleCondition)
+            ->whereNotIn('description', $descriptionCondition)
+            ->delete();
+
+        //update register or create new register
+        foreach (self::$services as $service) {
+            $scheduler = TaskScheduler::select()
+                ->where('title', '=', $service['title'])
+                ->where('description', '=', $service['description'])
+                ->first();
+            if (is_null($scheduler)) {
+                self::registerScheduledTask($service);
+            } else {
+                $scheduler->body = self::buildBody($service);
+                $scheduler->type = 'shell';
+                $scheduler->category = $service['category'];
+                $scheduler->system = 1;
+                $scheduler->update();
+            }
+        }
+
+        //log changes
+        $afterChanges = TaskScheduler::select()->get();
+        $result = [
+            'beforeChanges' => $beforeChanges,
+            'afterChanges' => $afterChanges
+        ];
+        $message = 'Check SCHEDULER table integrity';
+        Log::channel(':taskSchedulerCheckDataIntegrity')->info($message, Bootstrap::context($result));
+        return $result;
     }
 }

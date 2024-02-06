@@ -20,6 +20,9 @@ switch ($actionAjax) {
         $limit = isset($_REQUEST['limit']) ? $_REQUEST['limit'] : 20;
         $dir = isset($_POST['dir']) ? $_POST['dir'] : 'DESC';
         $sort = isset($_POST['sort']) ? $_POST['sort'] : '';
+        if ($sort === 'APP_MSG_DATE_LABEL') {
+            $sort = 'APP_MSG_DATE';
+        }
 
         global $G_PUBLISH;
         $case = new Cases();
@@ -86,7 +89,10 @@ switch ($actionAjax) {
                 if ($respMess == 'BLOCK' || $respMess == '') {
                     $appMessageArray[$index]['APP_MSG_BODY'] = '';
                 }
-                $appMessageArray[$index]['APP_MSG_DATE'] = DateTime::convertUtcToTimeZone($appMessageArray[$index]['APP_MSG_DATE']);
+                // Apply mask
+                $dateLabel = applyMaskDateEnvironment($appMessageArray[$index]['APP_MSG_DATE'], '', false);
+                // Apply the timezone
+                $appMessageArray[$index]['APP_MSG_DATE_LABEL'] = DateTime::convertUtcToTimeZone($dateLabel);
                 $messageList[] = array_merge($appMessageArray[$index], ['MSGS_HISTORY' => $respMess]);
             }
         }

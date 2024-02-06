@@ -100,34 +100,65 @@ try {
             global $RBAC;
 
             $co = new Configurations();
-            $config = $co->getConfiguration( 'authSourcesList', 'pageSize', '', $_SESSION['USER_LOGGED'] );
-            $limit_size = isset( $config['pageSize'] ) ? $config['pageSize'] : 20;
+            $config = $co->getConfiguration('authSourcesList', 'pageSize', '', $_SESSION['USER_LOGGED']);
+            $limit_size = isset($config['pageSize']) ? $config['pageSize'] : 20;
 
-            $start = isset( $_REQUEST['start'] ) ? $_REQUEST['start'] : 0;
-            $limit = isset( $_REQUEST['limit'] ) ? $_REQUEST['limit'] : $limit_size;
-            $filter = isset( $_REQUEST['textFilter'] ) ? $_REQUEST['textFilter'] : '';
+            $start = isset($_REQUEST['start']) ? $_REQUEST['start'] : 0;
+            $limit = isset($_REQUEST['limit']) ? $_REQUEST['limit'] : $limit_size;
+            $filter = isset($_REQUEST['textFilter']) ? $_REQUEST['textFilter'] : '';
 
-            $Criterias = $RBAC->getAuthenticationSources( $start, $limit, $filter );
+            $criterias = $RBAC->getAuthenticationSources($start, $limit, $filter);
 
-            $Dat = AuthenticationSourcePeer::doSelectRS( $Criterias['COUNTER'] );
-            $Dat->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-            $Dat->next();
-            $row = $Dat->getRow();
+            $dataSourceAuthentication = AuthenticationSourcePeer::doSelectRS($criterias['COUNTER']);
+            $dataSourceAuthentication->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataSourceAuthentication->next();
+            $row = $dataSourceAuthentication->getRow();
             $total_sources = $row['CNT'];
 
-            $oDataset = AuthenticationSourcePeer::doSelectRS( $Criterias['LIST'] );
-            $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
+            if (!empty($_REQUEST['orderBy']) && isset($_REQUEST['ascending']) && defined("AuthenticationSourcePeer::" . $_REQUEST['orderBy'])) {
+                if ($_REQUEST['ascending'] === '1') {
+                    $criterias['LIST']->addAscendingOrderByColumn(constant("AuthenticationSourcePeer::" . $_REQUEST['orderBy']));
+                }
+                if ($_REQUEST['ascending'] === '0') {
+                    $criterias['LIST']->addDescendingOrderByColumn(constant("AuthenticationSourcePeer::" . $_REQUEST['orderBy']));
+                }
+            } else {
+                $criterias['LIST']->addAscendingOrderByColumn(AuthenticationSourcePeer::AUTH_SOURCE_NAME);
+            }
+            $dataset = AuthenticationSourcePeer::doSelectRS($criterias['LIST']);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
             global $RBAC;
             $auth = $RBAC->getAllUsersByAuthSource();
 
-            $aSources = Array ();
-            while ($oDataset->next()) {
-                $aSources[] = $oDataset->getRow();
-                $index = sizeof( $aSources ) - 1;
-                $aSources[$index]['CURRENT_USERS'] = isset( $auth[$aSources[$index]['AUTH_SOURCE_UID']] ) ? $auth[$aSources[$index]['AUTH_SOURCE_UID']] : 0;
+            $sources = [];
+            while ($dataset->next()) {
+                $row = $dataset->getRow();
+                $values = explode("_", $row["AUTH_SOURCE_PASSWORD"]);
+                foreach ($values as $value) {
+                    if ($value == "2NnV3ujj3w") {
+                        $row["AUTH_SOURCE_PASSWORD"] = G::decrypt($values[0], $row["AUTH_SOURCE_SERVER_NAME"]);
+                    }
+                }
+                $label = G::LoadTranslation('ID_DISABLE');
+                if ($row['AUTH_SOURCE_ENABLED_TLS'] === "1") {
+                    $label = G::LoadTranslation('ID_ENABLE');
+                }
+                $row['AUTH_SOURCE_ENABLED_TLS_LABEL'] = $label;
+                //additional information
+                $authSourceData = unserialize($row['AUTH_SOURCE_DATA']);
+                if (is_array($authSourceData)) {
+                    $row = array_merge($row, $authSourceData);
+                }
+                $sources[] = $row;
+                $index = sizeof($sources) - 1;
+                $sources[$index]['CURRENT_USERS'] = isset($auth[$sources[$index]['AUTH_SOURCE_UID']]) ? $auth[$sources[$index]['AUTH_SOURCE_UID']] : 0;
             }
-            echo '{sources: ' . G::json_encode( $aSources ) . ', total_sources: ' . $total_sources . '}';
+            $response = [
+                'sources' => $sources,
+                'total_sources' => $total_sources
+            ];
+            echo G::json_encode($response);
             break;
         case 'canDeleteAuthSource':
             try {

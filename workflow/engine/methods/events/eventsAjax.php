@@ -1,5 +1,14 @@
 <?php
-//$req = $_POST['request'];
+use ProcessMaker\Exception\RBACException;
+
+// Include global object RBAC
+global $RBAC;
+
+// Check if the current user have the correct permissions to access to this resource, if not throws a RBAC Exception with code 403
+if ($RBAC->userCanAccess('PM_SETUP') !== 1 || $RBAC->userCanAccess('PM_SETUP_LOGS') !== 1) {
+    throw new RBACException('ID_ACCESS_DENIED', 403);
+}
+
 $req = (isset($_POST['request']))? $_POST['request']:((isset($_REQUEST['request']))? $_REQUEST['request'] : 'No hayyy tal');
 
 require_once 'classes/model/Content.php';

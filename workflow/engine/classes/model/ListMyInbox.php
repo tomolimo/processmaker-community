@@ -13,6 +13,7 @@ require_once 'classes/model/om/BaseListMyInbox.php';
  * long as it does not already exist in the output directory.
  *
  * @package    classes.model
+ * @deprecated Class deprecated in Release 3.6.0
  */
 // @codingStandardsIgnoreStart
 class ListMyInbox extends BaseListMyInbox implements ListInterface
@@ -147,9 +148,9 @@ class ListMyInbox extends BaseListMyInbox implements ListInterface
         $dataset->next();
         $aRow = $dataset->getRow();
         $data['DEL_CURRENT_USR_UID'] = $data['USR_UID'];
-        $data['DEL_CURRENT_USR_USERNAME']  = $aRow['USR_USERNAME'];
-        $data['DEL_CURRENT_USR_FIRSTNAME'] = $aRow['USR_FIRSTNAME'];
-        $data['DEL_CURRENT_USR_LASTNAME']  = $aRow['USR_LASTNAME'];
+        $data['DEL_CURRENT_USR_USERNAME']  = is_array($aRow) ? $aRow['USR_USERNAME'] : '';
+        $data['DEL_CURRENT_USR_FIRSTNAME'] = is_array($aRow) ? $aRow['USR_FIRSTNAME'] : '';
+        $data['DEL_CURRENT_USR_LASTNAME']  = is_array($aRow) ? $aRow['USR_LASTNAME'] : '';
 
         if ($data['DEL_INDEX'] == 1 && $data['APP_STATUS'] == 'TO_DO') {
             $data['APP_CREATE_DATE'] = $data['APP_UPDATE_DATE'];

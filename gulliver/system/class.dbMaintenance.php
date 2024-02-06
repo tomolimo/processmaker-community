@@ -368,6 +368,7 @@ class DataBaseMaintenance
                 . ' --port=' . $dbPort
                 . ' --opt'
                 . ' --skip-comments'
+                . ' --no-tablespaces'
                 . ' ' . $this->getDbName()
                 . ' > ' . $outfile;
         } else {
@@ -376,6 +377,7 @@ class DataBaseMaintenance
                 . ' --user=' . $this->getUser()
                 . ' --opt'
                 . ' --skip-comments'
+                . ' --no-tablespaces'
                 . ' --password=' . $password
                 . ' ' . $this->getDbName()
                 . ' > ' . $outfile;

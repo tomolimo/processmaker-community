@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Crypt;
+
 if (array_key_exists("d", $_GET)) {
-    $str = base64_decode($_GET["d"]);
+    $str = Crypt::decryptString($_GET["d"]);
     if (preg_match('/^a:[0-9]+:{/', $str) && !preg_match('/(^|;|{|})O:\+?[0-9]+:"/', $str)) {
         $_POST = unserialize($str);
     }

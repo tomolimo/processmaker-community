@@ -353,7 +353,10 @@ class TriggerWizard
             $library = $this->library->getLibraryDefinition($this->libraryGetLibraryName($libraryName));
             $method = $library->methods[$methodName];
 
-            $arrayParameter = array_keys($method->params);
+            $arrayParameter = [];
+            if (isset($method->params)) {
+                $arrayParameter = array_keys($method->params);
+            }
 
             foreach ($arrayParameter as $key => $value) {
                 $strParam = $value;
@@ -796,7 +799,7 @@ class TriggerWizard
     public function getMethod($libraryName, $methodName)
     {
         try {
-            $arrayMethod = array();
+            $arrayMethod = [];
 
             //Verify data
             $arrayMethodInputParam = $this->methodGetInputParams($libraryName, $methodName);
@@ -805,10 +808,9 @@ class TriggerWizard
             //Get data
             $library = $this->library->getLibraryDefinition($this->libraryGetLibraryName($libraryName));
             $method = $library->methods[$methodName];
-
-            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_NAME")] = trim($method->info["name"]);
-            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_DESCRIPTION")] = trim(str_replace("*", "", implode("", $method->info["description"])));
-            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_LABEL")] = trim($method->info["label"]);
+            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_NAME")] = isset($method->info["name"]) ? trim($method->info["name"]) : '';
+            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_DESCRIPTION")] = isset($method->info["description"]) ? trim(str_replace("*", "", implode("", $method->info["description"]))) : '';
+            $arrayMethod[$this->getFieldNameByFormatFieldName("FN_LABEL")] = isset($method->info["label"]) ? trim($method->info["label"]) : '';
             $arrayMethod[$this->getFieldNameByFormatFieldName("FN_LINK")] = (isset($method->info["link"]) && trim($method->info["link"]) != "")? trim($method->info["link"]) : "";
 
             if ($this->formatFieldNameInUppercase) {
@@ -841,7 +843,7 @@ class TriggerWizard
     public function getLibrary($libraryName)
     {
         try {
-            $arrayLibrary = array();
+            $arrayLibrary = [];
 
             //Verify data
             $this->throwExceptionIfNotExistsLibrary($libraryName, $this->arrayFieldNameForException["libraryName"]);
@@ -850,12 +852,12 @@ class TriggerWizard
             $library = $this->library->getLibraryDefinition($this->libraryGetLibraryName($libraryName));
 
             $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_NAME")] = $libraryName;
-            $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_TITLE")] = trim($library->info["name"]);
-            $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_DESCRIPTION")] = trim(str_replace("*", "", implode("", $library->info["description"])));
+            $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_TITLE")] = isset($library->info["name"]) ? trim($library->info["name"]) : '';
+            $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_DESCRIPTION")] = isset($library->info["description"]) ? trim(str_replace("*", "", implode("", $library->info["description"]))) : '';
             $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_ICON")] = (isset($library->info["icon"]) && trim($library->info["icon"]) != "")? trim($library->info["icon"]) : "/images/browse.gif";
             $arrayLibrary[$this->getFieldNameByFormatFieldName("LIB_CLASS_NAME")] = trim($library->info["className"]);
 
-            $arrayMethod = array();
+            $arrayMethod = [];
 
             if (count($library->methods) > 0) {
                 ksort($library->methods, SORT_STRING);

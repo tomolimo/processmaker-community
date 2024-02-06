@@ -2,6 +2,7 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
  */
 class OutputDocument extends Model
 {
+    use HasFactory;
+
     protected $table = 'OUTPUT_DOCUMENT';
     protected $primaryKey = 'OUT_DOC_ID';
     public $timestamps = false;

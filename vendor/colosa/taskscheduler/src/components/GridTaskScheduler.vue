@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-client-table :data="data" :columns="columns">
+    <v-client-table :data="data" :columns="columns" :options="options">
       <b-form-checkbox
         slot="enable"
         slot-scope="props"
@@ -45,7 +45,24 @@ export default {
   },
   data() {
     return {
-      TRANSLATIONS: window.TRANSLATIONS
+      TRANSLATIONS: window.TRANSLATIONS,
+      options: {
+          headings: {
+              enable: window.TRANSLATIONS.ID_ENABLE,
+              service: window.TRANSLATIONS.ID_SERVICE,
+              "schedule time": window.TRANSLATIONS.ID_SCHEDULE_TIME || "Schedule time"
+          },
+          texts: {
+              count: window.TRANSLATIONS.ID_SHOWING_FROM_RECORDS_COUNT,
+              first: window.TRANSLATIONS.ID_FIRST,
+              last: window.TRANSLATIONS.ID_LAST,
+              filter: window.TRANSLATIONS.ID_FILTER + ":",
+              limit: window.TRANSLATIONS.ID_RECORDS + ":",
+              page: window.TRANSLATIONS.ID_PAGE + ":",
+              noResults: window.TRANSLATIONS.ID_NO_MATCHING_RECORDS,
+              filterPlaceholder: window.TRANSLATIONS.ID_EMPTY_SEARCH
+          },
+       }
     };
   },
   methods: {

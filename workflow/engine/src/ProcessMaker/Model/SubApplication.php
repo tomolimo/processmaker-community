@@ -2,6 +2,7 @@
 
 namespace ProcessMaker\Model;
 
+use App\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SubApplication extends Model
 {
+    use HasFactory;
+
     // Set our table name
     protected $table = 'SUB_APPLICATION';
     // No timestamps

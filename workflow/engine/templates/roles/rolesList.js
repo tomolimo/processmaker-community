@@ -143,21 +143,7 @@ Ext.onReady(function(){
     url: 'roles_Ajax?request=saveNewRole',
     frame: true,
     items:[
-           {xtype: 'textfield', fieldLabel: _('ID_CODE'), name: 'code', width: 250, allowBlank: false,
-            listeners: {
-              blur : function(ob)
-             {
-                if(this.getValue().length == 0){
-                  Ext.MessageBox.show({
-                    title: _('ID_WARNING'),
-                    msg: _('ID_PLEASE_ENTER_REQUIRED_FIELDS'),
-                    buttons: Ext.MessageBox.OK,
-                    animEl: 'mb9',
-                    icon: Ext.MessageBox.WARNING
-                  });
-                }
-             }
-            }},
+           {xtype: 'textfield', fieldLabel: _('ID_CODE'), name: 'code', width: 250, allowBlank: false},
            {xtype: 'textfield', fieldLabel: _('ID_NAME'), name: 'name', width: 200, allowBlank: false,
             listeners: {
               blur : function(ob)
@@ -406,7 +392,13 @@ NewRoleWindow = function(){
     id: 'w',
     modal: true,
     width: 420,
-    items: [newForm]
+    items: [newForm],
+    listeners: {
+      beforeclose:function(){
+        CloseWindow();
+        return false;
+      }
+    }
   });
   w.show();
 };

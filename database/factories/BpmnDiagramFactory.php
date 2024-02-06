@@ -1,14 +1,28 @@
 <?php
 
-use Faker\Generator as Faker;
+namespace Database\Factories;
 
-$factory->define(\ProcessMaker\Model\BpmnDiagram::class, function(Faker $faker) {
-    return [
-        'DIA_UID' => $faker->regexify("/[a-zA-Z]{32}/"),
-        'PRJ_UID' => function() {
-            return factory(\ProcessMaker\Model\BpmnProject::class)->create()->PRJ_UID;
-        },
-        'DIA_NAME' => $faker->name,
-        'DIA_IS_CLOSABLE' => 0,
-    ];
-});
+use App\Factories\Factory;
+use Illuminate\Support\Str;
+
+class BpmnDiagramFactory extends Factory
+{
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        return [
+            'DIA_UID' => $this->faker->regexify("/[a-zA-Z]{32}/"),
+            'PRJ_UID' => function () {
+                return \ProcessMaker\Model\BpmnProject::factory()->create()->PRJ_UID;
+            },
+            'DIA_NAME' => $this->faker->name,
+            'DIA_IS_CLOSABLE' => 0,
+        ];
+    }
+
+}

@@ -1,5 +1,6 @@
 <?php
 
+use ProcessMaker\Model\Process as ProcessModel;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 
 //validate the data post
@@ -104,6 +105,15 @@ try {
     $oCase = new Cases();
     $oCase->thisIsTheCurrentUser( $_SESSION["APPLICATION"], $_SESSION["INDEX"], $_SESSION["USER_LOGGED"], "REDIRECT", "casesListExtJs" );
     $Fields = $oCase->loadCase( $_SESSION["APPLICATION"] );
+    
+    if (!ProcessModel::isActive($Fields['PRO_UID'], 'PRO_UID')) {
+        $G_PUBLISH = new Publisher();
+        $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', [
+            'MESSAGE' => G::LoadTranslation('ID_CASE_NOT_ALLOW_TO_BE_CREATED_DUE_TO_THE_PROCESS_IS_INACTIVE')
+        ]);
+        G::RenderPage('publish', 'blank');
+        exit();
+    }
 
     if ($swpmdynaform) {
         $dataFields = $Fields["APP_DATA"];

@@ -6,20 +6,29 @@ namespace PhpMyAdmin\SqlParser\Tools;
 
 use Exception;
 use PhpMyAdmin\SqlParser\Context;
+use PhpMyAdmin\SqlParser\Exceptions\LexerException;
+use PhpMyAdmin\SqlParser\Exceptions\ParserException;
 use PhpMyAdmin\SqlParser\Lexer;
 use PhpMyAdmin\SqlParser\Parser;
+use Zumba\JsonSerializer\JsonSerializer;
+
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function in_array;
 use function is_dir;
+use function json_decode;
+use function json_encode;
 use function mkdir;
 use function print_r;
 use function scandir;
-use function serialize;
 use function sprintf;
 use function strpos;
 use function substr;
+
+use const JSON_PRESERVE_ZERO_FRACTION;
+use const JSON_PRETTY_PRINT;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Used for test generation.
@@ -72,6 +81,7 @@ class TestGenerator
 
         // Extracting lexer's errors.
         if (! empty($lexer->errors)) {
+            /** @var LexerException $err */
             foreach ($lexer->errors as $err) {
                 $lexerErrors[] = [
                     $err->getMessage(),
@@ -86,6 +96,7 @@ class TestGenerator
 
         // Extracting parser's errors.
         if (! empty($parser->errors)) {
+            /** @var ParserException $err */
             foreach ($parser->errors as $err) {
                 $parserErrors[] = [
                     $err->getMessage(),
@@ -143,18 +154,32 @@ class TestGenerator
             Context::setMode('ANSI_QUOTES');
         }
 
+        $mariaDbPos = strpos($input, '_mariadb_');
+        if ($mariaDbPos !== false) {// Keep in sync with TestCase.php
+            // set context
+            $mariaDbVersion = (int) substr($input, $mariaDbPos + 9, 6);
+            Context::load('MariaDb' . $mariaDbVersion);
+        }
+
         $test = static::generate($query, $type);
 
         // unset mode, reset to default every time, to be sure
         Context::setMode();
-
+        $serializer = new JsonSerializer();
         // Writing test's data.
-        file_put_contents($output, serialize($test));
+        $encoded = $serializer->serialize($test);
+        $encoded = json_encode(
+            json_decode($encoded),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION
+        );
+        file_put_contents($output, $encoded);
 
         // Dumping test's data in human readable format too (if required).
-        if (! empty($debug)) {
-            file_put_contents($debug, print_r($test, true));
+        if (empty($debug)) {
+            return;
         }
+
+        file_put_contents($debug, print_r($test, true));
     }
 
     /**

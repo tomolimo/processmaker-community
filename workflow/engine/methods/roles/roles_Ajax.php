@@ -1,26 +1,7 @@
 <?php
-/**
- * upgrade.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
+
+use Illuminate\Support\Facades\DB;
+use ProcessMaker\BusinessModel\Role;
 use ProcessMaker\Exception\RBACException;
 
 global $RBAC;
@@ -250,46 +231,54 @@ switch ($REQUEST) {
         }
         break;
     case 'rolesList':
-        $co = new Configurations();
-        $config = $co->getConfiguration( 'rolesList', 'pageSize', '', $_SESSION['USER_LOGGED'] );
-        $limit_size = isset( $config['pageSize'] ) ? $config['pageSize'] : 20;
+        $configurations = new Configurations();
+        $config = $configurations->getConfiguration('rolesList', 'pageSize', '', $_SESSION['USER_LOGGED']);
+        $limitSize = isset($config['pageSize']) ? $config['pageSize'] : 20;
 
-        $start = isset( $_POST['start'] ) ? $_POST['start'] : 0;
-        $limit = isset( $_POST['limit'] ) ? $_POST['limit'] : $limit_size;
-        $filter = isset( $_REQUEST['textFilter'] ) ? $_REQUEST['textFilter'] : '';
+        $start = isset($_POST['start']) ? $_POST['start'] : 0;
+        $limit = isset($_POST['limit']) ? $_POST['limit'] : $limitSize;
+        $filter = isset($_REQUEST['textFilter']) ? $_REQUEST['textFilter'] : '';
 
         global $RBAC;
-        $Criterias = $RBAC->getAllRolesFilter( $start, $limit, $filter );
+        $criterias = $RBAC->getAllRolesFilter($start, $limit, $filter);
 
-        $rs = RolesPeer::DoSelectRs( $Criterias['LIST'] );
-        $rs->setFetchmode( ResultSet::FETCHMODE_ASSOC );
+        $rs = RolesPeer::DoSelectRs($criterias['LIST']);
+        $rs->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
         $content = new Content();
-        $rNames = $content->getAllContentsByRole();
-        $aUsers = $RBAC->getAllUsersByRole();
-        $aRows = Array ();
+        $names = $content->getAllContentsByRole();
+        $users = $RBAC->getAllUsersByRole();
+        $rows = Array();
         while ($rs->next()) {
-            $aRows[] = $rs->getRow();
-            $index = sizeof( $aRows ) - 1;
-            $roleUid = $aRows[$index]['ROL_UID'];
-            if (!isset($rNames[$roleUid])) {
+            $rows[] = $rs->getRow();
+            $index = sizeof($rows) - 1;
+            $roleUid = $rows[$index]['ROL_UID'];
+            if (!isset($names[$roleUid])) {
                 $rol = new Roles();
                 $row = $rol->load($roleUid);
-                $rolname = $row['ROL_NAME'];
+                $rolName = $row['ROL_NAME'];
             } else {
-                $rolname = $rNames[$roleUid];
+                $rolName = $names[$roleUid];
             }
-            $aRows[$index]['ROL_NAME'] = $rolname;
-            $aRows[$index]['TOTAL_USERS'] = isset( $aUsers[$roleUid] ) ? $aUsers[$roleUid] : 0;
+            $rows[$index]['ROL_NAME'] = $rolName;
+            $rows[$index]['TOTAL_USERS'] = isset($users[$roleUid]) ? $users[$roleUid] : 0;
         }
 
-        $oData = RolesPeer::doSelectRS( $Criterias['COUNTER'] );
-        $oData->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-        $oData->next();
-        $row = $oData->getRow();
-        $total_roles = $row['CNT'];
+        $data = RolesPeer::doSelectRS($criterias['COUNTER']);
+        $data->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+        $data->next();
+        $row = $data->getRow();
+        $totalRoles = $row['CNT'];
 
-        echo '{roles: ' . G::json_encode( $aRows ) . ', total_roles: ' . $total_roles . '}';
+        $result = [
+            'roles' => $rows,
+            'total_roles' => $totalRoles
+        ];
+        echo G::json_encode($result);
+        break;
+    case 'allRoles':
+        $roles = Role::getAllRoles();
+        echo G::json_encode($roles);
         break;
     case 'updatePageSize':
         $c = new Configurations();

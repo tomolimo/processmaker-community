@@ -13,12 +13,12 @@ class AlterStatementTest extends TestCase
      *
      * @dataProvider alterProvider
      */
-    public function testAlter($test)
+    public function testAlter($test): void
     {
         $this->runParserTest($test);
     }
 
-    public function alterProvider()
+    public function alterProvider(): array
     {
         return [
             ['parser/parseAlter'],
@@ -31,10 +31,30 @@ class AlterStatementTest extends TestCase
             ['parser/parseAlter8'],
             ['parser/parseAlter9'],
             ['parser/parseAlter10'],
+            ['parser/parseAlter11'],
+            ['parser/parseAlter12'],
+            ['parser/parseAlter13'],
             ['parser/parseAlterErr'],
             ['parser/parseAlterErr2'],
             ['parser/parseAlterErr3'],
+            ['parser/parseAlterErr4'],
             ['parser/parseAlterWithInvisible'],
+            ['parser/parseAlterTableCharacterSet1'],
+            ['parser/parseAlterTableCharacterSet2'],
+            ['parser/parseAlterTableCharacterSet3'],
+            ['parser/parseAlterTableCharacterSet4'],
+            ['parser/parseAlterTableCharacterSet5'],
+            ['parser/parseAlterTableCharacterSet6'],
+            ['parser/parseAlterTableCharacterSet7'],
+            ['parser/parseAlterUser'],
+            ['parser/parseAlterUser1'],
+            ['parser/parseAlterUser2'],
+            ['parser/parseAlterUser3'],
+            ['parser/parseAlterUser4'],
+            ['parser/parseAlterUser5'],
+            ['parser/parseAlterUser6'],
+            ['parser/parseAlterUser7'],
+            ['parser/parseAlterUser8'],
         ];
     }
 }

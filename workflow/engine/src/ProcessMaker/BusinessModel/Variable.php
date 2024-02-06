@@ -7,6 +7,8 @@ use Cases as ClassesCases;
 use Exception;
 use G;
 use PmDynaform;
+use ProcessMaker\Model\AdditionalTables as AT;
+use ProcessMaker\Model\Fields;
 use ProcessMaker\Model\ProcessVariables;
 use ProcessMaker\Util\Common;
 
@@ -570,18 +572,19 @@ class Variable
     public function throwExceptionIfVariableIsAssociatedAditionalTable($variableUid)
     {
         try {
-            $criteria = new \Criteria('workflow');
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_UID);
-            $criteria->addJoin(\ProcessVariablesPeer::PRJ_UID, \AdditionalTablesPeer::PRO_UID, \Criteria::INNER_JOIN);
-            $arrayCondition = [];
-            $arrayCondition[] = array(\AdditionalTablesPeer::ADD_TAB_UID, \FieldsPeer::ADD_TAB_UID, \Criteria::EQUAL);
-            $arrayCondition[] = array(\ProcessVariablesPeer::VAR_NAME, \FieldsPeer::FLD_NAME, \Criteria::EQUAL);
-            $criteria->addJoinMC($arrayCondition, \Criteria::INNER_JOIN);
-            $criteria->add(\ProcessVariablesPeer::VAR_UID, $variableUid, \Criteria::EQUAL);
-            $rsCriteria = \ProcessVariablesPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-            if ($rsCriteria->next()) {
-                throw new Exception(G::LoadTranslation('ID_VARIABLE_ASSOCIATED_WITH_REPORT_TABLE', array($variableUid)));
+            // Get variable name
+            $varInfo = ProcessVariables::getVariable($variableUid);
+            $varName = $varInfo['VAR_NAME'];
+            $proUid = $varInfo['PRJ_UID'];
+            // Get the tables related to the process
+            $tables = AT::getTables($proUid);
+            if (!empty($tables)) {
+                foreach ($tables as $value) {
+                    $exist = Fields::searchVariable($value['ADD_TAB_UID'], $varName);
+                    if ($exist) {
+                        throw new Exception(G::LoadTranslation('ID_VARIABLE_ASSOCIATED_WITH_REPORT_TABLE', [$varName]));
+                    }
+                }
             }
         } catch (Exception $e) {
             throw $e;
@@ -817,6 +820,15 @@ class Variable
             //in the current change there is no specific property that indicates
             //if the control is in the grid.
             if (isset($field->columnWidth)) {
+                if (!empty($field->dataVariable)) {
+                    //this support the global variable for @?, only access grids
+                    //for access to all variables, replace with '/^\s*@.(.+)\s*$/'
+                    $dataVariable = preg_match('/^\s*@\?(.+)\s*$/', $field->dataVariable, $arrayMatch) ? $arrayMatch[1] : $json->dataVariable;
+                    if (isset($params[$dataVariable]) && is_array($params[$dataVariable])) {
+                        $globalVariables[$dataVariable] = $params[$dataVariable];
+                        $paramsAndGlobal[$dataVariable] = $params[$dataVariable];
+                    }
+                }
                 $pmDynaform->fields["APP_DATA"] = $globalVariables;
                 $field->queryInputData = $paramsAndGlobal;
             }

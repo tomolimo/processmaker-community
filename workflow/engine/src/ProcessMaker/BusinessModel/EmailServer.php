@@ -8,6 +8,8 @@ use Exception;
 use G;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Net;
+use PHPMailer\PHPMailer\SMTP;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\AbeConfiguration;
 use ProcessMaker\Model\EmailEvent;
@@ -20,7 +22,7 @@ class EmailServer
 {
     private $arrayFieldDefinition = array(
         "MESS_UID"                 => array("type" => "string", "required" => false, "empty" => false, "defaultValues" => array(),                    "fieldNameAux" => "emailServerUid"),
-        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL", "IMAP", "GMAILAPI"), "fieldNameAux" => "emailServerEngine"),
+        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL", "IMAP", "GMAILAPI", "OFFICE365API"), "fieldNameAux" => "emailServerEngine"),
         "MESS_SERVER"              => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerServer"),
         "MESS_PORT"                => array("type" => "int",    "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerPort"),
         "MESS_INCOMING_SERVER"     => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerIncomingServer"),
@@ -247,12 +249,11 @@ class EmailServer
     }
 
     /**
-     * Test connection by step
+     * Test connection by step.
      *
-     * @param array $arrayData Data
-     * @param int   $step      Step
-     *
-     * @return array, return array with result of test connection by step
+     * @param array $arrayData
+     * @param int $step
+     * @return string
      * @throws Exception
      */
     public function testConnectionByStep(array $arrayData, $step = 0)
@@ -262,40 +263,38 @@ class EmailServer
             //MAIL
             if ($arrayData["MESS_ENGINE"] == "MAIL") {
 
-                $arrayDataMail = array();
+                $arrayDataMail = [];
 
                 $eregMail = "/^[0-9a-zA-Z]+(?:[._][0-9a-zA-Z]+)*@[0-9a-zA-Z]+(?:[._-][0-9a-zA-Z]+)*\.[0-9a-zA-Z]{2,3}$/";
 
-                $arrayDataMail["FROM_EMAIL"]    = ($arrayData["MESS_FROM_MAIL"] != "" && preg_match($eregMail, $arrayData["MESS_FROM_MAIL"]))? $arrayData["MESS_FROM_MAIL"] : "";
-                $arrayDataMail["FROM_NAME"]     = ($arrayData["MESS_FROM_NAME"] != "")? $arrayData["MESS_FROM_NAME"] : G::LoadTranslation("ID_MESS_TEST_BODY");
-                $arrayDataMail["MESS_ENGINE"]   = "MAIL";
-                $arrayDataMail["MESS_SERVER"]   = "localhost";
-                $arrayDataMail["MESS_PORT"]     = 25;
-                $arrayDataMail["MESS_ACCOUNT"]  = $arrayData["MAIL_TO"];
+                $arrayDataMail["FROM_EMAIL"] = ($arrayData["MESS_FROM_MAIL"] != "" && preg_match($eregMail, $arrayData["MESS_FROM_MAIL"])) ? $arrayData["MESS_FROM_MAIL"] : "";
+                $arrayDataMail["FROM_NAME"] = ($arrayData["MESS_FROM_NAME"] != "") ? $arrayData["MESS_FROM_NAME"] : G::LoadTranslation("ID_MESS_TEST_BODY");
+                $arrayDataMail["MESS_ENGINE"] = "MAIL";
+                $arrayDataMail["MESS_SERVER"] = "localhost";
+                $arrayDataMail["MESS_PORT"] = 25;
+                $arrayDataMail["MESS_ACCOUNT"] = $arrayData["MAIL_TO"];
                 $arrayDataMail["MESS_PASSWORD"] = "";
-                $arrayDataMail["TO"]            = $arrayData["MAIL_TO"];
-                $arrayDataMail["MESS_RAUTH"]    = true;
+                $arrayDataMail["TO"] = $arrayData["MAIL_TO"];
+                $arrayDataMail["MESS_RAUTH"] = true;
 
-                $arrayTestMailResult = array();
+                $arrayTestMailResult = [];
 
                 try {
                     $arrayTestMailResult = $this->sendTestMail($arrayDataMail);
                 } catch (Exception $e) {
                     $arrayTestMailResult["status"] = false;
                     $arrayTestMailResult["message"] = $e->getMessage();
-
                 }
 
-                $arrayResult = array(
-                    "result"  => $arrayTestMailResult["status"],
+                $arrayResult = [
+                    "result" => $arrayTestMailResult["status"],
                     "message" => ""
-                );
+                ];
 
                 if ($arrayTestMailResult["status"] == false) {
                     $arrayResult["message"] = G::LoadTranslation("ID_SENDMAIL_NOT_INSTALLED");
                 }
 
-                //Return
                 return $arrayResult;
             }
 
@@ -311,7 +310,7 @@ class EmailServer
                 $passwdHide = "";
             }
 
-            $passwdDec = G::decrypt($passwd,"EMAILENCRYPT");
+            $passwdDec = G::decrypt($passwd, "EMAILENCRYPT");
             $auxPass = explode("hash:", $passwdDec);
 
             if (count($auxPass) > 1) {
@@ -325,21 +324,24 @@ class EmailServer
 
             $arrayData["MESS_PASSWORD"] = $passwd;
 
-            $port = (int)($arrayData["MESS_PORT"]);
-            $auth_required = (int)($arrayData["MESS_RAUTH"]);
+            $port = (int) ($arrayData["MESS_PORT"]);
+            $auth_required = (int) ($arrayData["MESS_RAUTH"]);
             $useSecureCon = $arrayData["SMTPSECURE"];
-            $sendTestMail = (int)($arrayData["MESS_TRY_SEND_INMEDIATLY"]);
+            $sendTestMail = (int) ($arrayData["MESS_TRY_SEND_INMEDIATLY"]);
             $mailTo = $arrayData["MAIL_TO"];
             $smtpSecure = $arrayData["SMTPSECURE"];
 
-            $serverNet = new \Net($server);
-            $smtp = new \SMTP();
+            $serverNet = new Net($server);
+            $smtp = new SMTP();
 
             $timeout = 10;
-            $hostinfo = array();
+            $hostinfo = [];
             $srv = $arrayData["MESS_SERVER"];
 
-            $arrayResult = array();
+            $arrayResult = [
+                "result" => false,
+                "message" => ""
+            ];
 
             switch ($step) {
                 case 1:
@@ -348,7 +350,6 @@ class EmailServer
                     break;
                 case 2:
                     $serverNet->scannPort($port);
-
                     $arrayResult["result"] = $serverNet->getErrno() == 0;
                     $arrayResult["message"] = $serverNet->error;
                     break;
@@ -357,12 +358,10 @@ class EmailServer
                     if (preg_match("/^(.+):([0-9]+)$/", $srv, $hostinfo)) {
                         $server = $hostinfo[1];
                         $port = $hostinfo[2];
-                    } else {
-                        $host = $srv;
                     }
 
-                    $tls = (strtoupper($smtpSecure) == "tls");
-                    $ssl = (strtoupper($smtpSecure) == "ssl");
+                    $tls = strtolower($smtpSecure) === "tls";
+                    $ssl = strtolower($smtpSecure) === "ssl";
 
                     $arrayResult["result"] = $smtp->Connect(($ssl ? "ssl://" : "") . $server, $port, $timeout);
                     $arrayResult["message"] = $serverNet->error;
@@ -374,27 +373,12 @@ class EmailServer
                             if (preg_match("/^(.+):([0-9]+)$/", $srv, $hostinfo)) {
                                 $server = $hostinfo[1];
                                 $port = $hostinfo[2];
-                            } else {
-                                $server = $srv;
-                            }
-                            if (strtoupper($useSecureCon)=="TLS") {
-                                $tls = "tls";
                             }
 
-                            if (strtoupper($useSecureCon)=="SSL") {
-                                $tls = "ssl";
-                            }
+                            $tls = strtolower($useSecureCon) === "tls";
+                            $ssl = strtolower($useSecureCon) === "ssl";
 
-                            $tls = (strtoupper($useSecureCon) == "tls");
-                            $ssl = (strtoupper($useSecureCon) == "ssl");
-
-                            $server = $arrayData["MESS_SERVER"];
-
-                            if (strtoupper($useSecureCon) == "SSL") {
-                                $resp = $smtp->Connect(("ssl://") . $server, $port, $timeout);
-                            } else {
-                                $resp = $smtp->Connect($server, $port, $timeout);
-                            }
+                            $resp = $smtp->Connect(($ssl ? "ssl://" : "") . $server, $port, $timeout);
 
                             if ($resp) {
                                 $hello = $_SERVER["SERVER_NAME"];
@@ -404,7 +388,7 @@ class EmailServer
                                     $smtp->Hello($hello);
                                 }
 
-                                if ($smtp->Authenticate($user, $passwd) ) {
+                                if ($smtp->Authenticate($user, $passwd)) {
                                     $arrayResult["result"] = true;
                                 } else {
                                     if (strtoupper($useSecureCon) == "TLS") {
@@ -432,18 +416,18 @@ class EmailServer
                 case 5:
                     if ($sendTestMail == 1) {
                         try {
-                            $arrayDataPhpMailer = array();
+                            $arrayDataPhpMailer = [];
 
                             $eregMail = "/^[0-9a-zA-Z]+(?:[._][0-9a-zA-Z]+)*@[0-9a-zA-Z]+(?:[._-][0-9a-zA-Z]+)*\.[0-9a-zA-Z]{2,3}$/";
 
-                            $arrayDataPhpMailer["FROM_EMAIL"]    = ($fromMail != "" && preg_match($eregMail, $fromMail))? $fromMail : "";
-                            $arrayDataPhpMailer["FROM_NAME"]     = $arrayData["MESS_FROM_NAME"] != "" ? $arrayData["MESS_FROM_NAME"] : G::LoadTranslation("ID_MESS_TEST_BODY");
-                            $arrayDataPhpMailer["MESS_ENGINE"]   = "PHPMAILER";
-                            $arrayDataPhpMailer["MESS_SERVER"]   = $server;
-                            $arrayDataPhpMailer["MESS_PORT"]     = $port;
-                            $arrayDataPhpMailer["MESS_ACCOUNT"]  = $user;
+                            $arrayDataPhpMailer["FROM_EMAIL"] = ($fromMail != "" && preg_match($eregMail, $fromMail)) ? $fromMail : "";
+                            $arrayDataPhpMailer["FROM_NAME"] = $arrayData["MESS_FROM_NAME"] != "" ? $arrayData["MESS_FROM_NAME"] : G::LoadTranslation("ID_MESS_TEST_BODY");
+                            $arrayDataPhpMailer["MESS_ENGINE"] = "PHPMAILER";
+                            $arrayDataPhpMailer["MESS_SERVER"] = $server;
+                            $arrayDataPhpMailer["MESS_PORT"] = $port;
+                            $arrayDataPhpMailer["MESS_ACCOUNT"] = $user;
                             $arrayDataPhpMailer["MESS_PASSWORD"] = $passwd;
-                            $arrayDataPhpMailer["TO"]            = $mailTo;
+                            $arrayDataPhpMailer["TO"] = $mailTo;
 
                             if ($auth_required == 1) {
                                 $arrayDataPhpMailer["MESS_RAUTH"] = true;
@@ -474,19 +458,12 @@ class EmailServer
                     break;
             }
 
-            if (!isset($arrayResult["message"])) {
-                $arrayResult["message"] = "";
-            }
-
-            //Return
             return $arrayResult;
         } catch (Exception $e) {
-            $arrayResult = array();
-
-            $arrayResult["result"] = false;
-            $arrayResult["message"] = $e->getMessage();
-
-            //Return
+            $arrayResult = [
+                "result" => false,
+                "message" => $e->getMessage()
+            ];
             return $arrayResult;
         }
     }
@@ -715,7 +692,7 @@ class EmailServer
     {
         try {
             if ($this->checkIfIsDefault($emailServerUid)) {
-                throw new Exception(G::LoadTranslation("ID_EMAIL_SERVER_IS_DEFAULT", array($fieldNameForException, $emailServerUid)));
+                throw new Exception(G::LoadTranslation("ID_EMAIL_SERVER_IS_DEFAULT"));
             }
         } catch (Exception $e) {
             throw $e;

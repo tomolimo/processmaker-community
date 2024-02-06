@@ -3,7 +3,7 @@
 namespace ProcessMaker\BusinessModel\Light;
 
 use ProcessMaker\Core\System;
-use \ProcessMaker\Services\Api;
+use ProcessMaker\Services\Api;
 use G;
 
 class NotificationDevice
@@ -247,18 +247,27 @@ class NotificationDevice
         return $response;
     }
 
-    public function getTaskUserSelfService($tas_uid, $appFields)
+    /**
+     * Get the users related to the task
+     *
+     * @param string $tasUid
+     * @param array $appFields
+     *
+     * @return array
+    */
+    public function getTaskUserSelfService($tasUid, $appFields)
     {
         $oTask = new \Tasks();
         $oGroup = new \Groups();
-        $taskNextDel = \TaskPeer::retrieveByPK($tas_uid);
-        $arrayTaskUser = array();
+        $taskNextDel = \TaskPeer::retrieveByPK($tasUid);
+        $arrayTaskUser = [];
 
         if ($taskNextDel->getTasAssignType() == "SELF_SERVICE" && trim($taskNextDel->getTasGroupVariable()) != "") {
             // Self Service Value Based Assignment
             $nextTaskGroupVariable = trim($taskNextDel->getTasGroupVariable(), " @#");
-            if (isset($appFields["APP_DATA"][$nextTaskGroupVariable])) {
-                $dataGroupVariable = $appFields["APP_DATA"][$nextTaskGroupVariable];
+            $dataGroupVariable = isset($appFields["APP_DATA"][$nextTaskGroupVariable]) ? $appFields["APP_DATA"][$nextTaskGroupVariable] 
+                : (isset($appFields[$nextTaskGroupVariable]) ? $appFields[$nextTaskGroupVariable] : '');
+            if (!empty($dataGroupVariable)) {
                 $dataGroupVariable = (is_array($dataGroupVariable))? $dataGroupVariable : trim($dataGroupVariable);
                 if (!empty($dataGroupVariable) && is_array($dataGroupVariable)){
                     $arrayTaskUser[] = $dataGroupVariable;
@@ -270,14 +279,14 @@ class NotificationDevice
                 }
             }
         } else { // Self Service
-            $arrayGroupsOfTask = $oTask->getGroupsOfTask($tas_uid, 1);
+            $arrayGroupsOfTask = $oTask->getGroupsOfTask($tasUid, 1);
             foreach ($arrayGroupsOfTask as $arrayGroup) {
                 $arrayUsersOfGroup = $oGroup->getUsersOfGroup($arrayGroup["GRP_UID"]);
                 foreach ($arrayUsersOfGroup as $arrayUser) {
                     $arrayTaskUser[] = $arrayUser["USR_UID"];
                 }
             }
-            $arrayUsersOfTask = $oTask->getUsersOfTask($tas_uid, 1);
+            $arrayUsersOfTask = $oTask->getUsersOfTask($tasUid, 1);
             foreach ($arrayUsersOfTask as $arrayUser) {
                 $arrayTaskUser[] = $arrayUser["USR_UID"];
             }

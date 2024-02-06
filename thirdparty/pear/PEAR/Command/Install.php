@@ -13,7 +13,7 @@
 // | obtain it through the world-wide-web, please send a note to          |
 // | license@php.net so we can mail you a copy immediately.               |
 // +----------------------------------------------------------------------+
-// | Author: Stig Sæther Bakken <ssb@php.net>                             |
+// | Author: Stig Sï¿½ther Bakken <ssb@php.net>                             |
 // +----------------------------------------------------------------------+
 //
 // $Id: Install.php,v 1.42 2003/03/18 12:06:07 ssb Exp $
@@ -207,7 +207,7 @@ specified at once.
      *
      * @access public
      */
-    function PEAR_Command_Install(&$ui, &$config)
+    function __construct(&$ui, &$config)
     {
         parent::PEAR_Command_Common($ui, $config);
     }
@@ -219,7 +219,7 @@ specified at once.
     function doInstall($command, $options, $params)
     {
         if (empty($this->installer)) {
-            $this->installer = &new PEAR_Installer($this->ui);
+            $this->installer = new PEAR_Installer($this->ui);
         }
         if ($command == 'upgrade') {
             $options[$command] = true;
@@ -279,7 +279,7 @@ specified at once.
     function doUninstall($command, $options, $params)
     {
         if (empty($this->installer)) {
-            $this->installer = &new PEAR_Installer($this->ui);
+            $this->installer = new PEAR_Installer($this->ui);
         }
         if (sizeof($params) < 1) {
             return $this->raiseError("Please supply the package(s) you want to uninstall");

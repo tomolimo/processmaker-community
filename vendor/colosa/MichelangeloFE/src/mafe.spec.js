@@ -4,7 +4,7 @@ global.PMDesigner = {};
 global.dom.env({
     html: '<body></body>',
     scripts: ['../lib/jQuery/jquery-1.10.2.min.js',
-        '../lib/jQueryUI/jquery-ui-1.10.3.custom.min.js',
+        '../lib/jQueryUI/jquery-ui.min.js',
         '../lib/underscore/underscore-min.js',
         '../lib/restclient/restclient.js',
         '../lib/pmUI/pmui-1.0.0.js',
