@@ -793,7 +793,7 @@ function generateGridClassic(proUid, tasUid, dynUid) {
                         if (Ext.getCmp("chk_allColumn").checked) {
                             Ext.Msg.show({
                                 title: "",
-                                msg: "The modification will be applied to all rows in your selection.",
+                                msg: _("ID_BATCH_ROUTING_APPLY_CHANGES"),
                                 buttons: Ext.Msg.YESNO,
                                 fn: function (btn) {
                                     if (btn == "yes") {
@@ -1027,7 +1027,7 @@ function generateGrid(proUid, tasUid, dynUid) {
                         if (Ext.getCmp("chk_allColumn").checked) {
                             Ext.Msg.show({
                                 title: "",
-                                msg: "The modification will be applied to all rows in your selection.",
+                                msg: _("ID_BATCH_ROUTING_APPLY_CHANGES"),
                                 buttons: Ext.Msg.YESNO,
                                 fn: function (btn) {
                                     if (btn == "yes") {

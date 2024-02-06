@@ -43,7 +43,6 @@
 class AppDocument extends BaseAppDocument
 {
 
-    /*----------------------------------********---------------------------------*/
 
     /*
      * Load the application document registry
@@ -61,7 +60,6 @@ class AppDocument extends BaseAppDocument
             if (! is_null( $oAppDocument )) {
                 $aFields = $oAppDocument->toArray( BasePeer::TYPE_FIELDNAME );
                 $this->fromArray( $aFields, BasePeer::TYPE_FIELDNAME );
-                /*----------------------------------********---------------------------------*/
                 return $aFields;
             } else {
                 throw (new Exception( 'Error loading Document ' . $sAppDocUid . '/' . $iVersion . '. This row doesn\'t exist!' ));
@@ -185,7 +183,6 @@ class AppDocument extends BaseAppDocument
                 $docVersion ++;
             }
 
-            /*----------------------------------********---------------------------------*/
             $oAppDocument->fromArray( $aData, BasePeer::TYPE_FIELDNAME );
             $oAppDocument->setDocVersion( $docVersion );
 
@@ -234,7 +231,6 @@ class AppDocument extends BaseAppDocument
             $oAppDocument = AppDocumentPeer::retrieveByPK( $aData['APP_DOC_UID'], $aData['DOC_VERSION'] );
 
             if (! is_null( $oAppDocument )) {
-                /*----------------------------------********---------------------------------*/
                 $oAppDocument->fromArray( $aData, BasePeer::TYPE_FIELDNAME );
                 if ($oAppDocument->validate()) {
                     $oConnection->begin();
@@ -453,7 +449,6 @@ class AppDocument extends BaseAppDocument
         return true;
     }
 
-    /*----------------------------------********---------------------------------*/
 
     public function getObject ($APP_UID, $DEL_INDEX, $STEP_UID_OBJ, $APP_DOC_TYPE)
     {

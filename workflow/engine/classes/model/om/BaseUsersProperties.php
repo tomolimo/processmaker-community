@@ -58,6 +58,12 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
     protected $usr_setting_designer;
 
     /**
+     * The value for the pmdynaform_first_time field.
+     * @var        string
+     */
+    protected $pmdynaform_first_time = '0';
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -145,6 +151,17 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
     {
 
         return $this->usr_setting_designer;
+    }
+
+    /**
+     * Get the [pmdynaform_first_time] column value.
+     * 
+     * @return     string
+     */
+    public function getPmdynaformFirstTime()
+    {
+
+        return $this->pmdynaform_first_time;
     }
 
     /**
@@ -265,6 +282,28 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
     } // setUsrSettingDesigner()
 
     /**
+     * Set the value of [pmdynaform_first_time] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setPmdynaformFirstTime($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->pmdynaform_first_time !== $v || $v === '0') {
+            $this->pmdynaform_first_time = $v;
+            $this->modifiedColumns[] = UsersPropertiesPeer::PMDYNAFORM_FIRST_TIME;
+        }
+
+    } // setPmdynaformFirstTime()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -291,12 +330,14 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
 
             $this->usr_setting_designer = $rs->getString($startcol + 4);
 
+            $this->pmdynaform_first_time = $rs->getString($startcol + 5);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 5; // 5 = UsersPropertiesPeer::NUM_COLUMNS - UsersPropertiesPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 6; // 6 = UsersPropertiesPeer::NUM_COLUMNS - UsersPropertiesPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating UsersProperties object", $e);
@@ -515,6 +556,9 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
             case 4:
                 return $this->getUsrSettingDesigner();
                 break;
+            case 5:
+                return $this->getPmdynaformFirstTime();
+                break;
             default:
                 return null;
                 break;
@@ -540,6 +584,7 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
             $keys[2] => $this->getUsrLoggedNextTime(),
             $keys[3] => $this->getUsrPasswordHistory(),
             $keys[4] => $this->getUsrSettingDesigner(),
+            $keys[5] => $this->getPmdynaformFirstTime(),
         );
         return $result;
     }
@@ -586,6 +631,9 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
             case 4:
                 $this->setUsrSettingDesigner($value);
                 break;
+            case 5:
+                $this->setPmdynaformFirstTime($value);
+                break;
         } // switch()
     }
 
@@ -629,6 +677,10 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
             $this->setUsrSettingDesigner($arr[$keys[4]]);
         }
 
+        if (array_key_exists($keys[5], $arr)) {
+            $this->setPmdynaformFirstTime($arr[$keys[5]]);
+        }
+
     }
 
     /**
@@ -658,6 +710,10 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
 
         if ($this->isColumnModified(UsersPropertiesPeer::USR_SETTING_DESIGNER)) {
             $criteria->add(UsersPropertiesPeer::USR_SETTING_DESIGNER, $this->usr_setting_designer);
+        }
+
+        if ($this->isColumnModified(UsersPropertiesPeer::PMDYNAFORM_FIRST_TIME)) {
+            $criteria->add(UsersPropertiesPeer::PMDYNAFORM_FIRST_TIME, $this->pmdynaform_first_time);
         }
 
 
@@ -721,6 +777,8 @@ abstract class BaseUsersProperties extends BaseObject implements Persistent
         $copyObj->setUsrPasswordHistory($this->usr_password_history);
 
         $copyObj->setUsrSettingDesigner($this->usr_setting_designer);
+
+        $copyObj->setPmdynaformFirstTime($this->pmdynaform_first_time);
 
 
         $copyObj->setNew(true);

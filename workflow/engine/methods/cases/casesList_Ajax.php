@@ -8,7 +8,10 @@ if (!isset($_SESSION['USER_LOGGED'])) {
     die();
 }
 
-$actionAjax = isset($_REQUEST['actionAjax']) ? $_REQUEST['actionAjax'] : null;
+$actionAjax = isset($_REQUEST['actionAjax']) ? $_REQUEST['actionAjax'] : 'verifySession';
+
+global $RBAC;
+$RBAC->allows(basename(__FILE__), $actionAjax);
 
 function filterUserListArray($users = array(), $filter = '')
 {

@@ -232,11 +232,10 @@ switch ($_POST['action']) {
 
         $aFields['PREF_DEFAULT_MENUSELECTED'] = '';
         $aFields['PREF_DEFAULT_CASES_MENUSELECTED'] = '';
-        if (sizeof($oConf->Fields) > 0) {
-            // this user has a configuration record
-            $aFields['PREF_DEFAULT_LANG'] = $oConf->aConfig['DEFAULT_LANG'];
-            $aFields['PREF_DEFAULT_MENUSELECTED'] = isset($oConf->aConfig['DEFAULT_MENU']) ? $oConf->aConfig['DEFAULT_MENU'] : '';
-            $aFields['PREF_DEFAULT_CASES_MENUSELECTED'] = isset($oConf->aConfig['DEFAULT_CASES_MENU']) ? $oConf->aConfig['DEFAULT_CASES_MENU'] : '';
+        $aFields['PREF_DEFAULT_LANG'] = isset($oConf->aConfig['DEFAULT_LANG']) ? $oConf->aConfig['DEFAULT_LANG'] : SYS_LANG;
+
+        if (isset($oConf->aConfig['DEFAULT_MENU'])) {
+            $aFields['PREF_DEFAULT_MENUSELECTED'] = $oConf->aConfig['DEFAULT_MENU'];
         } else {
             switch ($RBAC->aUserInfo['PROCESSMAKER']['ROLE']['ROL_CODE']) {
                 case 'PROCESSMAKER_ADMIN':
@@ -246,8 +245,10 @@ switch ($_POST['action']) {
                     $aFields['PREF_DEFAULT_MENUSELECTED'] = 'PM_CASES';
                     break;
             }
-            $aFields['PREF_DEFAULT_LANG'] = SYS_LANG;
         }
+
+        $aFields['PREF_DEFAULT_CASES_MENUSELECTED'] = isset($oConf->aConfig['DEFAULT_CASES_MENU']) ? $oConf->aConfig['DEFAULT_CASES_MENU'] : '';
+
         if ($aFields['USR_REPLACED_BY'] != '') {
             $user = new Users();
             $u = $user->load($aFields['USR_REPLACED_BY']);
@@ -353,7 +354,6 @@ switch ($_POST['action']) {
                 case 'PM_DASHBOARD':
                     $rows[] = array('id' => 'PM_DASHBOARD', 'name' => strtoupper(G::LoadTranslation('ID_DASHBOARD'))
                     );
-                    /*----------------------------------********---------------------------------*/
                     break;
             }
         }

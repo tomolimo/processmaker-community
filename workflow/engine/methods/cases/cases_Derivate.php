@@ -195,7 +195,6 @@ try {
     $sFromData = $fromName . ($aUser['USR_EMAIL'] != '' ? ' <' . $aUser['USR_EMAIL'] . '>' : '');
 
     $flagGmail = false;
-    /*----------------------------------********---------------------------------*/
 
     try {
         $oCase->sendNotifications(
@@ -239,7 +238,6 @@ try {
     }
     //Events - End
 
-    /*----------------------------------********---------------------------------*/
 
     $debuggerAvailable = true;
 

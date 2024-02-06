@@ -44,7 +44,7 @@ class objectTemplate extends Smarty
      * @return void
      */
 
-    function objectTemplate ($templateFile)
+    public function __construct($templateFile)
     {
         $this->template_dir = PATH_TPL;
         $this->compile_dir = PATH_SMARTY_C;

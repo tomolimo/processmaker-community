@@ -4,18 +4,33 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
+class ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6
 {
     public static $files = array (
-        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        '5255c38a0faeba867671b61dfda6d864' => __DIR__ . '/..' . '/paragonie/random_compat/lib/random.php',
-        '023d27dca8066ef29e6739335ea73bad' => __DIR__ . '/..' . '/symfony/polyfill-php70/bootstrap.php',
+        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '25072dd6e2470089de65ae7bf11d3109' => __DIR__ . '/..' . '/symfony/polyfill-php72/bootstrap.php',
+        'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
+        '0d59ee240a4cd96ddbb4ff164fccea4d' => __DIR__ . '/..' . '/symfony/polyfill-php73/bootstrap.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
+        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
+        'c964ee0ededf28c96ebd9db5099ef910' => __DIR__ . '/..' . '/guzzlehttp/promises/src/functions_include.php',
+        'a0edc8309cc5e1d60e3047b5df6b7052' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/functions_include.php',
+        '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        'def43f6c87e4f8dfd0c9e1b1bab14fe8' => __DIR__ . '/..' . '/symfony/polyfill-iconv/bootstrap.php',
         '2c102faa651ef8ea5874edb585946bce' => __DIR__ . '/..' . '/swiftmailer/swiftmailer/lib/swift_required.php',
+        'cf97c57bfe0f23854afd2f3818abb7a0' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/create_uploaded_file.php',
+        '9bf37a3d0dad93e29cb4e1b1bfab04e9' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/marshal_headers_from_sapi.php',
+        'ce70dccb4bcc2efc6e94d2ee526e6972' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/marshal_method_from_sapi.php',
+        'f86420df471f14d568bfcb71e271b523' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/marshal_protocol_version_from_sapi.php',
+        'b87481e008a3700344428ae089e7f9e5' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/marshal_uri_from_sapi.php',
+        '0b0974a5566a1077e4f2e111341112c1' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/normalize_server.php',
+        '1ca3bc274755662169f9629d5412a1da' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/normalize_uploaded_files.php',
+        '40360c0b9b437e69bcbb7f1349ce029e' => __DIR__ . '/..' . '/zendframework/zend-diactoros/src/functions/parse_cookie_header.php',
+        '538ca81a9a966a6716601ecf48f4eaef' => __DIR__ . '/..' . '/opis/closure/functions.php',
+        '801c31d8ed748cfa537fa45402288c95' => __DIR__ . '/..' . '/psy/psysh/src/functions.php',
         'f0906e6318348a765ffb6eb24e0d0938' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Foundation/helpers.php',
         '58571171fd5812e6e447dce228f52f4d' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Support/helpers.php',
-        '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         'b57388b35b41789637fc12a955eda1ab' => __DIR__ . '/../..' . '/gulliver/includes/inc.ajax.php',
         '1fe5e32c5892f639f2e40ce6e36b4796' => __DIR__ . '/../..' . '/gulliver/includes/smarty_plugins/function.pmos.php',
         'ee0dc6925636670949ea2f90f8f8e773' => __DIR__ . '/../..' . '/thirdparty/pake/pakeFunction.php',
@@ -26,6 +41,14 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
     );
 
     public static $prefixLengthsPsr4 = array (
+        'Z' => 
+        array (
+            'Zend\\Diactoros\\' => 15,
+        ),
+        'X' => 
+        array (
+            'XdgBaseDir\\' => 11,
+        ),
         'T' => 
         array (
             'TijsVerkoyen\\CssToInlineStyles\\' => 31,
@@ -34,13 +57,20 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         ),
         'S' => 
         array (
-            'Symfony\\Polyfill\\Php70\\' => 23,
+            'Symfony\\Polyfill\\Php73\\' => 23,
+            'Symfony\\Polyfill\\Php72\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
+            'Symfony\\Polyfill\\Intl\\Idn\\' => 26,
+            'Symfony\\Polyfill\\Iconv\\' => 23,
             'Symfony\\Polyfill\\Ctype\\' => 23,
+            'Symfony\\Contracts\\Translation\\' => 30,
+            'Symfony\\Contracts\\Service\\' => 26,
+            'Symfony\\Contracts\\EventDispatcher\\' => 34,
             'Symfony\\Component\\VarDumper\\' => 28,
             'Symfony\\Component\\Translation\\' => 30,
             'Symfony\\Component\\Routing\\' => 26,
             'Symfony\\Component\\Process\\' => 26,
+            'Symfony\\Component\\Mime\\' => 23,
             'Symfony\\Component\\HttpKernel\\' => 29,
             'Symfony\\Component\\HttpFoundation\\' => 33,
             'Symfony\\Component\\Finder\\' => 25,
@@ -58,8 +88,21 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         ),
         'P' => 
         array (
+            'Psy\\' => 4,
+            'Psr\\SimpleCache\\' => 16,
+            'Psr\\Http\\Message\\' => 17,
             'Psr\\Container\\' => 14,
+            'PhpParser\\' => 10,
+            'PhpImap\\' => 8,
             'PDepend\\' => 8,
+        ),
+        'O' => 
+        array (
+            'Opis\\Closure\\' => 13,
+        ),
+        'N' => 
+        array (
+            'Nexmo\\' => 6,
         ),
         'M' => 
         array (
@@ -69,14 +112,40 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'L' => 
         array (
             'League\\Flysystem\\' => 17,
+            'Lcobucci\\JWT\\' => 13,
+            'Laravel\\Tinker\\' => 15,
+        ),
+        'J' => 
+        array (
+            'JakubOnderka\\PhpConsoleHighlighter\\' => 35,
+            'JakubOnderka\\PhpConsoleColor\\' => 29,
         ),
         'I' => 
         array (
+            'Illuminate\\Notifications\\' => 25,
             'Illuminate\\' => 11,
+        ),
+        'H' => 
+        array (
+            'Http\\Promise\\' => 13,
+            'Http\\Client\\' => 12,
+            'Http\\Adapter\\Guzzle6\\' => 21,
+        ),
+        'G' => 
+        array (
+            'GuzzleHttp\\Psr7\\' => 16,
+            'GuzzleHttp\\Promise\\' => 19,
+            'GuzzleHttp\\' => 11,
+        ),
+        'E' => 
+        array (
+            'Egulias\\EmailValidator\\' => 23,
         ),
         'D' => 
         array (
             'Dotenv\\' => 7,
+            'Doctrine\\Common\\Lexer\\' => 22,
+            'Doctrine\\Common\\Inflector\\' => 26,
         ),
         'C' => 
         array (
@@ -90,6 +159,14 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
     );
 
     public static $prefixDirsPsr4 = array (
+        'Zend\\Diactoros\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/zendframework/zend-diactoros/src',
+        ),
+        'XdgBaseDir\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dnoegel/php-xdg-base-dir/src',
+        ),
         'TijsVerkoyen\\CssToInlineStyles\\' => 
         array (
             0 => __DIR__ . '/..' . '/tijsverkoyen/css-to-inline-styles/src',
@@ -102,17 +179,41 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         array (
             0 => __DIR__ . '/..' . '/typo3/class-alias-loader/src',
         ),
-        'Symfony\\Polyfill\\Php70\\' => 
+        'Symfony\\Polyfill\\Php73\\' => 
         array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-php70',
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php73',
+        ),
+        'Symfony\\Polyfill\\Php72\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php72',
         ),
         'Symfony\\Polyfill\\Mbstring\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
+        'Symfony\\Polyfill\\Intl\\Idn\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-intl-idn',
+        ),
+        'Symfony\\Polyfill\\Iconv\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-iconv',
+        ),
         'Symfony\\Polyfill\\Ctype\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
+        ),
+        'Symfony\\Contracts\\Translation\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/translation-contracts',
+        ),
+        'Symfony\\Contracts\\Service\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/service-contracts',
+        ),
+        'Symfony\\Contracts\\EventDispatcher\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/event-dispatcher-contracts',
         ),
         'Symfony\\Component\\VarDumper\\' => 
         array (
@@ -129,6 +230,10 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'Symfony\\Component\\Process\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
+        ),
+        'Symfony\\Component\\Mime\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/mime',
         ),
         'Symfony\\Component\\HttpKernel\\' => 
         array (
@@ -174,13 +279,42 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         array (
             0 => __DIR__ . '/..' . '/ramsey/uuid/src',
         ),
+        'Psy\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psy/psysh/src',
+        ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
+        'PhpParser\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
+        ),
+        'PhpImap\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-imap/php-imap/src/PhpImap',
+        ),
         'PDepend\\' => 
         array (
             0 => __DIR__ . '/..' . '/pdepend/pdepend/src/main/php/PDepend',
+        ),
+        'Opis\\Closure\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/opis/closure/src',
+        ),
+        'Nexmo\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/nexmo/client/src',
         ),
         'Monolog\\' => 
         array (
@@ -194,17 +328,74 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         array (
             0 => __DIR__ . '/..' . '/league/flysystem/src',
         ),
+        'Lcobucci\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/lcobucci/jwt/src',
+        ),
+        'Laravel\\Tinker\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/laravel/tinker/src',
+        ),
+        'JakubOnderka\\PhpConsoleHighlighter\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jakub-onderka/php-console-highlighter/src',
+        ),
+        'JakubOnderka\\PhpConsoleColor\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jakub-onderka/php-console-color/src',
+        ),
+        'Illuminate\\Notifications\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/laravel/nexmo-notification-channel/src',
+            1 => __DIR__ . '/..' . '/laravel/slack-notification-channel/src',
+        ),
         'Illuminate\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate',
+        ),
+        'Http\\Promise\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-http/promise/src',
+        ),
+        'Http\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-http/httplug/src',
+        ),
+        'Http\\Adapter\\Guzzle6\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-http/guzzle6-adapter/src',
+        ),
+        'GuzzleHttp\\Psr7\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
+        ),
+        'GuzzleHttp\\Promise\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
+        ),
+        'GuzzleHttp\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
+        ),
+        'Egulias\\EmailValidator\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/egulias/email-validator/EmailValidator',
         ),
         'Dotenv\\' => 
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
+        'Doctrine\\Common\\Lexer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/lexer/lib/Doctrine/Common/Lexer',
+        ),
+        'Doctrine\\Common\\Inflector\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Common/Inflector',
+        ),
         'Cron\\' => 
         array (
-            0 => __DIR__ . '/..' . '/mtdowling/cron-expression/src/Cron',
+            0 => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron',
         ),
         'Chumper\\Zipper\\' => 
         array (
@@ -221,6 +412,13 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
     );
 
     public static $prefixesPsr0 = array (
+        'U' => 
+        array (
+            'UpdateHelper\\' => 
+            array (
+                0 => __DIR__ . '/..' . '/kylekatarnls/update-helper/src',
+            ),
+        ),
         'P' => 
         array (
             'Psr\\Log\\' => 
@@ -256,13 +454,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
             'Libchart\\' => 
             array (
                 0 => __DIR__ . '/..' . '/libchart/libchart/libchart',
-            ),
-        ),
-        'D' => 
-        array (
-            'Doctrine\\Common\\Inflector\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/doctrine/inflector/lib',
             ),
         ),
         'C' => 
@@ -381,9 +572,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'Applications' => __DIR__ . '/../..' . '/workflow/engine/classes/Applications.php',
         'Archive' => __DIR__ . '/../..' . '/workflow/engine/classes/Archive.php',
         'Archive_Zip' => __DIR__ . '/../..' . '/thirdparty/phing/lib/Zip.php',
-        'ArithmeticError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/ArithmeticError.php',
         'ArrayBasePeer' => __DIR__ . '/../..' . '/workflow/engine/classes/ArrayBasePeer.php',
-        'AssertionError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/AssertionError.php',
         'AssignedVar' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/CapsuleTask.php',
         'AuthenticationSource' => __DIR__ . '/../..' . '/rbac/engine/classes/model/AuthenticationSource.php',
         'AuthenticationSourceMapBuilder' => __DIR__ . '/../..' . '/rbac/engine/classes/model/map/AuthenticationSourceMapBuilder.php',
@@ -536,6 +725,10 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'BaseIsoLocationPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseIsoLocationPeer.php',
         'BaseIsoSubdivision' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseIsoSubdivision.php',
         'BaseIsoSubdivisionPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseIsoSubdivisionPeer.php',
+        'BaseJobsFailed' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseJobsFailed.php',
+        'BaseJobsFailedPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseJobsFailedPeer.php',
+        'BaseJobsPending' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseJobsPending.php',
+        'BaseJobsPendingPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseJobsPendingPeer.php',
         'BaseLanguage' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseLanguage.php',
         'BaseLanguagePeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseLanguagePeer.php',
         'BaseLexico' => __DIR__ . '/../..' . '/workflow/engine/classes/model/om/BaseLexico.php',
@@ -1096,7 +1289,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'DirSet' => __DIR__ . '/../..' . '/thirdparty/phing/types/DirSet.php',
         'DirectoryScanner' => __DIR__ . '/../..' . '/thirdparty/phing/util/DirectoryScanner.php',
         'Dispatcher' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/dispatcher.class.php',
-        'DivisionByZeroError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/DivisionByZeroError.php',
         'DocHTML' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/classes/org/active-link/doc/DocHTML.php',
         'DynaFormField' => __DIR__ . '/../..' . '/workflow/engine/classes/DynaFormField.php',
         'Dynaform' => __DIR__ . '/../..' . '/workflow/engine/classes/model/Dynaform.php',
@@ -1105,6 +1297,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'DynaformHandler' => __DIR__ . '/../..' . '/gulliver/system/class.dynaformhandler.php',
         'DynaformMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/DynaformMapBuilder.php',
         'DynaformPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/DynaformPeer.php',
+        'EasyPeasyICS' => __DIR__ . '/..' . '/phpmailer/phpmailer/extras/EasyPeasyICS.php',
         'EchoTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/EchoTask.php',
         'EdgePDF' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/value.border.edge.class.php',
         'ElementTaskRelation' => __DIR__ . '/../..' . '/workflow/engine/classes/model/ElementTaskRelation.php',
@@ -1133,7 +1326,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'EntitySolrRequestData' => __DIR__ . '/../..' . '/workflow/engine/classes/entities/EntitySolrRequestData.php',
         'EntitySolrUpdateDocument' => __DIR__ . '/../..' . '/workflow/engine/classes/entities/EntitySolrUpdateDocument.php',
         'EqualsCondition' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/condition/EqualsCondition.php',
-        'Error' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/Error.php',
         'Event' => __DIR__ . '/../..' . '/workflow/engine/classes/model/Event.php',
         'EventMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/EventMapBuilder.php',
         'EventObject' => __DIR__ . '/../..' . '/thirdparty/phing/system/lang/EventObject.php',
@@ -4836,8 +5028,15 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'JSMin' => __DIR__ . '/../..' . '/thirdparty/jsmin/jsmin.php',
         'JSMinException' => __DIR__ . '/../..' . '/thirdparty/jsmin/jsmin.php',
         'JavaBridgePM' => __DIR__ . '/../..' . '/workflow/engine/classes/JavaBridgePM.php',
+        'JobsFailed' => __DIR__ . '/../..' . '/workflow/engine/classes/model/JobsFailed.php',
+        'JobsFailedMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/JobsFailedMapBuilder.php',
+        'JobsFailedPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/JobsFailedPeer.php',
+        'JobsPending' => __DIR__ . '/../..' . '/workflow/engine/classes/model/JobsPending.php',
+        'JobsPendingMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/JobsPendingMapBuilder.php',
+        'JobsPendingPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/JobsPendingPeer.php',
         'Join' => __DIR__ . '/../..' . '/thirdparty/propel/util/Criteria.php',
         'JoinMC' => __DIR__ . '/../..' . '/thirdparty/propel/util/Criteria.php',
+        'JsonException' => __DIR__ . '/..' . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
         'LDAP' => __DIR__ . '/../..' . '/rbac/engine/classes/plugins/class.ldap.php',
         'Language' => __DIR__ . '/../..' . '/workflow/engine/classes/model/Language.php',
         'LanguageMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/LanguageMapBuilder.php',
@@ -5190,6 +5389,8 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'PHPClass' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/classes/org/active-link/doc/PHPClass.php',
         'PHPDocumentorTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/phpdoc/PHPDocumentorTask.php',
         'PHPMailer' => __DIR__ . '/..' . '/phpmailer/phpmailer/class.phpmailer.php',
+        'PHPMailerOAuth' => __DIR__ . '/..' . '/phpmailer/phpmailer/class.phpmaileroauth.php',
+        'PHPMailerOAuthGoogle' => __DIR__ . '/..' . '/phpmailer/phpmailer/class.phpmaileroauthgoogle.php',
         'PHPSQLParser' => __DIR__ . '/../..' . '/gulliver/system/class.phpSqlParser.php',
         'PHPUnit2ReportTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/phpunit2/PHPUnit2ReportTask.php',
         'PHPUnit2ResultFormatter' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/phpunit2/PHPUnit2ResultFormatter.php',
@@ -5218,7 +5419,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'PageBreakLocator' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/layout.page.breaks.php',
         'Parameter' => __DIR__ . '/../..' . '/thirdparty/phing/types/Parameter.php',
         'Parameterizable' => __DIR__ . '/../..' . '/thirdparty/phing/types/Parameterizable.php',
-        'ParseError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/ParseError.php',
         'Parser' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/parser._interface.class.php',
         'ParserXHTML' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/parser.xhtml.class.php',
         'PasswordInputBox' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/box.input.password.php',
@@ -5270,6 +5470,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'PmGauge' => __DIR__ . '/../..' . '/workflow/engine/classes/PmGauge.php',
         'PmLicenseManager' => __DIR__ . '/../..' . '/workflow/engine/classes/PmLicenseManager.php',
         'PmPhing' => __DIR__ . '/../..' . '/workflow/engine/classes/PmPhing.php',
+        'PmPluginCompatibility' => __DIR__ . '/../..' . '/workflow/engine/classes/PmPluginCompatibility.php',
         'PmTable' => __DIR__ . '/../..' . '/workflow/engine/classes/PmTable.php',
         'PmTrSharepointClass' => __DIR__ . '/../..' . '/workflow/engine/classes/triggers/PmTrSharepointClass.php',
         'PmTree' => __DIR__ . '/../..' . '/gulliver/system/class.tree.php',
@@ -5453,7 +5654,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'SessionStorage' => __DIR__ . '/../..' . '/workflow/engine/classes/model/SessionStorage.php',
         'SessionStorageMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/SessionStorageMapBuilder.php',
         'SessionStoragePeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/SessionStoragePeer.php',
-        'SessionUpdateTimestampHandlerInterface' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/SessionUpdateTimestampHandlerInterface.php',
         'Sessions' => __DIR__ . '/../..' . '/workflow/engine/classes/Sessions.php',
         'ShadowTable' => __DIR__ . '/../..' . '/workflow/engine/classes/model/ShadowTable.php',
         'ShadowTableMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/ShadowTableMapBuilder.php',
@@ -5582,7 +5782,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'TriggersPeer' => __DIR__ . '/../..' . '/workflow/engine/classes/model/TriggersPeer.php',
         'TstampCustomFormat' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/TstampTask.php',
         'TstampTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/TstampTask.php',
-        'TypeError' => __DIR__ . '/..' . '/symfony/polyfill-php70/Resources/stubs/TypeError.php',
         'TypeSelector' => __DIR__ . '/../..' . '/thirdparty/phing/types/selectors/TypeSelector.php',
         'TypedefTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/TypedefTask.php',
         'UDDI' => __DIR__ . '/../..' . '/thirdparty/pear/UDDI.php',
@@ -5592,7 +5791,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'UntarTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/UntarTask.php',
         'UnzipTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/UnzipTask.php',
         'UpToDateTask' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/system/UpToDateTask.php',
-        'Upgrade' => __DIR__ . '/../..' . '/workflow/engine/classes/Upgrade.php',
         'UpgradeManagerMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/UpgradeManagerMapBuilder.php',
         'UpgradeStoreMapBuilder' => __DIR__ . '/../..' . '/workflow/engine/classes/model/map/UpgradeStoreMapBuilder.php',
         'Users' => __DIR__ . '/../..' . '/workflow/engine/classes/model/Users.php',
@@ -5667,7 +5865,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'XMLPHPUnit2ResultFormatter' => __DIR__ . '/../..' . '/thirdparty/phing/tasks/ext/phpunit2/XMLPHPUnit2ResultFormatter.php',
         'XMLRPCClient' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/classes/org/active-link/xml/XMLRPCClient.php',
         'XMLResult' => __DIR__ . '/../..' . '/workflow/engine/classes/XMLResult.php',
-        'XMLSchema' => __DIR__ . '/../..' . '/thirdparty/pear/class.xmlschema.php',
+        'XMLSchema' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.php',
         'XML_' => __DIR__ . '/../..' . '/thirdparty/html2ps_pdf/classes/org/active-link/xml/XML.php',
         'XML_Parser' => __DIR__ . '/../..' . '/thirdparty/pear/XML/Parser.php',
         'XML_Parser_Error' => __DIR__ . '/../..' . '/thirdparty/pear/XML/Parser.php',
@@ -5743,7 +5941,6 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         '_parse_proppatch' => __DIR__ . '/../..' . '/thirdparty/pear/HTTP/WebDAV/Tools/_parse_proppatch.php',
         'adhocUserProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/adhocUserProxy.php',
         'adminProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/adminProxy.php',
-        'authSourceProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/authSourceProxy.php',
         'caseSchedulerPlugin' => __DIR__ . '/../..' . '/workflow/engine/classes/class.plugin.php',
         'caseSchedulerProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/caseSchedulerProxy.php',
         'clientInfo' => __DIR__ . '/../..' . '/thirdparty/pear/SOAP/Interop/registrationAndNotification.php',
@@ -5764,6 +5961,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'mailer' => __DIR__ . '/../..' . '/gulliver/system/class.mailer.php',
         'menuDetail' => __DIR__ . '/../..' . '/workflow/engine/classes/class.plugin.php',
         'newSiteProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/newSiteProxy.php',
+        'ntlm_sasl_client_class' => __DIR__ . '/..' . '/phpmailer/phpmailer/extras/ntlm_sasl_client.php',
         'nusoap_base' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.php',
         'nusoap_base_colosa' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.colosa.php',
         'nusoapservermime' => __DIR__ . '/../..' . '/thirdparty/pear/nusoapmime.php',
@@ -5793,8 +5991,11 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'serverInfo' => __DIR__ . '/../..' . '/thirdparty/pear/SOAP/Interop/registrationAndNotification.php',
         'soapNtlm' => __DIR__ . '/../..' . '/gulliver/system/class.soapNtlm.php',
         'soap_fault' => __DIR__ . '/../..' . '/thirdparty/pear/class.soap_fault.php',
+        'soap_fault_colosa' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.colosa.php',
         'soap_parser' => __DIR__ . '/../..' . '/thirdparty/pear/class.soap_parser.php',
-        'soap_server' => __DIR__ . '/../..' . '/thirdparty/pear/class.soap_server.php',
+        'soap_parser_colosa' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.colosa.php',
+        'soap_server' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.php',
+        'soap_server_colosa' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.colosa.php',
         'soap_transport_http' => __DIR__ . '/../..' . '/thirdparty/pear/class.soap_transport_http.php',
         'soapclient' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.php',
         'soapclient_colosa' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.colosa.php',
@@ -5807,7 +6008,7 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
         'triggerDetail' => __DIR__ . '/../..' . '/workflow/engine/classes/class.plugin.php',
         'uploadDocumentData' => __DIR__ . '/../..' . '/workflow/engine/classes/class.plugin.php',
         'webEntryProxy' => __DIR__ . '/../..' . '/workflow/engine/controllers/webEntryProxy.php',
-        'wsdl' => __DIR__ . '/../..' . '/thirdparty/pear/class.wsdl.php',
+        'wsdl' => __DIR__ . '/../..' . '/thirdparty/pear/nusoap.php',
         'wsdlcache' => __DIR__ . '/../..' . '/thirdparty/pear/class.wsdlcache.php',
         'x_Employee' => __DIR__ . '/../..' . '/thirdparty/pear/SOAP/Interop/params_classes.php',
         'x_Person' => __DIR__ . '/../..' . '/thirdparty/pear/SOAP/Interop/params_classes.php',
@@ -5818,12 +6019,12 @@ class ComposerStaticInit66bc30249e5d6d2d0fc249853688d926
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixDirsPsr4;
-            $loader->fallbackDirsPsr4 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$fallbackDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$prefixesPsr0;
-            $loader->fallbackDirsPsr0 = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$fallbackDirsPsr0;
-            $loader->classMap = ComposerStaticInit66bc30249e5d6d2d0fc249853688d926::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$prefixDirsPsr4;
+            $loader->fallbackDirsPsr4 = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$fallbackDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$prefixesPsr0;
+            $loader->fallbackDirsPsr0 = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$fallbackDirsPsr0;
+            $loader->classMap = ComposerStaticInit302cd29056763a910dbb2821a6bfdfb6::$classMap;
 
         }, null, ClassLoader::class);
     }

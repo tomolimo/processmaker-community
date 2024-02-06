@@ -12,9 +12,9 @@ class TarFile extends Archive
      *
      * @param string $name
      */
-    public function TarFile($name)
+    public function __construct($name)
     {
-        $this->archive($name);
+        parent::__construct($name);
         $this->options['type'] = "tar";
     }
 

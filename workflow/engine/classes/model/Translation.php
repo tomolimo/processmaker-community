@@ -237,7 +237,7 @@ class Translation extends BaseTranslation
             }
 
             $res['cacheFileMafe'] = $cacheFileMafe;
-            $res['languague'] = count($cacheFileMafe);
+            $res['languague'] = (is_array($cacheFileMafe) || $cacheFileMafe instanceof Countable) ? count($cacheFileMafe) : 0;
             $res['rowsMafeJS'] = count( $translation );
             return $res;
         } catch (Exception $e) {

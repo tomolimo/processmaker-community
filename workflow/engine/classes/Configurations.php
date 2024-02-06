@@ -613,6 +613,36 @@ class Configurations // extends Configuration
     }
 
     /**
+     * Get the values stored in the USER_PREFERENCES
+     *
+     * @param string $key
+     * @param string $userUid
+     * @param string $listName
+     *
+     * @return array
+    */
+    public function getUserPreferences($key = null, $userUid = null, $listName = 'advanced')
+    {
+        $this->loadConfig($obj, 'USER_PREFERENCES', '', '', $userUid, '');
+
+        if (isset($key)) {
+            if (isset($this->aConfig[$key])) {
+                if (isset($data) && is_array($data)) {
+                    foreach ($data as $k => $v) {
+                        $this->aConfig[$key] = str_replace('@' . $k, $v, $this->aConfig[$key]);
+                    }
+                }
+
+                return $this->aConfig[$key];
+            } else {
+                return [$listName => []];
+            }
+        } else {
+            return $this->aConfig;
+        }
+    }
+
+    /**
      * Gets the default fields and configuration for the cases list
      *
      * Return the fields and configuration

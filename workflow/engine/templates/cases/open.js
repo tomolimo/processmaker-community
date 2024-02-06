@@ -143,7 +143,9 @@ Ext.onReady(function(){
               }
               actionMenu.show();
               break;
-
+            case 'RETURN_ADVANCED_SEARCH':
+                Ext.getCmp('returnButton').show();
+              break;
             // custom menus from plugins or others
             default:
               var navPanel = Ext.getCmp('navPanel');
@@ -498,7 +500,23 @@ Ext.onReady(function(){
         region: 'center',
         layout: 'border',
         items: [navPanelWest, navPanelCenter],
-        tbar: [{
+        tbar: [
+        {
+            id: 'returnButton',
+            pressed: false,
+            enableToggle: true,
+            text: _('ID_RETURN_ADVANCED_SEARCH'),
+            iconCls: 'button_menu_ext ICON_RETURN',
+            tooltip: {
+                title:_('ID_RETURN_ADVANCED_SEARCH'),
+                text: _('ID_SHOW_RETURN_ADVANCED_SEARCH') 
+            },
+            toggleHandler: function (btn, pressed) {
+                //Force to redirect to advanced search list from any side
+                location.href = 'casesListExtJs?action=search';
+            }
+        },
+        {
             id: 'stepsMenu',
             text: '&nbsp;&nbsp;' + _('ID_STEPS'),
             pressed: false,
@@ -535,7 +553,8 @@ Ext.onReady(function(){
                     closeCaseNotesWindow();
                 }
             }
-        }]
+        }
+      ]
     };
 
     /**
@@ -577,6 +596,7 @@ Ext.onReady(function(){
   Ext.getCmp('caseNotes').hide();
   Ext.getCmp('informationMenu').hide();
   Ext.getCmp('actionMenu').hide();
+  Ext.getCmp('returnButton').hide();
 
   hideCaseNavigatorPanel();
   if(typeof appStatus !== "undefined") {

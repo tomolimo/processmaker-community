@@ -87,6 +87,8 @@ class UsersMapBuilder
 
         $tMap->addColumn('USR_STATUS', 'UsrStatus', 'string', CreoleTypes::VARCHAR, true, 32);
 
+        $tMap->addColumn('USR_STATUS_ID', 'UsrStatusId', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addColumn('USR_COUNTRY', 'UsrCountry', 'string', CreoleTypes::VARCHAR, true, 3);
 
         $tMap->addColumn('USR_CITY', 'UsrCity', 'string', CreoleTypes::VARCHAR, true, 3);

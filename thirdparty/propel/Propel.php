@@ -617,9 +617,7 @@ class Propel
      */
     public static function getDbConnection($name)
     {
-            /*----------------------------------********---------------------------------*/
             return null;
-        /*----------------------------------********---------------------------------*/
 
         if (!empty(self::$configuration['datasources'][$name]['connection'])) {
             return self::getConnection($name);

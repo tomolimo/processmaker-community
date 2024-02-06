@@ -717,6 +717,9 @@ antes funcionaba.
 	width:15px !important;
 	height:15px !important;
 }
+.ICON_RETURN {
+  background-image: url(/images/baseline_arrow_back_black_18dp.png) !important;
+}
 .ICON_CASES_NOTES {
   /*ss_comment*/
   background-image:url( /images/icons_silk/sprites.png) !important;

@@ -36,6 +36,7 @@ PMDesigner.taskProperties = function (activity) {
         abeAddOption,
         abeTemplates,
         abeDynaforms,
+        abeReceiverAccount,
         abeEmailAcount,
         abeFields,
         warningChanges,
@@ -565,7 +566,6 @@ PMDesigner.taskProperties = function (activity) {
         });
     }
 
-    /*----------------------------------********---------------------------------*/
 
     warningChanges = new PMUI.ui.MessageWindow({
         id: 'warningChanges',
@@ -792,7 +792,6 @@ PMDesigner.taskProperties = function (activity) {
         formNotifications.getField('tas_receive_message_template').setValue(dataProperties.tas_receive_message_template);
         formNotifications.getField('tas_receive_email_from_format').setValue(dataProperties.tas_receive_email_from_format);
     }
-    /*----------------------------------********---------------------------------*/
     function loadCalendar(response) {
         var field = formTimingControl.getField('tas_calendar'), i;
         field.clearOptions();
@@ -907,6 +906,35 @@ PMDesigner.taskProperties = function (activity) {
 
     };
 
+    /**
+     * Loads the IMAP email accounts settings
+     * @param response
+     */
+    function loadABImapEmailAccount(response) {
+        var accountField = abeForm.getField('ABE_RECEIVER_EMAIL_SERVER_UID') || null,
+            i;
+
+        if (response instanceof Array) {
+            for (i = 0; i < response.length; i += 1) {
+                if (response[i].mess_engine === "IMAP") {
+                    if (accountField !== null) {
+                        accountField.addOption({
+                            value: response[i].mess_uid,
+                            label: response[i].mess_from_name && response[i].mess_from_name !== "" ?
+                                    response[i].mess_from_name + ' <' + response[i].mess_account + '>' : ' <' + response[i].mess_account + '>'
+                        });
+                    }
+                    abeReceiverAccount.options.push({
+                        value: response[i].mess_uid,
+                        label: response[i].mess_from_name && response[i].mess_from_name !== "" ?
+                                response[i].mess_from_name + ' <' + response[i].mess_account + '>' : ' <' + response[i].mess_account + '>'
+                    });
+                }
+            }
+        }
+
+    };
+
     function loadABEDynaformField(dynaforms) {
         var dynaformField = abeForm.getField('DYN_UID'), i;
         for (i in dynaforms) {
@@ -956,7 +984,6 @@ PMDesigner.taskProperties = function (activity) {
                 loadEmailAccount(response["emailserver"].response, 'tas_email_server_uid');
                 loadEmailAccount(response["emailserver"].response, 'tas_receive_server_uid');
 
-                /*----------------------------------********---------------------------------*/
             },
             functionFailure: function (xhr, response) {
                 PMDesigner.msgWinError(response.error.message);
@@ -974,7 +1001,6 @@ PMDesigner.taskProperties = function (activity) {
                 }
             });
         }
-        /*----------------------------------********---------------------------------*/
         restClient.setBaseEndPoint('');
         restClient.executeRestClient();
     }
@@ -1043,7 +1069,6 @@ PMDesigner.taskProperties = function (activity) {
                 return;
             }
         }
-        /*----------------------------------********---------------------------------*/
 
         tas_transfer_fly = formTimingControl.getField('tas_transfer_fly').getValue() === '["1"]';
         tas_send_last_email = formNotifications.getField('tas_send_last_email').getValue() === '["1"]';
@@ -1146,7 +1171,6 @@ PMDesigner.taskProperties = function (activity) {
         if (dataNotification['tas_receive_message_template']) {
             dataProperties.tas_receive_message_template = dataNotification['tas_receive_message_template'];
         }
-        /*----------------------------------********---------------------------------*/
 
         if (consolidated == '1') {
             consolidated_enable = false;
@@ -1237,7 +1261,6 @@ PMDesigner.taskProperties = function (activity) {
     if (consolidated == '1') {
         formConsolidated.getField('consolidated_report_table').setVisible(false);
     }
-    /*----------------------------------********---------------------------------*/
     function customDOM() {
         $customGrid = $("#customGrid");
         $customGrid.show().appendTo($("#customGridPanel").find("fieldset:eq(0)"));

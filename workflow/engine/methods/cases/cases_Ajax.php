@@ -888,42 +888,6 @@ switch (($_POST['action']) ? $_POST['action'] : $_REQUEST['action']) {
         $G_PUBLISH->AddContent('propeltable', 'cases/paged-table-reassigByUser2', 'cases/cases_ToReassignByUserList2', $oCriteria);
         G::RenderPage('publish', 'raw');
         break;
-    /* @Author Erik Amaru Ortiz <erik@colosa.com> */
-    case 'reassignByUser':
-
-        $oCases = new Cases();
-        $aCases = array();
-
-        if (isset($_POST['items']) && trim($_POST['items']) != '') {
-            $sItems = $_POST['items'];
-            $aItems = explode(',', $sItems);
-            $FROM_USR_UID = $_POST['USR_UID'];
-
-            foreach ($aItems as $item) {
-                list($APP_UID, $USR_UID) = explode('|', $item);
-                $aCase = $oCases->loadCaseInCurrentDelegation($APP_UID, true);
-                $oCase->reassignCase($aCase['APP_UID'], $aCase['DEL_INDEX'], $FROM_USR_UID, $USR_UID);
-                array_push($aCases, $aCase);
-            }
-            //G::pr($aCases);
-
-
-            //require_once 'classes/model/Users.php';
-            $oUser = new Users();
-            $sText = '';
-            foreach ($aCases as $aCase) {
-                $aCaseUpdated = $oCases->loadCaseInCurrentDelegation($aCase['APP_UID'], true);
-                $aUser = $oUser->load($aCaseUpdated['USR_UID']);
-                $sText .= $aCaseUpdated['APP_PRO_TITLE'] . ' - ' . ' Case: ' . $aCaseUpdated['APP_NUMBER'] . '# (' . $aCaseUpdated['APP_TAS_TITLE'] . ') <b> => Reassigned to => </b> <font color="blue">' . $aUser['USR_FIRSTNAME'] . ' ' . $aUser['USR_LASTNAME'] . ' [' . $aUser['USR_USERNAME'] . ']' . '</font><br />';
-            }
-
-            $G_PUBLISH = new Publisher();
-            $aMessage['MESSAGE'] = $sText;
-            $aMessage['URL'] = 'cases_ReassignByUser?REASSIGN_USER=' . $_POST['USR_UID'];
-            $G_PUBLISH->AddContent('xmlform', 'xmlform', 'cases/cases_ReassignShowInfo', '', $aMessage);
-            G::RenderPage('publish', 'raw');
-        }
-        break;
     case "uploadInputDocument":
         //krumo($_POST);
         $G_PUBLISH = new Publisher();

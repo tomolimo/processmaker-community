@@ -22,7 +22,7 @@ class EnterpriseClass extends PMPlugin
     {
     }
 
-    public function enterpriseSystemUpdate($data) //$data = $oData
+    public static function enterpriseSystemUpdate($data) //$data = $oData
     {
         if (count(glob(PATH_DATA_SITE . 'license/*.dat')) == 0) {
             return;

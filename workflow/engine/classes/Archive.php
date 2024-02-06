@@ -26,7 +26,7 @@ class Archive
      * @return void
      *
      */
-    public function archive($name)
+    public function __construct($name)
     {
         $this->options = array('basedir' => ".", 'name' => $name, 'prepend' => "", 'inmemory' => 0, 'overwrite' => 0, 'recurse' => 1, 'storepaths' => 1, 'followlinks' => 0, 'level' => 3, 'method' => 1, 'sfx' => "", 'type' => "", 'comment' => ""
         );

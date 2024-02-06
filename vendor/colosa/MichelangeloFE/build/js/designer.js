@@ -1,4 +1,3 @@
-/*----------------------------------********---------------------------------*/
 var defaultCrown = {
     items: [
         {
@@ -5973,7 +5972,6 @@ var defaultNavbarPanelMenus = {
 };
 
 defaultNavbarPanelMenus.init();
-/*----------------------------------********---------------------------------*/
 
 /**
  * @class PMUI.menu.navBarPanel
@@ -16835,6 +16833,7 @@ PMDesigner.taskProperties = function (activity) {
         abeAddOption,
         abeTemplates,
         abeDynaforms,
+        abeReceiverAccount,
         abeEmailAcount,
         abeFields,
         warningChanges,
@@ -17364,7 +17363,6 @@ PMDesigner.taskProperties = function (activity) {
         });
     }
 
-    /*----------------------------------********---------------------------------*/
 
     warningChanges = new PMUI.ui.MessageWindow({
         id: 'warningChanges',
@@ -17591,7 +17589,6 @@ PMDesigner.taskProperties = function (activity) {
         formNotifications.getField('tas_receive_message_template').setValue(dataProperties.tas_receive_message_template);
         formNotifications.getField('tas_receive_email_from_format').setValue(dataProperties.tas_receive_email_from_format);
     }
-    /*----------------------------------********---------------------------------*/
     function loadCalendar(response) {
         var field = formTimingControl.getField('tas_calendar'), i;
         field.clearOptions();
@@ -17706,6 +17703,35 @@ PMDesigner.taskProperties = function (activity) {
 
     };
 
+    /**
+     * Loads the IMAP email accounts settings
+     * @param response
+     */
+    function loadABImapEmailAccount(response) {
+        var accountField = abeForm.getField('ABE_RECEIVER_EMAIL_SERVER_UID') || null,
+            i;
+
+        if (response instanceof Array) {
+            for (i = 0; i < response.length; i += 1) {
+                if (response[i].mess_engine === "IMAP") {
+                    if (accountField !== null) {
+                        accountField.addOption({
+                            value: response[i].mess_uid,
+                            label: response[i].mess_from_name && response[i].mess_from_name !== "" ?
+                                    response[i].mess_from_name + ' <' + response[i].mess_account + '>' : ' <' + response[i].mess_account + '>'
+                        });
+                    }
+                    abeReceiverAccount.options.push({
+                        value: response[i].mess_uid,
+                        label: response[i].mess_from_name && response[i].mess_from_name !== "" ?
+                                response[i].mess_from_name + ' <' + response[i].mess_account + '>' : ' <' + response[i].mess_account + '>'
+                    });
+                }
+            }
+        }
+
+    };
+
     function loadABEDynaformField(dynaforms) {
         var dynaformField = abeForm.getField('DYN_UID'), i;
         for (i in dynaforms) {
@@ -17755,7 +17781,6 @@ PMDesigner.taskProperties = function (activity) {
                 loadEmailAccount(response["emailserver"].response, 'tas_email_server_uid');
                 loadEmailAccount(response["emailserver"].response, 'tas_receive_server_uid');
 
-                /*----------------------------------********---------------------------------*/
             },
             functionFailure: function (xhr, response) {
                 PMDesigner.msgWinError(response.error.message);
@@ -17773,7 +17798,6 @@ PMDesigner.taskProperties = function (activity) {
                 }
             });
         }
-        /*----------------------------------********---------------------------------*/
         restClient.setBaseEndPoint('');
         restClient.executeRestClient();
     }
@@ -17842,7 +17866,6 @@ PMDesigner.taskProperties = function (activity) {
                 return;
             }
         }
-        /*----------------------------------********---------------------------------*/
 
         tas_transfer_fly = formTimingControl.getField('tas_transfer_fly').getValue() === '["1"]';
         tas_send_last_email = formNotifications.getField('tas_send_last_email').getValue() === '["1"]';
@@ -17945,7 +17968,6 @@ PMDesigner.taskProperties = function (activity) {
         if (dataNotification['tas_receive_message_template']) {
             dataProperties.tas_receive_message_template = dataNotification['tas_receive_message_template'];
         }
-        /*----------------------------------********---------------------------------*/
 
         if (consolidated == '1') {
             consolidated_enable = false;
@@ -18036,7 +18058,6 @@ PMDesigner.taskProperties = function (activity) {
     if (consolidated == '1') {
         formConsolidated.getField('consolidated_report_table').setVisible(false);
     }
-    /*----------------------------------********---------------------------------*/
     function customDOM() {
         $customGrid = $("#customGrid");
         $customGrid.show().appendTo($("#customGridPanel").find("fieldset:eq(0)"));
@@ -19059,60 +19080,45 @@ PMDesigner.ProcessFilesManager = function (processFileManagerOptionPath, optionC
 
     }
 
+    /**
+     * Upload file to Public Files or Templates
+     */
     function uploadFile() {
-        var fileSelector = formUploadField.getHTML().getElementsByTagName('input')[0];
+        var fileSelector = formUploadField.getHTML().getElementsByTagName('input')[0],
+            formData = new FormData(),
+            xhr;
         if (fileSelector.files.length === 0) {
             PMDesigner.msgFlash('Please select a file to upload'.translate(), windowUpload.footer, "info");
             return;
         }
-        (new PMRestClient({
-            endpoint: 'file-manager',
-            typeRequest: 'post',
-            messageError: '',
-            data: {
-                prf_filename: fileSelector.files[0].name,
-                prf_path: processFileManagerOptionPath,
-                prf_content: null
-            },
-            functionSuccess: function (xhr, response) {
-                var win = window, fd = new FormData(), xhr, val = 'prf_file', resp = null;
-                fd.append(val, fileSelector.files[0]);
-                if (win.XMLHttpRequest)
-                    xhr = new XMLHttpRequest();
-                else if (win.ActiveXObject)
-                    xhr = new ActiveXObject('Microsoft.XMLHTTP');
-                xhr.open('POST', '/api/1.0/' + WORKSPACE + '/project/' + PMDesigner.project.id + '/file-manager/' + response.prf_uid + '/upload', true);
-                xhr.setRequestHeader('Authorization', 'Bearer ' + PMDesigner.project.keys.access_token);
-                xhr.onload = function () {
-                    switch (this.status) {
-                        case 200:
-                        formUploadField.reset();
-                        windowUpload.close();
-                        if (processFileManagerOptionPath == "templates") {
-                            PMDesigner.msgFlash('File uploaded successfully'.translate(), gridTemplate);
-                            loadTemplate();
-                        }
-                        if (processFileManagerOptionPath == "public") {
-                            PMDesigner.msgFlash('File uploaded successfully'.translate(), gridPublic);
-                            loadPublic();
-                        }
-                            break;
-                        case 403:
-                        case 415:
-                        case 429:
-                            if (this.response) {
-                                resp = JSON.parse(this.response);
-                                PMDesigner.msgWinError(resp.message ? resp.message : resp.error.message);
-                            }
-                            break;
+        formData.append('form', fileSelector.files[0]);
+        xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/1.0/' + WORKSPACE + '/project/' + PMDesigner.project.id + '/process-files-manager/' + processFileManagerOptionPath, true);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + PMDesigner.project.keys.access_token);
+        xhr.onload = function () {
+            var resp;
+            switch (xhr.status) {
+                case 200:
+                    formUploadField.reset();
+                    windowUpload.close();
+                    if (processFileManagerOptionPath === "templates") {
+                        PMDesigner.msgFlash('File uploaded successfully'.translate(), gridTemplate);
+                        loadTemplate();
                     }
-                };
-                xhr.send(fd);
-            },
-            functionFailure: function (xhr, response) {
-                PMDesigner.msgWinError(response.error.message);
+                    if (processFileManagerOptionPath === "public") {
+                        PMDesigner.msgFlash('File uploaded successfully'.translate(), gridPublic);
+                        loadPublic();
+                    }
+                    break;
+                default:
+                    if (this.response) {
+                        resp = JSON.parse(this.response);
+                        PMDesigner.msgWinError(resp.message ? resp.message : resp.error.message);
+                    }
+                    break;
             }
-        })).executeRestClient();
+        };
+        xhr.send(formData);
     }
 
     function styleApp() {
@@ -26636,7 +26642,6 @@ PMVariables.prototype.changeViewFieldType = function (newValue) {
             that.gridAcceptedValues.setVisible(true && sw);
             this.fieldInfo.data = "Supported Controls: text, textarea, dropdown, radio, suggest, hidden.".translate();
 
-            /*----------------------------------********---------------------------------*/
 
             break;
         case 'integer':
@@ -32836,7 +32841,6 @@ MessageEventDefinition.prototype._resetEditMessageForm = function () {
     return this;
 };
 
-/*----------------------------------********---------------------------------*/
 /**
  * @class IntroHelper
  * Handle Intro helper

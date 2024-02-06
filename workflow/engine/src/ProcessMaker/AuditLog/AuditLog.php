@@ -172,7 +172,9 @@ class AuditLog
             "GSuiteConnect" => G::LoadTranslation("ID_G_SUITE_CONNECT"),
             "GSuiteDisconnect" => G::LoadTranslation("ID_G_SUITE_DISCONNECT"),
             "GSuiteLoadGroups" => G::LoadTranslation("ID_G_SUITE_LOAD_GROUPS"),
-            "GSuiteSyncUsers" => G::LoadTranslation("ID_G_SUITE_SYNC_USERS")
+            "GSuiteSyncUsers" => G::LoadTranslation("ID_G_SUITE_SYNC_USERS"),
+            "SamlEnable" => G::LoadTranslation("ID_SAML_ENABLE"),
+            "SamlProvider" => G::LoadTranslation("ID_SAML_PROVIDER")
         ];
     }
 

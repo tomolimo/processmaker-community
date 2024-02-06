@@ -968,6 +968,66 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 	<%}%>
 </script>
 
+<script type='text/template' id='tpl-suggest2'>
+	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
+		<% if(group === "form") {%>
+			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+				<label for="form[<%-id%>]" class="control-label pmdynaform-label">
+					<span data-toggle="tooltip" data-placement="bottom" title="<%-tooltipLabel%>" class="textlabel"><%=label%></span>
+					<%if(required && enableValidate){%>
+						<span class="pmdynaform-field-required">*</span>
+					<%}%>
+				</label>
+			</div>
+		<%}%>
+		<div
+			<%if (group === 'form'){ %>
+				class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%>
+				pmdynaform-field-control"
+			<%} else if (layout === "responsive") {%>
+				class="pmdynaform-field-control col-xs-12 col-sm-12 col-md-12 col-lg-12"
+			<%}%>
+		>
+			<div class="control-group">
+				<select
+					<% if ( group === "grid") { %>
+						id="form<%-id%>"
+						name= "form<%-name%>"
+					<%} else{%>
+						id="form[<%-id%>]"
+						name="form[<%-name%>]"
+					<%}%>
+					type = <%-type%> class="<%-namespace%>-control-<%-type%> form-control"
+					placeholder= "<%-placeholder%>" value = "<%-data['label']%>"
+					<% if(disabled === true){%>disabled<%}%>
+					<% if (autoComplete === "on" || autoComplete === "off") { %>
+						autocomplete = "<%-autoComplete%>"
+					<%} else{%>
+						autoComplete = "off"
+					<%}%>
+				>
+				</select>
+				<% if (group === "form") { %>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom"
+						title="<%-hint%>"></span>
+					<%}%>
+				<% } %>
+				<span class="content-print"></span>
+			</div>
+			<input type="hidden"
+				<% if ( group === "grid") { %>
+					id = "form<%-id%>"
+					name ="form<%-name%>"
+				<%} else{%>
+					id = "form[<%-id%>_label]"
+					name ="form[<%-name%>_label]"
+				<%}%>
+				value="<%-data['value']%>"
+			>
+		</div>
+	</div>
+</script>
 <script type="text/template" id="tpl-grid">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%-namespace%>-<%-mode%>-<%-type%> <%-layout%>">
 		<div class="<%-namespace%>-<%-type%>-new">
@@ -1587,7 +1647,6 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         </div>
     </div>
 </script>
-
 <script type="text/template" id="tpl-progressbar">
         <div class="pm-progressbar col-xs-<%-col%>">
             <div class="progressbar-title">
@@ -1745,6 +1804,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
                 </div>
             </div>
         </div>
+    </div>
+</script>
+<script type="text/template" id="tpl-spinner">
+    <div class="col-xs-12">
+           <div class="pm-field-loading"></div>
     </div>
 </script>
 

@@ -2,7 +2,6 @@
 
 use ProcessMaker\BusinessModel\Cases as BmCases;
 use ProcessMaker\BusinessModel\Cases\ChangeLog;
-/*----------------------------------********---------------------------------*/
 use ProcessMaker\Plugins\PluginRegistry;
 
 if (!isset($_SESSION['USER_LOGGED'])) {
@@ -436,6 +435,7 @@ class Ajax
         $oHeadPublisher->addExtJsScript('cases/caseHistory', true); //adding a javascript file .js
         $oHeadPublisher->addContent('cases/caseHistory'); //adding a html file  .html.
         $oHeadPublisher->assign('pageSize', $conf->getEnvSetting('casesListRowNumber'));
+        $oHeadPublisher->assign('FORMATS', $conf->getFormats());
         G::RenderPage('publish', 'extJs');
     }
 
@@ -796,12 +796,10 @@ class Ajax
         $appUid = $idHistoryArray[1];
         $tasUid = $idHistoryArray[2];
 
-        /*----------------------------------********---------------------------------*/
             $start = isset($_REQUEST['start']) ? (int) $_REQUEST['start'] : 0;
             $limit = isset($_REQUEST['limit']) ? (int) $_REQUEST['limit'] : 15;
             $changeLog = new ChangeLog();
             echo G::json_encode($changeLog->getChangeLog($appUid, $proUid, $tasUid, $start, $limit));
-        /*----------------------------------********---------------------------------*/
     }
 
     public function changeLogTab()

@@ -25,7 +25,7 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
     private $bag;
     private $resolveArrays;
 
-    public function __construct($resolveArrays = true)
+    public function __construct(bool $resolveArrays = true)
     {
         $this->resolveArrays = $resolveArrays;
     }
@@ -42,7 +42,7 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
         try {
             parent::process($container);
 
-            $aliases = array();
+            $aliases = [];
             foreach ($container->getAliases() as $name => $target) {
                 $this->currentId = $name;
                 $aliases[$this->bag->resolveValue($name)] = $target;

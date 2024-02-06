@@ -37,7 +37,6 @@ $G_PUBLISH = new Publisher();
 $fields = $RBAC->getAuthSource($_GET['sUID']);
 if (file_exists(PATH_XMLFORM . 'ldapAdvanced/' . $fields['AUTH_SOURCE_PROVIDER'] . 'Edit.xml')) {
     $pluginEnabled = 0;
-    /*----------------------------------********---------------------------------*/
     if ($pluginEnabled == 0) {
         $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', array('MESSAGE' => G::LoadTranslation('ID_AUTH_SOURCE_FEATURE_MISSING') ));
         G::RenderPage('publish', 'blank');

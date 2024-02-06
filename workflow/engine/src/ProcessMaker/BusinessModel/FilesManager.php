@@ -1,8 +1,10 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
-use \G;
+use Exception;
+use G;
 use Criteria;
+use ProcessFiles;
 use ProcessFilesPeer;
 use ProcessPeer;
 use TaskPeer;
@@ -138,6 +140,158 @@ class FilesManager
             }
             return $aTheFiles;
         } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Upload process file manager related to templates or public
+     *
+     * @param string $userUid
+     * @param string $proUid
+     * @param string $mainPath
+     *
+     * @return array
+     * @throws Exception
+     *
+     * @link https://wiki.processmaker.com/3.0/Process_Files_Manager
+     */
+    public function uploadFilesManager($userUid, $proUid, $mainPath)
+    {
+        try {
+            $response = [];
+            if (isset($_FILES["form"]["name"])) {
+                // todo: can be upload one file, we can improve this if we can receive more than one file
+                if (!is_array($_FILES["form"]["name"])) {
+                    $arrayFileName = [
+                        'name' => $_FILES["form"]["name"],
+                        'tmp_name' => $_FILES["form"]["tmp_name"],
+                        'error' => $_FILES["form"]["error"]
+                    ];
+                    $file = [
+                        'filename' => $arrayFileName["name"],
+                        'path' => $arrayFileName["tmp_name"]
+                    ];
+                    // Get the full path of the folder
+                    $editable = false;
+                    $folder = '';
+                    switch ($mainPath) {
+                        case 'templates': // Templates: only permitted to upload HTML files
+                            $editable = true;
+                            $folder = PATH_DATA_MAILTEMPLATES . $proUid . PATH_SEP;
+                            break;
+                        case 'public': // Public: does not permit the EXE files
+                            $folder = PATH_DATA_PUBLIC . $proUid . PATH_SEP;
+                            break;
+                    }
+                    // We will to review if we can upload the file in process files
+                    $processFiles = $this->canUploadProcessFilesManager($userUid, $proUid, $mainPath, $file, $folder,
+                        $editable);
+                    // There is no error, the file uploaded with success
+                    if ($arrayFileName["error"] === UPLOAD_ERR_OK) {
+                        try {
+                            $fileName = $file["filename"];
+                            G::uploadFile(
+                                $arrayFileName["tmp_name"],
+                                $folder,
+                                $fileName
+                            );
+                        } catch (Exception $e) {
+                            // Delete the register from Database
+                            $this->remove($processFiles->getPrfUid());
+
+                            throw $e;
+                        }
+                    } else {
+                        throw new UploadException($arrayFileName['error']);
+                    }
+                    // Prepare the results
+                    $response = [
+                        'prf_uid' => $processFiles->getPrfUid(),
+                        'prf_filename' => $file["filename"],
+                        'usr_uid' => $processFiles->getUsrUid(),
+                        'prf_update_usr_uid' => $processFiles->getPrfUpdateUsrUid(),
+                        'prf_path' => $folder . $file['filename'],
+                        'prf_type' => $processFiles->getPrfType(),
+                        'prf_editable' => $processFiles->getPrfEditable(),
+                        'prf_create_date' => $processFiles->getPrfCreateDate(),
+                        'prf_update_date' => $processFiles->getPrfUpdateDate(),
+                        'prf_content' => '',
+                    ];
+                }
+            } else {
+                throw new Exception(G::LoadTranslation('ID_FIELD_REQUIRED', ['form']));
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if the file can be uploaded
+     *
+     * @param string $userUid
+     * @param string $proUid
+     * @param string $mainPath
+     * @param array $file
+     * @param string $folder
+     * @param bool $editable
+     *
+     * @return object
+     * @throws Exception
+     *
+     * @link https://wiki.processmaker.com/3.0/Process_Files_Manager
+     */
+    public function canUploadProcessFilesManager($userUid, $proUid, $mainPath, $file, $folder, $editable = false)
+    {
+        try {
+            $path = pathinfo($file['filename']);
+            if (!$file['filename'] || $path['dirname'] != '.') {
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_FOR", ['filename']));
+            }
+            // Check if is a file will upload in the directory: public or mailTemplates
+            if ($mainPath !== 'public' && $mainPath !== 'templates') {
+                throw new Exception(G::LoadTranslation("ID_INVALID_PRF_PATH"));
+            }
+            // Get the extension of the file
+            $info = pathinfo($file["filename"]);
+            $extension = ((isset($info["extension"])) ? $info["extension"] : "");
+            // In templates we can upload only HTML
+            if ($mainPath === 'templates' && $extension !== 'html') {
+                throw new Exception(G::LoadTranslation('ID_FILE_UPLOAD_INCORRECT_EXTENSION'));
+            }
+            // In public we can't upload executables
+            if ($mainPath === 'public' && $extension === 'exe') {
+                throw new Exception(G::LoadTranslation('ID_FILE_UPLOAD_INCORRECT_EXTENSION'));
+            }
+            // Get the file path
+            $filePath = $folder . $file['filename'];
+            // Check if the file exist
+            if (file_exists($filePath)) {
+                $filePath = $mainPath . PATH_SEP . $file['filename'];
+                throw new Exception(G::LoadTranslation("ID_EXISTS_FILE", [$filePath]));
+            }
+            // Get the file path is defined
+            if (empty($filePath)) {
+                throw new Exception(G::LoadTranslation('ID_CAN_NOT_BE_EMPTY', ['filename']));
+            }
+            // Check if the file exist
+            $processFiles = new ProcessFiles();
+            $prfUid = G::generateUniqueID();
+            $processFiles->setPrfUid($prfUid);
+            $processFiles->setProUid($proUid);
+            $processFiles->setUsrUid($userUid);
+            $processFiles->setPrfUpdateUsrUid('');
+            $processFiles->setPrfPath($filePath);
+            $processFiles->setPrfType('file');
+            $processFiles->setPrfEditable($editable);
+            $processFiles->setPrfCreateDate(date('Y-m-d H:i:s'));
+            $processFiles->save();
+
+            return $processFiles;
+        } catch (Exception $e) {
             throw $e;
         }
     }

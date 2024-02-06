@@ -43,6 +43,7 @@ class PhpFileLoaderTest extends TestCase
         $fixtures = realpath(__DIR__.'/../Fixtures');
         $loader = new PhpFileLoader($container = new ContainerBuilder(), new FileLocator());
         $loader->load($fixtures.'/config/services9.php');
+        $container->getDefinition('errored_definition')->addError('Service "errored_definition" is broken.');
 
         $container->compile();
         $dumper = new PhpDumper($container);
@@ -61,20 +62,21 @@ class PhpFileLoaderTest extends TestCase
         $container->compile();
 
         $dumper = new YamlDumper($container);
-        $this->assertStringEqualsFile($fixtures.'/config/'.$file.'.expected.yml', $dumper->dump());
+        $this->assertStringMatchesFormatFile($fixtures.'/config/'.$file.'.expected.yml', $dumper->dump());
     }
 
     public function provideConfig()
     {
-        yield array('basic');
-        yield array('defaults');
-        yield array('instanceof');
-        yield array('prototype');
-        yield array('child');
-
-        if (\PHP_VERSION_ID >= 70000) {
-            yield array('php7');
-        }
+        yield ['basic'];
+        yield ['object'];
+        yield ['defaults'];
+        yield ['instanceof'];
+        yield ['prototype'];
+        yield ['prototype_array'];
+        yield ['child'];
+        yield ['php7'];
+        yield ['anonymous'];
+        yield ['lazy_fqcn'];
     }
 
     /**
@@ -92,7 +94,7 @@ class PhpFileLoaderTest extends TestCase
 
     /**
      * @expectedException \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Invalid factory "factory:method": the `service:method` notation is not available when using PHP-based DI configuration. Use "[ref('factory'), 'method']" instead.
+     * @expectedExceptionMessage Invalid factory "factory:method": the "service:method" notation is not available when using PHP-based DI configuration. Use "[ref('factory'), 'method']" instead.
      */
     public function testFactoryShortNotationNotAllowed()
     {

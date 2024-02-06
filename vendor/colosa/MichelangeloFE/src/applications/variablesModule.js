@@ -958,7 +958,6 @@ PMVariables.prototype.changeViewFieldType = function (newValue) {
             that.gridAcceptedValues.setVisible(true && sw);
             this.fieldInfo.data = "Supported Controls: text, textarea, dropdown, radio, suggest, hidden.".translate();
 
-            /*----------------------------------********---------------------------------*/
 
             break;
         case 'integer':

@@ -15,7 +15,7 @@ set_include_path(PATH_PM_ENTERPRISE . PATH_SEPARATOR . get_include_path());
 
 class enterprisePlugin extends PMPlugin
 {
-    public function enterprisePlugin($sNamespace, $sFilename = null)
+    public function __construct($sNamespace, $sFilename = null)
     {
         $pathPluginTrunk = PATH_CORE . "enterprise";
 

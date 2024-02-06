@@ -54,12 +54,71 @@ trait SuggestTrait
                         $where = $isWhere ? "WHERE " . $col . "='" . $dv . "'" : $where . " AND " . $col . "='" . $dv . "'";
                     }
                 }
-                if (isset($json->queryField) && isset($dt[0]["base_expr"])) {
-                    $col = isset($dt[1]["base_expr"]) ? $dt[1]["base_expr"] : $dt[0]["base_expr"];
-                    $qf = str_replace("'", "''", $json->queryFilter);
-                    $where = $isWhere ? "WHERE " . $col . " LIKE '%" . $qf . "%'" : $where . " AND " . $col . " LIKE '%" . $qf . "%'";
+                if (isset($json->querySearch) && is_array($json->querySearch) && !empty($json->querySearch)) {
+                    $dataSearch = $json->querySearch;
+                    $sqlWildcard = "";
+                    //We will to search term in the query
+                    if (isset($dataSearch['term'])) {
+                        $value = isset($dataSearch['term']['value']) ? $dataSearch['term']['value'] : '';
+                        $label = isset($dataSearch['term']['text']) ? $dataSearch['term']['text'] : '';
+                        $sqlWildcard = "%";
+                    }
+                    //The match has priority
+                    //We will to search match in the query
+                    if (isset($dataSearch['match'])) {
+                        $value = isset($dataSearch['match']['value']) ? $dataSearch['match']['value'] : '';
+                        $label = isset($dataSearch['match']['text']) ? $dataSearch['match']['text'] : '';
+                        $sqlWildcard = "";
+                    }
+                    if (!empty($value) && !empty($label)){
+                        //We need to search in the firstColumn and secondColumn
+                        //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL1 LIKE 'querySearch' OR COL2 LIKE 'querySearch'
+                        //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL1 LIKE '%querySearch%' OR COL2 LIKE '%querySearch%'
+                        $col1 = $dt[0]["base_expr"];
+                        $col2 = isset($dt[1]["base_expr"]) ? $dt[1]["base_expr"] : $dt[0]["base_expr"];
+                        $qfValue = str_replace("'", "''", $value);
+                        $qfLabel = str_replace("'", "''", $label);
+                        $search = $col1 . " LIKE '" . $sqlWildcard . $qfValue . $sqlWildcard . "' OR " . $col2 . " LIKE '" . $sqlWildcard . $qfLabel . $sqlWildcard . "'";
+                        $where = $isWhere ? "WHERE " . $search : $where . " AND (" . $search . ")";
+                    } else {
+                        $valueOrLabel = '';
+                        $column = $dt[0]["base_expr"];
+                        if (!empty($value)) {
+                            //We need to search in the firstColumn
+                            //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL1 LIKE 'querySearch'
+                            //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL1 LIKE '%querySearch%'
+                            $valueOrLabel = $value;
+                        }
+                        if (!empty($label)) {
+                            //We need to search in the secondColumn
+                            //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL2 LIKE 'querySearch'
+                            //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL2 LIKE '%querySearch%'
+                            $column = isset($dt[1]["base_expr"]) ? $dt[1]["base_expr"] : $column;
+                            $valueOrLabel = $label;
+                        }
+                        $where = $this->buildWhere(
+                            $column,
+                            $valueOrLabel,
+                            $sqlWildcard,
+                            $isWhere,
+                            $where
+                        );
+                    }
+                } else {
+                    //If the property querySearch does not exist we need to search in the secondColumn
+                    //Ex: SELECT COL1, COL2 FROM TABLE WHERE COL2 LIKE '%queryFilter%'
+                    if (isset($json->queryField) && isset($dt[0]["base_expr"])) {
+                        $where = $this->buildWhere(
+                            isset($dt[1]["base_expr"]) ? $dt[1]["base_expr"] : $dt[0]["base_expr"],
+                            $json->queryFilter,
+                            "%",
+                            $isWhere,
+                            $where
+                        );
+                    }
                 }
 
+                // Define if we need to add a limit in the query
                 if ($optionsLimit > 0) {
                     $this->addSuggestLimit($json, $select, $limit, $where);
                 } else {
@@ -67,6 +126,26 @@ trait SuggestTrait
                 }
             }
         );
+    }
+
+    /**
+     * This function will be define the WHERE clause
+     *
+     * @param string $col, name of column
+     * @param string $value, value to search in the column
+     * @param string $sqlWildcard, if we to search term or correct match
+     * @param boolean $isWhere, if the we need to concat other condition
+     * @param string $where, initial where to add the concat
+     *
+     * @return string
+     *
+    */
+    private function buildWhere($col, $value, $sqlWildcard = "", $isWhere = false, $where = "")
+    {
+        $qf = str_replace("'", "''", $value);
+        $searchValue = $col . " LIKE '" . $sqlWildcard . $qf . $sqlWildcard;
+        $where = ($isWhere) ? "WHERE " . $searchValue . "'" : $where . " AND " . $searchValue . "'";
+        return $where;
     }
 
     /**

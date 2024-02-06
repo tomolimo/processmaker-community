@@ -52,6 +52,12 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
     protected $grp_status = 'ACTIVE';
 
     /**
+     * The value for the grp_status_id field.
+     * @var        int
+     */
+    protected $grp_status_id = 0;
+
+    /**
      * The value for the grp_ldap_dn field.
      * @var        string
      */
@@ -119,6 +125,17 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
     {
 
         return $this->grp_status;
+    }
+
+    /**
+     * Get the [grp_status_id] column value.
+     * 
+     * @return     int
+     */
+    public function getGrpStatusId()
+    {
+
+        return $this->grp_status_id;
     }
 
     /**
@@ -232,6 +249,28 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
     } // setGrpStatus()
 
     /**
+     * Set the value of [grp_status_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setGrpStatusId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->grp_status_id !== $v || $v === 0) {
+            $this->grp_status_id = $v;
+            $this->modifiedColumns[] = GroupwfPeer::GRP_STATUS_ID;
+        }
+
+    } // setGrpStatusId()
+
+    /**
      * Set the value of [grp_ldap_dn] column.
      * 
      * @param      string $v new value
@@ -300,16 +339,18 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
 
             $this->grp_status = $rs->getString($startcol + 3);
 
-            $this->grp_ldap_dn = $rs->getString($startcol + 4);
+            $this->grp_status_id = $rs->getInt($startcol + 4);
 
-            $this->grp_ux = $rs->getString($startcol + 5);
+            $this->grp_ldap_dn = $rs->getString($startcol + 5);
+
+            $this->grp_ux = $rs->getString($startcol + 6);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 6; // 6 = GroupwfPeer::NUM_COLUMNS - GroupwfPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 7; // 7 = GroupwfPeer::NUM_COLUMNS - GroupwfPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating Groupwf object", $e);
@@ -526,9 +567,12 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
                 return $this->getGrpStatus();
                 break;
             case 4:
-                return $this->getGrpLdapDn();
+                return $this->getGrpStatusId();
                 break;
             case 5:
+                return $this->getGrpLdapDn();
+                break;
+            case 6:
                 return $this->getGrpUx();
                 break;
             default:
@@ -555,8 +599,9 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
             $keys[1] => $this->getGrpId(),
             $keys[2] => $this->getGrpTitle(),
             $keys[3] => $this->getGrpStatus(),
-            $keys[4] => $this->getGrpLdapDn(),
-            $keys[5] => $this->getGrpUx(),
+            $keys[4] => $this->getGrpStatusId(),
+            $keys[5] => $this->getGrpLdapDn(),
+            $keys[6] => $this->getGrpUx(),
         );
         return $result;
     }
@@ -601,9 +646,12 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
                 $this->setGrpStatus($value);
                 break;
             case 4:
-                $this->setGrpLdapDn($value);
+                $this->setGrpStatusId($value);
                 break;
             case 5:
+                $this->setGrpLdapDn($value);
+                break;
+            case 6:
                 $this->setGrpUx($value);
                 break;
         } // switch()
@@ -646,11 +694,15 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[4], $arr)) {
-            $this->setGrpLdapDn($arr[$keys[4]]);
+            $this->setGrpStatusId($arr[$keys[4]]);
         }
 
         if (array_key_exists($keys[5], $arr)) {
-            $this->setGrpUx($arr[$keys[5]]);
+            $this->setGrpLdapDn($arr[$keys[5]]);
+        }
+
+        if (array_key_exists($keys[6], $arr)) {
+            $this->setGrpUx($arr[$keys[6]]);
         }
 
     }
@@ -678,6 +730,10 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
 
         if ($this->isColumnModified(GroupwfPeer::GRP_STATUS)) {
             $criteria->add(GroupwfPeer::GRP_STATUS, $this->grp_status);
+        }
+
+        if ($this->isColumnModified(GroupwfPeer::GRP_STATUS_ID)) {
+            $criteria->add(GroupwfPeer::GRP_STATUS_ID, $this->grp_status_id);
         }
 
         if ($this->isColumnModified(GroupwfPeer::GRP_LDAP_DN)) {
@@ -747,6 +803,8 @@ abstract class BaseGroupwf extends BaseObject implements Persistent
         $copyObj->setGrpTitle($this->grp_title);
 
         $copyObj->setGrpStatus($this->grp_status);
+
+        $copyObj->setGrpStatusId($this->grp_status_id);
 
         $copyObj->setGrpLdapDn($this->grp_ldap_dn);
 

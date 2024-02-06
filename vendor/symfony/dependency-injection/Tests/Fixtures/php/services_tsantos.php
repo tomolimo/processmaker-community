@@ -17,28 +17,17 @@ use Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag;
 class ProjectServiceContainer extends Container
 {
     private $parameters;
-    private $targetDirs = array();
+    private $targetDirs = [];
 
     public function __construct()
     {
-        $this->services = array();
-        $this->normalizedIds = array(
-            'tsantos\\serializer\\serializerinterface' => 'TSantos\\Serializer\\SerializerInterface',
-        );
-        $this->methodMap = array(
+        $this->services = $this->privates = [];
+        $this->methodMap = [
             'tsantos_serializer' => 'getTsantosSerializerService',
-        );
-        $this->aliases = array(
+        ];
+        $this->aliases = [
             'TSantos\\Serializer\\SerializerInterface' => 'tsantos_serializer',
-        );
-    }
-
-    public function getRemovedIds()
-    {
-        return array(
-            'Psr\\Container\\ContainerInterface' => true,
-            'Symfony\\Component\\DependencyInjection\\ContainerInterface' => true,
-        );
+        ];
     }
 
     public function compile()
@@ -51,11 +40,12 @@ class ProjectServiceContainer extends Container
         return true;
     }
 
-    public function isFrozen()
+    public function getRemovedIds()
     {
-        @trigger_error(sprintf('The %s() method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the isCompiled() method instead.', __METHOD__), E_USER_DEPRECATED);
-
-        return true;
+        return [
+            'Psr\\Container\\ContainerInterface' => true,
+            'Symfony\\Component\\DependencyInjection\\ContainerInterface' => true,
+        ];
     }
 
     /**

@@ -52,6 +52,18 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
     protected $mess_port = 0;
 
     /**
+     * The value for the mess_incoming_server field.
+     * @var        string
+     */
+    protected $mess_incoming_server = '';
+
+    /**
+     * The value for the mess_incoming_port field.
+     * @var        int
+     */
+    protected $mess_incoming_port = 0;
+
+    /**
      * The value for the mess_rauth field.
      * @var        int
      */
@@ -161,6 +173,28 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
     {
 
         return $this->mess_port;
+    }
+
+    /**
+     * Get the [mess_incoming_server] column value.
+     * 
+     * @return     string
+     */
+    public function getMessIncomingServer()
+    {
+
+        return $this->mess_incoming_server;
+    }
+
+    /**
+     * Get the [mess_incoming_port] column value.
+     * 
+     * @return     int
+     */
+    public function getMessIncomingPort()
+    {
+
+        return $this->mess_incoming_port;
     }
 
     /**
@@ -349,6 +383,50 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
         }
 
     } // setMessPort()
+
+    /**
+     * Set the value of [mess_incoming_server] column.
+     * 
+     * @param      string $v new value
+     * @return     void
+     */
+    public function setMessIncomingServer($v)
+    {
+
+        // Since the native PHP type for this column is string,
+        // we will cast the input to a string (if it is not).
+        if ($v !== null && !is_string($v)) {
+            $v = (string) $v;
+        }
+
+        if ($this->mess_incoming_server !== $v || $v === '') {
+            $this->mess_incoming_server = $v;
+            $this->modifiedColumns[] = EmailServerPeer::MESS_INCOMING_SERVER;
+        }
+
+    } // setMessIncomingServer()
+
+    /**
+     * Set the value of [mess_incoming_port] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setMessIncomingPort($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->mess_incoming_port !== $v || $v === 0) {
+            $this->mess_incoming_port = $v;
+            $this->modifiedColumns[] = EmailServerPeer::MESS_INCOMING_PORT;
+        }
+
+    } // setMessIncomingPort()
 
     /**
      * Set the value of [mess_rauth] column.
@@ -573,30 +651,34 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
 
             $this->mess_port = $rs->getInt($startcol + 3);
 
-            $this->mess_rauth = $rs->getInt($startcol + 4);
+            $this->mess_incoming_server = $rs->getString($startcol + 4);
 
-            $this->mess_account = $rs->getString($startcol + 5);
+            $this->mess_incoming_port = $rs->getInt($startcol + 5);
 
-            $this->mess_password = $rs->getString($startcol + 6);
+            $this->mess_rauth = $rs->getInt($startcol + 6);
 
-            $this->mess_from_mail = $rs->getString($startcol + 7);
+            $this->mess_account = $rs->getString($startcol + 7);
 
-            $this->mess_from_name = $rs->getString($startcol + 8);
+            $this->mess_password = $rs->getString($startcol + 8);
 
-            $this->smtpsecure = $rs->getString($startcol + 9);
+            $this->mess_from_mail = $rs->getString($startcol + 9);
 
-            $this->mess_try_send_inmediatly = $rs->getInt($startcol + 10);
+            $this->mess_from_name = $rs->getString($startcol + 10);
 
-            $this->mail_to = $rs->getString($startcol + 11);
+            $this->smtpsecure = $rs->getString($startcol + 11);
 
-            $this->mess_default = $rs->getInt($startcol + 12);
+            $this->mess_try_send_inmediatly = $rs->getInt($startcol + 12);
+
+            $this->mail_to = $rs->getString($startcol + 13);
+
+            $this->mess_default = $rs->getInt($startcol + 14);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 13; // 13 = EmailServerPeer::NUM_COLUMNS - EmailServerPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 15; // 15 = EmailServerPeer::NUM_COLUMNS - EmailServerPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating EmailServer object", $e);
@@ -813,30 +895,36 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
                 return $this->getMessPort();
                 break;
             case 4:
-                return $this->getMessRauth();
+                return $this->getMessIncomingServer();
                 break;
             case 5:
-                return $this->getMessAccount();
+                return $this->getMessIncomingPort();
                 break;
             case 6:
-                return $this->getMessPassword();
+                return $this->getMessRauth();
                 break;
             case 7:
-                return $this->getMessFromMail();
+                return $this->getMessAccount();
                 break;
             case 8:
-                return $this->getMessFromName();
+                return $this->getMessPassword();
                 break;
             case 9:
-                return $this->getSmtpsecure();
+                return $this->getMessFromMail();
                 break;
             case 10:
-                return $this->getMessTrySendInmediatly();
+                return $this->getMessFromName();
                 break;
             case 11:
-                return $this->getMailTo();
+                return $this->getSmtpsecure();
                 break;
             case 12:
+                return $this->getMessTrySendInmediatly();
+                break;
+            case 13:
+                return $this->getMailTo();
+                break;
+            case 14:
                 return $this->getMessDefault();
                 break;
             default:
@@ -863,15 +951,17 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
             $keys[1] => $this->getMessEngine(),
             $keys[2] => $this->getMessServer(),
             $keys[3] => $this->getMessPort(),
-            $keys[4] => $this->getMessRauth(),
-            $keys[5] => $this->getMessAccount(),
-            $keys[6] => $this->getMessPassword(),
-            $keys[7] => $this->getMessFromMail(),
-            $keys[8] => $this->getMessFromName(),
-            $keys[9] => $this->getSmtpsecure(),
-            $keys[10] => $this->getMessTrySendInmediatly(),
-            $keys[11] => $this->getMailTo(),
-            $keys[12] => $this->getMessDefault(),
+            $keys[4] => $this->getMessIncomingServer(),
+            $keys[5] => $this->getMessIncomingPort(),
+            $keys[6] => $this->getMessRauth(),
+            $keys[7] => $this->getMessAccount(),
+            $keys[8] => $this->getMessPassword(),
+            $keys[9] => $this->getMessFromMail(),
+            $keys[10] => $this->getMessFromName(),
+            $keys[11] => $this->getSmtpsecure(),
+            $keys[12] => $this->getMessTrySendInmediatly(),
+            $keys[13] => $this->getMailTo(),
+            $keys[14] => $this->getMessDefault(),
         );
         return $result;
     }
@@ -916,30 +1006,36 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
                 $this->setMessPort($value);
                 break;
             case 4:
-                $this->setMessRauth($value);
+                $this->setMessIncomingServer($value);
                 break;
             case 5:
-                $this->setMessAccount($value);
+                $this->setMessIncomingPort($value);
                 break;
             case 6:
-                $this->setMessPassword($value);
+                $this->setMessRauth($value);
                 break;
             case 7:
-                $this->setMessFromMail($value);
+                $this->setMessAccount($value);
                 break;
             case 8:
-                $this->setMessFromName($value);
+                $this->setMessPassword($value);
                 break;
             case 9:
-                $this->setSmtpsecure($value);
+                $this->setMessFromMail($value);
                 break;
             case 10:
-                $this->setMessTrySendInmediatly($value);
+                $this->setMessFromName($value);
                 break;
             case 11:
-                $this->setMailTo($value);
+                $this->setSmtpsecure($value);
                 break;
             case 12:
+                $this->setMessTrySendInmediatly($value);
+                break;
+            case 13:
+                $this->setMailTo($value);
+                break;
+            case 14:
                 $this->setMessDefault($value);
                 break;
         } // switch()
@@ -982,39 +1078,47 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[4], $arr)) {
-            $this->setMessRauth($arr[$keys[4]]);
+            $this->setMessIncomingServer($arr[$keys[4]]);
         }
 
         if (array_key_exists($keys[5], $arr)) {
-            $this->setMessAccount($arr[$keys[5]]);
+            $this->setMessIncomingPort($arr[$keys[5]]);
         }
 
         if (array_key_exists($keys[6], $arr)) {
-            $this->setMessPassword($arr[$keys[6]]);
+            $this->setMessRauth($arr[$keys[6]]);
         }
 
         if (array_key_exists($keys[7], $arr)) {
-            $this->setMessFromMail($arr[$keys[7]]);
+            $this->setMessAccount($arr[$keys[7]]);
         }
 
         if (array_key_exists($keys[8], $arr)) {
-            $this->setMessFromName($arr[$keys[8]]);
+            $this->setMessPassword($arr[$keys[8]]);
         }
 
         if (array_key_exists($keys[9], $arr)) {
-            $this->setSmtpsecure($arr[$keys[9]]);
+            $this->setMessFromMail($arr[$keys[9]]);
         }
 
         if (array_key_exists($keys[10], $arr)) {
-            $this->setMessTrySendInmediatly($arr[$keys[10]]);
+            $this->setMessFromName($arr[$keys[10]]);
         }
 
         if (array_key_exists($keys[11], $arr)) {
-            $this->setMailTo($arr[$keys[11]]);
+            $this->setSmtpsecure($arr[$keys[11]]);
         }
 
         if (array_key_exists($keys[12], $arr)) {
-            $this->setMessDefault($arr[$keys[12]]);
+            $this->setMessTrySendInmediatly($arr[$keys[12]]);
+        }
+
+        if (array_key_exists($keys[13], $arr)) {
+            $this->setMailTo($arr[$keys[13]]);
+        }
+
+        if (array_key_exists($keys[14], $arr)) {
+            $this->setMessDefault($arr[$keys[14]]);
         }
 
     }
@@ -1042,6 +1146,14 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
 
         if ($this->isColumnModified(EmailServerPeer::MESS_PORT)) {
             $criteria->add(EmailServerPeer::MESS_PORT, $this->mess_port);
+        }
+
+        if ($this->isColumnModified(EmailServerPeer::MESS_INCOMING_SERVER)) {
+            $criteria->add(EmailServerPeer::MESS_INCOMING_SERVER, $this->mess_incoming_server);
+        }
+
+        if ($this->isColumnModified(EmailServerPeer::MESS_INCOMING_PORT)) {
+            $criteria->add(EmailServerPeer::MESS_INCOMING_PORT, $this->mess_incoming_port);
         }
 
         if ($this->isColumnModified(EmailServerPeer::MESS_RAUTH)) {
@@ -1139,6 +1251,10 @@ abstract class BaseEmailServer extends BaseObject implements Persistent
         $copyObj->setMessServer($this->mess_server);
 
         $copyObj->setMessPort($this->mess_port);
+
+        $copyObj->setMessIncomingServer($this->mess_incoming_server);
+
+        $copyObj->setMessIncomingPort($this->mess_incoming_port);
 
         $copyObj->setMessRauth($this->mess_rauth);
 

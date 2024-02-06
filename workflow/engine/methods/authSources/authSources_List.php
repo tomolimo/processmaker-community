@@ -42,7 +42,6 @@ $licensedFeatures = PMLicensedFeatures::getSingleton();
 
 $oHeadPublisher = headPublisher::getSingleton();
 $oHeadPublisher->addExtJsScript('authSources/authSourcesList', false); //adding a javascript file .js
-/*----------------------------------********---------------------------------*/
 $oHeadPublisher->addContent('authSources/authSourcesList'); //adding a html file  .html.
 $oHeadPublisher->assign('FORMATS', $c->getFormats());
 $oHeadPublisher->assign('CONFIG', $Config);

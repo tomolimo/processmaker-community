@@ -106,7 +106,7 @@ class StringHelper {
      * @return int
      */
     public static function hashCode($string) {
-        return $this->encryptCrc32($string);
+        return self::encryptCrc32($string);
     }
     
     /**

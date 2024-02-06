@@ -22,7 +22,7 @@ class RestMessage extends SimpleMessage
     /**
      * Call the parent Curl initialization and set the type of the message
      */
-    public function RestMessage ()
+    public function __construct()
     {
         parent::__construct();
         $this->type = "rest";

@@ -5,7 +5,6 @@ use ProcessMaker\Core\System;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 global $translation;
 
@@ -13,8 +12,8 @@ include PATH_LANGUAGECONT . "translation." . SYS_LANG;
 
 class InstallerModule extends Controller
 {
-    const PHP_VERSION_MINIMUM_SUPPORTED = '5.6';
-    const PHP_VERSION_NOT_SUPPORTED = '7.2';
+    const PHP_VERSION_MINIMUM_SUPPORTED = "7.1";
+    const PHP_VERSION_NOT_SUPPORTED = "7.4";
     public $path_config;
     public $path_languages;
     public $path_plugins;
@@ -117,7 +116,7 @@ class InstallerModule extends Controller
             $this->setJSVar('DB_ADAPTER', DB_ADAPTER);
             $aux = explode(':', DB_HOST);
             $this->setJSVar('DB_HOST', $aux[0]);
-            $this->setJSVar('DB_PORT', isset($aux[1]) ? $aux[1] : (DB_ADAPTER == 'mssql' ? '1433' : '3306'));
+            $this->setJSVar('DB_PORT', isset($aux[1]) ? $aux[1] : '3306');
             $this->setJSVar('DB_NAME', 'workflow');
             $this->setJSVar('DB_USER', '');
             $this->setJSVar('DB_PASS', '');
@@ -196,7 +195,6 @@ class InstallerModule extends Controller
         $info = new stdclass();
         $info->php = new stdclass();
         $info->mysql = new stdclass();
-        $info->mssql = new stdclass();
         $info->openssl = new stdclass();
         $info->curl = new stdclass();
         $info->dom = new stdclass();
@@ -220,14 +218,6 @@ class InstallerModule extends Controller
             $mysqlNum = (float)$match[0];
             $info->mysql->version = 'Client API version ' . $mysqlVer;
             $info->mysql->result = $mysqlNum >= 5.0;
-        }
-
-        // MSSQL info and verification
-        $info->mssql->result = false;
-        $info->mssql->version = G::LoadTranslation('ID_NOT_ENABLED');
-        if (function_exists('mssql_query')) {
-            $info->mssql->result = true;
-            $info->mssql->version = G::LoadTranslation('ID_ENABLED');
         }
 
         // OpenSSL info
@@ -295,7 +285,7 @@ class InstallerModule extends Controller
 
         // memory limit verification
         $memory = (int)ini_get('memory_limit');
-        $info->memory->version = $memory . 'M';
+        $info->memory->version = changeAbbreviationOfDirectives(ini_get('memory_limit'));
         $info->memory->result = $memory > 255;
 
         return $info;
@@ -436,15 +426,7 @@ class InstallerModule extends Controller
         $this->setResponseType('json');
         $info = new StdClass();
         try {
-            switch ($_REQUEST['db_engine']) {
-                case 'mysql':
-                case 'mysqli':
-                    $info = $this->testMySQLConnection();
-                    break;
-                case 'mssql':
-                    $info = $this->testMSSQLConnection();
-                    break;
-            }
+            $info = $this->testMySQLConnection();
         } catch (Exception $e) {
             $info->result = false;
             $info->message = G::LoadTranslation('DBCONNECTIONS_MSGA');
@@ -495,7 +477,7 @@ class InstallerModule extends Controller
 
     /**
      * function to create a workspace
-     * in fact this function is calling appropriate functions for mysql and mssql
+     * in fact this function is calling appropriate functions for mysql
      * need permission PM_SETUP_ADVANCE for this action
      * @return stdClass information create a workspace.
      */
@@ -510,14 +492,7 @@ class InstallerModule extends Controller
             $this->setResponseType('json');
             $info = new StdClass();
             try {
-                switch ($_REQUEST['db_engine']) {
-                    case 'mysql':
-                        $info = $this->createMySQLWorkspace();
-                        break;
-                    case 'mssql':
-                        $info = $this->createMSSQLWorkspace();
-                        break;
-                }
+                $info = $this->createMySQLWorkspace();
             } catch (Exception $e) {
                 $info->result = false;
                 $info->message = G::LoadTranslation('DBCONNECTIONS_MSGA');
@@ -562,30 +537,6 @@ class InstallerModule extends Controller
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 20);
         curl_exec($ch);
         curl_close($ch);
-    }
-
-    /**
-     * Send a query to MSSQL and log the query
-     *
-     * @param string $sql
-     *
-     * @return boolean
-     * @throws Exception
-     */
-    public function mssqlQuery($sql)
-    {
-        $filter = new InputFilter();
-        $sql = $filter->preventSqlInjection($sql, array());
-        $this->installLog($sql);
-        $query = @mssql_query($sql, $this->link);
-        if (!$query) {
-            $errorMessage = mssql_get_last_message();
-            $this->installLog(G::LoadTranslation('ID_MYSQL_ERROR', SYS_LANG, array($errorMessage)));
-            throw (new Exception($errorMessage));
-            return false;
-        }
-        @mssql_free_result($query);
-        return true;
     }
 
     /**
@@ -652,38 +603,6 @@ class InstallerModule extends Controller
     }
 
     /**
-     * query_sql_file send many statements to server
-     *
-     * @param string $file
-     * @param string $connection
-     * @return array $report
-     */
-    public function mssqlFileQuery($file)
-    {
-        if (!is_file($file)) {
-            throw (new Exception(G::LoadTranslation('ID_SQL_FILE_INVALID', SYS_LANG, array($file))));
-            return $false;
-        }
-        $this->installLog(G::LoadTranslation('ID_PROCESING', SYS_LANG, array($file)));
-        $startTime = microtime(true);
-        $content = file_get_contents($file);
-        $queries = explode(';', $content);
-
-        foreach ($queries as $sql) {
-            $query = @mssql_query($sql, $this->link);
-            if (!$query) {
-                $errorMessage = mssql_get_last_message();
-                $this->installLog(G::LoadTranslation('ID_MYSQL_ERROR', SYS_LANG, array($errorMessage . G::LoadTranslation('ID_QUERY') . ": " . $sql)));
-                throw (new Exception($errorMessage));
-                return false;
-            }
-        }
-        $endTime = microtime(true);
-        $this->installLog(G::LoadTranslation('ID_FILE_PROCESSED', SYS_LANG, array(basename($file), $endTime - $startTime)));
-        return true;
-    }
-
-    /**
      * set Grant Privileges for MySQL
      *
      * @param string $psUser
@@ -708,46 +627,6 @@ class InstallerModule extends Controller
             $this->installLog(G::LoadTranslation('ID_MYSQL_ERROR', SYS_LANG, [$e->getMessage()]));
             throw new Exception($e->getMessage());
         }
-    }
-
-    /**
-     * set Grant Privileges for SQLServer
-     *
-     * @param string $psUser
-     * @param string $psPassword
-     * @param string $psDatabase
-     * @return void
-     */
-    public function setGrantPrivilegesMSSQL($psUser, $psPassword, $psDatabase)
-    {
-        $query = sprintf("IF  EXISTS (SELECT * FROM sys.server_principals WHERE name = N'%s') DROP LOGIN [%s]", $psUser, $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("CREATE LOGIN [%s] WITH PASSWORD=N'%s', DEFAULT_DATABASE=[%s], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF ", $psUser, $psPassword, $psDatabase);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("USE %s;", $psDatabase);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("IF  EXISTS (SELECT * FROM sys.database_principals WHERE name = N'%s') DROP USER [%s]", $psUser, $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("CREATE USER %s FOR LOGIN %s;", $psUser, $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("sp_addrolemember 'db_owner', '%s' ", $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("sp_addrolemember 'db_ddladmin', '%s' ", $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("sp_addrolemember 'db_accessadmin', '%s' ", $psUser);
-        $this->mssqlQuery($query);
-
-        $query = sprintf("use master ");
-        $this->mssqlQuery($query);
-
-        return true;
     }
 
     /**
@@ -856,7 +735,6 @@ class InstallerModule extends Controller
             $this->installLog(G::LoadTranslation('ID_CREATING', SYS_LANG, [$db_file]));
             file_put_contents($db_file, $dbText);
 
-            /*----------------------------------********---------------------------------*/
 
             //Generate the databases.php file
             $databases_file = $path_site . 'databases.php';
@@ -1048,190 +926,6 @@ class InstallerModule extends Controller
         return $info;
     }
 
-    public function createMSSQLWorkspace()
-    {
-        $filter = new InputFilter();
-        ini_set('max_execution_time', '0');
-
-        $info = new stdClass();
-        $info->result = false;
-        $info->message = '';
-
-        $db_hostname = trim($_REQUEST['db_hostname']);
-        $db_hostname = $filter->validateInput($db_hostname);
-        $db_port = trim($_REQUEST['db_port']);
-        $db_port = $filter->validateInput($db_port);
-        $db_username = trim($_REQUEST['db_username']);
-        $db_username = $filter->validateInput($db_username);
-        $db_password = urlencode(trim($_REQUEST['db_password']));
-        $db_password = urldecode($filter->validateInput($db_password));
-        $wf = trim($_REQUEST['wfDatabase']);
-        $rb = trim($_REQUEST['wfDatabase']);
-        $rp = trim($_REQUEST['wfDatabase']);
-        $workspace = trim($_REQUEST['workspace']);
-        $pathConfig = trim($_REQUEST['pathConfig']);
-        $pathLanguages = trim($_REQUEST['pathLanguages']);
-        $pathPlugins = trim($_REQUEST['pathPlugins']);
-        $pathShared = trim($_REQUEST['pathShared']);
-        $pathXmlforms = trim($_REQUEST['pathXmlforms']);
-        $adminPassword = trim($_REQUEST['adminPassword']);
-        $adminUsername = trim($_REQUEST['adminUsername']);
-        $deleteDB = ($_REQUEST['deleteDB'] == 'true');
-
-        if (substr($pathShared, -1) != '/') {
-            $pathShared .= '/';
-        }
-
-        $this->installLog('-------------------------------------------');
-        $this->installLog(G::LoadTranslation('ID_CREATING_WORKSPACE', SYS_LANG, array($workspace)));
-
-        try {
-            $db_host = ($db_port != '' && $db_port != 1433) ? $db_hostname . ':' . $db_port : $db_hostname;
-            $this->link = @mssql_connect($db_host, $db_username, $db_password);
-            $this->installLog(G::LoadTranslation('ID_CONNECT_TO_SERVER', SYS_LANG, array($db_hostname, $db_port, $db_username)));
-
-            $this->mssqlQuery('USE [master]');
-
-            // DROP databases wf_workflow, rb_workflow and rp_workflow
-            if ($deleteDB) {
-                $q = sprintf("IF EXISTS (SELECT name FROM sys.databases WHERE name='%s' ) DROP DATABASE %s", $wf, $wf);
-                $this->mssqlQuery($q);
-            }
-
-            // CREATE databases wf_workflow, rb_workflow and rp_workflow
-            $q = sprintf("IF NOT EXISTS (SELECT * FROM sys.databases WHERE name='%s' ) CREATE DATABASE %s", $wf, $wf);
-            $this->mssqlQuery($q);
-
-            //CREATE users and GRANT Privileges
-            $wfPass = G::generate_password(15);
-            $this->setGrantPrivilegesMSSQL($wf, $wfPass, $wf);
-
-            //Generate the db.php file and folders
-            $path_site = $pathShared . "/sites/" . $workspace . "/";
-            $db_file = $path_site . "db.php";
-            mkdir($path_site, 0777, true);
-            @mkdir($path_site . "files/", 0777, true);
-            @mkdir($path_site . "mailTemplates/", 0777, true);
-            @mkdir($path_site . "public/", 0777, true);
-            @mkdir($path_site . "reports/", 0777, true);
-            @mkdir($path_site . "xmlForms", 0777, true);
-
-            $dbText = "<?php\n";
-            $dbText .= sprintf("// Processmaker configuration\n");
-            $dbText .= sprintf("  define ('DB_ADAPTER',     '%s' );\n", 'mssql');
-            $dbText .= sprintf("  define ('DB_HOST',        '%s' );\n", $db_host);
-            $dbText .= sprintf("  define ('DB_NAME',        '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_USER',        '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_PASS',        '%s' );\n", $wfPass);
-            $dbText .= sprintf("  define ('DB_RBAC_HOST',   '%s' );\n", $db_host);
-            $dbText .= sprintf("  define ('DB_RBAC_NAME',   '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_RBAC_USER',   '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_RBAC_PASS',   '%s' );\n", $wfPass);
-            $dbText .= sprintf("  define ('DB_REPORT_HOST', '%s' );\n", $db_host);
-            $dbText .= sprintf("  define ('DB_REPORT_NAME', '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_REPORT_USER', '%s' );\n", $wf);
-            $dbText .= sprintf("  define ('DB_REPORT_PASS', '%s' );\n", $wfPass);
-            if (defined('PARTNER_FLAG') || isset($_REQUEST['PARTNER_FLAG'])) {
-                $dbText .= "\n";
-                $dbText .= "  define ('PARTNER_FLAG', " . ((defined('PARTNER_FLAG')) ? PARTNER_FLAG : ((isset($_REQUEST['PARTNER_FLAG'])) ? $_REQUEST['PARTNER_FLAG'] : 'false')) . ");\n";
-                if ($this->systemName != '') {
-                    $dbText .= "  define ('SYSTEM_NAME', '" . $this->systemName . "');\n";
-                }
-            }
-
-            $this->installLog(G::LoadTranslation('ID_CREATING', SYS_LANG, array($db_file)));
-            file_put_contents($db_file, $dbText);
-
-            // Generate the databases.php file
-            $databases_file = $path_site . 'databases.php';
-            $dbData = sprintf("\$dbAdapter    = '%s';\n", 'mssql');
-            $dbData .= sprintf("\$dbHost       = '%s';\n", $db_host);
-            $dbData .= sprintf("\$dbName       = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbUser       = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbPass       = '%s';\n", $wfPass);
-            $dbData .= sprintf("\$dbRbacHost   = '%s';\n", $db_host);
-            $dbData .= sprintf("\$dbRbacName   = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbRbacUser   = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbRbacPass   = '%s';\n", $wfPass);
-            $dbData .= sprintf("\$dbReportHost = '%s';\n", $db_host);
-            $dbData .= sprintf("\$dbReportName = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbReportUser = '%s';\n", $wf);
-            $dbData .= sprintf("\$dbReportPass = '%s';\n", $wfPass);
-            $databasesText = str_replace('{dbData}', $dbData, @file_get_contents(PATH_HOME . 'engine/templates/installer/databases.tpl'));
-
-            $this->installLog(G::LoadTranslation('ID_CREATING', SYS_LANG, array($databases_file)));
-            file_put_contents($databases_file, $databasesText);
-
-            //execute scripts to create and populates databases
-            $query = sprintf("USE %s;", $wf);
-            $this->mssqlQuery($query);
-
-            $this->mssqlFileQuery(PATH_RBAC_HOME . 'engine/data/mssql/schema.sql');
-            $this->mssqlFileQuery(PATH_RBAC_HOME . 'engine/data/mssql/insert.sql');
-
-            $query = sprintf("USE %s;", $wf);
-            $this->mssqlQuery($query);
-            $this->mssqlFileQuery(PATH_HOME . 'engine/data/mssql/schema.sql');
-            $this->mssqlFileQuery(PATH_HOME . 'engine/data/mssql/insert.sql');
-
-            // Create the triggers
-            if (file_exists(PATH_HOME . 'engine/plugins/enterprise/data/triggerAppDelegationInsert.sql') && file_exists(PATH_HOME . 'engine/plugins/enterprise/data/triggerAppDelegationUpdate.sql') && file_exists(PATH_HOME . 'engine/plugins/enterprise/data/triggerApplicationUpdate.sql') && file_exists(PATH_HOME . 'engine/plugins/enterprise/data/triggerApplicationDelete.sql') && file_exists(PATH_HOME . 'engine/plugins/enterprise/data/triggerContentUpdate.sql')) {
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . 'engine/plugins/enterprise/data/triggerAppDelegationInsert.sql'));
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . 'engine/plugins/enterprise/data/triggerAppDelegationUpdate.sql'));
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . 'engine/plugins/enterprise/data/triggerApplicationUpdate.sql'));
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . 'engine/plugins/enterprise/data/triggerApplicationDelete.sql'));
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . "engine/methods/setup/setupSchemas/triggerSubApplicationInsert.sql"));
-                $this->mssqlQuery(@file_get_contents(PATH_HOME . 'engine/plugins/enterprise/data/triggerContentUpdate.sql'));
-                $this->mssqlQuery("INSERT INTO CONFIGURATION (
-                            CFG_UID,
-                            CFG_VALUE
-                           )
-                           VALUES (
-                             'APP_CACHE_VIEW_ENGINE',
-                             '" . addslashes(serialize(array('LANG' => 'en', 'STATUS' => 'active'
-                    ))) . "'
-                           )");
-
-                $this->mssqlQuery("INSERT INTO EMAIL_SERVER(MESS_UID, MESS_ENGINE) VALUES('" . Common::generateUID() . "','MAIL')");
-            }
-
-            //change admin user
-            $query = sprintf("USE %s;", $wf);
-            $this->mssqlQuery($query);
-
-            $query = sprintf("UPDATE USERS SET USR_USERNAME = '%s', USR_PASSWORD = '%s' WHERE USR_UID = '00000000000000000000000000000001' ", $adminUsername, G::encryptHash($adminPassword));
-            $this->mssqlQuery($query);
-
-            $query = sprintf("USE %s;", $wf);
-            $this->mssqlQuery($query);
-
-            $query = sprintf("UPDATE RBAC_USERS SET USR_USERNAME = '%s', USR_PASSWORD = '%s' WHERE USR_UID = '00000000000000000000000000000001' ", $adminUsername, G::encryptHash($adminPassword));
-            $this->mssqlQuery($query);
-
-            // Write the paths_installed.php file (contains all the information configured so far)
-            if (!file_exists(FILE_PATHS_INSTALLED)) {
-                $sh = G::encryptOld(filemtime(PATH_GULLIVER . '/class.g.php'));
-                $h = G::encrypt($db_hostname . $sh . $db_username . $sh . $db_password . '1', $sh);
-                $dbText = "<?php\n";
-                $dbText .= sprintf("  define ('PATH_DATA',        '%s' );\n", $pathShared);
-                $dbText .= sprintf("  define ('PATH_C',           '%s' );\n", $pathShared . 'compiled/');
-                $dbText .= sprintf("  define ('HASH_INSTALLATION', '%s' );\n", $h);
-                $dbText .= sprintf("  define ('SYSTEM_HASH',       '%s' );\n", $sh);
-                $this->installLog(G::LoadTranslation('ID_CREATING', SYS_LANG, array(FILE_PATHS_INSTALLED)));
-                file_put_contents(FILE_PATHS_INSTALLED, $dbText);
-            }
-            $this->installLog(G::LoadTranslation('ID_INSTALL_SUCESS'));
-            $info->result = true;
-            $info->message = G::LoadTranslation('ID_INSTALL_SUCESS');
-            $info->url = '/sys' . $_REQUEST['workspace'] . '/en/neoclassic/login/login';
-            $info->messageFinish = G::LoadTranslation('ID_PROCESSMAKER_SUCCESS_INSTALLED', SYS_LANG, array($workspace));
-        } catch (Exception $e) {
-            $info->result = false;
-            $info->message = $e->getMessage();
-        }
-        return $info;
-    }
-
     public function getSystemName($siteShared)
     {
         $systemName = '';
@@ -1263,15 +957,6 @@ class InstallerModule extends Controller
             $engine->label = 'MySQL';
             $engines[] = $engine;
         }
-        /**
-         * DISABLED TEMPORARELY
-         * if (function_exists('mssql_query')) {
-         * $engine = new stdclass();
-         * $engine->id = 'mssql';
-         * $engine->label = 'Microsoft SQL Server';
-         * $engines[] = $engine;
-         * }
-         */
         return $engines;
     }
 
@@ -1296,14 +981,6 @@ class InstallerModule extends Controller
                     ->select("show databases like '$wfDatabase'");
 
                 $info->wfDatabaseExists = count($response) > 0;
-                break;
-            case 'mssql':
-                $link = @mssql_connect($db_hostname, $db_username, $db_password);
-                $wfDatabase = $filter->validateInput($_REQUEST['wfDatabase'], 'nosql');
-                $query = "select * from sys.databases where name = '%s' ";
-                $query = $filter->preventSqlInjection($query, array($wfDatabase));
-                $dataSet = @mssql_query($query, $link);
-                $info->wfDatabaseExists = (@mssql_num_rows($dataSet) > 0);
                 break;
             case 'sqlsrv':
                 $arguments = array("UID" => $db_username, "PWD" => $db_password);
@@ -1368,89 +1045,6 @@ class InstallerModule extends Controller
             $info->result = false;
             $info->message = G::LoadTranslation('ID_MYSQL_CREDENTIALS_WRONG');
         }
-        return $info;
-    }
-
-    /**
-     * This function test a SQL Server connection
-     *
-     * @return object
-     */
-    private function testMSSQLConnection()
-    {
-        $filter = new InputFilter();
-        $info = new stdClass();
-        $info->result = false;
-        $info->message = '';
-
-        if (!function_exists("mssql_connect")) {
-            $info->message = G::LoadTranslation('ID_PHP_MSSQL_NOT_INSTALLED');
-            return $info;
-        }
-        $dataRequest = $_REQUEST;
-        $db_hostname = $filter->validateInput($dataRequest['db_hostname']);
-        $db_port = $filter->validateInput($dataRequest['db_port']);
-        $db_username = $filter->validateInput($dataRequest['db_username']);
-        $db_password = urlencode($dataRequest['db_password']);
-        $db_password = urldecode($filter->validateInput($db_password));
-
-        $fp = @fsockopen($db_hostname, $db_port, $errno, $errstr, 30);
-        if (!$fp) {
-            $info->message .= G::LoadTranslation('ID_CONNECTION_ERROR', SYS_LANG, array("$errstr ($errno)"));
-            return $info;
-        }
-        \Illuminate\Support\Facades\DB::connection();
-
-        $db_host = ($db_port != '' && $db_port != 1433) ? $db_hostname . ':' . $db_port : $db_hostname;
-
-        $link = @mssql_connect($db_host, $db_username, $db_password);
-        if (!$link) {
-            $info->message .= G::LoadTranslation('ID_MYSQL_CREDENTIALS_WRONG');
-            return $info;
-        }
-
-        //checking if user has the dbcreator role
-        $hasDbCreator = false;
-        $hasSecurityAdmin = false;
-        $hasSysAdmin = false;
-
-        $res = @mssql_query("EXEC sp_helpsrvrolemember 'dbcreator' ", $link);
-        $row = mssql_fetch_array($res);
-        while (is_array($row)) {
-            if ($row['MemberName'] == $db_username) {
-                $hasDbCreator = true;
-            }
-            $row = mssql_fetch_array($res);
-        }
-        mssql_free_result($res);
-
-        $res = @mssql_query("EXEC sp_helpsrvrolemember 'sysadmin' ", $link);
-        $row = mssql_fetch_array($res);
-        while (is_array($row)) {
-            if ($row['MemberName'] == $db_username) {
-                $hasSysAdmin = true;
-            }
-            $row = mssql_fetch_array($res);
-        }
-        mssql_free_result($res);
-
-        $res = @mssql_query("EXEC sp_helpsrvrolemember 'SecurityAdmin' ", $link);
-        $row = mssql_fetch_array($res);
-        while (is_array($row)) {
-            if ($row['MemberName'] == $db_username) {
-                $hasSecurityAdmin = true;
-            }
-            $row = mssql_fetch_array($res);
-        }
-        mssql_free_result($res);
-
-        if (!($hasSysAdmin || ($hasSecurityAdmin && $hasDbCreator))) {
-            $info->message .= G::LoadTranslation('ID_CONNECTION_ERROR_SECURITYADMIN', SYS_LANG, array($db_username));
-            return $info;
-        }
-
-        $info->message .= G::LoadTranslation('ID_MSSQL_SUCCESS_CONNECT');
-        $info->result = true;
         return $info;
     }
 

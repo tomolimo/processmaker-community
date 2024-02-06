@@ -1,5 +1,8 @@
 var FormDesigner = {};
 FormDesigner.version = '0.1';
+FormDesigner.DEPRECATION_LINK = 'http://wiki.processmaker.com/Deprecated_Features';
+FormDesigner.DEPRECATION_TEXT = 'Control Deprecated. Refer to '.translate() + '<a href="'
+    + FormDesigner.DEPRECATION_LINK + '" target="_blank">' + FormDesigner.DEPRECATION_LINK + '</a>.';
 FormDesigner.extendNamespace = function (path, newClass) {
     var current,
         pathArray,
@@ -114,7 +117,7 @@ FormDesigner.generateUniqueId = function () {
     return sUID;
 };
 FormDesigner.getNextNumber = function (string, type, field, max) {
-    var a, 
+    var a,
         i;
     if (max === undefined) {
         max = 0;

@@ -300,5 +300,24 @@ class AppMessage extends BaseAppMessage
 
         return $messages;
     }
+
+    /**
+     * Get the APP_MSG_BODY related to the key
+     *
+     * @param string $key
+     *
+     * @return string
+     * @throws Exception
+    */
+    public static function getAppMsgBodyByKey($key)
+    {
+        try {
+            $appMessage = AppMessagePeer::retrieveByPk($key);
+
+            return $appMessage->getAppMsgBody();
+        } catch (Exception $error) {
+            throw $error;
+        }
+    }
 }
 

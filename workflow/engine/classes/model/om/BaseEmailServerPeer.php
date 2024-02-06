@@ -25,7 +25,7 @@ abstract class BaseEmailServerPeer
     const CLASS_DEFAULT = 'classes.model.EmailServer';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 13;
+    const NUM_COLUMNS = 15;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -42,6 +42,12 @@ abstract class BaseEmailServerPeer
 
     /** the column name for the MESS_PORT field */
     const MESS_PORT = 'EMAIL_SERVER.MESS_PORT';
+
+    /** the column name for the MESS_INCOMING_SERVER field */
+    const MESS_INCOMING_SERVER = 'EMAIL_SERVER.MESS_INCOMING_SERVER';
+
+    /** the column name for the MESS_INCOMING_PORT field */
+    const MESS_INCOMING_PORT = 'EMAIL_SERVER.MESS_INCOMING_PORT';
 
     /** the column name for the MESS_RAUTH field */
     const MESS_RAUTH = 'EMAIL_SERVER.MESS_RAUTH';
@@ -81,10 +87,10 @@ abstract class BaseEmailServerPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('MessUid', 'MessEngine', 'MessServer', 'MessPort', 'MessRauth', 'MessAccount', 'MessPassword', 'MessFromMail', 'MessFromName', 'Smtpsecure', 'MessTrySendInmediatly', 'MailTo', 'MessDefault', ),
-        BasePeer::TYPE_COLNAME => array (EmailServerPeer::MESS_UID, EmailServerPeer::MESS_ENGINE, EmailServerPeer::MESS_SERVER, EmailServerPeer::MESS_PORT, EmailServerPeer::MESS_RAUTH, EmailServerPeer::MESS_ACCOUNT, EmailServerPeer::MESS_PASSWORD, EmailServerPeer::MESS_FROM_MAIL, EmailServerPeer::MESS_FROM_NAME, EmailServerPeer::SMTPSECURE, EmailServerPeer::MESS_TRY_SEND_INMEDIATLY, EmailServerPeer::MAIL_TO, EmailServerPeer::MESS_DEFAULT, ),
-        BasePeer::TYPE_FIELDNAME => array ('MESS_UID', 'MESS_ENGINE', 'MESS_SERVER', 'MESS_PORT', 'MESS_RAUTH', 'MESS_ACCOUNT', 'MESS_PASSWORD', 'MESS_FROM_MAIL', 'MESS_FROM_NAME', 'SMTPSECURE', 'MESS_TRY_SEND_INMEDIATLY', 'MAIL_TO', 'MESS_DEFAULT', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, )
+        BasePeer::TYPE_PHPNAME => array ('MessUid', 'MessEngine', 'MessServer', 'MessPort', 'MessIncomingServer', 'MessIncomingPort', 'MessRauth', 'MessAccount', 'MessPassword', 'MessFromMail', 'MessFromName', 'Smtpsecure', 'MessTrySendInmediatly', 'MailTo', 'MessDefault', ),
+        BasePeer::TYPE_COLNAME => array (EmailServerPeer::MESS_UID, EmailServerPeer::MESS_ENGINE, EmailServerPeer::MESS_SERVER, EmailServerPeer::MESS_PORT, EmailServerPeer::MESS_INCOMING_SERVER, EmailServerPeer::MESS_INCOMING_PORT, EmailServerPeer::MESS_RAUTH, EmailServerPeer::MESS_ACCOUNT, EmailServerPeer::MESS_PASSWORD, EmailServerPeer::MESS_FROM_MAIL, EmailServerPeer::MESS_FROM_NAME, EmailServerPeer::SMTPSECURE, EmailServerPeer::MESS_TRY_SEND_INMEDIATLY, EmailServerPeer::MAIL_TO, EmailServerPeer::MESS_DEFAULT, ),
+        BasePeer::TYPE_FIELDNAME => array ('MESS_UID', 'MESS_ENGINE', 'MESS_SERVER', 'MESS_PORT', 'MESS_INCOMING_SERVER', 'MESS_INCOMING_PORT', 'MESS_RAUTH', 'MESS_ACCOUNT', 'MESS_PASSWORD', 'MESS_FROM_MAIL', 'MESS_FROM_NAME', 'SMTPSECURE', 'MESS_TRY_SEND_INMEDIATLY', 'MAIL_TO', 'MESS_DEFAULT', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, )
     );
 
     /**
@@ -94,10 +100,10 @@ abstract class BaseEmailServerPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('MessUid' => 0, 'MessEngine' => 1, 'MessServer' => 2, 'MessPort' => 3, 'MessRauth' => 4, 'MessAccount' => 5, 'MessPassword' => 6, 'MessFromMail' => 7, 'MessFromName' => 8, 'Smtpsecure' => 9, 'MessTrySendInmediatly' => 10, 'MailTo' => 11, 'MessDefault' => 12, ),
-        BasePeer::TYPE_COLNAME => array (EmailServerPeer::MESS_UID => 0, EmailServerPeer::MESS_ENGINE => 1, EmailServerPeer::MESS_SERVER => 2, EmailServerPeer::MESS_PORT => 3, EmailServerPeer::MESS_RAUTH => 4, EmailServerPeer::MESS_ACCOUNT => 5, EmailServerPeer::MESS_PASSWORD => 6, EmailServerPeer::MESS_FROM_MAIL => 7, EmailServerPeer::MESS_FROM_NAME => 8, EmailServerPeer::SMTPSECURE => 9, EmailServerPeer::MESS_TRY_SEND_INMEDIATLY => 10, EmailServerPeer::MAIL_TO => 11, EmailServerPeer::MESS_DEFAULT => 12, ),
-        BasePeer::TYPE_FIELDNAME => array ('MESS_UID' => 0, 'MESS_ENGINE' => 1, 'MESS_SERVER' => 2, 'MESS_PORT' => 3, 'MESS_RAUTH' => 4, 'MESS_ACCOUNT' => 5, 'MESS_PASSWORD' => 6, 'MESS_FROM_MAIL' => 7, 'MESS_FROM_NAME' => 8, 'SMTPSECURE' => 9, 'MESS_TRY_SEND_INMEDIATLY' => 10, 'MAIL_TO' => 11, 'MESS_DEFAULT' => 12, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, )
+        BasePeer::TYPE_PHPNAME => array ('MessUid' => 0, 'MessEngine' => 1, 'MessServer' => 2, 'MessPort' => 3, 'MessIncomingServer' => 4, 'MessIncomingPort' => 5, 'MessRauth' => 6, 'MessAccount' => 7, 'MessPassword' => 8, 'MessFromMail' => 9, 'MessFromName' => 10, 'Smtpsecure' => 11, 'MessTrySendInmediatly' => 12, 'MailTo' => 13, 'MessDefault' => 14, ),
+        BasePeer::TYPE_COLNAME => array (EmailServerPeer::MESS_UID => 0, EmailServerPeer::MESS_ENGINE => 1, EmailServerPeer::MESS_SERVER => 2, EmailServerPeer::MESS_PORT => 3, EmailServerPeer::MESS_INCOMING_SERVER => 4, EmailServerPeer::MESS_INCOMING_PORT => 5, EmailServerPeer::MESS_RAUTH => 6, EmailServerPeer::MESS_ACCOUNT => 7, EmailServerPeer::MESS_PASSWORD => 8, EmailServerPeer::MESS_FROM_MAIL => 9, EmailServerPeer::MESS_FROM_NAME => 10, EmailServerPeer::SMTPSECURE => 11, EmailServerPeer::MESS_TRY_SEND_INMEDIATLY => 12, EmailServerPeer::MAIL_TO => 13, EmailServerPeer::MESS_DEFAULT => 14, ),
+        BasePeer::TYPE_FIELDNAME => array ('MESS_UID' => 0, 'MESS_ENGINE' => 1, 'MESS_SERVER' => 2, 'MESS_PORT' => 3, 'MESS_INCOMING_SERVER' => 4, 'MESS_INCOMING_PORT' => 5, 'MESS_RAUTH' => 6, 'MESS_ACCOUNT' => 7, 'MESS_PASSWORD' => 8, 'MESS_FROM_MAIL' => 9, 'MESS_FROM_NAME' => 10, 'SMTPSECURE' => 11, 'MESS_TRY_SEND_INMEDIATLY' => 12, 'MAIL_TO' => 13, 'MESS_DEFAULT' => 14, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, )
     );
 
     /**
@@ -205,6 +211,10 @@ abstract class BaseEmailServerPeer
         $criteria->addSelectColumn(EmailServerPeer::MESS_SERVER);
 
         $criteria->addSelectColumn(EmailServerPeer::MESS_PORT);
+
+        $criteria->addSelectColumn(EmailServerPeer::MESS_INCOMING_SERVER);
+
+        $criteria->addSelectColumn(EmailServerPeer::MESS_INCOMING_PORT);
 
         $criteria->addSelectColumn(EmailServerPeer::MESS_RAUTH);
 

@@ -522,7 +522,7 @@ class EmailEvent
                     $emailTo,
                     '',
                     '',
-                    G::replaceDataField($arrayData[5], $arrayApplicationData['APP_DATA']),
+                    G::replaceDataField($arrayData[5], $arrayApplicationData['APP_DATA'], 'mysql', false),
                     $contentFile['prf_filename'],
                     [],
                     [],

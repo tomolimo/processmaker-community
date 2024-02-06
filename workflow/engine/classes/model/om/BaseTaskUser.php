@@ -34,6 +34,12 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
     protected $tas_uid = '';
 
     /**
+     * The value for the tas_id field.
+     * @var        int
+     */
+    protected $tas_id = 0;
+
+    /**
      * The value for the usr_uid field.
      * @var        string
      */
@@ -50,6 +56,12 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
      * @var        int
      */
     protected $tu_relation = 0;
+
+    /**
+     * The value for the assigned_id field.
+     * @var        int
+     */
+    protected $assigned_id = 0;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -74,6 +86,17 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
     {
 
         return $this->tas_uid;
+    }
+
+    /**
+     * Get the [tas_id] column value.
+     * 
+     * @return     int
+     */
+    public function getTasId()
+    {
+
+        return $this->tas_id;
     }
 
     /**
@@ -110,6 +133,17 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
     }
 
     /**
+     * Get the [assigned_id] column value.
+     * 
+     * @return     int
+     */
+    public function getAssignedId()
+    {
+
+        return $this->assigned_id;
+    }
+
+    /**
      * Set the value of [tas_uid] column.
      * 
      * @param      string $v new value
@@ -130,6 +164,28 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
         }
 
     } // setTasUid()
+
+    /**
+     * Set the value of [tas_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setTasId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->tas_id !== $v || $v === 0) {
+            $this->tas_id = $v;
+            $this->modifiedColumns[] = TaskUserPeer::TAS_ID;
+        }
+
+    } // setTasId()
 
     /**
      * Set the value of [usr_uid] column.
@@ -198,6 +254,28 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
     } // setTuRelation()
 
     /**
+     * Set the value of [assigned_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setAssignedId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->assigned_id !== $v || $v === 0) {
+            $this->assigned_id = $v;
+            $this->modifiedColumns[] = TaskUserPeer::ASSIGNED_ID;
+        }
+
+    } // setAssignedId()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -216,18 +294,22 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
 
             $this->tas_uid = $rs->getString($startcol + 0);
 
-            $this->usr_uid = $rs->getString($startcol + 1);
+            $this->tas_id = $rs->getInt($startcol + 1);
 
-            $this->tu_type = $rs->getInt($startcol + 2);
+            $this->usr_uid = $rs->getString($startcol + 2);
 
-            $this->tu_relation = $rs->getInt($startcol + 3);
+            $this->tu_type = $rs->getInt($startcol + 3);
+
+            $this->tu_relation = $rs->getInt($startcol + 4);
+
+            $this->assigned_id = $rs->getInt($startcol + 5);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 4; // 4 = TaskUserPeer::NUM_COLUMNS - TaskUserPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 6; // 6 = TaskUserPeer::NUM_COLUMNS - TaskUserPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating TaskUser object", $e);
@@ -435,13 +517,19 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
                 return $this->getTasUid();
                 break;
             case 1:
-                return $this->getUsrUid();
+                return $this->getTasId();
                 break;
             case 2:
-                return $this->getTuType();
+                return $this->getUsrUid();
                 break;
             case 3:
+                return $this->getTuType();
+                break;
+            case 4:
                 return $this->getTuRelation();
+                break;
+            case 5:
+                return $this->getAssignedId();
                 break;
             default:
                 return null;
@@ -464,9 +552,11 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
         $keys = TaskUserPeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getTasUid(),
-            $keys[1] => $this->getUsrUid(),
-            $keys[2] => $this->getTuType(),
-            $keys[3] => $this->getTuRelation(),
+            $keys[1] => $this->getTasId(),
+            $keys[2] => $this->getUsrUid(),
+            $keys[3] => $this->getTuType(),
+            $keys[4] => $this->getTuRelation(),
+            $keys[5] => $this->getAssignedId(),
         );
         return $result;
     }
@@ -502,13 +592,19 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
                 $this->setTasUid($value);
                 break;
             case 1:
-                $this->setUsrUid($value);
+                $this->setTasId($value);
                 break;
             case 2:
-                $this->setTuType($value);
+                $this->setUsrUid($value);
                 break;
             case 3:
+                $this->setTuType($value);
+                break;
+            case 4:
                 $this->setTuRelation($value);
+                break;
+            case 5:
+                $this->setAssignedId($value);
                 break;
         } // switch()
     }
@@ -538,15 +634,23 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[1], $arr)) {
-            $this->setUsrUid($arr[$keys[1]]);
+            $this->setTasId($arr[$keys[1]]);
         }
 
         if (array_key_exists($keys[2], $arr)) {
-            $this->setTuType($arr[$keys[2]]);
+            $this->setUsrUid($arr[$keys[2]]);
         }
 
         if (array_key_exists($keys[3], $arr)) {
-            $this->setTuRelation($arr[$keys[3]]);
+            $this->setTuType($arr[$keys[3]]);
+        }
+
+        if (array_key_exists($keys[4], $arr)) {
+            $this->setTuRelation($arr[$keys[4]]);
+        }
+
+        if (array_key_exists($keys[5], $arr)) {
+            $this->setAssignedId($arr[$keys[5]]);
         }
 
     }
@@ -564,6 +668,10 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
             $criteria->add(TaskUserPeer::TAS_UID, $this->tas_uid);
         }
 
+        if ($this->isColumnModified(TaskUserPeer::TAS_ID)) {
+            $criteria->add(TaskUserPeer::TAS_ID, $this->tas_id);
+        }
+
         if ($this->isColumnModified(TaskUserPeer::USR_UID)) {
             $criteria->add(TaskUserPeer::USR_UID, $this->usr_uid);
         }
@@ -574,6 +682,10 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
 
         if ($this->isColumnModified(TaskUserPeer::TU_RELATION)) {
             $criteria->add(TaskUserPeer::TU_RELATION, $this->tu_relation);
+        }
+
+        if ($this->isColumnModified(TaskUserPeer::ASSIGNED_ID)) {
+            $criteria->add(TaskUserPeer::ASSIGNED_ID, $this->assigned_id);
         }
 
 
@@ -651,6 +763,10 @@ abstract class BaseTaskUser extends BaseObject implements Persistent
      */
     public function copyInto($copyObj, $deepCopy = false)
     {
+
+        $copyObj->setTasId($this->tas_id);
+
+        $copyObj->setAssignedId($this->assigned_id);
 
 
         $copyObj->setNew(true);

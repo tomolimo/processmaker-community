@@ -61,7 +61,6 @@ $Criteria = new Criteria( 'workflow' );
 $Criteria->addSelectColumn( ApplicationPeer::APP_UID );
 $Criteria->addSelectColumn( ApplicationPeer::APP_DATA );
 
-//    $Criteria->add (AppCacheViewPeer::DEL_THREAD_STATUS, 'OPEN');
 $oDataset = ApplicationPeer::doSelectRS( $Criteria );
 $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
 $oDataset->next();

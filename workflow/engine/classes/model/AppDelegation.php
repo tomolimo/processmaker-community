@@ -252,10 +252,8 @@ class AppDelegation extends BaseAppDelegation
             $data->PREVIOUS_USR_UID = ($arrayAppDelegationPrevious !== false)? $arrayAppDelegationPrevious['USR_UID'] : $delPreviusUsrUid;
 
             if ($bpmn->exists($sProUid)) {
-                /*----------------------------------********---------------------------------*/
 
 
-                /*----------------------------------********---------------------------------*/
             }
 
             if ($flagActionsByEmail) {
@@ -763,7 +761,7 @@ class AppDelegation extends BaseAppDelegation
      * @param integer $index, Index to review
      * @return array
     */
-    public function getCurrentUsers($appUid, $index)
+    public static function getCurrentUsers($appUid, $index)
     {
         $oCriteria = new Criteria();
         $oCriteria->addSelectColumn(AppDelegationPeer::USR_UID);

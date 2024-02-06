@@ -25,7 +25,7 @@ abstract class BaseProcessCategoryPeer
     const CLASS_DEFAULT = 'classes.model.ProcessCategory';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 4;
+    const NUM_COLUMNS = 5;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -33,6 +33,9 @@ abstract class BaseProcessCategoryPeer
 
     /** the column name for the CATEGORY_UID field */
     const CATEGORY_UID = 'PROCESS_CATEGORY.CATEGORY_UID';
+
+    /** the column name for the CATEGORY_ID field */
+    const CATEGORY_ID = 'PROCESS_CATEGORY.CATEGORY_ID';
 
     /** the column name for the CATEGORY_PARENT field */
     const CATEGORY_PARENT = 'PROCESS_CATEGORY.CATEGORY_PARENT';
@@ -54,10 +57,10 @@ abstract class BaseProcessCategoryPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('CategoryUid', 'CategoryParent', 'CategoryName', 'CategoryIcon', ),
-        BasePeer::TYPE_COLNAME => array (ProcessCategoryPeer::CATEGORY_UID, ProcessCategoryPeer::CATEGORY_PARENT, ProcessCategoryPeer::CATEGORY_NAME, ProcessCategoryPeer::CATEGORY_ICON, ),
-        BasePeer::TYPE_FIELDNAME => array ('CATEGORY_UID', 'CATEGORY_PARENT', 'CATEGORY_NAME', 'CATEGORY_ICON', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('CategoryUid', 'CategoryId', 'CategoryParent', 'CategoryName', 'CategoryIcon', ),
+        BasePeer::TYPE_COLNAME => array (ProcessCategoryPeer::CATEGORY_UID, ProcessCategoryPeer::CATEGORY_ID, ProcessCategoryPeer::CATEGORY_PARENT, ProcessCategoryPeer::CATEGORY_NAME, ProcessCategoryPeer::CATEGORY_ICON, ),
+        BasePeer::TYPE_FIELDNAME => array ('CATEGORY_UID', 'CATEGORY_ID', 'CATEGORY_PARENT', 'CATEGORY_NAME', 'CATEGORY_ICON', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, )
     );
 
     /**
@@ -67,10 +70,10 @@ abstract class BaseProcessCategoryPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('CategoryUid' => 0, 'CategoryParent' => 1, 'CategoryName' => 2, 'CategoryIcon' => 3, ),
-        BasePeer::TYPE_COLNAME => array (ProcessCategoryPeer::CATEGORY_UID => 0, ProcessCategoryPeer::CATEGORY_PARENT => 1, ProcessCategoryPeer::CATEGORY_NAME => 2, ProcessCategoryPeer::CATEGORY_ICON => 3, ),
-        BasePeer::TYPE_FIELDNAME => array ('CATEGORY_UID' => 0, 'CATEGORY_PARENT' => 1, 'CATEGORY_NAME' => 2, 'CATEGORY_ICON' => 3, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('CategoryUid' => 0, 'CategoryId' => 1, 'CategoryParent' => 2, 'CategoryName' => 3, 'CategoryIcon' => 4, ),
+        BasePeer::TYPE_COLNAME => array (ProcessCategoryPeer::CATEGORY_UID => 0, ProcessCategoryPeer::CATEGORY_ID => 1, ProcessCategoryPeer::CATEGORY_PARENT => 2, ProcessCategoryPeer::CATEGORY_NAME => 3, ProcessCategoryPeer::CATEGORY_ICON => 4, ),
+        BasePeer::TYPE_FIELDNAME => array ('CATEGORY_UID' => 0, 'CATEGORY_ID' => 1, 'CATEGORY_PARENT' => 2, 'CATEGORY_NAME' => 3, 'CATEGORY_ICON' => 4, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, )
     );
 
     /**
@@ -172,6 +175,8 @@ abstract class BaseProcessCategoryPeer
     {
 
         $criteria->addSelectColumn(ProcessCategoryPeer::CATEGORY_UID);
+
+        $criteria->addSelectColumn(ProcessCategoryPeer::CATEGORY_ID);
 
         $criteria->addSelectColumn(ProcessCategoryPeer::CATEGORY_PARENT);
 

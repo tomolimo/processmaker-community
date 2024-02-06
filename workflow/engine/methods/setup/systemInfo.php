@@ -36,7 +36,6 @@ switch ($option) {
 
         $oHeadPublisher->assign("SYSINFO_PHP", "\"" . $systemInfo->php->version . "\", " . (($systemInfo->php->result)? 1 : 0));
         $oHeadPublisher->assign("SYSINFO_MYSQL", "\"" . $systemInfo->mysql->version . "\", " . (($systemInfo->mysql->result)? 1 : 0));
-        $oHeadPublisher->assign("SYSINFO_MSSQL", "\"" . $systemInfo->mssql->version . "\", " . (($systemInfo->mssql->result)? 1 : 0));
         $oHeadPublisher->assign("SYSINFO_CURL", "\"" . $systemInfo->curl->version . "\", " . (($systemInfo->curl->result)? 1 : 0));
         $oHeadPublisher->assign("SYSINFO_OPENSSL", "\"" . $systemInfo->openssl->version . "\", " . (($systemInfo->openssl->result)? 1 : 0));
         $oHeadPublisher->assign("SYSINFO_DOMXML", "\"" . $systemInfo->dom->version . "\", " . (($systemInfo->dom->result)? 1 : 0));

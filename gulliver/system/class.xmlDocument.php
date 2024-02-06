@@ -51,7 +51,7 @@ class Xml_Node
      * @param eter string attributes
      * @return string
      */
-    public function Xml_Node ($name, $type, $value, $attributes = array())
+    public function __construct ($name, $type, $value, $attributes = array())
     {
         $this->name = $name;
         $this->type = $type;
@@ -266,7 +266,7 @@ class Xml_Document extends Xml_Node
      * @access public
      * @return string
      */
-    public function Xml_Document ()
+    public function __construct ()
     {
         $this->currentNode = &$this;
     }

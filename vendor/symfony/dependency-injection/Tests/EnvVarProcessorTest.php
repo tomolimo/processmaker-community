@@ -31,16 +31,16 @@ class EnvVarProcessorTest extends TestCase
 
     public function validStrings()
     {
-        return array(
-            array('hello', 'hello'),
-            array('true', 'true'),
-            array('false', 'false'),
-            array('null', 'null'),
-            array('1', '1'),
-            array('0', '0'),
-            array('1.1', '1.1'),
-            array('1e1', '1e1'),
-        );
+        return [
+            ['hello', 'hello'],
+            ['true', 'true'],
+            ['false', 'false'],
+            ['null', 'null'],
+            ['1', '1'],
+            ['0', '0'],
+            ['1.1', '1.1'],
+            ['1e1', '1e1'],
+        ];
     }
 
     /**
@@ -61,15 +61,15 @@ class EnvVarProcessorTest extends TestCase
 
     public function validBools()
     {
-        return array(
-            array('true', true),
-            array('false', false),
-            array('null', false),
-            array('1', true),
-            array('0', false),
-            array('1.1', true),
-            array('1e1', true),
-        );
+        return [
+            ['true', true],
+            ['false', false],
+            ['null', false],
+            ['1', true],
+            ['0', false],
+            ['1.1', true],
+            ['1e1', true],
+        ];
     }
 
     /**
@@ -90,11 +90,11 @@ class EnvVarProcessorTest extends TestCase
 
     public function validInts()
     {
-        return array(
-            array('1', 1),
-            array('1.1', 1),
-            array('1e1', 10),
-        );
+        return [
+            ['1', 1],
+            ['1.1', 1],
+            ['1e1', 10],
+        ];
     }
 
     /**
@@ -115,11 +115,11 @@ class EnvVarProcessorTest extends TestCase
 
     public function invalidInts()
     {
-        return array(
-            array('foo'),
-            array('true'),
-            array('null'),
-        );
+        return [
+            ['foo'],
+            ['true'],
+            ['null'],
+        ];
     }
 
     /**
@@ -140,11 +140,11 @@ class EnvVarProcessorTest extends TestCase
 
     public function validFloats()
     {
-        return array(
-            array('1', 1.0),
-            array('1.1', 1.1),
-            array('1e1', 10.0),
-        );
+        return [
+            ['1', 1.0],
+            ['1.1', 1.1],
+            ['1e1', 10.0],
+        ];
     }
 
     /**
@@ -165,11 +165,11 @@ class EnvVarProcessorTest extends TestCase
 
     public function invalidFloats()
     {
-        return array(
-            array('foo'),
-            array('true'),
-            array('null'),
-        );
+        return [
+            ['foo'],
+            ['true'],
+            ['null'],
+        ];
     }
 
     /**
@@ -190,10 +190,10 @@ class EnvVarProcessorTest extends TestCase
 
     public function validConsts()
     {
-        return array(
-            array('Symfony\Component\DependencyInjection\Tests\EnvVarProcessorTest::TEST_CONST', self::TEST_CONST),
-            array('E_ERROR', E_ERROR),
-        );
+        return [
+            ['Symfony\Component\DependencyInjection\Tests\EnvVarProcessorTest::TEST_CONST', self::TEST_CONST],
+            ['E_ERROR', E_ERROR],
+        ];
     }
 
     /**
@@ -214,10 +214,10 @@ class EnvVarProcessorTest extends TestCase
 
     public function invalidConsts()
     {
-        return array(
-            array('Symfony\Component\DependencyInjection\Tests\EnvVarProcessorTest::UNDEFINED_CONST'),
-            array('UNDEFINED_CONST'),
-        );
+        return [
+            ['Symfony\Component\DependencyInjection\Tests\EnvVarProcessorTest::UNDEFINED_CONST'],
+            ['UNDEFINED_CONST'],
+        ];
     }
 
     public function testGetEnvBase64()
@@ -233,17 +233,42 @@ class EnvVarProcessorTest extends TestCase
         $this->assertSame('hello', $result);
     }
 
-    public function testGetEnvJson()
+    public function testGetEnvTrim()
     {
         $processor = new EnvVarProcessor(new Container());
 
-        $result = $processor->getEnv('json', 'foo', function ($name) {
+        $result = $processor->getEnv('trim', 'foo', function ($name) {
             $this->assertSame('foo', $name);
 
-            return json_encode(array(1));
+            return " hello\n";
         });
 
-        $this->assertSame(array(1), $result);
+        $this->assertSame('hello', $result);
+    }
+
+    /**
+     * @dataProvider validJson
+     */
+    public function testGetEnvJson($value, $processed)
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $result = $processor->getEnv('json', 'foo', function ($name) use ($value) {
+            $this->assertSame('foo', $name);
+
+            return $value;
+        });
+
+        $this->assertSame($processed, $result);
+    }
+
+    public function validJson()
+    {
+        return [
+            ['[1]', [1]],
+            ['{"key": "value"}', ['key' => 'value']],
+            [null, null],
+        ];
     }
 
     /**
@@ -279,12 +304,13 @@ class EnvVarProcessorTest extends TestCase
 
     public function otherJsonValues()
     {
-        return array(
-            array(1),
-            array(1.1),
-            array(true),
-            array(false),
-        );
+        return [
+            [1],
+            [1.1],
+            [true],
+            [false],
+            ['foo'],
+        ];
     }
 
     /**
@@ -300,5 +326,164 @@ class EnvVarProcessorTest extends TestCase
 
             return 'foo';
         });
+    }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\RuntimeException
+     * @expectedExceptionMessage Invalid env "key:foo": a key specifier should be provided.
+     */
+    public function testGetEnvKeyInvalidKey()
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $processor->getEnv('key', 'foo', function ($name) {
+            $this->fail('Should not get here');
+        });
+    }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\RuntimeException
+     * @expectedExceptionMessage Resolved value of "foo" did not result in an array value.
+     * @dataProvider noArrayValues
+     */
+    public function testGetEnvKeyNoArrayResult($value)
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $processor->getEnv('key', 'index:foo', function ($name) use ($value) {
+            $this->assertSame('foo', $name);
+
+            return $value;
+        });
+    }
+
+    public function noArrayValues()
+    {
+        return [
+            [null],
+            ['string'],
+            [1],
+            [true],
+        ];
+    }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\EnvNotFoundException
+     * @expectedExceptionMessage Key "index" not found in
+     * @dataProvider invalidArrayValues
+     */
+    public function testGetEnvKeyArrayKeyNotFound($value)
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $processor->getEnv('key', 'index:foo', function ($name) use ($value) {
+            $this->assertSame('foo', $name);
+
+            return $value;
+        });
+    }
+
+    public function invalidArrayValues()
+    {
+        return [
+            [[]],
+            [['index2' => 'value']],
+            [['index', 'index2']],
+        ];
+    }
+
+    /**
+     * @dataProvider arrayValues
+     */
+    public function testGetEnvKey($value)
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $this->assertSame($value['index'], $processor->getEnv('key', 'index:foo', function ($name) use ($value) {
+            $this->assertSame('foo', $name);
+
+            return $value;
+        }));
+    }
+
+    public function arrayValues()
+    {
+        return [
+            [['index' => 'password']],
+            [['index' => 'true']],
+            [['index' => false]],
+            [['index' => '1']],
+            [['index' => 1]],
+            [['index' => '1.1']],
+            [['index' => 1.1]],
+            [['index' => []]],
+            [['index' => ['val1', 'val2']]],
+        ];
+    }
+
+    public function testGetEnvKeyChained()
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $this->assertSame('password', $processor->getEnv('key', 'index:file:foo', function ($name) {
+            $this->assertSame('file:foo', $name);
+
+            return [
+                'index' => 'password',
+            ];
+        }));
+    }
+
+    /**
+     * @dataProvider validNullables
+     */
+    public function testGetEnvNullable($value, $processed)
+    {
+        $processor = new EnvVarProcessor(new Container());
+        $result = $processor->getEnv('default', ':foo', function ($name) use ($value) {
+            $this->assertSame('foo', $name);
+
+            return $value;
+        });
+        $this->assertSame($processed, $result);
+    }
+
+    public function validNullables()
+    {
+        return [
+            ['hello', 'hello'],
+            ['', null],
+            ['null', 'null'],
+            ['Null', 'Null'],
+            ['NULL', 'NULL'],
+         ];
+    }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\EnvNotFoundException
+     * @expectedExceptionMessage missing-file
+     */
+    public function testRequireMissingFile()
+    {
+        $processor = new EnvVarProcessor(new Container());
+
+        $processor->getEnv('require', '/missing-file', function ($name) {
+            return $name;
+        });
+    }
+
+    public function testRequireFile()
+    {
+        $path = __DIR__.'/Fixtures/php/return_foo_string.php';
+
+        $processor = new EnvVarProcessor(new Container());
+
+        $result = $processor->getEnv('require', $path, function ($name) use ($path) {
+            $this->assertSame($path, $name);
+
+            return $path;
+        });
+
+        $this->assertEquals('foo', $result);
     }
 }

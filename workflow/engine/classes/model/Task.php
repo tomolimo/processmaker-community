@@ -499,7 +499,6 @@ class Task extends BaseTask
                                                                       //Populating attributes
                 $this->setNew(false);
 
-                /*----------------------------------********---------------------------------*/
 
                 ///////
                 return $aFields;

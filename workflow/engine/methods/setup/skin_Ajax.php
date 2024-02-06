@@ -200,91 +200,83 @@ function newSkin ($baseSkin = 'classic')
 function importSkin ()
 {
     try {
-        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
+        ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function ($validator) {
             throw new Exception($validator->getMessage());
         });
-        if (! isset( $_FILES['uploadedFile'] )) {
-            throw (new Exception( G::LoadTranslation( 'ID_SKIN_FILE_REQUIRED' ) ));
+        if (!isset($_FILES['uploadedFile'])) {
+            throw (new Exception(G::LoadTranslation('ID_SKIN_FILE_REQUIRED')));
         }
-        $uploadedInstances = count( $_FILES['uploadedFile']['name'] );
-        $sw_error = false;
-        $sw_error_exists = isset( $_FILES['uploadedFile']['error'] );
-        $emptyInstances = 0;
-        $quequeUpload = array ();
 
-        // upload files & check for errors
+        $sw_error_exists = isset($_FILES['uploadedFile']['error']);
+
+        // Upload files & check for errors
         $tmp = $_FILES['uploadedFile']['tmp_name'];
-        $items = stripslashes( $_FILES['uploadedFile']['name'] );
+        $items = stripslashes($_FILES['uploadedFile']['name']);
         if ($sw_error_exists) {
             $up_err = $_FILES['uploadedFile']['error'];
         } else {
-            $up_err = (file_exists( $tmp ) ? 0 : 4);
+            $up_err = (file_exists($tmp) ? 0 : 4);
         }
 
         if ($items == "" || $up_err == 4) {
-            throw (new Exception( G::LoadTranslation( 'ID_SKIN_FILE_REQUIRED' ) ));
+            throw (new Exception(G::LoadTranslation('ID_SKIN_FILE_REQUIRED')));
         }
         if ($up_err == 1 || $up_err == 2) {
-            throw (new Exception( G::LoadTranslation( 'ID_FILE_TOO_BIG' ) ));
-            //$errors[$i]='miscfilesize';
+            throw (new Exception(G::LoadTranslation('ID_FILE_TOO_BIG')));
         }
         if ($up_err == 3) {
-            throw (new Exception( G::LoadTranslation( 'ID_ERROR_UPLOAD_FILE_CONTACT_ADMINISTRATOR' ) ));
-            //$errors[$i]='miscfilepart';
+            throw (new Exception(G::LoadTranslation('ID_ERROR_UPLOAD_FILE_CONTACT_ADMINISTRATOR')));
         }
-        if (! @is_uploaded_file( $tmp )) {
-            throw (new Exception( G::LoadTranslation( 'ID_ERROR_UPLOAD_FILE_CONTACT_ADMINISTRATOR' ) ));
-            //$errors[$i]='uploadfile';
+        if (!@is_uploaded_file($tmp)) {
+            throw (new Exception(G::LoadTranslation('ID_ERROR_UPLOAD_FILE_CONTACT_ADMINISTRATOR')));
         }
-        $fileInfo = pathinfo( $items );
-        $validType = array ('tar','gz'
-        );
+        $fileInfo = pathinfo($items);
+        $validType = ['tar', 'gz'];
 
-        if (! in_array( $fileInfo['extension'], $validType )) {
-            throw (new Exception( G::LoadTranslation( 'ID_FILE_UPLOAD_INCORRECT_EXTENSION' ) ));
-            //$errors[$i]='wrongtype';
+        if (!in_array($fileInfo['extension'], $validType)) {
+            throw (new Exception(G::LoadTranslation('ID_FILE_UPLOAD_INCORRECT_EXTENSION')));
         }
 
         $filename = $items;
         $tempPath = PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP;
-        G::verifyPath( $tempPath, true );
+        G::verifyPath($tempPath, true);
         $tempName = $tmp;
-        G::uploadFile( $tempName, $tempPath, $filename );
+        G::uploadFile($tempName, $tempPath, $filename);
 
-        $tar = new Archive_Tar( $tempPath . $filename );
+        $tar = new Archive_Tar($tempPath . $filename);
         $aFiles = $tar->listContent();
         $swConfigFile = false;
 
         foreach ($aFiles as $key => $val) {
-            if (basename( $val['filename'] ) == 'config.xml') {
-                $skinName = dirname( $val['filename'] );
-                $skinArray = explode( "/", $skinName );
-                if (count( $skinArray ) == 1) {
+            if (basename($val['filename']) == 'config.xml') {
+                $skinName = dirname($val['filename']);
+                $skinArray = explode("/", $skinName);
+                if (count($skinArray) == 1) {
                     $swConfigFile = true;
                 }
             }
         }
 
-        if (! $swConfigFile) {
-            @unlink( PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP . $filename );
-            throw (new Exception( G::LoadTranslation( 'ID_SKIN_CONFIGURATION_MISSING' ) ));
+        if (!$swConfigFile) {
+            @unlink(PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP . $filename);
+            throw (new Exception(G::LoadTranslation('ID_SKIN_CONFIGURATION_MISSING')));
         }
 
-        if (is_dir( PATH_CUSTOM_SKINS . $skinName )) {
-            if ((isset( $_REQUEST['overwrite_files'] )) && ($_REQUEST['overwrite_files'] == 'on')) {
-                G::rm_dir( PATH_CUSTOM_SKINS . $skinName, false );
+        if (is_dir(PATH_CUSTOM_SKINS . $skinName)) {
+            if ((isset($_REQUEST['overwrite_files'])) && ($_REQUEST['overwrite_files'] == 'on')) {
+                G::rm_dir(PATH_CUSTOM_SKINS . $skinName, false);
             } else {
-                throw (new Exception( G::LoadTranslation( 'ID_SKIN_ALREADY_EXISTS' ) ));
+                throw (new Exception(G::LoadTranslation('ID_SKIN_ALREADY_EXISTS')));
             }
         }
-        $res = $tar->extract( PATH_CUSTOM_SKINS );
-        if (! $res) {
-            throw (new Exception( G::LoadTranslation( 'ID_SKIN_ERROR_EXTRACTING' ) ));
+        $res = $tar->extract(PATH_CUSTOM_SKINS);
+        if (!$res) {
+            throw (new Exception(G::LoadTranslation('ID_SKIN_ERROR_EXTRACTING')));
         }
 
         $configFileOriginal = PATH_CUSTOM_SKINS . $skinName . PATH_SEP . 'config.xml';
         $configFileFinal = PATH_CUSTOM_SKINS . $skinName . PATH_SEP . 'config.xml';
-        $xmlConfiguration = file_get_contents( $configFileOriginal );
+        $xmlConfiguration = file_get_contents($configFileOriginal);
 
         $workspace = ($_REQUEST['workspace'] == 'global') ? '' : config("system.workspace");
 
@@ -292,27 +284,27 @@ function importSkin ()
         $skinInformationArray = $xmlConfigurationObj->result["skinConfiguration"]["__CONTENT__"]["information"]["__CONTENT__"];
 
         if (isset($skinInformationArray["workspace"]["__VALUE__"])) {
-            $workspace = ($workspace != "" && !empty($skinInformationArray["workspace"]["__VALUE__"]))? $skinInformationArray["workspace"]["__VALUE__"] . "|" . $workspace : $workspace;
+            $workspace = ($workspace != "" && !empty($skinInformationArray["workspace"]["__VALUE__"])) ? $skinInformationArray["workspace"]["__VALUE__"] . "|" . $workspace : $workspace;
 
             $xmlConfiguration = preg_replace("/(<workspace>)(.*)(<\/workspace>)/i", "<workspace>" . $workspace . "</workspace><!-- $2 -->", $xmlConfiguration);
         } else {
             $xmlConfiguration = preg_replace("/(<name>)(.*)(<\/name>)/i", "<name>" . $skinName . "</name><!-- $2 -->\n<workspace>" . $workspace . "</workspace>", $xmlConfiguration);
         }
 
-        file_put_contents( $configFileFinal, $xmlConfiguration );
+        file_put_contents($configFileFinal, $xmlConfiguration);
 
-        //Delete Temporal
-        @unlink( PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP . $filename );
+        // Delete Temporal
+        @unlink(PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP . $filename);
 
         $response['success'] = true;
-        $response['message'] = G::LoadTranslation( 'ID_SKIN_SUCCESSFUL_IMPORTED' );
-        G::auditLog("ImportSkin", "Skin Name: ".$skinName);
-        G::outRes( G::json_encode( $response ) );
+        $response['message'] = G::LoadTranslation('ID_SKIN_SUCCESSFUL_IMPORTED');
+        G::auditLog("ImportSkin", "Skin Name: " . $skinName);
+        G::outRes(G::json_encode($response));
     } catch (Exception $e) {
         $response['success'] = false;
         $response['message'] = $e->getMessage();
         $response['error'] = $e->getMessage();
-        G::outRes( G::json_encode( $response ) );
+        G::outRes(G::json_encode($response));
     }
 }
 

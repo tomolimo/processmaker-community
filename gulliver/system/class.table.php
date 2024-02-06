@@ -49,16 +49,16 @@ class Table
     public $_contexto = '';
 
     /**
-     * Set conecction using default values
+     * Set connection using default values
      *
-     * @author Fernando Ontiveros Lira <fernando@colosa.com>
-     * @access public
      * @param string $objConnection connection string
+     *
      * @return void
+     * @access public
      */
-    public function Table ($objConnection = null)
+    public function __construct($objConnection = null)
     {
-        $this->SetTo( $objConnection );
+        $this->SetTo($objConnection);
     }
 
     /**

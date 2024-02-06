@@ -145,8 +145,7 @@ class AppFolder extends BaseAppFolder
 
         $oApplication = new Application();
         $appFields = $oApplication->Load( $sessionID );
-        $folderPathParsed = G::replaceDataField( $folderPath, $appFields );
-        $folderPathParsed = G::replaceDataField( $folderPath, unserialize( $appFields['APP_DATA'] ) );
+        $folderPathParsed = G::replaceDataField( $folderPath, unserialize( $appFields['APP_DATA'] ), 'mysql', false );
         $folderPathParsedArray = explode( "/", $folderPathParsed );
         $folderRoot = "/"; //Always starting from Root
         foreach ($folderPathParsedArray as $folderName) {
@@ -174,8 +173,7 @@ class AppFolder extends BaseAppFolder
 
         $oApplication = new Application();
         $appFields = $oApplication->Load( $sessionID );
-        $fileTagsParsed = G::replaceDataField( $fileTags, $appFields );
-        $fileTagsParsed = G::replaceDataField( $fileTags, unserialize( $appFields['APP_DATA'] ) );
+        $fileTagsParsed = G::replaceDataField( $fileTags, unserialize( $appFields['APP_DATA'] ), 'mysql', false );
         return $fileTagsParsed;
     }
 

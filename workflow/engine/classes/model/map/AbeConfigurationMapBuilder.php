@@ -83,6 +83,8 @@ class AbeConfigurationMapBuilder
 
         $tMap->addColumn('ABE_ACTION_FIELD', 'AbeActionField', 'string', CreoleTypes::VARCHAR, false, 255);
 
+        $tMap->addColumn('ABE_ACTION_BODY_FIELD', 'AbeActionBodyField', 'string', CreoleTypes::VARCHAR, false, 255);
+
         $tMap->addColumn('ABE_CASE_NOTE_IN_RESPONSE', 'AbeCaseNoteInResponse', 'int', CreoleTypes::INTEGER, false, null);
 
         $tMap->addColumn('ABE_FORCE_LOGIN', 'AbeForceLogin', 'int', CreoleTypes::INTEGER, false, null);
@@ -98,6 +100,8 @@ class AbeConfigurationMapBuilder
         $tMap->addColumn('ABE_CUSTOM_GRID', 'AbeCustomGrid', 'string', CreoleTypes::LONGVARCHAR, false, null);
 
         $tMap->addColumn('ABE_EMAIL_SERVER_UID', 'AbeEmailServerUid', 'string', CreoleTypes::VARCHAR, false, 32);
+
+        $tMap->addColumn('ABE_EMAIL_SERVER_RECEIVER_UID', 'AbeEmailServerReceiverUid', 'string', CreoleTypes::VARCHAR, false, 32);
 
     } // doBuild()
 

@@ -417,7 +417,6 @@ Ext.onReady(function () {
                 inputValue: 'always'
             }
         }
-        /*----------------------------------********---------------------------------*/
     ];
 
     function validateFieldSizeAutoincrement(valueType, defaultValue) {
@@ -1320,7 +1319,6 @@ function editorFieldsEnableDisable(fieldTypeValue, fieldIndex, fieldInc, sizeEdi
         swAI = 0;
         swI = 0;
     }
-    /*----------------------------------********---------------------------------*/
     if (swAI == 1) {
         fieldInc.enable();
     } else {

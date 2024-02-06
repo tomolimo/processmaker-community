@@ -19,7 +19,7 @@ require_once ("CURLMessage.php");
 class SimpleMessage extends CURLMessage
 {
 
-    public function SimpleMessage ()
+    public function __construct()
     {
         parent::__construct();
     }

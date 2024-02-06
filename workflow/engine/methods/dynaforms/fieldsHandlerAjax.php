@@ -47,7 +47,7 @@ switch ($request) {
                 $e[] = $o->getNode( $element );
             }
 
-            $o->__cloneEmpty();
+            $o->cloneEmpty();
 
             foreach ($e as $e1) {
                 $o->setNode( $e1 );

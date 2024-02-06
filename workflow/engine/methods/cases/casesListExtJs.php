@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * casesListExtJs.php
+ *
+ * Prepare the value of variables required for show the cases list and advanced search
+ */
+
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
@@ -9,7 +15,6 @@ unset($_SESSION['APPLICATION']);
 $action = isset($_GET['action']) ? $_GET['action'] : (isset($_POST['action']) ? $_POST['action'] : 'todo');
 $openApplicationUid = (isset($_GET['openApplicationUid']))? $_GET['openApplicationUid'] : null;
 
-/*----------------------------------********---------------------------------*/
 
 //fix a previous inconsistency
 $urlProxy = 'proxyCasesList';
@@ -17,10 +22,9 @@ if ($action == 'selfservice') {
     $action = 'unassigned';
 }
 
-/*----------------------------------********---------------------------------*/
 
-$oHeadPublisher = headPublisher::getSingleton();
-// oHeadPublisher->setExtSkin( 'xtheme-blue');
+$headPublisher = headPublisher::getSingleton();
+
 //get the configuration for this action
 $conf = new Configurations();
 try {
@@ -32,12 +36,12 @@ try {
         $aditionalTable = new AdditionalTables();
         $table = $aditionalTable->load($confCasesList['PMTable']);
     }
-    $confCasesList = ($table != null) ? $confCasesList : array();
+    $confCasesList = ($table != null) ? $confCasesList : [];
 
     $generalConfCasesList = $conf->getConfiguration('ENVIRONMENT_SETTINGS', '');
 } catch (Exception $e) {
-    $confCasesList = array();
-    $generalConfCasesList = array();
+    $confCasesList = [];
+    $generalConfCasesList = [];
 }
 
 // reassign header configuration
@@ -65,20 +69,12 @@ if (isset($generalConfCasesList['casesListDateFormat']) && ! empty($generalConfC
     $dateFormat = $config['dateformat'];
 }
 
-if ($action == 'draft') {
-    //array_unshift ( $columns, array( 'header'=> '', 'width'=> 50, 'sortable'=> false, 'id'=> 'deleteLink' ) );
-}
 if ($action == 'selfservice') {
-    array_unshift($columns, array('header' => '','width' => 50,'sortable' => false,'id' => 'viewLink'));
-}
-
-if ($action == 'paused') {
-    //array_unshift ( $columns, array( 'header'=> '', 'width'=> 50, 'sortable'=> false, 'id'=> 'unpauseLink' ) );
+    array_unshift($columns, ['header' => '','width' => 50,'sortable' => false,'id' => 'viewLink']);
 }
 
 $userUid = (isset($_SESSION['USER_LOGGED']) && $_SESSION['USER_LOGGED'] != '') ? $_SESSION['USER_LOGGED'] : null;
-$oAppCache = new AppCacheView();
-$oAppCache->confCasesList = $confCasesList;
+
 $solrEnabled = 0;
 if ($action == "todo" || $action == "draft" || $action == "sent" || $action == "selfservice" ||
     $action == "unassigned" || $action == "search") {
@@ -95,55 +91,57 @@ if ($action == "todo" || $action == "draft" || $action == "sent" || $action == "
     }
 }
 
-//get values for the comboBoxes
-$processes[] = array('', G::LoadTranslation('ID_ALL_PROCESS'));
-$status = getStatusArray($action, $userUid);
+//Get values for the comboBoxes
+$processes = [];
+$processes[] = ['', G::LoadTranslation('ID_ALL_PROCESS')];
+$status = getStatusArray($action);
 $category = getCategoryArray();
 $columnToSearch = getColumnsSearchArray();
-$oHeadPublisher->assign('reassignReaderFields', $reassignReaderFields); //sending the fields to get from proxy
-$oHeadPublisher->addExtJsScript('cases/reassignList', false);
+$headPublisher->assign('reassignReaderFields', $reassignReaderFields); //sending the fields to get from proxy
+$headPublisher->addExtJsScript('cases/reassignList', false);
 $enableEnterprise = false;
 if (class_exists('enterprisePlugin')) {
     $enableEnterprise = true;
-    $oHeadPublisher->addExtJsScript(PATH_PLUGINS . "enterprise" . PATH_SEP . "advancedTools" . PATH_SEP, false, true);
+    $headPublisher->addExtJsScript(PATH_PLUGINS . "enterprise" . PATH_SEP . "advancedTools" . PATH_SEP, false, true);
 }
 
-$oHeadPublisher->assign('pageSize', $pageSize); //sending the page size
-$oHeadPublisher->assign('columns', $columns); //sending the columns to display in grid
-$oHeadPublisher->assign('readerFields', $readerFields); //sending the fields to get from proxy
-$oHeadPublisher->assign('reassignColumns', $reassignColumns); //sending the columns to display in grid
-$oHeadPublisher->assign('action', $action); //sending the action to make
-$oHeadPublisher->assign('urlProxy', $urlProxy); //sending the urlProxy to make
-$oHeadPublisher->assign('PMDateFormat', $dateFormat); //sending the fields to get from proxy
-$oHeadPublisher->assign('statusValues', $status); //Sending the listing of status
-$oHeadPublisher->assign('processValues', $processes); //Sending the listing of processes
-$oHeadPublisher->assign('categoryValues', $category); //Sending the listing of categories
-$oHeadPublisher->assign('solrEnabled', $solrEnabled); //Sending the status of solar
-$oHeadPublisher->assign('enableEnterprise', $enableEnterprise); //sending the page size
-$oHeadPublisher->assign('columnSearchValues', $columnToSearch); //Sending the list of column for search: caseTitle, caseNumber, tasTitle
+//Get user preferences
+$filters = $conf->getUserPreferences('FILTERS', $userUid);
 
+$headPublisher->assign('pageSize', $pageSize); //sending the page size
+$headPublisher->assign('columns', $columns); //sending the columns to display in grid
+$headPublisher->assign('readerFields', $readerFields); //sending the fields to get from proxy
+$headPublisher->assign('reassignColumns', $reassignColumns); //sending the columns to display in grid
+$headPublisher->assign('action', $action); //sending the action to make
+$headPublisher->assign('urlProxy', $urlProxy); //sending the urlProxy to make
+$headPublisher->assign('PMDateFormat', $dateFormat); //sending the fields to get from proxy
+$headPublisher->assign('statusValues', $status); //Sending the listing of status
+$headPublisher->assign('processValues', $processes); //Sending the listing of processes
+$headPublisher->assign('categoryValues', $category); //Sending the listing of categories
+$headPublisher->assign('solrEnabled', $solrEnabled); //Sending the status of solar
+$headPublisher->assign('enableEnterprise', $enableEnterprise); //sending the page size
+$headPublisher->assign('columnSearchValues', $columnToSearch); //Sending the list of column for search: caseTitle, caseNumber, tasTitle
+$headPublisher->assign('filtersValues', $filters); //Sending filters defined
 
-/*----------------------------------********---------------------------------*/
 
 /** Define actions menu in the cases list */
-$cnt = '';
 $reassignCase = ($RBAC->userCanAccess('PM_REASSIGNCASE') == 1) ? 'true' : 'false';
 $reassignCaseSup = ($RBAC->userCanAccess('PM_REASSIGNCASE_SUPERVISOR') == 1) ? 'true' : 'false';
-$oHeadPublisher->assign('varReassignCase', $reassignCase);
-$oHeadPublisher->assign('varReassignCaseSupervisor', $reassignCaseSup);
+$headPublisher->assign('varReassignCase', $reassignCase);
+$headPublisher->assign('varReassignCaseSupervisor', $reassignCaseSup);
 
 $c = new Configurations();
-$oHeadPublisher->addExtJsScript('app/main', true);
-$oHeadPublisher->addExtJsScript('cases/casesList', false); //adding a javascript file .js
-$oHeadPublisher->addContent('cases/casesListExtJs'); //adding a html file  .html.
-$oHeadPublisher->assign('FORMATS', $c->getFormats());
-$oHeadPublisher->assign('userUid', $userUid);
-$oHeadPublisher->assign('extJsViewState', $oHeadPublisher->getExtJsViewState($userUid));
-$oHeadPublisher->assign('isIE', Bootstrap::isIE());
-$oHeadPublisher->assign('__OPEN_APPLICATION_UID__', $openApplicationUid);
+$headPublisher->addExtJsScript('app/main', true);
+$headPublisher->addExtJsScript('cases/casesList', false); //adding a javascript file .js
+$headPublisher->addContent('cases/casesListExtJs'); //adding a html file  .html.
+$headPublisher->assign('FORMATS', $c->getFormats());
+$headPublisher->assign('userUid', $userUid);
+$headPublisher->assign('extJsViewState', $headPublisher->getExtJsViewState($userUid));
+$headPublisher->assign('isIE', Bootstrap::isIE());
+$headPublisher->assign('__OPEN_APPLICATION_UID__', $openApplicationUid);
 
-$oPluginRegistry = PluginRegistry::loadSingleton();
-$fromPlugin = $oPluginRegistry->getOpenReassignCallback();
+$pluginRegistry = PluginRegistry::loadSingleton();
+$fromPlugin = $pluginRegistry->getOpenReassignCallback();
 $jsFunction = false;
 if (sizeof($fromPlugin)) {
     /** @var \ProcessMaker\Plugins\Interfaces\OpenReassignCallback $jsFile */
@@ -157,15 +155,18 @@ if (sizeof($fromPlugin)) {
         }
     }
 }
-$oHeadPublisher->assign('openReassignCallback', $jsFunction);
+$headPublisher->assign('openReassignCallback', $jsFunction);
 G::RenderPage('publish', 'extJs');
 
+/**
+ * Return the list of categories
+ *
+ * @return array
+*/
 function getCategoryArray()
 {
-    global $oAppCache;
-    require_once 'classes/model/ProcessCategory.php';
-    $category[] = array("",G::LoadTranslation("ID_ALL_CATEGORIES")
-    );
+    $category = [];
+    $category[] = ["", G::LoadTranslation("ID_ALL_CATEGORIES")];
 
     $criteria = new Criteria('workflow');
     $criteria->addSelectColumn(ProcessCategoryPeer::CATEGORY_UID);
@@ -177,118 +178,206 @@ function getCategoryArray()
     $dataset->next();
 
     while ($row = $dataset->getRow()) {
-        $category[] = array($row['CATEGORY_UID'],$row['CATEGORY_NAME']);
+        $category[] = [$row['CATEGORY_UID'], $row['CATEGORY_NAME']];
         $dataset->next();
     }
+
     return $category;
 }
 
-function getStatusArray($action, $userUid)
+/**
+ * Return the list of task status
+ *
+ * @return array
+ */
+function getTaskStatus()
 {
-    $status = array();
-    $aStatus = Application::$app_status_values;
-    $status[] = array('', G::LoadTranslation('ID_ALL_STATUS'));
-    foreach ($aStatus as $key => $value) {
+    $taskStatus = [];
+    $taskStatus[] = ['', G::LoadTranslation('ID_ALL_STATUS')];
+    $taskStatus[] = ['ON_TIME', G::LoadTranslation('ID_ON_TIME')];
+    $taskStatus[] = ['AT_RISK', G::LoadTranslation('ID_AT_RISK')];
+    $taskStatus[] = ['OVERDUE', G::LoadTranslation('ID_TASK_OVERDUE')];
+
+    return $taskStatus;
+}
+
+/**
+ * Return the list of status
+ *
+ * @param string $action
+ *
+ * @return array
+ */
+function getStatusArray($action)
+{
+    $status = [];
+    $statusValues = Application::$app_status_values;
+    $status[] = ['', G::LoadTranslation('ID_ALL_STATUS')];
+    foreach ($statusValues as $key => $value) {
         if ($action == 'search') {
-            $status[] =  array($value, G::LoadTranslation('ID_CASES_STATUS_' . $key));
+            $status[] = [$value, G::LoadTranslation('ID_CASES_STATUS_' . $key)];
         } else {
-            $status[] =  array($key, G::LoadTranslation('ID_CASES_STATUS_' . $key));
+            $status[] = [$key, G::LoadTranslation('ID_CASES_STATUS_' . $key)];
         }
     }
     return $status;
 }
 
 /**
- * get the list configuration headers of the cases checked for reassign, for the
- * reassign cases list.
+ * Get the list configuration headers of the cases checked for reassign, for the reassign cases list.
+ *
+ * @return array
  */
 function getReassignList()
 {
-    $caseColumns = array();
-    $caseColumns[] = array('header' => '#','dataIndex' => 'APP_NUMBER','width' => 40);
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_SUMMARY'),'dataIndex' => 'CASE_SUMMARY','width' => 45,'hidden' => true
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_CASES_NOTES'),'dataIndex' => 'CASE_NOTES_COUNT','width' => 45,'hidden' => true
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_CASE'),'dataIndex' => 'APP_TITLE','width' => 100,'hidden' => true
-    );
-    $caseColumns[] = array('header' => 'CaseId','dataIndex' => 'APP_UID','width' => 200,'hidden' => true,'hideable' => false
-    );
-    $caseColumns[] = array('header' => 'User','dataIndex' => 'USR_UID','width' => 200,'hidden' => true,'hideable' => false
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_TASK'),'dataIndex' => 'APP_TAS_TITLE','width' => 120
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_PROCESS'),'dataIndex' => 'APP_PRO_TITLE','width' => 120
-    );
-    $caseColumns[] = array('header' => 'Reassigned Uid','dataIndex' => 'APP_REASSIGN_USER_UID','width' => 120,'hidden' => true,'hideable' => false
-    );
-    $caseColumns[] = array('header' => 'Reassigned Uid','dataIndex' => 'TAS_UID','width' => 120,'hidden' => true,'hideable' => false
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_ASSIGNED_TO'),'dataIndex' => 'APP_CURRENT_USER','width' => 170
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_REASSIGNED_TO'),'dataIndex' => 'APP_REASSIGN_USER','width' => 170
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_REASON'),'dataIndex' => 'NOTE_REASON','width' => 170
-    );
-    $caseColumns[] = array('header' => G::LoadTranslation('ID_NOTIFY'), 'dataIndex' => 'NOTIFY_REASSIGN', 'width' => 100
-    );
+    $caseColumns = [];
+    $caseColumns[] = ['header' => '#', 'dataIndex' => 'APP_NUMBER', 'width' => 40];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_SUMMARY'),
+        'dataIndex' => 'CASE_SUMMARY',
+        'width' => 45,
+        'hidden' => true
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_CASES_NOTES'),
+        'dataIndex' => 'CASE_NOTES_COUNT',
+        'width' => 45,
+        'hidden' => true
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_CASE'),
+        'dataIndex' => 'APP_TITLE',
+        'width' => 100,
+        'hidden' => true
+    ];
+    $caseColumns[] = [
+        'header' => 'CaseId',
+        'dataIndex' => 'APP_UID',
+        'width' => 200,
+        'hidden' => true,
+        'hideable' => false
+    ];
+    $caseColumns[] = [
+        'header' => 'User',
+        'dataIndex' => 'USR_UID',
+        'width' => 200,
+        'hidden' => true,
+        'hideable' => false
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_TASK'),
+        'dataIndex' => 'APP_TAS_TITLE',
+        'width' => 120
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_PROCESS'),
+        'dataIndex' => 'APP_PRO_TITLE',
+        'width' => 120
+    ];
+    $caseColumns[] = [
+        'header' => 'Reassigned Uid',
+        'dataIndex' => 'APP_REASSIGN_USER_UID',
+        'width' => 120,
+        'hidden' => true,
+        'hideable' => false
+    ];
+    $caseColumns[] = [
+        'header' => 'Reassigned Uid',
+        'dataIndex' => 'TAS_UID',
+        'width' => 120,
+        'hidden' => true,
+        'hideable' => false
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_ASSIGNED_TO'),
+        'dataIndex' => 'APP_CURRENT_USER',
+        'width' => 170
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_REASSIGNED_TO'),
+        'dataIndex' => 'APP_REASSIGN_USER',
+        'width' => 170
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_REASON'),
+        'dataIndex' => 'NOTE_REASON',
+        'width' => 170
+    ];
+    $caseColumns[] = [
+        'header' => G::LoadTranslation('ID_NOTIFY'),
+        'dataIndex' => 'NOTIFY_REASSIGN',
+        'width' => 100
+    ];
 
-    $caseReaderFields = array();
-    $caseReaderFields[] = array('name' => 'APP_NUMBER');
-    $caseReaderFields[] = array('name' => 'APP_TITLE');
-    $caseReaderFields[] = array('name' => 'APP_UID');
-    $caseReaderFields[] = array('name' => 'USR_UID');
-    $caseReaderFields[] = array('name' => 'APP_TAS_TITLE');
-    $caseReaderFields[] = array('name' => 'APP_PRO_TITLE');
-    $caseReaderFields[] = array('name' => 'APP_REASSIGN_USER_UID');
-    $caseReaderFields[] = array('name' => 'TAS_UID');
-    $caseReaderFields[] = array('name' => 'APP_REASSIGN_USER');
-    $caseReaderFields[] = array('name' => 'CASE_SUMMARY');
-    $caseReaderFields[] = array('name' => 'CASE_NOTES_COUNT');
-    $caseReaderFields[] = array('name' => 'APP_CURRENT_USER');
+    $caseReaderFields = [];
+    $caseReaderFields[] = ['name' => 'APP_NUMBER'];
+    $caseReaderFields[] = ['name' => 'APP_TITLE'];
+    $caseReaderFields[] = ['name' => 'APP_UID'];
+    $caseReaderFields[] = ['name' => 'USR_UID'];
+    $caseReaderFields[] = ['name' => 'APP_TAS_TITLE'];
+    $caseReaderFields[] = ['name' => 'APP_PRO_TITLE'];
+    $caseReaderFields[] = ['name' => 'APP_REASSIGN_USER_UID'];
+    $caseReaderFields[] = ['name' => 'TAS_UID'];
+    $caseReaderFields[] = ['name' => 'APP_REASSIGN_USER'];
+    $caseReaderFields[] = ['name' => 'CASE_SUMMARY'];
+    $caseReaderFields[] = ['name' => 'CASE_NOTES_COUNT'];
+    $caseReaderFields[] = ['name' => 'APP_CURRENT_USER'];
 
-    return array('caseColumns' => $caseColumns,'caseReaderFields' => $caseReaderFields,'rowsperpage' => 20,'dateformat' => 'M d, Y'
-    );
-}
-
-function getReassignUsersList()
-{
-    $caseColumns = array();
-
-    $caseReaderFields = array();
-    $caseReaderFields[] = array('name' => 'userUid'
-    );
-    $caseReaderFields[] = array('name' => 'userFullname'
-    );
-
-    return array('caseColumns' => $caseColumns,'caseReaderFields' => $caseReaderFields,'rowsperpage' => 20,'dateformat' => 'M d, Y'
-    );
+    return [
+        'caseColumns' => $caseColumns,
+        'caseReaderFields' => $caseReaderFields,
+        'rowsperpage' => 20,
+        'dateformat' => 'M d, Y'
+    ];
 }
 
 /**
- * loads the PM Table field list from the database based in an action parameter
+ * Get the list of users for reassign
+ *
+ * @return array
+*/
+function getReassignUsersList()
+{
+    $caseColumns = [];
+
+    $caseReaderFields = [];
+    $caseReaderFields[] = ['name' => 'userUid'];
+    $caseReaderFields[] = ['name' => 'userFullname'];
+
+    return [
+        'caseColumns' => $caseColumns,
+        'caseReaderFields' => $caseReaderFields,
+        'rowsperpage' => 20,
+        'dateformat' => 'M d, Y'
+    ];
+}
+
+/**
+ * Load the PM Table field list from the database based in an action parameter
  * then assemble the List of fields with these data, for the configuration in cases list.
  *
- * @param String $action
- * @return Array $config
+ * @param string $action
+ * @param array $confCasesList
+ *
+ * @return array
  *
  */
-function getAdditionalFields($action, $confCasesList = array())
+function getAdditionalFields($action, $confCasesList = [])
 {
     $config = new Configurations();
     $arrayConfig = $config->casesListDefaultFieldsAndConfig($action);
 
     if (is_array($confCasesList) && count($confCasesList) > 0 && isset($confCasesList["second"]) && count($confCasesList["second"]["data"]) > 0) {
         //For the case list builder in the enterprise plugin
-        $caseColumns = array();
-        $caseReaderFields = array();
-        $caseReaderFieldsAux = array();
+        $caseColumns = [];
+        $caseReaderFields = [];
+        $caseReaderFieldsAux = [];
 
         foreach ($confCasesList["second"]["data"] as $index1 => $value1) {
             $arrayField = $value1;
 
             if ($arrayField["fieldType"] != "key" && $arrayField["name"] != "USR_UID" && $arrayField["name"] != "PREVIOUS_USR_UID") {
-                $arrayAux = array();
+                $arrayAux = [];
 
                 foreach ($arrayField as $index2 => $value2) {
                     if ($index2 != "gridIndex" && $index2 != "fieldType") {
@@ -312,7 +401,7 @@ function getAdditionalFields($action, $confCasesList = array())
                 }
 
                 $caseColumns[] = $arrayAux;
-                $caseReaderFields[] = array("name" => $arrayField["name"]);
+                $caseReaderFields[] = ["name" => $arrayField["name"]];
 
                 $caseReaderFieldsAux[] = $arrayField["name"];
             }
@@ -323,7 +412,12 @@ function getAdditionalFields($action, $confCasesList = array())
             }
         }
 
-        $arrayConfig = array("caseColumns" => $caseColumns, "caseReaderFields" => $caseReaderFields, "rowsperpage" => $confCasesList["rowsperpage"], "dateformat" => $confCasesList["dateformat"]);
+        $arrayConfig = [
+            "caseColumns" => $caseColumns,
+            "caseReaderFields" => $caseReaderFields,
+            "rowsperpage" => $confCasesList["rowsperpage"],
+            "dateformat" => $confCasesList["dateformat"]
+        ];
     }
 
     return $arrayConfig;
@@ -331,6 +425,7 @@ function getAdditionalFields($action, $confCasesList = array())
 
 /**
  * This function define the possibles columns for apply the specific search
+ *
  * @return array $filters values of the dropdown
  */
 function getColumnsSearchArray()
@@ -339,7 +434,7 @@ function getColumnsSearchArray()
     $filters[] = ['APP_TITLE', G::LoadTranslation('ID_CASE_TITLE')];
     $filters[] = ['APP_NUMBER', G::LoadTranslation('ID_CASE_NUMBER')];
     $filters[] = ['TAS_TITLE', G::LoadTranslation('ID_TASK')];
+
     return $filters;
 }
 
-/*----------------------------------********---------------------------------*/

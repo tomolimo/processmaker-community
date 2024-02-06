@@ -161,7 +161,6 @@ Ext.onReady(function(){
         {name : 'CASES_COUNT_COMPLETED', type:'float'},
         {name : 'CASES_COUNT_CANCELLED', type:'float'},
         {name : 'PROJECT_TYPE', type:'string'}
-        /*----------------------------------********---------------------------------*/
         ,{name : "PRO_UPDATE_DATE"}
       ]
     }),
@@ -358,9 +357,7 @@ Ext.onReady(function(){
             exportProcess();
         }
     };
-    /*----------------------------------********---------------------------------*/
         exportProcessOption = normalExportProcessOption;
-    /*----------------------------------********---------------------------------*/
     //End code export - exportGranular (handle)
 
   processesGrid = new Ext.grid.GridPanel( {
@@ -414,7 +411,7 @@ Ext.onReady(function(){
           color = r.get('PRO_STATUS') == 'ACTIVE'? 'green': 'red';
           return String.format("<font color='{0}'>{1}</font>", color, v);
         }},
-        {header: _('ID_PRO_USER'), dataIndex: 'PRO_CREATE_USER_LABEL', width: 150},
+        {header: _('ID_OWNER'), dataIndex: 'PRO_CREATE_USER_LABEL', width: 150},
         {header: _('ID_PRO_CREATE_DATE'), dataIndex: 'PRO_CREATE_DATE', width: 90},
         {header: _('ID_INBOX'), dataIndex: 'CASES_COUNT_TO_DO', width: 50, align:'right'},
         {header: _('ID_DRAFT'), dataIndex: 'CASES_COUNT_DRAFT', width: 50, align:'right'},
@@ -422,7 +419,6 @@ Ext.onReady(function(){
         {header: _('ID_CANCELLED'), dataIndex: 'CASES_COUNT_CANCELLED', width: 70, align:'right'},
         {header: _('ID_TOTAL_CASES'), dataIndex: 'CASES_COUNT', width: 75,renderer:function(v){return "<b>"+v+"</b>";}, align:'right'},
         {header: _('ID_PRO_DEBUG'), dataIndex: 'PRO_DEBUG_LABEL', width: 50, align:'center'}
-        /*----------------------------------********---------------------------------*/
         ,{header: _("ID_LAN_UPDATE_DATE"), dataIndex: "PRO_UPDATE_DATE", width: 75, align:"left"}
       ]
     }),
@@ -531,7 +527,6 @@ Ext.onReady(function(){
           var activator = Ext.getCmp('activator');
 
           activator.setDisabled(false);
-          /*----------------------------------********---------------------------------*/
           Ext.ComponentMgr.get("export").setDisabled(false);
 
           if( rowSelected.data.PRO_STATUS == 'ACTIVE' ){
@@ -589,7 +584,6 @@ Ext.onReady(function(){
   function onMessageContextMenu(grid, rowIndex, e) {
     e.stopEvent();
     var coords = e.getXY();
-    /*----------------------------------********---------------------------------*/
     messageContextMenu.showAt([coords[0], coords[1]]);
   }
     //code export - exportGranular (handler)
@@ -604,9 +598,7 @@ Ext.onReady(function(){
         }
     };
 
-    /*----------------------------------********---------------------------------*/
         menuExportOption = normalMenuExportOption;
-    /*----------------------------------********---------------------------------*/
     //End code export - exportGranular (handler)
 
   var arrayContextMenuOption = [
@@ -2064,7 +2056,6 @@ importProcess = function()
                       switch (fileExtension) {
                           case "pm":
                           case "pmx":
-                          /*----------------------------------********---------------------------------*/
                               var uploader = Ext.getCmp("uploader");
 
                               if (uploader.getForm().isValid()) {

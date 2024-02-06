@@ -136,7 +136,6 @@ if (!$sw_file_exists) {
         $nameFile = $info['basename'] . $ver . '.' . $ext;
         $licensedFeatures = PMLicensedFeatures::getSingleton();
         $downloadStatus = false;
-        /*----------------------------------********---------------------------------*/
         if (!$downloadStatus) {
             G::streamFile($realPath, $download, $nameFile); //download
         }

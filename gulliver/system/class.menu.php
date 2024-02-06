@@ -48,7 +48,7 @@ class Menu
 {
 
     public $Id = null;
-    public $Options = null;
+    public $Options = [];
     public $Labels = null;
     public $Icons = null;
     public $JS = null;

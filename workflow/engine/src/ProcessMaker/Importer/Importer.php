@@ -2,11 +2,12 @@
 namespace ProcessMaker\Importer;
 
 use Processes;
-use ProcessMaker\Util;
-use ProcessMaker\Project;
-use ProcessMaker\Project\Adapter;
 use ProcessMaker\BusinessModel\Migrator;
 use ProcessMaker\BusinessModel\Migrator\ImportException;
+use ProcessMaker\Model\Process;
+use ProcessMaker\Project;
+use ProcessMaker\Project\Adapter;
+use ProcessMaker\Util;
 use ProcessMaker\Util\Common;
 use ProcessPeer;
 use stdClass;
@@ -18,7 +19,7 @@ abstract class Importer
     protected $filename = "";
     protected $saveDir = "";
     protected $metadata = array();
-    protected $prjCreateUser = '';
+
     /**
      * Stores the current objects before import.
      * @var object 
@@ -91,6 +92,7 @@ abstract class Importer
     public function import($option = self::IMPORT_OPTION_CREATE_NEW, $optionGroup = self::GROUP_IMPORT_OPTION_CREATE_NEW, $generateUidFromJs = null, $objectsToImport = '')
     {
         $this->prepare();
+        $keepCreateDate = false;
         //Verify data
         switch ($option) {
             case self::IMPORT_OPTION_CREATE_NEW:
@@ -126,6 +128,7 @@ abstract class Importer
             case self::IMPORT_OPTION_DISABLE_AND_CREATE_NEW:
                 break;
             case self::IMPORT_OPTION_KEEP_WITHOUT_CHANGING_AND_CREATE_NEW:
+                $keepCreateDate = true;
                 break;
         }
 
@@ -187,14 +190,12 @@ abstract class Importer
                     }
                 }
                 //Shouldn't generate new UID for all objects
-                /*----------------------------------********---------------------------------*/
                     try {
                         $this->verifyIfTheProcessHasStartedCases();
                     } catch (\Exception $e) {
                         throw $e;
                     }
                     $this->removeProject(false);
-                /*----------------------------------********---------------------------------*/
                 $generateUid = false;
                 break;
             case self::IMPORT_OPTION_DISABLE_AND_CREATE_NEW:
@@ -228,15 +229,32 @@ abstract class Importer
         $this->importData["tables"]["workflow"]["process"] = $this->importData["tables"]["workflow"]["process"][0];
 
         //Import
-        if(!empty($generateUidFromJs)) {
+        if (!empty($generateUidFromJs)) {
             $generateUid = $generateUidFromJs;
         }
-        /*----------------------------------********---------------------------------*/
 
         $result = $this->doImport($generateUid);
-
-        //Return
+        $this->updateTheProcessOwner($result);
         return $result;
+    }
+    
+    /**
+     * This updates the process owner.
+     * @param string $proUid
+     * @return void
+     */
+    private function updateTheProcessOwner(string $proUid): void
+    {
+        $processOwner = $this->data["usr_uid"];
+
+        $currentProcess = $this->getCurrentProcess();
+        if (is_object($currentProcess)) {
+            $processOwner = $currentProcess->process->getProCreateUser();
+        }
+        $process = Process::where('PRO_UID', '=', $proUid);
+        $process->update([
+            'PRO_CREATE_USER' => $processOwner
+        ]);
     }
 
     /**
@@ -428,19 +446,17 @@ abstract class Importer
         // Build BPMN project struct
         $project = $tables["project"][0];
         $diagram = $tables["diagram"][0];
-        $diagram["activities"] =  (isset($tables["activity"]))? $tables["activity"] : array();
-        $diagram["artifacts"] = (isset($tables["artifact"]))? $tables["artifact"] : array();
-        $diagram["events"] = (isset($tables["event"]))? $tables["event"] : array();
-        $diagram["flows"] = (isset($tables["flow"]))? $tables["flow"] : array();
-        $diagram["gateways"] = (isset($tables["gateway"]))? $tables["gateway"]: array();
-        $diagram["data"] = (isset($tables["data"]))? $tables["data"] : array();
-        $diagram["participants"] = (isset($tables["participant"]))? $tables["participant"] : array();
-        $diagram["laneset"] = (isset($tables["laneset"]))? $tables["laneset"] : array();
-        $diagram["lanes"] = (isset($tables["lane"]))? $tables["lane"] : array();
+        $diagram["activities"] =  (isset($tables["activity"]))? $tables["activity"] : [];
+        $diagram["artifacts"] = (isset($tables["artifact"]))? $tables["artifact"] : [];
+        $diagram["events"] = (isset($tables["event"]))? $tables["event"] : [];
+        $diagram["flows"] = (isset($tables["flow"]))? $tables["flow"] : [];
+        $diagram["gateways"] = (isset($tables["gateway"]))? $tables["gateway"]: [];
+        $diagram["data"] = (isset($tables["data"]))? $tables["data"] : [];
+        $diagram["participants"] = (isset($tables["participant"]))? $tables["participant"] : [];
+        $diagram["laneset"] = (isset($tables["laneset"]))? $tables["laneset"] : [];
+        $diagram["lanes"] = (isset($tables["lane"]))? $tables["lane"] : [];
         $project["diagrams"] = array($diagram);
-        $project["prj_author"] = isset($this->data["usr_uid"])? $this->data["usr_uid"]: "00000000000000000000000000000001";
         $project["process"] = $tables["process"][0];
-        $project["prjCreateUser"] = $this->prjCreateUser;
 
         return Adapter\BpmnWorkflow::createFromStruct($project, $generateUid);
     }
@@ -518,6 +534,18 @@ abstract class Importer
             foreach ($arrayWorkflowTables["emailEvent"] as &$emailEvent) {
                 $this->preserveEmailEventConfiguration($emailEvent);
             }
+            
+            foreach ($arrayWorkflowTables["dynaforms"] as &$dynaform) {
+                $this->preserveDynaformId($dynaform);
+            }
+
+            foreach ($arrayWorkflowTables["inputs"] as &$input) {
+                $this->preserveInputDocumentId($input);
+            }
+
+            foreach ($arrayWorkflowTables["outputs"] as &$output) {
+                $this->preserveOutputDocumentId($output);
+            }
 
             $this->importWfTables($arrayWorkflowTables);
 
@@ -537,7 +565,9 @@ abstract class Importer
             }
 
             unset($arrayWorkflowTables["process"]["PRO_CREATE_USER"]);
-            unset($arrayWorkflowTables["process"]["PRO_CREATE_DATE"]);
+            if ($generateUid) {
+                unset($arrayWorkflowTables["process"]["PRO_CREATE_DATE"]);
+            }
             unset($arrayWorkflowTables["process"]["PRO_UPDATE_DATE"]);
 
             if ($flagDeleteCategory) {
@@ -718,7 +748,7 @@ abstract class Importer
         }
     }
 
-    public function saveAs($prj_uid, $prj_name, $prj_description, $prj_category, $prj_user = '')
+    public function saveAs($prj_uid, $prj_name, $prj_description, $prj_category)
     {
         try {
             $exporter = new \ProcessMaker\Exporter\XmlExporter($prj_uid);
@@ -736,7 +766,7 @@ abstract class Importer
 
             $this->setSourceFile($outputFilename);
             $this->prepare();
-            $this->prjCreateUser = $prj_user;
+
             $this->importData["tables"]["bpmn"]["project"][0]["prj_name"] = $prj_name;
             $this->importData["tables"]["bpmn"]["project"][0]["prj_description"] = $prj_description;
             $this->importData["tables"]["bpmn"]["diagram"][0]["dia_name"] = $prj_name;
@@ -748,7 +778,9 @@ abstract class Importer
             $this->importData["tables"]["workflow"]["process"][0]["PRO_UPDATE_DATE"] = null;
             $this->importData["tables"]["workflow"]["process"] = $this->importData["tables"]["workflow"]["process"][0];
 
-            return ['prj_uid' => $this->doImport(true, false)];
+            $result = $this->doImport(true, false);
+            $this->updateTheProcessOwner($result);
+            return ['prj_uid' => $result];
         } catch (\Exception $e) {
             return $e->getMessage();
         }
@@ -778,6 +810,8 @@ abstract class Importer
      * Saves the current objects before import.
      * 
      * @param string $proUid
+     * 
+     * @see ProcessMaker\Importer\Importer::import()
      */
     public function saveCurrentProcess($proUid)
     {
@@ -789,9 +823,9 @@ abstract class Importer
         $result->tasks = $processes->getTaskRows($proUid);
         $result->abeConfigurations = $processes->getActionsByEmail($proUid);
         $result->emailEvents = $processes->getEmailEvent($proUid);
-        $result->dynaforms = $processes->getDynaformRows($proUid);
-        $result->inputs = $processes->getInputRows($proUid);
-        $result->outputs = $processes->getOutputRows($proUid);
+        $result->dynaforms = $processes->getDynaformRows($proUid, false);
+        $result->inputs = $processes->getInputRows($proUid, false);
+        $result->outputs = $processes->getOutputRows($proUid, false);
 
         $this->setCurrentProcess($result);
     }
@@ -864,4 +898,87 @@ abstract class Importer
         }
     }
 
+    /**
+     * Restore DYN_ID value for specific dynaform.
+     * The value of __DYN_ID_UPDATE__ only used like a reference.
+     * 
+     * @param array $data
+     * 
+     * @see ProcessMaker\Importer\Importer::import()
+     * @see ProcessMaker\Importer\Importer::doImport()
+     * @link https://wiki.processmaker.com/3.1/Importing_and_Exporting_Projects#Importing_a_Project
+     */
+    public function preserveDynaformId(&$data)
+    {
+        $currentProccess = $this->getCurrentProcess();
+        if (!is_object($currentProccess)) {
+            return;
+        }
+        if (!is_array($currentProccess->dynaforms)) {
+            return;
+        }
+        foreach ($currentProccess->dynaforms as $dynaform) {
+            if ($data["DYN_UID"] === $dynaform["DYN_UID"]) {
+                $data["DYN_ID"] = $dynaform["DYN_ID"];
+                $data["__DYN_ID_UPDATE__"] = false;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Restore INP_DOC_ID value for specific input document.
+     * The value of __INP_DOC_ID_UPDATE__ only used like a reference.
+     * 
+     * @param array $data
+     * 
+     * @see ProcessMaker\Importer\Importer::import()
+     * @see ProcessMaker\Importer\Importer::doImport()
+     * @link https://wiki.processmaker.com/3.1/Importing_and_Exporting_Projects#Importing_a_Project
+     */
+    public function preserveInputDocumentId(&$data)
+    {
+        $currentProccess = $this->getCurrentProcess();
+        if (!is_object($currentProccess)) {
+            return;
+        }
+        if (!is_array($currentProccess->inputs)) {
+            return;
+        }
+        foreach ($currentProccess->inputs as $inputDocument) {
+            if ($data["INP_DOC_UID"] === $inputDocument["INP_DOC_UID"]) {
+                $data["INP_DOC_ID"] = $inputDocument["INP_DOC_ID"];
+                $data["__INP_DOC_ID_UPDATE__"] = false;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Restore OUT_DOC_ID value for specific output document.
+     * The value of __OUT_DOC_ID_UPDATE__ only used like a reference.
+     * 
+     * @param array $data
+     * 
+     * @see ProcessMaker\Importer\Importer::import()
+     * @see ProcessMaker\Importer\Importer::doImport()
+     * @link https://wiki.processmaker.com/3.1/Importing_and_Exporting_Projects#Importing_a_Project
+     */
+    public function preserveOutputDocumentId(&$data)
+    {
+        $currentProccess = $this->getCurrentProcess();
+        if (!is_object($currentProccess)) {
+            return;
+        }
+        if (!is_array($currentProccess->outputs)) {
+            return;
+        }
+        foreach ($currentProccess->outputs as $outputDocument) {
+            if ($data["OUT_DOC_UID"] === $outputDocument["OUT_DOC_UID"]) {
+                $data["OUT_DOC_ID"] = $outputDocument["OUT_DOC_ID"];
+                $data["__OUT_DOC_ID_UPDATE__"] = false;
+                break;
+            }
+        }
+    }
 }

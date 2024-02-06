@@ -48,34 +48,34 @@ class WebResource
      * @param string $uri
      * @param string $post
      *
-     * @return none
+     * @return void
      */
-    function WebResource ($uri, $post)
+    public function __construct($uri, $post)
     {
         $this->_uri = $uri;
-        if (isset( $post['function'] ) && $post['function'] != '') {
+        if (isset($post['function']) && $post['function'] != '') {
             /*Call a function*/
-            header( 'Content-Type: text/json' );
+            header('Content-Type: text/json');
             //$parameters=G::json_decode((urldecode($post['parameters']))); //for %AC
-            $parameters = G::json_decode( ($post['parameters']) );
-            $paramsRef = array ();
+            $parameters = G::json_decode(($post['parameters']));
+            $paramsRef = array();
             foreach ($parameters as $key => $value) {
-                if (is_string( $key )) {
-                    $paramsRef[] = "\$parameters['" . addcslashes( $key, '\\\'' ) . "']";
+                if (is_string($key)) {
+                    $paramsRef[] = "\$parameters['" . addcslashes($key, '\\\'') . "']";
                 } else {
                     $paramsRef[] = '$parameters[' . $key . ']';
                 }
             }
-            
-            $paramsRef = implode( ',', $paramsRef );
+
+            $paramsRef = implode(',', $paramsRef);
 
             $filter = new InputFilter();
             $post['function'] = $filter->validateInput($post['function']);
             $paramsRef = $filter->validateInput($paramsRef);
-            
-            $res = eval( 'return ($this->' . $post['function'] . '(' . $paramsRef . '));' );
-            $res = G::json_encode( $res );
-            print ($res) ;
+
+            $res = eval('return ($this->' . $post['function'] . '(' . $paramsRef . '));');
+            $res = G::json_encode($res);
+            print ($res);
         } else {
             /*Print class definition*/
             $this->_encode();

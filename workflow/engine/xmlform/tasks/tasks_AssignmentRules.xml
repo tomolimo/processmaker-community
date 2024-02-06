@@ -38,19 +38,21 @@
     ORDER BY CON.CON_VALUE ASC
     ]]><en><![CDATA[Trigger to execute]]><option name=""><![CDATA[- Select a trigger -]]></option></en></TAS_SELFSERVICE_TRIGGER_UID>
   <!--//////////////////////////////////********//////////////////////////////////-->
+  <TAS_SELFSERVICE_EXECUTION type="dropdown">
+    <en><![CDATA[Execute Trigger]]><option name="EVERY_TIME"><![CDATA[Every time scheduled by cron]]></option><option name="ONCE"><![CDATA[Once]]></option></en>
+  </TAS_SELFSERVICE_EXECUTION>
+  <!--//////////////////////////////////********//////////////////////////////////-->
   <JS type="javascript"><![CDATA[
 var selfServiceTimeoutDataShow = function (sw)
 {
     hideRowById("TAS_SELFSERVICE_TIME");
     hideRowById("TAS_SELFSERVICE_TIME_UNIT");
     hideRowById("TAS_SELFSERVICE_TRIGGER_UID");
-    /*----------------------------------********---------------------------------*/
 
     if (sw == true) {
         showRowById("TAS_SELFSERVICE_TIME");
         showRowById("TAS_SELFSERVICE_TIME_UNIT");
         showRowById("TAS_SELFSERVICE_TRIGGER_UID");
-        /*----------------------------------********---------------------------------*/
     }
 };
 
@@ -126,7 +128,6 @@ if (aTaskFlag[1])
         }
 
         getField("TAS_SELFSERVICE_TRIGGER_UID").value = oTaskData.TAS_SELFSERVICE_TRIGGER_UID;
-        /*----------------------------------********---------------------------------*/
 
         showTextpm();
         break;

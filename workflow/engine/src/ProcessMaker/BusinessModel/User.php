@@ -207,7 +207,6 @@ class User
             "defaultValues" => array(),
             "fieldNameAux" => "usrCellular"
         ),
-        /*----------------------------------********---------------------------------*/
         'USR_LOGGED_NEXT_TIME' => [
             'type' => 'int',
             'required' => false,
@@ -625,7 +624,7 @@ class User
      * @return array Return an array with custom record
      * @throws Exception
      */
-    private function __getUserCustomRecordFromRecord(array $record)
+    private function getUserCustomRecordFromRecord(array $record)
     {
         try {
             //Get Calendar
@@ -669,7 +668,6 @@ class User
             $arrayResult[$this->getFieldNameByFormatFieldName('USR_CALENDAR_UID')] = $aFields['USR_CALENDAR_UID'];
             $arrayResult[$this->getFieldNameByFormatFieldName('USR_CALENDAR_NAME')] = $aFields['USR_CALENDAR'];
             $arrayResult[$this->getFieldNameByFormatFieldName('USR_UX')] = $record['USR_UX'];
-            /*----------------------------------********---------------------------------*/
             $arrayResult[$this->getFieldNameByFormatFieldName('USR_PHOTO_PATH')] = $pathPhotoUser;
 
             if (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) {
@@ -720,7 +718,6 @@ class User
             $criteria->addSelectColumn(UsersPeer::USR_REPORTS_TO);
             $criteria->addSelectColumn(UsersPeer::USR_REPLACED_BY);
             $criteria->addSelectColumn(UsersPeer::USR_UX);
-            /*----------------------------------********---------------------------------*/
             $criteria->addSelectColumn(UsersPeer::USR_TIME_ZONE);
 
             //Return
@@ -759,7 +756,6 @@ class User
                 $arrayData['USR_UNIT_COST']
             );
 
-            /*----------------------------------********---------------------------------*/
 
             $this->throwExceptionIfDataIsInvalid("", $arrayData);
 
@@ -851,7 +847,6 @@ class User
                 $arrayData['USR_UNIT_COST']
             );
 
-            /*----------------------------------********---------------------------------*/
 
             //Verify data
             $this->throwExceptionIfNotExistsUser($userUid, $this->arrayFieldNameForException["usrUid"]);
@@ -1047,7 +1042,7 @@ class User
             $row = $rsCriteria->getRow();
 
             //Return
-            return (!$flagGetRecord) ? $this->__getUserCustomRecordFromRecord($row) : $row;
+            return (!$flagGetRecord) ? $this->getUserCustomRecordFromRecord($row) : $row;
         } catch (Exception $e) {
             throw $e;
         }
@@ -1457,7 +1452,7 @@ class User
             while ($rsCriteria->next()) {
                 $record = $rsCriteria->getRow();
 
-                $arrayUser[] = ($flagRecord) ? $record : $this->__getUserCustomRecordFromRecord($record);
+                $arrayUser[] = ($flagRecord) ? $record : $this->getUserCustomRecordFromRecord($record);
             }
 
             //Return
@@ -1894,9 +1889,7 @@ class User
             $row['USR_ROLE_ID'] = $row['USR_ROLE'];
             $row['USR_ROLE'] = isset($uRole['ROL_NAME']) ? ($uRole['ROL_NAME'] != '' ? $uRole['ROL_NAME'] : $uRole['ROL_CODE']) : $uRole['ROL_CODE'];
 
-                /*----------------------------------********---------------------------------*/
                 $total = $oAppCache->getListCounters('sent', $row['USR_UID'], false);
-            /*----------------------------------********---------------------------------*/
             $row['TOTAL_CASES'] = $total;
 
             $row['DUE_DATE_OK'] = (date('Y-m-d') > date('Y-m-d', strtotime($row['USR_DUE_DATE']))) ? 0 : 1;

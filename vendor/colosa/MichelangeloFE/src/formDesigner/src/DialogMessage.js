@@ -34,7 +34,7 @@
         });
         FormDesigner.main.DialogStyle(this.dialog, this.type);
 
-        this.dialog.append("<div style='font-size:14px;margin:20px;'>" +
+        this.dialog.append("<div style='font-size:14px;margin:20px;text-align:center'>" +
             this.message +
             "</div>");
         this.dialog.append(this.buttons);

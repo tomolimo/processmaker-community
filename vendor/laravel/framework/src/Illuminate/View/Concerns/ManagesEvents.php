@@ -115,7 +115,7 @@ trait ManagesEvents
      */
     protected function buildClassEventCallback($class, $prefix)
     {
-        list($class, $method) = $this->parseClassEvent($class, $prefix);
+        [$class, $method] = $this->parseClassEvent($class, $prefix);
 
         // Once we have the class and method name, we can build the Closure to resolve
         // the instance out of the IoC container and call the method on it with the
@@ -176,7 +176,7 @@ trait ManagesEvents
      */
     public function callComposer(ViewContract $view)
     {
-        $this->events->fire('composing: '.$view->name(), [$view]);
+        $this->events->dispatch('composing: '.$view->name(), [$view]);
     }
 
     /**
@@ -187,6 +187,6 @@ trait ManagesEvents
      */
     public function callCreator(ViewContract $view)
     {
-        $this->events->fire('creating: '.$view->name(), [$view]);
+        $this->events->dispatch('creating: '.$view->name(), [$view]);
     }
 }

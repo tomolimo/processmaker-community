@@ -46,6 +46,8 @@
     <option name="CASES_NOTES">Cases Notes</option>
     <option name="MSGS_HISTORY">Messages History</option>
     <!--//////////////////////////////////********//////////////////////////////////-->
+    <option name="SUMMARY_FORM">Summary Form</option>
+    <!--//////////////////////////////////********//////////////////////////////////-->
   </en>
 </OP_OBJ_TYPE>
 <ALL type="dropdown" mode="edit" sqlConnection="dbarray">
@@ -172,7 +174,6 @@ leimnud.event.add(getField('OP_OBJ_TYPE'), 'change', function() {
       showRowById('OP_ACTION');
     break;
     case 'CASES_NOTES':
-    /*----------------------------------********---------------------------------*/
       getField('ALL').value = '';
       getField('DYNAFORMS').value = '';
       getField('INPUTS').value = '';
@@ -248,7 +249,6 @@ switch (vValue) {
     showRowById('OP_ACTION');
   break;
   case 'CASES_NOTES':
-  /*----------------------------------********---------------------------------*/
       getField('ALL').value = '';
       getField('DYNAFORMS').value = '';
       getField('INPUTS').value = '';

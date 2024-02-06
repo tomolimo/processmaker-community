@@ -127,6 +127,14 @@
         this.var_uid = {label: "var_uid".translate(), value: "", type: "hidden"};
         this.protectedValue = {label: "protected value".translate(), value: false, type: "checkbox"};
         this.delay = {label: "Delay".translate(), value: 0, type: "text", regExp: /^[0-9]+$/};
+        this.resultsLimit = {
+            label: "Results Limit".translate(),
+            value: 10,
+            type: "text",
+            regExpNumber: /^\d*[0-9]\d*$/,
+            regExpString: /^[@][@%=]+[a-zA-Z\_]{1}\w+$/
+        };
+        this.forceSelection = {label: "force selection".translate(), value: false, type: "checkbox"};
         this.alt = {label: "title (mouseover)".translate(), value: "", type: "text"};
         this.multiple = {label: "multiple".translate(), value: false, type: "hidden"};
         this.script = {label: "javascript".translate(), value: "", type: "button", labelButton: "edit...".translate()};
@@ -508,7 +516,8 @@
         if (type === FormDesigner.main.TypesControl.suggest) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
                 "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay"];
+                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay", "resultsLimit",
+                "forceSelection"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
             }

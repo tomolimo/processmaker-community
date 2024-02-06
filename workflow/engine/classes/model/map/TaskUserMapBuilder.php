@@ -67,11 +67,15 @@ class TaskUserMapBuilder
 
         $tMap->addPrimaryKey('TAS_UID', 'TasUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
+        $tMap->addColumn('TAS_ID', 'TasId', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addPrimaryKey('USR_UID', 'UsrUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
         $tMap->addPrimaryKey('TU_TYPE', 'TuType', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addPrimaryKey('TU_RELATION', 'TuRelation', 'int', CreoleTypes::INTEGER, true, null);
+
+        $tMap->addColumn('ASSIGNED_ID', 'AssignedId', 'int', CreoleTypes::INTEGER, false, null);
 
         $tMap->addValidator('TAS_UID', 'maxLength', 'propel.validator.MaxLengthValidator', '32', 'Task UID can be no larger than 32 in size');
 

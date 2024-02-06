@@ -40,7 +40,7 @@
  */
 class IsoSubdivision extends BaseIsoSubdivision
 {
-    public function findById($IC_UID, $IS_UID)
+    public static function findById($IC_UID, $IS_UID)
     {
         $oCriteria = new Criteria('workflow');
         $oCriteria->addSelectColumn(IsoSubdivisionPeer::IC_UID);

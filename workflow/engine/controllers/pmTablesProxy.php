@@ -1,18 +1,8 @@
 <?php
-/**
- * pmTablesProxy
- *
- * @author Erik Amaru Ortiz <erik@colosa.com, aortiz.erik@gmail.com>
- * @inherits HttpProxyController
- * @access public
- */
 
 use ProcessMaker\Core\System;
 use ProcessMaker\Validation\ExceptionRestApi;
 use ProcessMaker\Validation\ValidationUploadedFiles;
-
-header("Content-type: text/html;charset=utf-8");
-require_once 'classes/model/AdditionalTables.php';
 
 class pmTablesProxy extends HttpProxyController
 {
@@ -217,6 +207,9 @@ class pmTablesProxy extends HttpProxyController
     public function save ($httpData, $alterTable = true)
     {
         try {
+            // Remove temporary Propel folder used by Report Tables and PM Tables (Bug PMC-388)
+            PmTable::removePmtPropelFolder();
+
             $reportTable = new \ProcessMaker\BusinessModel\ReportTable();
 
             return $reportTable->saveStructureOfTable((array)($httpData), $alterTable);
@@ -404,7 +397,6 @@ class pmTablesProxy extends HttpProxyController
         $this->className = $table['ADD_TAB_CLASS_NAME'];
         $this->classPeerName = $this->className . 'Peer';
         $sPath = PATH_DB . config("system.workspace") . PATH_SEP . 'classes' . PATH_SEP;
-
         if (! file_exists( $sPath . $this->className . '.php' )) {
             throw new Exception( 'Update:: ' . G::loadTranslation( 'ID_PMTABLE_CLASS_DOESNT_EXIST', $this->className ) );
         }
@@ -427,7 +419,6 @@ class pmTablesProxy extends HttpProxyController
         if ($result) {
             G::auditLog("UpdateDataPmtable", "Table Name: ".$table['ADD_TAB_NAME']." Table ID: (".$table['ADD_TAB_UID'].") ");
         }
-
         $this->success = $result;
         $this->message = $result ? G::loadTranslation( 'ID_UPDATED_SUCCESSFULLY' ) : G::loadTranslation( 'ID_UPDATE_FAILED' );
     }
@@ -828,6 +819,9 @@ class pmTablesProxy extends HttpProxyController
 
             fclose($f);
 
+            // Remove temporary Propel folder used by Report Tables and PM Tables (Bug PMC-388)
+            PmTable::removePmtPropelFolder();
+
             //First Validate the file
             $reportTable = new \ProcessMaker\BusinessModel\ReportTable();
 
@@ -1094,32 +1088,38 @@ class pmTablesProxy extends HttpProxyController
     /**
      * Update data from a addTable record
      *
-     * @param $row
+     * @param array $row
+     * @param array $primaryKeys
+     * @return boolean
+     * @throws Exception
+     *
+     * @see workflow/engine/controllers/pmTablesProxy::dataUpdate()
+     * @link https://wiki.processmaker.com/3.2/PM_Tables
      */
-    public function _dataUpdate ($row, $primaryKeys)
+    public function _dataUpdate($row, $primaryKeys)
     {
-        $keys = G::decrypt( $row['__index__'], 'pmtable' );
-        $keys = explode( ',', $keys );
-        unset( $row['__index__'] );
+        $keys = G::decrypt($row['__index__'], 'pmtable');
+        $keys = explode(',', $keys);
+        unset($row['__index__']);
 
-        $params = array ();
+        $params = [];
 
         foreach ($keys as $key) {
-            $params[] = is_numeric( $key ) ? $key : "'$key'";
+            $params[] = is_int($key) ? (int)$key : (string)$key;
         }
 
-        $obj = null;
-        eval( '$obj = ' . $this->classPeerName . '::retrieveByPk(' . implode( ',', $params ) . ');' );
-
-        if (is_object( $obj )) {
+        $className = $this->classPeerName;
+        $obj = call_user_func_array($className . "::retrieveByPk", $params);
+        if (is_object($obj)) {
             foreach ($row as $key => $value) {
                 // validation, don't modify primary keys
-                if (in_array( $key, $primaryKeys )) {
-                    throw new Exception( G::loadTranslation( 'ID_DONT_MODIFY_PK_VALUE', array ($key
-                    ) ) );
+                if (in_array($key, $primaryKeys)) {
+                    throw new Exception(G::loadTranslation('ID_DONT_MODIFY_PK_VALUE', [
+                        $key
+                    ]));
                 }
-                $action = 'set' . AdditionalTables::getPHPName( $key );
-                $obj->$action( $value );
+                $action = 'set' . AdditionalTables::getPHPName($key);
+                $obj->$action($value);
             }
             if ($r = $obj->validate()) {
                 $obj->save();
@@ -1129,7 +1129,7 @@ class pmTablesProxy extends HttpProxyController
                 foreach ($obj->getValidationFailures() as $objValidationFailure) {
                     $msg .= $objValidationFailure->getMessage() . "\n";
                 }
-                throw new Exception( $msg );
+                throw new Exception($msg);
             }
         } else {
             $result = false;
@@ -1141,22 +1141,25 @@ class pmTablesProxy extends HttpProxyController
     /**
      * Update data from a addTable record
      *
-     * @param $row
+     * @param array $row
+     * @return boolean
+     * @see workflow/engine/controllers/pmTablesProxy::dataDestroy()
+     * @link https://wiki.processmaker.com/3.2/PM_Tables
      */
-    public function _dataDestroy ($row)
+    public function _dataDestroy($row)
     {
-        $row = G::decrypt( $row, 'pmtable' );
-        $row = str_replace( '"', '', $row );
-        $keys = explode( ',', $row );
-        $params = array ();
+        $row = G::decrypt($row, 'pmtable');
+        $row = str_replace('"', '', $row);
+        $keys = explode(',', $row);
+        $params = [];
         foreach ($keys as $key) {
-            $params[] = is_numeric( $key ) ? $key : "'$key'";
+            $params[] = is_int($key) ? (int)$key : (string)$key;
         }
 
-        $obj = null;
-        eval( '$obj = ' . $this->classPeerName . '::retrieveByPk(' . implode( ',', $params ) . ');' );
+        $className = $this->classPeerName;
+        $obj = call_user_func_array($className . "::retrieveByPk", $params);
 
-        if (is_object( $obj )) {
+        if (is_object($obj)) {
             $obj->delete();
             return true;
         } else {

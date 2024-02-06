@@ -1348,8 +1348,7 @@ class Bootstrap
      *
      * @return void
      */
-    // _Internal: Remove recursion in result array
-    public function _del_p(&$ary)
+    public static function _del_p(&$ary)
     {
         foreach ($ary as $k => $v) {
             if ($k === '_p') {
@@ -1840,7 +1839,7 @@ class Bootstrap
      *
      * @return multitype:string mixed Ambigous <number, string>
      */
-    public function parseNormalUri($aRequestUri, array $arrayFriendlyUri = null)
+    public static function parseNormalUri($aRequestUri, array $arrayFriendlyUri = null)
     {
         if (substr($aRequestUri[1], 0, 3) == 'sys') {
             define('SYS_TEMP', substr($aRequestUri[1], 3));
@@ -2617,22 +2616,37 @@ class Bootstrap
     }
 
     /**
-     * Set Language
+     * Set Language defined in HTTP_ACCEPT_LANGUAGE
+     * Only will accept if the language defined exist in the list of Admin > Settings > Language
+     *
+     * @link https://wiki.processmaker.com/3.2/Languages#Installing_the_PO_File
      */
     public static function setLanguage()
     {
-        $acceptLanguage = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])?$_SERVER['HTTP_ACCEPT_LANGUAGE']:'en';
+        $acceptLanguage = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : 'en';
+        $langServer = $acceptLanguage;
         if (!defined('SYS_LANG')) {
-            $Translations = new \Translation;
+            $Translations = new Translation;
+            // Get the translation uploaded in the system
             $translationsTable = $Translations->getTranslationEnvironments();
             $inLang = false;
             foreach ($translationsTable as $locale) {
-                if ($locale['LOCALE'] == $acceptLanguage) {
+                // Check if the language used was uploaded in the Language
+                // The languages can defined like this : en, en-US (language-localization)
+                // We need to validate if the language exist it does not matter the localization
+                $langServer = $locale['LOCALE'];
+                $language = explode('-', $langServer);
+                $language = head($language);
+                if ($language === $acceptLanguage) {
                     $inLang = true;
                     break;
                 }
             }
-            $lang = $inLang?$acceptLanguage:'en';
+            // Overwriting the language defined in the server
+            // Example 1. Accept-Language = pt and langServer = pt-BR, result SYS_LANG = pt-BR
+            // Example 2. Accept-Language = pt and langServer = pt, result SYS_LANG = pt
+            // Example 3. Accept-Language = it and langServer = NONE, result SYS_LANG = en
+            $lang = ($inLang) ? $langServer : 'en';
             define("SYS_LANG", $lang);
         }
     }

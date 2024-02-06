@@ -8301,9 +8301,6 @@ class TCPDF {
 			$version = PHP_VERSION;
 			define('PHP_VERSION_ID', (($version{0} * 10000) + ($version{2} * 100) + $version{4}));
 		}
-		if (PHP_VERSION_ID < 50300) {
-			@set_magic_quotes_runtime($mqr);
-		}
 	}
 
 	/**
@@ -21418,7 +21415,7 @@ class TCPDF {
 		// define self-closing tags
 		$selfclosingtags = array('area','base','basefont','br','hr','input','img','link','meta');
 		// remove all unsupported tags (the line below lists all supported tags)
-		$html = strip_tags($html, '<marker/><a><b><blockquote><body><br><br/><dd><del><div><dl><dt><em><font><form><h1><h2><h3><h4><h5><h6><hr><hr/><i><img><input><label><li><ol><option><p><pre><s><select><small><span><strike><strong><sub><sup><table><tablehead><tcpdf><td><textarea><th><thead><tr><tt><u><ul>');
+		$html = strip_tags($html, '<marker><a><b><blockquote><body><br><dd><del><div><dl><dt><em><font><form><h1><h2><h3><h4><h5><h6><hr><i><img><input><label><li><ol><option><p><pre><s><select><small><span><strike><strong><sub><sup><table><tablehead><tcpdf><td><textarea><th><thead><tr><tt><u><ul>');
 		//replace some blank characters
 		$html = preg_replace('/<pre/', '<xre', $html); // preserve pre tag
 		$html = preg_replace('/<(table|tr|td|th|tcpdf|blockquote|dd|div|dl|dt|form|h1|h2|h3|h4|h5|h6|br|hr|li|ol|ul|p)([^\>]*)>[\n\r\t]+/', '<\\1\\2>', $html);
@@ -22789,6 +22786,7 @@ Putting 1 is equivalent to putting 0 and calling Ln() just after. Default value:
 								}
 								global $spacew;
 								while (preg_match('/([0-9\.\+\-]*)[\s](Td|cm|m|l|c|re)[\s]/x', $pmid, $strpiece, PREG_OFFSET_CAPTURE, $offset) == 1) {
+									$flagContinue = true;
 									// check if we are inside a string section '[( ... )]'
 									$stroffset = strpos($pmid, '[(', $offset);
 									if (($stroffset !== false) AND ($stroffset <= $strpiece[2][1])) {
@@ -22853,7 +22851,8 @@ Putting 1 is equivalent to putting 0 and calling Ln() just after. Default value:
 											// justify block
 											if (!$this->empty_string($this->lispacer)) {
 												$this->lispacer = '';
-												continue;
+												$flagContinue = false;
+												break;
 											}
 											preg_match('/([0-9\.\+\-]*)[\s]([0-9\.\+\-]*)[\s]([0-9\.\+\-]*)[\s]('.$strpiece[1][0].')[\s](re)([\s]*)/x', $pmid, $xmatches);
 											$currentxpos = $xmatches[1];
@@ -22906,36 +22905,39 @@ Putting 1 is equivalent to putting 0 and calling Ln() just after. Default value:
 											break;
 										}
 									}
-									// shift the annotations and links
-									$cxpos = ($currentxpos / $this->k);
-									$lmpos = ($this->lMargin + $this->cell_padding['L'] + $this->feps);
-									if ($this->inxobj) {
-										// we are inside an XObject template
-										foreach ($this->xobjects[$this->xobjid]['annotations'] as $pak => $pac) {
-											if (($pac['y'] >= $minstartliney) AND (($pac['x'] * $this->k) >= ($currentxpos - $this->feps)) AND (($pac['x'] * $this->k) <= ($currentxpos + $this->feps))) {
-												if ($cxpos > $lmpos) {
-													$this->xobjects[$this->xobjid]['annotations'][$pak]['x'] += ($spacew / $this->k);
-													$this->xobjects[$this->xobjid]['annotations'][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
-												} else {
-													$this->xobjects[$this->xobjid]['annotations'][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
-												}
-												break;
-											}
-										}
-									} elseif (isset($this->PageAnnots[$this->page])) {
-										foreach ($this->PageAnnots[$this->page] as $pak => $pac) {
-											if (($pac['y'] >= $minstartliney) AND (($pac['x'] * $this->k) >= ($currentxpos - $this->feps)) AND (($pac['x'] * $this->k) <= ($currentxpos + $this->feps))) {
-												if ($cxpos > $lmpos) {
-													$this->PageAnnots[$this->page][$pak]['x'] += ($spacew / $this->k);
-													$this->PageAnnots[$this->page][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
-												} else {
-													$this->PageAnnots[$this->page][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
-												}
-												break;
-											}
-										}
+									if ($flagContinue) {
+									    // shift the annotations and links
+									    $cxpos = ($currentxpos / $this->k);
+									    $lmpos = ($this->lMargin + $this->cell_padding['L'] + $this->feps);
+									    if ($this->inxobj) {
+									        // we are inside an XObject template
+									        foreach ($this->xobjects[$this->xobjid]['annotations'] as $pak => $pac) {
+									            if (($pac['y'] >= $minstartliney) AND (($pac['x'] * $this->k) >= ($currentxpos - $this->feps)) AND (($pac['x'] * $this->k) <= ($currentxpos + $this->feps))) {
+									                if ($cxpos > $lmpos) {
+									                    $this->xobjects[$this->xobjid]['annotations'][$pak]['x'] += ($spacew / $this->k);
+									                    $this->xobjects[$this->xobjid]['annotations'][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
+									                } else {
+									                    $this->xobjects[$this->xobjid]['annotations'][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
+									                }
+									                break;
+									            }
+									        }
+									    } elseif (isset($this->PageAnnots[$this->page])) {
+									        foreach ($this->PageAnnots[$this->page] as $pak => $pac) {
+									            if (($pac['y'] >= $minstartliney) AND (($pac['x'] * $this->k) >= ($currentxpos - $this->feps)) AND (($pac['x'] * $this->k) <= ($currentxpos + $this->feps))) {
+									                if ($cxpos > $lmpos) {
+									                    $this->PageAnnots[$this->page][$pak]['x'] += ($spacew / $this->k);
+									                    $this->PageAnnots[$this->page][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
+									                } else {
+									                    $this->PageAnnots[$this->page][$pak]['w'] += (($spacewidth * $pac['numspaces']) / $this->k);
+									                }
+									                break;
+									            }
+									        }
+									    }
 									}
-								} // end of while
+								}
+								// end of while
 								// remove markers
 								$pmid = str_replace('x*#!#*x', '', $pmid);
 								if ($this->isUnicodeFont()) {

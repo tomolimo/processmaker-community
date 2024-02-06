@@ -34,6 +34,12 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
     protected $category_uid = '';
 
     /**
+     * The value for the category_id field.
+     * @var        int
+     */
+    protected $category_id;
+
+    /**
      * The value for the category_parent field.
      * @var        string
      */
@@ -74,6 +80,17 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
     {
 
         return $this->category_uid;
+    }
+
+    /**
+     * Get the [category_id] column value.
+     * 
+     * @return     int
+     */
+    public function getCategoryId()
+    {
+
+        return $this->category_id;
     }
 
     /**
@@ -130,6 +147,28 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
         }
 
     } // setCategoryUid()
+
+    /**
+     * Set the value of [category_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setCategoryId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->category_id !== $v) {
+            $this->category_id = $v;
+            $this->modifiedColumns[] = ProcessCategoryPeer::CATEGORY_ID;
+        }
+
+    } // setCategoryId()
 
     /**
      * Set the value of [category_parent] column.
@@ -216,18 +255,20 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
 
             $this->category_uid = $rs->getString($startcol + 0);
 
-            $this->category_parent = $rs->getString($startcol + 1);
+            $this->category_id = $rs->getInt($startcol + 1);
 
-            $this->category_name = $rs->getString($startcol + 2);
+            $this->category_parent = $rs->getString($startcol + 2);
 
-            $this->category_icon = $rs->getString($startcol + 3);
+            $this->category_name = $rs->getString($startcol + 3);
+
+            $this->category_icon = $rs->getString($startcol + 4);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 4; // 4 = ProcessCategoryPeer::NUM_COLUMNS - ProcessCategoryPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 5; // 5 = ProcessCategoryPeer::NUM_COLUMNS - ProcessCategoryPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating ProcessCategory object", $e);
@@ -435,12 +476,15 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
                 return $this->getCategoryUid();
                 break;
             case 1:
-                return $this->getCategoryParent();
+                return $this->getCategoryId();
                 break;
             case 2:
-                return $this->getCategoryName();
+                return $this->getCategoryParent();
                 break;
             case 3:
+                return $this->getCategoryName();
+                break;
+            case 4:
                 return $this->getCategoryIcon();
                 break;
             default:
@@ -464,9 +508,10 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
         $keys = ProcessCategoryPeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getCategoryUid(),
-            $keys[1] => $this->getCategoryParent(),
-            $keys[2] => $this->getCategoryName(),
-            $keys[3] => $this->getCategoryIcon(),
+            $keys[1] => $this->getCategoryId(),
+            $keys[2] => $this->getCategoryParent(),
+            $keys[3] => $this->getCategoryName(),
+            $keys[4] => $this->getCategoryIcon(),
         );
         return $result;
     }
@@ -502,12 +547,15 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
                 $this->setCategoryUid($value);
                 break;
             case 1:
-                $this->setCategoryParent($value);
+                $this->setCategoryId($value);
                 break;
             case 2:
-                $this->setCategoryName($value);
+                $this->setCategoryParent($value);
                 break;
             case 3:
+                $this->setCategoryName($value);
+                break;
+            case 4:
                 $this->setCategoryIcon($value);
                 break;
         } // switch()
@@ -538,15 +586,19 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
         }
 
         if (array_key_exists($keys[1], $arr)) {
-            $this->setCategoryParent($arr[$keys[1]]);
+            $this->setCategoryId($arr[$keys[1]]);
         }
 
         if (array_key_exists($keys[2], $arr)) {
-            $this->setCategoryName($arr[$keys[2]]);
+            $this->setCategoryParent($arr[$keys[2]]);
         }
 
         if (array_key_exists($keys[3], $arr)) {
-            $this->setCategoryIcon($arr[$keys[3]]);
+            $this->setCategoryName($arr[$keys[3]]);
+        }
+
+        if (array_key_exists($keys[4], $arr)) {
+            $this->setCategoryIcon($arr[$keys[4]]);
         }
 
     }
@@ -562,6 +614,10 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
 
         if ($this->isColumnModified(ProcessCategoryPeer::CATEGORY_UID)) {
             $criteria->add(ProcessCategoryPeer::CATEGORY_UID, $this->category_uid);
+        }
+
+        if ($this->isColumnModified(ProcessCategoryPeer::CATEGORY_ID)) {
+            $criteria->add(ProcessCategoryPeer::CATEGORY_ID, $this->category_id);
         }
 
         if ($this->isColumnModified(ProcessCategoryPeer::CATEGORY_PARENT)) {
@@ -629,6 +685,8 @@ abstract class BaseProcessCategory extends BaseObject implements Persistent
      */
     public function copyInto($copyObj, $deepCopy = false)
     {
+
+        $copyObj->setCategoryId($this->category_id);
 
         $copyObj->setCategoryParent($this->category_parent);
 

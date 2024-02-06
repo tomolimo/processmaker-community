@@ -7,6 +7,7 @@ use AbeConfigurationPeer;
 use AbeRequests;
 use AbeRequestsPeer;
 use AbeResponsesPeer;
+use ActionsByEmailCoreClass;
 use AppDelegation;
 use AppDelegationPeer;
 use AppMessage;
@@ -18,6 +19,8 @@ use G;
 use PmDynaform;
 use PMLicensedFeatures;
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\AbeConfiguration as AbeConfigurationModel;
+use ProcessMaker\Model\EmailServerModel;
 use ProcessMaker\Plugins\PluginRegistry;
 use Publisher;
 use ResultSet;
@@ -267,10 +270,10 @@ class ActionsByEmail
 
     /**
      * Get the information for the log.
-     * 
+     *
      * @param array $arrayData
      * @return array
-     * 
+     *
      * @see ProcessMaker\Services\Api\ActionsByEmail->loadActionByEmail()
      * @see workflow/engine/methods/actionsByEmail/actionsByEmailAjax.php
      * @link https://wiki.processmaker.com/3.3/Actions_by_Email
@@ -376,34 +379,29 @@ class ActionsByEmail
         if (!isset($arrayData['REQ_UID'])) {
             $arrayData['REQ_UID'] = '';
         }
-
-        $abeRequest = new AbeRequests();
-        $dataRes = $abeRequest->getAbeRequest($arrayData['REQ_UID']);
-
+        $dataRes = AbeConfigurationModel::getAbeRequest($arrayData['REQ_UID']);
         if (!empty($dataRes)) {
             if (is_null($dataRes['DEL_FINISH_DATE'])) {
-
-                $emailServer = new EmailServer();
-                $criteria = $emailServer->getEmailServerCriteria();
-                $rsCriteria = EmailServerPeer::doSelectRS($criteria);
-                $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                if ($rsCriteria->next()) {
-                    $row = $rsCriteria->getRow();
-
-                    $arrayConfigAux = $row;
-                    $arrayConfigAux["SMTPSecure"] = $row["SMTPSECURE"];
-                }
-                $aSetup = (!empty($arrayConfigAux))? $arrayConfigAux : System::getEmailConfiguration();
-
+                $emailServer = new EmailServerModel();
+                $criteria = $emailServer->getEmailServer($dataRes['ABE_EMAIL_SERVER_UID']);
+                $setup = !empty($criteria) ? $criteria : $emailServer->getEmailServerDefault();
+                $setup['SMTPSecure'] = $setup['SMTPSECURE'];
+                unset($setup['SMTPSECURE']);
                 $spool = new SpoolRun();
-                $spool->setConfig($aSetup);
+                $spool->setConfig($setup);
+                $abeCore = new ActionsByEmailCoreClass();
+                $abeCore->setTaskAbeProperties([
+                    'ABE_MAILSERVER_OR_MAILCURRENT' => $dataRes['ABE_MAILSERVER_OR_MAILCURRENT'],
+                    'ABE_TYPE' => $dataRes['ABE_TYPE']
+                ]);
+                $abeCore->publicDefineEmailFrom($setup);
                 $messageArray = AppMessage::buildMessageRow(
                     '',
                     $dataRes['APP_UID'],
                     $dataRes['DEL_INDEX'],
                     WsBase::MESSAGE_TYPE_ACTIONS_BY_EMAIL,
                     $dataRes['ABE_REQ_SUBJECT'],
-                    $aSetup['MESS_ACCOUNT'],
+                    $abeCore->getEmailFrom(),
                     $dataRes['ABE_REQ_SENT_TO'],
                     $dataRes['ABE_REQ_BODY'],
                     '',
@@ -413,7 +411,7 @@ class ActionsByEmail
                     'pending',
                     1,
                     '',
-                    false,
+                    true,
                     isset($dataRes['APP_NUMBER']) ? $dataRes['APP_NUMBER'] : 0,
                     $dataRes['PRO_ID'],
                     $dataRes['TAS_ID']
@@ -436,10 +434,10 @@ class ActionsByEmail
                     throw $error;
                 }
             } else {
-                $message =  G::LoadTranslation('ID_UNABLE_TO_SEND_EMAIL');
+                $message = G::LoadTranslation('ID_UNABLE_TO_SEND_EMAIL');
             }
         } else {
-             $message = G::LoadTranslation('ID_UNEXPECTED_ERROR_OCCURRED_PLEASE');
+            $message = G::LoadTranslation('ID_UNEXPECTED_ERROR_OCCURRED_PLEASE');
         }
 
         //Return
@@ -451,7 +449,7 @@ class ActionsByEmail
      * @param array $arrayData
      *
      * @return string $message
-     * 
+     *
      * @see workflow/engine/methods/actionsByEmail/actionsByEmailAjax.php
      * @see ProcessMaker\Services\Api\ActionsByEmail->viewForm()
      * @link https://wiki.processmaker.com/3.3/Actions_by_Email#Actions_by_Email_Log
@@ -560,10 +558,10 @@ class ActionsByEmail
 
     /**
      * Get the decision from Actions By Email by BPMN dynaform.
-     * 
+     *
      * @param array $dataRes
      * @return string
-     * 
+     *
      * @see ActionsByEmail->viewForm()
      * @link https://wiki.processmaker.com/3.3/Actions_by_Email
      */
@@ -640,7 +638,7 @@ class ActionsByEmail
                         $message = $field->label . ': ';
                         if (!empty($value)) {
                             /**
-                             * Value 'On' is deprecated in version ProcessMaker 3.x.x. 
+                             * Value 'On' is deprecated in version ProcessMaker 3.x.x.
                              * now return '1'.
                              * @deprecated
                              */
@@ -687,7 +685,6 @@ class ActionsByEmail
                     $flagLogin = false;
 
                     if (!isset($_SESSION['USER_LOGGED'])) {
-                        /*----------------------------------********---------------------------------*/
 
                         if (defined('PM_SINGLE_SIGN_ON')) {
                             $pluginRegistry = PluginRegistry::loadSingleton();

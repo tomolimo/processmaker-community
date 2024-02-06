@@ -2,27 +2,13 @@
 /**
  * processes_ImportFile.php
  *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.
+ * If the feature is enable and the code_scanner_scope was enable the argument import_process will check the code
+ * Review in a process import
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
+ * @link https://wiki.processmaker.com/3.1/Importing_and_Exporting_Projects#Importing_a_Project
  */
 
-use \ProcessMaker\Importer\XmlImporter;
+use ProcessMaker\Importer\XmlImporter;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 
 ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
@@ -35,14 +21,13 @@ ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($valida
 });
 
 ini_set("max_execution_time", 0);
-$affectedGroups = array();
+$affectedGroups = [];
 $granularImport = false;
 $objectImport = '';
 $objectsToImport = '';
 if (isset($_POST["PRO_FILENAME"])) {
     $_POST["PRO_FILENAME"] = htmlspecialchars_decode($_POST["PRO_FILENAME"]);
 }
-/*----------------------------------********---------------------------------*/
 
 if (isset($_FILES["PROCESS_FILENAME"]) && (pathinfo($_FILES["PROCESS_FILENAME"]["name"], PATHINFO_EXTENSION) == "pmx"
         || pathinfo($_FILES["PROCESS_FILENAME"]["name"], PATHINFO_EXTENSION) == "pmx2")
@@ -64,7 +49,6 @@ if (isset($_FILES["PROCESS_FILENAME"]) && (pathinfo($_FILES["PROCESS_FILENAME"][
         ) {
             die(G::LoadTranslation("ID_IMPORTER_ERROR_FILE_INVALID_TYPE_OR_CORRUPT_DATA"));
         }
-        /*----------------------------------********---------------------------------*/
         if ($_POST['generateUid'] === 'generate') {
                 $generateUid = true;
                 $prjUid = $importer->import($opt1, $opt2, $generateUid, $objectsToImport);
@@ -95,7 +79,6 @@ if (isset($_FILES["PROCESS_FILENAME"]) && (pathinfo($_FILES["PROCESS_FILENAME"][
             "project_type_aux"          => $proType
         );
     } catch (Exception $e) {
-        /*----------------------------------********---------------------------------*/
                 $groupsExists = ($e->getCode() == XmlImporter::IMPORT_STAT_GROUP_ALREADY_EXISTS) ? 1 : 0;
                 if ($groupsExists === 1) {
                     $arrayGroups = XmlImporter::$affectedGroups;
@@ -125,7 +108,6 @@ if (isset($_FILES["PROCESS_FILENAME"]) && (pathinfo($_FILES["PROCESS_FILENAME"][
                     "groupBeforeAccion" => 'uploadFileNewProcess',
                     "importOption" => 0
                 );
-        /*----------------------------------********---------------------------------*/
     }
 
     echo G::json_encode($result);
@@ -173,7 +155,6 @@ if (isset($_POST["PRO_FILENAME"]) &&
         die(G::LoadTranslation( "ID_IMPORTER_ERROR_FILE_INVALID_TYPE_OR_CORRUPT_DATA" ));
     }
     try {
-        /*----------------------------------********---------------------------------*/
         $prjUid = $importer->import($option, $optionGroup, false, $objectsToImport);
 
         $oProcess = new Process();
@@ -193,7 +174,6 @@ if (isset($_POST["PRO_FILENAME"]) &&
             "project_type_aux"       => $proType
         );
     } catch (Exception $e) {
-        /*----------------------------------********---------------------------------*/
                 $groupsExists = ($e->getCode() == XmlImporter::IMPORT_STAT_GROUP_ALREADY_EXISTS) ? 1 : 0;
                 if ($groupsExists === 1) {
                     $arrayGroups = XmlImporter::$affectedGroups;
@@ -218,7 +198,6 @@ if (isset($_POST["PRO_FILENAME"]) &&
                     "groupBeforeAccion" => "uploadFileNewProcess",
                     "importOption" => (isset($_POST["IMPORT_OPTION"])) ? (int)($_POST["IMPORT_OPTION"]) : 0
                 );
-        /*----------------------------------********---------------------------------*/
     }
 
     echo G::json_encode($result);

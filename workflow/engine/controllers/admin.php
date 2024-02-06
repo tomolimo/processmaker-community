@@ -271,7 +271,6 @@ class Admin extends Controller
 
         $properties = array ();
         $ee = '';
-        /*----------------------------------********---------------------------------*/
         $systemName = 'ProcessMaker';
         if (defined('SYSTEM_NAME')) {
             $systemName = SYSTEM_NAME;

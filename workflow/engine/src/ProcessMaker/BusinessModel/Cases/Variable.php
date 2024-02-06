@@ -90,7 +90,7 @@ class Variable extends Attribute
      * @return mixed Returns array with Application, AppDelegation and Variable record,
      *               ThrowTheException/FALSE otherwise
      */
-    private function __getApplicationAppDelegationAndVariableRecordByData(
+    private function getApplicationAppDelegationAndVariableRecordByData(
         $applicationUid,
         $delIndex,
         $variableName,
@@ -144,7 +144,7 @@ class Variable extends Attribute
      *
      * @return array Returns an array with Fields of a Grid
      */
-    private function __getGridFieldDefinitions($projectUid, $gridName)
+    private function getGridFieldDefinitions($projectUid, $gridName)
     {
         try {
             $arrayGridField = [];
@@ -202,7 +202,7 @@ class Variable extends Attribute
      *
      * @return bool Returns TRUE when array data is valid, ThrowTheException/FALSE otherwise
      */
-    private function __validateData(array $arrayData, array $arrayVariableData, $throwException = true)
+    private function validateData(array $arrayData, array $arrayVariableData, $throwException = true)
     {
         try {
             if (empty($arrayData)) {
@@ -303,7 +303,7 @@ class Variable extends Attribute
     {
         try {
             //Verify data and Set variables
-            $result = $this->__getApplicationAppDelegationAndVariableRecordByData(
+            $result = $this->getApplicationAppDelegationAndVariableRecordByData(
                 $applicationUid, $delIndex, $variableName, $throwException
             );
 
@@ -329,12 +329,12 @@ class Variable extends Attribute
             }
 
             if ($arrayVariableData['VAR_FIELD_TYPE'] == 'grid') {
-                $arrayVariableData['arrayGridField'] = $this->__getGridFieldDefinitions(
+                $arrayVariableData['arrayGridField'] = $this->getGridFieldDefinitions(
                     $arrayVariableData['PRJ_UID'], $arrayVariableData['VAR_NAME']
                 );
             }
 
-            $result = $this->__validateData($arrayData, $arrayVariableData, $throwException);
+            $result = $this->validateData($arrayData, $arrayVariableData, $throwException);
 
             if ($result === false) {
                 return false;
@@ -396,7 +396,7 @@ class Variable extends Attribute
     {
         try {
             //Verify data and Set variables
-            $result = $this->__getApplicationAppDelegationAndVariableRecordByData(
+            $result = $this->getApplicationAppDelegationAndVariableRecordByData(
                 $applicationUid, $delIndex, $variableName, $throwException
             );
 
@@ -420,12 +420,12 @@ class Variable extends Attribute
             }
 
             if ($arrayVariableData['VAR_FIELD_TYPE'] == 'grid') {
-                $arrayVariableData['arrayGridField'] = $this->__getGridFieldDefinitions(
+                $arrayVariableData['arrayGridField'] = $this->getGridFieldDefinitions(
                     $arrayVariableData['PRJ_UID'], $arrayVariableData['VAR_NAME']
                 );
             }
 
-            $result = $this->__validateData($arrayData, $arrayVariableData, $throwException);
+            $result = $this->validateData($arrayData, $arrayVariableData, $throwException);
 
             if ($result === false) {
                 return false;
@@ -490,7 +490,7 @@ class Variable extends Attribute
     {
         try {
             //Verify data and Set variables
-            $result = $this->__getApplicationAppDelegationAndVariableRecordByData(
+            $result = $this->getApplicationAppDelegationAndVariableRecordByData(
                 $applicationUid, $delIndex, $variableName, $throwException
             );
 
@@ -605,7 +605,7 @@ class Variable extends Attribute
             $arrayVariable = [];
 
             //Verify data and Set variables
-            $result = $this->__getApplicationAppDelegationAndVariableRecordByData(
+            $result = $this->getApplicationAppDelegationAndVariableRecordByData(
                 $applicationUid, $delIndex, $variableName, $throwException
             );
 
@@ -696,7 +696,7 @@ class Variable extends Attribute
                 }
             }
 
-            $result = $this->__getApplicationAppDelegationAndVariableRecordByData(
+            $result = $this->getApplicationAppDelegationAndVariableRecordByData(
                 $applicationUid, $delIndex, $variableName, $throwException
             );
 

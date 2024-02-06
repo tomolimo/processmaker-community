@@ -5,7 +5,7 @@ use ProcessMaker\Plugins\PluginRegistry;
 /**
  * @package workflow.engine.classes
  */
-class PMPlugin
+class PMPlugin extends PmPluginCompatibility
 {
     public $sNamespace;
     public $sClassName;
@@ -22,7 +22,7 @@ class PMPlugin
      * @param string $sFilename
      * @return void
      */
-    public function PMPlugin($sNamespace, $sFilename = null)
+    public function __construct($sNamespace, $sFilename = null)
     {
         $this->sNamespace = $sNamespace;
         $this->sClassName = $sNamespace . 'Plugin';

@@ -18,7 +18,7 @@ class ReportTable
      *
      * @return object
      */
-    private function __getDefaultColumns($type = 'NORMAL')
+    private function getDefaultColumns($type = 'NORMAL')
     {
         $defaultColumns = [];
         $application = new \stdClass(); //APPLICATION KEY
@@ -97,7 +97,7 @@ class ReportTable
      *
      * @return string
      */
-    private function __populateData(array $arrayTableData, array $tableNameMap)
+    private function populateData(array $arrayTableData, array $tableNameMap)
     {
         try {
             $errors = '';
@@ -408,7 +408,7 @@ class ReportTable
                 //New report table
                 if ($flagIsReportTable && $flagAlterTable) {
                     //Setting default columns
-                    $defaultColumns = $this->__getDefaultColumns($arrayData['REP_TAB_TYPE']);
+                    $defaultColumns = $this->getDefaultColumns($arrayData['REP_TAB_TYPE']);
                     $columns = array_merge($defaultColumns, $columns);
                 }
 
@@ -835,7 +835,7 @@ class ReportTable
             }
 
             if (!empty($tableNameMap)) {
-                $errors = $this->__populateData($arrayTableData, $tableNameMap);
+                $errors = $this->populateData($arrayTableData, $tableNameMap);
             }
 
             //Return

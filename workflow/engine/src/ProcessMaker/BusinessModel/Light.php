@@ -25,9 +25,9 @@ use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 use ProcessMaker\BusinessModel\Lists;
 use ProcessMaker\BusinessModel\Task as BusinessModelTask;
 use ProcessMaker\BusinessModel\User as BusinessModelUser;
-/*----------------------------------********---------------------------------*/
 use ProcessMaker\Core\RoutingScreen;
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\Process as ProcessEloquent;
 use ProcessMaker\Services\Api\Project\Activity\Step as ActivityStep;
 use ProcessMaker\Util\DateTime;
 use ProcessMaker\Validation\ExceptionRestApi;
@@ -605,7 +605,6 @@ class Light
                 $tasks
             );
 
-            /*----------------------------------********---------------------------------*/
 
             $array = json_decode(json_encode($fields), true);
             $array['message'] = trim(strip_tags($array['message']));
@@ -876,7 +875,6 @@ class Light
         $_SESSION["USERNAME_PREVIOUS1"] = $usernamePrevious1;
         $_SESSION["USERNAME_PREVIOUS2"] = $usernamePrevious2;
 
-        /*----------------------------------********---------------------------------*/
 
         try {
             $oatoken = new \OauthAccessTokens();
@@ -1220,109 +1218,29 @@ class Light
     }
 
     /**
-     * @param $action
-     * @param $categoryUid
-     * @param $userUid
+     * Return the list of processes
+     *
+     * @param string $action
+     * @param string $categoryUid
+     * @param string $userUid
+     *
+     * @see ProcessMaker\Services\Api\Light::getProcessList();
      *
      * @return array
-     * @throws PropelException
      */
     public function getProcessList($action, $categoryUid, $userUid)
     {
-        //$action = isset( $_REQUEST['action'] ) ? $_REQUEST['action'] : null;
-        //$categoryUid = isset( $_REQUEST['CATEGORY_UID'] ) ? $_REQUEST['CATEGORY_UID'] : null;
-        //$userUid = (isset( $_SESSION['USER_LOGGED'] ) && $_SESSION['USER_LOGGED'] != '') ? $_SESSION['USER_LOGGED'] : null;
+        $processes = [];
+        $processes[] = ['', G::LoadTranslation('ID_ALL_PROCESS')];
 
-        // global $oAppCache;
-        $oAppCache = new AppCacheView();
-        $processes = array();
-        $processes[] = array('', G::LoadTranslation('ID_ALL_PROCESS'));
+        $process = new ProcessEloquent();
+        $processList = $process->getProcessList($categoryUid, $userUid);
 
-        //get the list based in the action provided
-        switch ($action) {
-            case 'draft':
-                $cProcess = $oAppCache->getDraftListCriteria($userUid); //fast enough
-                break;
-            case 'sent':
-                $cProcess = $oAppCache->getSentListProcessCriteria($userUid); // fast enough
-                break;
-            case 'simple_search':
-            case 'search':
-                //in search action, the query to obtain all process is too slow, so we need to query directly to
-                //process and content tables, and for that reason we need the current language in AppCacheView.
+        $values = (array_map(function ($x) {
+            return array_values([$x['PRO_UID'], $x['PRO_TITLE']]);
+        }, $processList));
 
-                $oConf = new Configurations();
-                $oConf->loadConfig($x, 'APP_CACHE_VIEW_ENGINE', '', '', '', '');
-                $appCacheViewEngine = $oConf->aConfig;
-                $lang = isset($appCacheViewEngine['LANG']) ? $appCacheViewEngine['LANG'] : 'en';
-
-                $cProcess = new Criteria('workflow');
-                $cProcess->clearSelectColumns();
-                $cProcess->addSelectColumn(ProcessPeer::PRO_UID);
-                $cProcess->addSelectColumn(ProcessPeer::PRO_TITLE);
-                if ($categoryUid) {
-                    $cProcess->add(ProcessPeer::PRO_CATEGORY, $categoryUid);
-                }
-                $cProcess->add(ProcessPeer::PRO_STATUS, 'ACTIVE');
-                $cProcess->addAscendingOrderByColumn(ProcessPeer::PRO_TITLE);
-
-                $oDataset = ProcessPeer::doSelectRS($cProcess);
-                $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                $oDataset->next();
-
-                while ($aRow = $oDataset->getRow()) {
-                    $processes[] = array($aRow['PRO_UID'], $aRow['PRO_TITLE']);
-                    $oDataset->next();
-                }
-
-                return print G::json_encode($processes);
-                break;
-            case 'unassigned':
-                $cProcess = $oAppCache->getUnassignedListCriteria($userUid);
-                break;
-            case 'paused':
-                $cProcess = $oAppCache->getPausedListCriteria($userUid);
-                break;
-            case 'to_revise':
-                $cProcess = $oAppCache->getToReviseListCriteria($userUid);
-                break;
-            case 'to_reassign':
-                $cProcess = $oAppCache->getToReassignListCriteria($userUid);
-                break;
-            case 'gral':
-                $cProcess = $oAppCache->getGeneralListCriteria();
-                break;
-            case 'todo':
-            default:
-                $cProcess = $oAppCache->getToDoListCriteria($userUid); //fast enough
-                break;
-        }
-        //get the processes for this user in this action
-        $cProcess->clearSelectColumns();
-        $cProcess->addSelectColumn(AppCacheViewPeer::PRO_UID);
-        $cProcess->addSelectColumn(AppCacheViewPeer::APP_PRO_TITLE);
-        $cProcess->setDistinct(AppCacheViewPeer::PRO_UID);
-        if ($categoryUid) {
-            require_once 'classes/model/Process.php';
-            $cProcess->addAlias('CP', 'PROCESS');
-            $cProcess->add('CP.PRO_CATEGORY', $categoryUid, Criteria::EQUAL);
-            $cProcess->addJoin(AppCacheViewPeer::PRO_UID, 'CP.PRO_UID', Criteria::LEFT_JOIN);
-            $cProcess->addAsColumn('CATEGORY_UID', 'CP.PRO_CATEGORY');
-        }
-
-        $cProcess->addAscendingOrderByColumn(AppCacheViewPeer::APP_PRO_TITLE);
-
-        $oDataset = AppCacheViewPeer::doSelectRS($cProcess, Propel::getDbConnection('workflow_ro'));
-        $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        $oDataset->next();
-
-        while ($aRow = $oDataset->getRow()) {
-            $processes[] = array(
-                $aRow['PRO_UID'],
-                $aRow['APP_PRO_TITLE']
-            );
-            $oDataset->next();
-        }
+        $processes = array_merge($processes, $values);
 
         return $processes;
     }
@@ -1423,7 +1341,6 @@ class Light
         $sysConf = Bootstrap::getSystemConfiguration('', '', config("system.workspace"));
         $multiTimeZone = false;
         //Set Time Zone
-        /*----------------------------------********---------------------------------*/
         $tz = isset($_SESSION['USR_TIME_ZONE']) ? $_SESSION['USR_TIME_ZONE'] : $sysConf['time_zone'];
         $offset = timezone_offset_get(new \DateTimeZone($tz), new \DateTime());
         $response['timeZone'] = sprintf(
@@ -1437,7 +1354,6 @@ class Light
         $response['version'] = $fields['PM_VERSION'];
 
         $buildType = 'Community';
-        /*----------------------------------********---------------------------------*/
         $response['buildType'] = $buildType;
 
         $conf = new Configurations();
@@ -1541,11 +1457,9 @@ class Light
         $dataList['appUidCheck'] = $casesToCheck;
         $dataList['userId'] = $userUid;
         $dataList['action'] = $action;
-            /*----------------------------------********---------------------------------*/
             $case = new Cases();
             $response = $case->getList($dataList);
 
-        /*----------------------------------********---------------------------------*/
         $result = [];
         foreach ($data as $key => $val) {
             $flagRemoved = true;

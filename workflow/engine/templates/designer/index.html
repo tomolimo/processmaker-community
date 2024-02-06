@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <head>
+    <link rel="stylesheet" href="/lib/pmdynaform/libs/font-awesome-4.6.3/css/font-awesome.min.css">
     <!-- translations -->
     <script type="text/javascript" src="{$translationMafe}"></script>
 
@@ -29,6 +30,7 @@
         var SYS_LANG = "{$SYS_LANG}";
         var SYS_SKIN = "{$SYS_SKIN}";
         var HTTP_SERVER_HOSTNAME = "{$HTTP_SERVER_HOSTNAME}";
+        var PMDYNAFORM_FIRST_TIME = "{$PMDYNAFORM_FIRST_TIME}" === "1";
         var maxFileSizeInformation = {$maxFileSizeInformation};
     </script>
     <script type="text/javascript" src="/lib-dev/js/wz_jsgraphics.js"></script>
@@ -87,6 +89,7 @@
         var SYS_LANG = "{$SYS_LANG}";
         var SYS_SKIN = "{$SYS_SKIN}";
         var HTTP_SERVER_HOSTNAME = "{$HTTP_SERVER_HOSTNAME}";
+        var PMDYNAFORM_FIRST_TIME = "{$PMDYNAFORM_FIRST_TIME}" === "1";
         var maxFileSizeInformation = {$maxFileSizeInformation};
     </script>
     <script type="text/javascript" src="/lib/js/mafe-{$buildhash}.js"></script>
@@ -95,7 +98,6 @@
     {/foreach}
 
 {/if}
-
 
 </head>
 <body onresize="resizingFrame();">

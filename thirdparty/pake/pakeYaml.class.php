@@ -80,7 +80,7 @@
      * @access public
      * @return void
      */
-     public function pakeYAMLNode() {
+     public function __construct() {
       $this->id = uniqid('');
     }
   }

@@ -14,9 +14,11 @@ class EmailServer
 {
     private $arrayFieldDefinition = array(
         "MESS_UID"                 => array("type" => "string", "required" => false, "empty" => false, "defaultValues" => array(),                    "fieldNameAux" => "emailServerUid"),
-        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL"), "fieldNameAux" => "emailServerEngine"),
+        "MESS_ENGINE"              => array("type" => "string", "required" => true,  "empty" => false, "defaultValues" => array("PHPMAILER", "MAIL", "IMAP"), "fieldNameAux" => "emailServerEngine"),
         "MESS_SERVER"              => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerServer"),
         "MESS_PORT"                => array("type" => "int",    "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerPort"),
+        "MESS_INCOMING_SERVER"     => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerIncomingServer"),
+        "MESS_INCOMING_PORT"       => array("type" => "int",    "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerIncomingPort"),
         "MESS_RAUTH"               => array("type" => "int",    "required" => false, "empty" => false, "defaultValues" => array(0, 1),                "fieldNameAux" => "emailServerRauth"),
         "MESS_ACCOUNT"             => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerUserName"),
         "MESS_PASSWORD"            => array("type" => "string", "required" => false, "empty" => true,  "defaultValues" => array(),                    "fieldNameAux" => "emailServerPassword"),
@@ -52,10 +54,10 @@ class EmailServer
             throw $e;
         }
     }
-    
+
     /**
      * Get the default information from the context.
-     * 
+     *
      * @global type $RBAC
      * @return void
      */
@@ -527,6 +529,7 @@ class EmailServer
                     }
                     break;
                 case "PHPMAILER":
+                case "IMAP":
                     $numSteps = ($arrayData['MAIL_TO'] != '') ? count($arrayPhpMailerTestName) :
                         count($arrayPhpMailerTestName) - 1;
                     for ($step = 1; $step <= $numSteps; $step++) {
@@ -831,6 +834,8 @@ class EmailServer
                         'engine'=> $arrayData["MESS_ENGINE"],
                         'server' => $arrayData["MESS_SERVER"],
                         'port' => $arrayData["MESS_PORT"],
+                        'incomingServer' => $arrayData["MESS_INCOMING_SERVER"],
+                        'incomingPort' => $arrayData["MESS_INCOMING_PORT"],
                         'requireAuthentication' => $arrayData["MESS_RAUTH"],
                         'account' => $arrayData["MESS_ACCOUNT"],
                         'senderEmail' => $arrayData["MESS_FROM_MAIL"],
@@ -1002,6 +1007,8 @@ class EmailServer
                         'engine' => $arrayData["MESS_ENGINE"],
                         'server' => $arrayData["MESS_SERVER"],
                         'port' => $arrayData["MESS_PORT"],
+                        'incomingServer' => $arrayData["MESS_INCOMING_SERVER"],
+                        'incomingPort' => $arrayData["MESS_INCOMING_PORT"],
                         'requireAuthentication' => $arrayData["MESS_RAUTH"],
                         'account' => $arrayData["MESS_ACCOUNT"],
                         'senderEmail' => $arrayData["MESS_FROM_MAIL"],
@@ -1088,6 +1095,8 @@ class EmailServer
             $criteria->addSelectColumn(\EmailServerPeer::MESS_ENGINE);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_SERVER);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_PORT);
+            $criteria->addSelectColumn(\EmailServerPeer::MESS_INCOMING_SERVER);
+            $criteria->addSelectColumn(\EmailServerPeer::MESS_INCOMING_PORT);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_RAUTH);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_ACCOUNT);
             $criteria->addSelectColumn(\EmailServerPeer::MESS_PASSWORD);
@@ -1120,6 +1129,8 @@ class EmailServer
                 $this->getFieldNameByFormatFieldName("MESS_ENGINE")              => $record["MESS_ENGINE"],
                 $this->getFieldNameByFormatFieldName("MESS_SERVER")              => $record["MESS_SERVER"],
                 $this->getFieldNameByFormatFieldName("MESS_PORT")                => $record["MESS_PORT"],
+                $this->getFieldNameByFormatFieldName("MESS_INCOMING_SERVER")     => $record["MESS_INCOMING_SERVER"],
+                $this->getFieldNameByFormatFieldName("MESS_INCOMING_PORT")       => $record["MESS_INCOMING_PORT"],
                 $this->getFieldNameByFormatFieldName("MESS_RAUTH")               => $record["MESS_RAUTH"],
                 $this->getFieldNameByFormatFieldName("MESS_ACCOUNT")             => $record["MESS_ACCOUNT"],
                 $this->getFieldNameByFormatFieldName("MESS_PASSWORD")            => $record["MESS_PASSWORD"],
@@ -1165,6 +1176,8 @@ class EmailServer
                 $arrayData["MESS_ENGINE"]              = $row["MESS_ENGINE"];
                 $arrayData["MESS_SERVER"]              = $row["MESS_SERVER"];
                 $arrayData["MESS_PORT"]                = (int)($row["MESS_PORT"]);
+                $arrayData["MESS_INCOMING_SERVER"]     = $row["MESS_INCOMING_SERVER"];
+                $arrayData["MESS_INCOMING_PORT"]       = (int)($row["MESS_INCOMING_PORT"]);
                 $arrayData["MESS_RAUTH"]               = (int)($row["MESS_RAUTH"]);
                 $arrayData["MESS_ACCOUNT"]             = $row["MESS_ACCOUNT"];
                 $arrayData["MESS_PASSWORD"]            = $row["MESS_PASSWORD"];
@@ -1221,6 +1234,7 @@ class EmailServer
                 $criteria->add(
                     $criteria->getNewCriterion(\EmailServerPeer::MESS_ENGINE,    "%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE)->addOr(
                         $criteria->getNewCriterion(\EmailServerPeer::MESS_SERVER,    "%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE))->addOr(
+                        $criteria->getNewCriterion(\EmailServerPeer::MESS_INCOMING_SERVER,"%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE))->addOr(
                         $criteria->getNewCriterion(\EmailServerPeer::MESS_ACCOUNT,   "%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE))->addOr(
                         $criteria->getNewCriterion(\EmailServerPeer::MESS_FROM_NAME, "%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE))->addOr(
                         $criteria->getNewCriterion(\EmailServerPeer::SMTPSECURE,     "%" . $arrayFilterData["filter"] . "%", \Criteria::LIKE))
@@ -1245,7 +1259,7 @@ class EmailServer
             if (!is_null($sortField) && trim($sortField) != "") {
                 $sortField = strtoupper($sortField);
 
-                if (in_array($sortField, array("MESS_ENGINE", "MESS_SERVER", "MESS_ACCOUNT", "MESS_FROM_NAME", "SMTPSECURE"))) {
+                if (in_array($sortField, array("MESS_ENGINE", "MESS_SERVER", "MESS_INCOMING_SERVER", "MESS_ACCOUNT", "MESS_FROM_NAME", "SMTPSECURE"))) {
                     $sortField = \EmailServerPeer::TABLE_NAME . "." . $sortField;
                 } else {
                     $sortField = \EmailServerPeer::MESS_ENGINE;
@@ -1318,6 +1332,7 @@ class EmailServer
             $row = $rsCriteria->getRow();
 
             $row["MESS_PORT"] = (int)($row["MESS_PORT"]);
+            $row["MESS_INCOMING_PORT"] = (int)($row["MESS_INCOMING_PORT"]);
             $row["MESS_RAUTH"] = (int)($row["MESS_RAUTH"]);
             $row["MESS_TRY_SEND_INMEDIATLY"] = (int)($row["MESS_TRY_SEND_INMEDIATLY"]);
             $row["MESS_DEFAULT"] = (int)($row["MESS_DEFAULT"]);

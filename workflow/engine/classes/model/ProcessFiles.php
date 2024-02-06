@@ -16,4 +16,31 @@ require_once 'classes/model/om/BaseProcessFiles.php';
  */
 class ProcessFiles extends BaseProcessFiles {
 
+    /**
+     * Remove a process file record
+     *
+     * @param string $prfUid
+     *
+     * @return string
+     *
+     * @throws Exception
+     **/
+    public function remove($prfUid)
+    {
+        $connection = Propel::getConnection(ProcessFilesPeer::DATABASE_NAME);
+        try {
+            $object = ProcessFilesPeer::retrieveByPK($prfUid);
+            if (!is_null($object)) {
+                $connection->begin();
+                $object->delete();
+                $connection->commit();
+            } else {
+                throw new Exception('This row doesn\'t exist!');
+            }
+        } catch (Exception $error) {
+            $connection->rollback();
+            throw $error;
+        }
+    }
+
 } // ProcessFiles

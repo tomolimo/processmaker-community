@@ -41,7 +41,6 @@ try {
             $usr = mb_strtolower(trim($frm['USR_USERNAME']), 'UTF-8');
             $pwd = trim($frm['USR_PASSWORD']);
         }
-        /*----------------------------------********---------------------------------*/
         $uid = $RBAC->VerifyLogin($usr , $pwd);
         $RBAC->cleanSessionFiles(72); //cleaning session files older than 72 hours
 
@@ -227,7 +226,6 @@ try {
         $_SESSION['USR_TIME_ZONE'] = $userTimeZone;
     }
 
-    /*----------------------------------********---------------------------------*/
 
     //Set data
     $aUser = $RBAC->userObj->load($_SESSION['USER_LOGGED']);
@@ -305,6 +303,8 @@ try {
     }
 
     if ($RBAC->singleSignOn) {
+        // Update the User's last login date
+        updateUserLastLogin($aLog);
         G::header('Location: ' . $sLocation);
         die();
     }
@@ -315,6 +315,8 @@ try {
     if ($changePassword === true) {
         $user = new User();
         $currentUser = $user->changePassword($_SESSION['USER_LOGGED'], $_POST['form']['USR_PASSWORD']);
+        // Update the User's last login date
+        updateUserLastLogin($aLog);
         G::header('Location: ' . $currentUser["__REDIRECT_PATH__"]);
         return;
     }
@@ -372,6 +374,9 @@ try {
     if ($activeSession){
         setcookie("PM-TabPrimary", 101010010, time() + (24 * 60 * 60), '/');
     }
+
+    // Update the User's last login date
+    updateUserLastLogin($aLog);
 
     $oPluginRegistry = PluginRegistry::loadSingleton();
     if ($oPluginRegistry->existsTrigger ( PM_AFTER_LOGIN )) {

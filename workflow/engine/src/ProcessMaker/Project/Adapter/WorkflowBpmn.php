@@ -87,9 +87,9 @@ class WorkflowBpmn extends Project\Workflow
         return parent::getList($start, $limit, $filter, $changeCaseTo);
     }
 
-    public function remove()
+    public function remove($flagRemoveCases = true, $onlyDiagram = false)
     {
-        parent::remove();
+        parent::remove($flagRemoveCases, $onlyDiagram);
         $this->bp->remove();
     }
 

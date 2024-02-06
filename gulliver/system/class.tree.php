@@ -25,9 +25,9 @@ class PmTree extends Xml_Node
      *
      * @param array $xmlnode default value NULL
      *
-     * @return none
+     * @return void
      */
-    public function PmTree($xmlnode = null)
+    public function __construct($xmlnode = null)
     {
         if (!isset($xmlnode)) {
             return;

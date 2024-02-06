@@ -93,7 +93,7 @@ class DBConnection
      * @return string
      *
      */
-    public function DBConnection($strServer = DB_HOST, $strUser = DB_USER, $strPwd = DB_PASS, $strDB = DB_NAME, $type = DB_ADAPTER, $strPort = 0, $errorLevel = 2)
+    public function __construct($strServer = DB_HOST, $strUser = DB_USER, $strPwd = DB_PASS, $strDB = DB_NAME, $type = DB_ADAPTER, $strPort = 0, $errorLevel = 2)
     {
         $this->errorLevel = $errorLevel;
         if ($type == null) {

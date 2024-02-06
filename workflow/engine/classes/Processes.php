@@ -1919,14 +1919,19 @@ class Processes
 
 
     /**
-     * Gets Input Documents Rows from aProcess.
+     * Gets Input Documents Rows from process.
      *
      * @param string $proUid
+     * @param boolean $unsetInpDocId
      *
      * @return array
      * @throws Exception
+     * 
+     * @see Processes::getWorkflowData()
+     * @see ProcessMaker\BusinessModel\Migrator\InputDocumentsMigrator::export()
+     * @see ProcessMaker\Importer\Importer::saveCurrentProcess()
      */
-    public function getInputRows($proUid)
+    public function getInputRows($proUid, $unsetInpDocId = true)
     {
         try {
             $inputList = [];
@@ -1938,7 +1943,9 @@ class Processes
             while ($row = $dataset->getRow()) {
                 $input = new InputDocument();
                 $infoInput = $input->load($row['INP_DOC_UID']);
-                unset($infoInput['INP_DOC_ID']);
+                if ($unsetInpDocId === true) {
+                    unset($infoInput['INP_DOC_ID']);
+                }
                 $inputList[] = $infoInput;
                 $dataset->next();
             }
@@ -1956,6 +1963,10 @@ class Processes
      *
      * @return void
      * @throws Exception
+     * 
+     * @see Processes::createProcessPropertiesFromData()
+     * @see Processes::updateProcessFromData()
+     * @see ProcessMaker\BusinessModel\Migrator\InputDocumentsMigrator::import()
      */
     public function createInputRows($input)
     {
@@ -1970,11 +1981,15 @@ class Processes
                 //Get the INP_DOC_ID column
                 $dataSet = BasePeer::doSelect($criteria, $con);
                 $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                if ($dataSet->next()) {
-                    $inputInfo = $dataSet->getRow();
-                    $row['INP_DOC_ID'] = $inputInfo['INP_DOC_ID'];
+                if (isset($row["__INP_DOC_ID_UPDATE__"]) && $row["__INP_DOC_ID_UPDATE__"] === false) {
+                    unset($row["__INP_DOC_ID_UPDATE__"]);
                 } else {
-                    $row['INP_DOC_ID'] = null;
+                    if ($dataSet->next()) {
+                        $inputInfo = $dataSet->getRow();
+                        $row['INP_DOC_ID'] = $inputInfo['INP_DOC_ID'];
+                    } else {
+                        $row['INP_DOC_ID'] = null;
+                    }
                 }
                 BasePeer::doDelete($criteria, $con);
                 //Prepare the insert
@@ -2102,11 +2117,16 @@ class Processes
      * Gets the Output Documents Rows from a Process.
      *
      * @param string $proUid
+     * @param boolean $unsetOutDocId
      *
      * @return array
      * @throws Exception
+     * 
+     * @see Processes::getWorkflowData()
+     * @see ProcessMaker\BusinessModel\Migrator\OutputDocumentsMigrator::export()
+     * @see ProcessMaker\Importer\Importer::saveCurrentProcess()
      */
-    public function getOutputRows($proUid)
+    public function getOutputRows($proUid, $unsetOutDocId = true)
     {
         try {
             $outputList = [];
@@ -2118,7 +2138,9 @@ class Processes
             while ($row = $dataset->getRow()) {
                 $output = new OutputDocument();
                 $infoOutput = $output->Load($row['OUT_DOC_UID']);
-                unset($infoOutput['OUT_DOC_ID']);
+                if ($unsetOutDocId === true) {
+                    unset($infoOutput['OUT_DOC_ID']);
+                }
                 $outputList[] = $infoOutput;
                 $dataset->next();
             }
@@ -2136,6 +2158,10 @@ class Processes
      *
      * @return void
      * @throws Exception
+     * 
+     * @see Processes::createProcessPropertiesFromData()
+     * @see Processes::updateProcessFromData()
+     * @see ProcessMaker\BusinessModel\Migrator\OutputDocumentsMigrator::import()
      */
     public function createOutputRows($output)
     {
@@ -2150,11 +2176,15 @@ class Processes
                 //Get the OUT_DOC_ID column
                 $dataSet = BasePeer::doSelect($criteria, $con);
                 $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                if ($dataSet->next()) {
-                    $outputInfo = $dataSet->getRow();
-                    $row['OUT_DOC_ID'] = $outputInfo['OUT_DOC_ID'];
+                if (isset($row["__OUT_DOC_ID_UPDATE__"]) && $row["__OUT_DOC_ID_UPDATE__"] === false) {
+                    unset($row["__OUT_DOC_ID_UPDATE__"]);
                 } else {
-                    $row['OUT_DOC_ID'] = null;
+                    if ($dataSet->next()) {
+                        $outputInfo = $dataSet->getRow();
+                        $row['OUT_DOC_ID'] = $outputInfo['OUT_DOC_ID'];
+                    } else {
+                        $row['OUT_DOC_ID'] = null;
+                    }
                 }
                 BasePeer::doDelete($criteria, $con);
                 //Prepare the insert
@@ -2931,11 +2961,16 @@ class Processes
      * Get Dynaform Rows from a Process
      *
      * @param string $proUid
+     * @param boolean $unsetDynId
      *
      * @return array
      * @throws Exception
+     * 
+     * @see Processes::getWorkflowData()
+     * @see ProcessMaker\BusinessModel\Migrator\DynaformsMigrator::export()
+     * @see ProcessMaker\Importer\Importer::saveCurrentProcess()
      */
-    public function getDynaformRows($proUid)
+    public function getDynaformRows($proUid, $unsetDynId = true)
     {
         try {
             $dynaformList = [];
@@ -2947,7 +2982,9 @@ class Processes
             while ($row = $dataset->getRow()) {
                 $dynaform = new Dynaform();
                 $infoDyn = $dynaform->Load($row['DYN_UID']);
-                unset($infoDyn['DYN_ID']);
+                if ($unsetDynId === true) {
+                    unset($infoDyn['DYN_ID']);
+                }
                 $dynaformList[] = $infoDyn;
                 $dataset->next();
             }
@@ -3077,12 +3114,16 @@ class Processes
     }
 
     /**
-     * Create dynaforms for a process
+     * Create dynaforms for a process.
      *
      * @param array $dynaforms
      *
      * @return void
      * @throws Exception
+     * 
+     * @see Processes::createProcessPropertiesFromData()
+     * @see Processes::updateProcessFromData()
+     * @see ProcessMaker\BusinessModel\Migrator\DynaformsMigrator::import()
      */
     public function createDynaformRows($dynaforms)
     {
@@ -3097,11 +3138,15 @@ class Processes
                 //Get the DYN_ID column
                 $dataSet = BasePeer::doSelect($criteria, $con);
                 $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-                if ($dataSet->next()) {
-                    $dynInfo = $dataSet->getRow();
-                    $row['DYN_ID'] = $dynInfo['DYN_ID'];
+                if (isset($row["__DYN_ID_UPDATE__"]) && $row["__DYN_ID_UPDATE__"] === false) {
+                    unset($row["__DYN_ID_UPDATE__"]);
                 } else {
-                    $row['DYN_ID'] = null;
+                    if ($dataSet->next()) {
+                        $dynInfo = $dataSet->getRow();
+                        $row['DYN_ID'] = $dynInfo['DYN_ID'];
+                    } else {
+                        $row['DYN_ID'] = null;
+                    }
                 }
                 BasePeer::doDelete($criteria, $con);
                 //Prepare the insert
@@ -4762,9 +4807,7 @@ class Processes
         $oData->abeConfiguration = $this->getActionsByEmail($sProUid);
         $oData->elementTask = $this->getElementTaskRelation($sProUid);
         $oData->groupwfs = $this->groupwfsMerge($oData->groupwfs, $oData->processUser, "USR_UID");
-        $oData->process["PRO_TYPE_PROCESS"] = "PUBLIC";
 
-        //Return
         return $oData;
     }
 
@@ -6307,19 +6350,22 @@ class Processes
     }
 
     /**
-     * Get disabled code
+     * If the feature is enable and the code_scanner_scope has the arguments for enable code scanner
+     * Review the triggers related to the process
      *
      * @param string $processUid    Unique id of Process
      * @param string $workspaceName Workspace name
      *
-     * @return array Returns an array with disabled code found, array empty otherwise
+     * @return array
+     * @throws Exception
+     *
+     * @link https://wiki.processmaker.com/Plugin_Trigger_Code_Security_Scanner_v2
      */
     public function getDisabledCode($processUid = null, $workspaceName = null)
     {
         try {
-            $arrayDisabledCode = array();
+            $arrayDisabledCode = [];
 
-            /*----------------------------------********---------------------------------*/
 
             //Return
             return $arrayDisabledCode;

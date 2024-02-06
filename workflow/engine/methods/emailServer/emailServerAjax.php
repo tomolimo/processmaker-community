@@ -9,6 +9,8 @@ switch ($option) {
 
         $server = "";
         $port = "";
+        $incomingServer = "";
+        $incomingPort = "";
         $reqAuthentication = 0;
         $password = "";
         $smtpSecure = "";
@@ -27,6 +29,14 @@ switch ($option) {
             $reqAuthentication = (int)($_POST["reqAuthentication"]);
             $password = ($reqAuthentication == 1)? $_POST["password"] : "";
             $smtpSecure = $_POST["smtpSecure"];
+        } elseif ($cboEmailEngine == "IMAP") {
+            $server = $_POST["server"];
+            $port = (int)($_POST["port"]);
+            $incomingServer = $_POST["incomingServer"];
+            $incomingPort = (int)($_POST["incomingPort"]);
+            $reqAuthentication = (int)($_POST["reqAuthentication"]);
+            $password = ($reqAuthentication == 1)? $_POST["password"] : "";
+            $smtpSecure = $_POST["smtpSecure"];
         }
 
         try {
@@ -34,6 +44,8 @@ switch ($option) {
                 "MESS_ENGINE"              => $cboEmailEngine,
                 "MESS_SERVER"              => $server,
                 "MESS_PORT"                => $port,
+                "MESS_INCOMING_SERVER"     => $incomingServer,
+                "MESS_INCOMING_PORT"       => $incomingPort,
                 "MESS_RAUTH"               => $reqAuthentication,
                 "MESS_ACCOUNT"             => $accountFrom,
                 "MESS_PASSWORD"            => $password,
@@ -63,6 +75,8 @@ switch ($option) {
 
         $server = "";
         $port = "";
+        $incomingServer = "";
+        $incomingPort = "";
         $reqAuthentication = 0;
         $password = "";
         $smtpSecure = "";
@@ -81,6 +95,14 @@ switch ($option) {
             $reqAuthentication = (int)($_POST["reqAuthentication"]);
             $password = ($reqAuthentication == 1)? $_POST["password"] : "";
             $smtpSecure = $_POST["smtpSecure"];
+        } elseif ($cboEmailEngine == "IMAP") {
+            $server = $_POST["server"];
+            $port = (int)($_POST["port"]);
+            $incomingServer = $_POST["incomingServer"];
+            $incomingPort = (int)($_POST["incomingPort"]);
+            $reqAuthentication = (int)($_POST["reqAuthentication"]);
+            $password = ($reqAuthentication == 1)? $_POST["password"] : "";
+            $smtpSecure = $_POST["smtpSecure"];
         }
 
         try {
@@ -88,6 +110,8 @@ switch ($option) {
                 "MESS_ENGINE"              => $cboEmailEngine,
                 "MESS_SERVER"              => $server,
                 "MESS_PORT"                => $port,
+                "MESS_INCOMING_SERVER"     => $incomingServer,
+                "MESS_INCOMING_PORT"       => $incomingPort,
                 "MESS_RAUTH"               => $reqAuthentication,
                 "MESS_ACCOUNT"             => $accountFrom,
                 "MESS_PASSWORD"            => $password,
@@ -153,6 +177,8 @@ switch ($option) {
 
         $server = "";
         $port = "";
+        $incomingServer = "";
+        $incomingPort = "";
         $reqAuthentication = 0;
         $password = "";
         $smtpSecure = "";
@@ -165,7 +191,7 @@ switch ($option) {
         $mailTo = ($sendTestMail == 1)? $_POST["mailTo"] : "";
         $emailServerDefault = (int)($_POST["emailServerDefault"]);
 
-        if ($cboEmailEngine == "PHPMAILER") {
+        if ($cboEmailEngine == "PHPMAILER" || $cboEmailEngine == "IMAP") {
             $server = $_POST["server"];
             $port = (int)($_POST["port"]);
             $reqAuthentication = (int)($_POST["reqAuthentication"]);

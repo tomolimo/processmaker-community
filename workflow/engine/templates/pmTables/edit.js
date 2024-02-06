@@ -335,7 +335,6 @@ Ext.onReady(function(){
             inputValue: 'always'
         }
       }      
-      /*----------------------------------********---------------------------------*/
   ];
 
   //if permissions plugin is enabled
@@ -1101,7 +1100,6 @@ function editorFieldsEnableDisable(fieldTypeValue, fieldNull, fieldPrimaryKey, f
         fieldPrimaryKey.setValue(false);
     }
 
-    /*----------------------------------********---------------------------------*/
 
     if (swAI == 1) {
         fieldInc.enable();

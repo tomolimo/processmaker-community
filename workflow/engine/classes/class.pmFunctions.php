@@ -308,6 +308,7 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
                     while ($rs->next()) {
                         $result[$i ++] = $rs->getRow();
                     }
+                    $rs->close();
                     $con->commit();
                     break;
                 case preg_match( "/^INSERT\s/i", $statement ):
@@ -1750,7 +1751,7 @@ function PMFGenerateOutputDocument ($outputID, $sApplication = null, $index = nu
     //The $_GET['UID'] variable is used when a process executes.
     //$_GET['UID']=($aOD['OUT_DOC_VERSIONING'])?$_GET['UID']:$aOD['OUT_DOC_UID'];
     //$sUID = ($aOD['OUT_DOC_VERSIONING'])?$_GET['UID']:$aOD['OUT_DOC_UID'];
-    $sFilename = preg_replace( '[^A-Za-z0-9_]', '_', G::replaceDataField( $aOD['OUT_DOC_FILENAME'], $Fields['APP_DATA'] ) );
+    $sFilename = preg_replace( '[^A-Za-z0-9_]', '_', G::replaceDataField( $aOD['OUT_DOC_FILENAME'], $Fields['APP_DATA'], 'mysql', false ) );
     require_once 'classes/model/AppFolder.php';
     require_once 'classes/model/AppDocument.php';
 

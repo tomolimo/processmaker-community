@@ -26,7 +26,6 @@
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 
-/*----------------------------------********---------------------------------*/
 $aFields = array();
 
 //Validated redirect url
@@ -108,19 +107,12 @@ if (isset($_SESSION['USER_LOGGED'])) {
             $aLog['USR_UID'] = $aRow['USR_UID'];
 
             $weblog->update($aLog);
-
-            $aLog = array();
-            $aLog['USR_UID'] = $aRow['USR_UID'];
-            $aLog['USR_LAST_LOGIN'] = $endDate;
-            $user = new Users();
-            $aUser = $user->update($aLog);
         }
     }
 } else {
     // Execute SSO trigger
     $pluginRegistry = PluginRegistry::loadSingleton();
     if (defined('PM_SINGLE_SIGN_ON')) {
-        /*----------------------------------********---------------------------------*/
         if ($pluginRegistry->existsTrigger(PM_SINGLE_SIGN_ON)) {
             if ($pluginRegistry->executeTriggers(PM_SINGLE_SIGN_ON, null)) {
                 // Start new session
@@ -163,7 +155,6 @@ $_SESSION["USERNAME_PREVIOUS2"] = $usernamePrevious2;
 $_SESSION['NW_PASSWORD'] = $pass;
 $_SESSION['NW_PASSWORD2'] = $pass1;
 
-/*----------------------------------********---------------------------------*/
 
 //translation
 //$Translations = G::getModel("Translation");
@@ -173,7 +164,6 @@ $translationsTable = $Translations->getTranslationEnvironments();
 
 $availableLangArray = array();
 $availableLangArray [] = array('LANG_ID' => 'char', 'LANG_NAME' => 'char' );
-/*----------------------------------********---------------------------------*/
 foreach ($translationsTable as $locale) {
     $row['LANG_ID'] = $locale['LOCALE'];
 
@@ -194,7 +184,6 @@ $oConf->loadConfig($obj, 'ENVIRONMENT_SETTINGS', '');
 
 if (isset($oConf->aConfig["login_defaultLanguage"]) && $oConf->aConfig["login_defaultLanguage"] != "") {
     $aFields["USER_LANG"] = $oConf->aConfig["login_defaultLanguage"];
-    /*----------------------------------********---------------------------------*/
 } else {
     $myUrl = explode("/", $_SERVER["REQUEST_URI"]);
 

@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag;
 class ProjectServiceContainer extends Container
 {
     private $parameters;
-    private $targetDirs = array();
+    private $targetDirs = [];
 
     public function __construct()
     {
@@ -27,24 +27,14 @@ class ProjectServiceContainer extends Container
         }
         $this->parameters = $this->getDefaultParameters();
 
-        $this->services = array();
-        $this->normalizedIds = array(
-            'symfony\\component\\dependencyinjection\\tests\\fixtures\\includes\\hotpath\\c1' => 'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C1',
-            'symfony\\component\\dependencyinjection\\tests\\fixtures\\includes\\hotpath\\c2' => 'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C2',
-            'symfony\\component\\dependencyinjection\\tests\\fixtures\\includes\\hotpath\\c3' => 'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C3',
-            'symfony\\component\\dependencyinjection\\tests\\fixtures\\parentnotexists' => 'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\ParentNotExists',
-        );
-        $this->methodMap = array(
+        $this->services = $this->privates = [];
+        $this->methodMap = [
             'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\ParentNotExists' => 'getParentNotExistsService',
             'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C1' => 'getC1Service',
             'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C2' => 'getC2Service',
-            'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C3' => 'getC3Service',
-        );
-        $this->privates = array(
-            'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C3' => true,
-        );
+        ];
 
-        $this->aliases = array();
+        $this->aliases = [];
 
         $this->privates['service_container'] = function () {
             include_once $this->targetDirs[1].'/includes/HotPath/I1.php';
@@ -52,15 +42,6 @@ class ProjectServiceContainer extends Container
             include_once $this->targetDirs[1].'/includes/HotPath/T1.php';
             include_once $this->targetDirs[1].'/includes/HotPath/C1.php';
         };
-    }
-
-    public function getRemovedIds()
-    {
-        return array(
-            'Psr\\Container\\ContainerInterface' => true,
-            'Symfony\\Component\\DependencyInjection\\ContainerInterface' => true,
-            'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C3' => true,
-        );
     }
 
     public function compile()
@@ -73,11 +54,13 @@ class ProjectServiceContainer extends Container
         return true;
     }
 
-    public function isFrozen()
+    public function getRemovedIds()
     {
-        @trigger_error(sprintf('The %s() method is deprecated since Symfony 3.3 and will be removed in 4.0. Use the isCompiled() method instead.', __METHOD__), E_USER_DEPRECATED);
-
-        return true;
+        return [
+            'Psr\\Container\\ContainerInterface' => true,
+            'Symfony\\Component\\DependencyInjection\\ContainerInterface' => true,
+            'Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C3' => true,
+        ];
     }
 
     /**
@@ -87,7 +70,7 @@ class ProjectServiceContainer extends Container
      */
     protected function getParentNotExistsService()
     {
-        return $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\ParentNotExists'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\ParentNotExists();
+        return $this->services['Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\ParentNotExists'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\ParentNotExists();
     }
 
     /**
@@ -97,7 +80,7 @@ class ProjectServiceContainer extends Container
      */
     protected function getC1Service()
     {
-        return $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C1'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C1();
+        return $this->services['Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C1'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C1();
     }
 
     /**
@@ -110,30 +93,15 @@ class ProjectServiceContainer extends Container
         include_once $this->targetDirs[1].'/includes/HotPath/C2.php';
         include_once $this->targetDirs[1].'/includes/HotPath/C3.php';
 
-        return $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C2'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C2(${($_ = isset($this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3']) ? $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3'] : $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3()) && false ?: '_'});
-    }
-
-    /**
-     * Gets the private 'Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3' shared service.
-     *
-     * @return \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3
-     */
-    protected function getC3Service()
-    {
-        include_once $this->targetDirs[1].'/includes/HotPath/C3.php';
-
-        return $this->services['Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3();
+        return $this->services['Symfony\\Component\\DependencyInjection\\Tests\\Fixtures\\includes\\HotPath\\C2'] = new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C2(new \Symfony\Component\DependencyInjection\Tests\Fixtures\includes\HotPath\C3());
     }
 
     public function getParameter($name)
     {
         $name = (string) $name;
-        if (!(isset($this->parameters[$name]) || isset($this->loadedDynamicParameters[$name]) || array_key_exists($name, $this->parameters))) {
-            $name = $this->normalizeParameterName($name);
 
-            if (!(isset($this->parameters[$name]) || isset($this->loadedDynamicParameters[$name]) || array_key_exists($name, $this->parameters))) {
-                throw new InvalidArgumentException(sprintf('The parameter "%s" must be defined.', $name));
-            }
+        if (!(isset($this->parameters[$name]) || isset($this->loadedDynamicParameters[$name]) || array_key_exists($name, $this->parameters))) {
+            throw new InvalidArgumentException(sprintf('The parameter "%s" must be defined.', $name));
         }
         if (isset($this->loadedDynamicParameters[$name])) {
             return $this->loadedDynamicParameters[$name] ? $this->dynamicParameters[$name] : $this->getDynamicParameter($name);
@@ -145,7 +113,6 @@ class ProjectServiceContainer extends Container
     public function hasParameter($name)
     {
         $name = (string) $name;
-        $name = $this->normalizeParameterName($name);
 
         return isset($this->parameters[$name]) || isset($this->loadedDynamicParameters[$name]) || array_key_exists($name, $this->parameters);
     }
@@ -168,8 +135,8 @@ class ProjectServiceContainer extends Container
         return $this->parameterBag;
     }
 
-    private $loadedDynamicParameters = array();
-    private $dynamicParameters = array();
+    private $loadedDynamicParameters = [];
+    private $dynamicParameters = [];
 
     /**
      * Computes a dynamic parameter.
@@ -185,22 +152,6 @@ class ProjectServiceContainer extends Container
         throw new InvalidArgumentException(sprintf('The dynamic parameter "%s" must be defined.', $name));
     }
 
-    private $normalizedParameterNames = array();
-
-    private function normalizeParameterName($name)
-    {
-        if (isset($this->normalizedParameterNames[$normalizedName = strtolower($name)]) || isset($this->parameters[$normalizedName]) || array_key_exists($normalizedName, $this->parameters)) {
-            $normalizedName = isset($this->normalizedParameterNames[$normalizedName]) ? $this->normalizedParameterNames[$normalizedName] : $normalizedName;
-            if ((string) $name !== $normalizedName) {
-                @trigger_error(sprintf('Parameter names will be made case sensitive in Symfony 4.0. Using "%s" instead of "%s" is deprecated since Symfony 3.4.', $name, $normalizedName), E_USER_DEPRECATED);
-            }
-        } else {
-            $normalizedName = $this->normalizedParameterNames[$normalizedName] = (string) $name;
-        }
-
-        return $normalizedName;
-    }
-
     /**
      * Gets the default parameters.
      *
@@ -208,8 +159,8 @@ class ProjectServiceContainer extends Container
      */
     protected function getDefaultParameters()
     {
-        return array(
+        return [
             'inline_requires' => true,
-        );
+        ];
     }
 }

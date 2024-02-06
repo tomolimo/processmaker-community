@@ -61,7 +61,6 @@ Ext.onReady(function () {
                 var response = Ext.util.JSON.decode(response.responseText);
                 Ext.getCmp('php').setValue(getFieldOutput(response.php.version, response.php.result));
                 Ext.getCmp('mysql').setValue(getFieldOutput(response.mysql.version, response.mysql.result));
-                //Ext.getCmp('mssql').setValue     (getFieldOutput(response.mssql.version,    response.mssql.result));
                 Ext.getCmp('curl').setValue(getFieldOutput(response.curl.version, response.curl.result));
                 Ext.getCmp('openssl').setValue(getFieldOutput(response.openssl.version, response.openssl.result));
                 Ext.getCmp('dom').setValue(getFieldOutput(response.dom.version, response.dom.result));
@@ -72,7 +71,7 @@ Ext.onReady(function () {
                 Ext.getCmp('ldap').setValue(getFieldOutput(response.ldap.version, response.ldap.result));
                 Ext.getCmp('memory').setValue(getFieldOutput(response.memory.version, response.memory.result));
 
-                dbReq = response.mysql.result || response.mssql.result;
+                dbReq = response.mysql.result;
                 phpReq = response.php.result && response.curl.result && response.dom.result && response.gd.result && response.multibyte.result && response.soap.result && response.memory.result && response.mcrypt.result;
                 wizard.onClientValidation(0, dbReq && phpReq);
                 wizard.showLoadMask(false);

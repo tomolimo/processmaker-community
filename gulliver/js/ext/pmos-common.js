@@ -696,3 +696,29 @@ function downloadFile(method, url, headers, formData, callBack) {
     xhr.send(formData);
 }
 
+/**
+ * Converts a valid date string to a date type object.
+ * @param {String} value
+ * @return {Date}
+ */
+function convertDate(value) {
+    var date,
+        array,
+        arrayDate,
+        arrayTime;
+    date = new Date(1900, 0, 1, 0, 0, 0);
+    try {
+        if (!Ext.isDate(value)) {
+            array = value.split(' ');
+            arrayDate = array[0].split('-');
+            if (array.length > 1) {
+                arrayTime = array[1].split(':');
+            } else {
+                arrayTime = new Array('0', '0', '0');
+            }
+            date = new Date(arrayDate[0], arrayDate[1] - 1, arrayDate[2], arrayTime[0], arrayTime[1], arrayTime[2]);
+        }
+    } catch (e) {
+    }
+    return date;
+}

@@ -46,6 +46,12 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
     protected $usr_uid = '0';
 
     /**
+     * The value for the usr_id field.
+     * @var        int
+     */
+    protected $usr_id = 0;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      * @var        boolean
@@ -90,6 +96,17 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
     {
 
         return $this->usr_uid;
+    }
+
+    /**
+     * Get the [usr_id] column value.
+     * 
+     * @return     int
+     */
+    public function getUsrId()
+    {
+
+        return $this->usr_id;
     }
 
     /**
@@ -159,6 +176,28 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
     } // setUsrUid()
 
     /**
+     * Set the value of [usr_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setUsrId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->usr_id !== $v || $v === 0) {
+            $this->usr_id = $v;
+            $this->modifiedColumns[] = GroupUserPeer::USR_ID;
+        }
+
+    } // setUsrId()
+
+    /**
      * Hydrates (populates) the object variables with values from the database resultset.
      *
      * An offset (1-based "start column") is specified so that objects can be hydrated
@@ -181,12 +220,14 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
 
             $this->usr_uid = $rs->getString($startcol + 2);
 
+            $this->usr_id = $rs->getInt($startcol + 3);
+
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 3; // 3 = GroupUserPeer::NUM_COLUMNS - GroupUserPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 4; // 4 = GroupUserPeer::NUM_COLUMNS - GroupUserPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating GroupUser object", $e);
@@ -399,6 +440,9 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
             case 2:
                 return $this->getUsrUid();
                 break;
+            case 3:
+                return $this->getUsrId();
+                break;
             default:
                 return null;
                 break;
@@ -422,6 +466,7 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
             $keys[0] => $this->getGrpUid(),
             $keys[1] => $this->getGrpId(),
             $keys[2] => $this->getUsrUid(),
+            $keys[3] => $this->getUsrId(),
         );
         return $result;
     }
@@ -462,6 +507,9 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
             case 2:
                 $this->setUsrUid($value);
                 break;
+            case 3:
+                $this->setUsrId($value);
+                break;
         } // switch()
     }
 
@@ -497,6 +545,10 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
             $this->setUsrUid($arr[$keys[2]]);
         }
 
+        if (array_key_exists($keys[3], $arr)) {
+            $this->setUsrId($arr[$keys[3]]);
+        }
+
     }
 
     /**
@@ -518,6 +570,10 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
 
         if ($this->isColumnModified(GroupUserPeer::USR_UID)) {
             $criteria->add(GroupUserPeer::USR_UID, $this->usr_uid);
+        }
+
+        if ($this->isColumnModified(GroupUserPeer::USR_ID)) {
+            $criteria->add(GroupUserPeer::USR_ID, $this->usr_id);
         }
 
 
@@ -587,6 +643,8 @@ abstract class BaseGroupUser extends BaseObject implements Persistent
     {
 
         $copyObj->setGrpId($this->grp_id);
+
+        $copyObj->setUsrId($this->usr_id);
 
 
         $copyObj->setNew(true);

@@ -1,5 +1,5 @@
 (function () {
-    var Form = function () {
+    var Form = function (parent) {
         this.id = PMUI.generateUniqueId();
         this.onRemove = new Function();
         this.onRemoveItem = new Function();
@@ -8,8 +8,10 @@
         this.onDrawControl = new Function();
         this.onSetProperty = new Function();
         this.onSynchronizeVariables = new Function();
+        this.onDrawDroppedItem = new Function();
         this.sourceNode = null;
         this.targetNode = null;
+        this.parent = parent;
         this.stopValidateRows = false;
         this.variable = null;
         this.dirty = null;
@@ -17,6 +19,36 @@
         this.disabled = false;
         this.recovery = false;
         this.checkColspan = true;
+        this.typesControlSupported = [
+            FormDesigner.main.TypesControl.title,
+            FormDesigner.main.TypesControl.subtitle,
+            FormDesigner.main.TypesControl.label,
+            FormDesigner.main.TypesControl.link,
+            FormDesigner.main.TypesControl.image,
+            FormDesigner.main.TypesControl.file,
+            FormDesigner.main.TypesControl.multipleFile,
+            FormDesigner.main.TypesControl.submit,
+            FormDesigner.main.TypesControl.button,
+            FormDesigner.main.TypesControl.text,
+            FormDesigner.main.TypesControl.textarea,
+            FormDesigner.main.TypesControl.dropdown,
+            FormDesigner.main.TypesControl.checkbox,
+            FormDesigner.main.TypesControl.checkgroup,
+            FormDesigner.main.TypesControl.radio,
+            FormDesigner.main.TypesControl.datetime,
+            FormDesigner.main.TypesControl.suggest,
+            FormDesigner.main.TypesControl.hidden,
+            FormDesigner.main.TypesControl.annotation,
+            FormDesigner.main.TypesControl.geomap,
+            FormDesigner.main.TypesControl.qrcode,
+            FormDesigner.main.TypesControl.signature,
+            FormDesigner.main.TypesControl.imagem,
+            FormDesigner.main.TypesControl.audiom,
+            FormDesigner.main.TypesControl.videom,
+            FormDesigner.main.TypesControl.panel,
+            FormDesigner.main.TypesControl.msgPanel
+        ];
+        this._items = new PMUI.util.ArrayList();
         Form.prototype.init.call(this);
     };
     Form.prototype.init = function () {
@@ -99,6 +131,8 @@
             that.onSetProperty(prop, value, that);
         };
         this.clear();
+        this.notice = new FormDesigner.main.Notice();
+        this.notice.body.insertBefore(this.table);
     };
     Form.prototype.addRow = function () {
         var row = $("<tr style='padding:5px;'></tr>");
@@ -106,7 +140,9 @@
         return row;
     };
     Form.prototype.addCell = function () {
-        var that = this, cell;
+        var that = this,
+            cell,
+            properties;
         cell = $("<td style='height:56px;background:white;position:relative;vertical-align:top;border:1px dotted gray;' class='itemVariables itemControls cellDragDrop colspan-12' colspan='12'></td>");
         cell[0].disabled = false;
         cell[0].setDisabled = function (disabled) {
@@ -137,7 +173,7 @@
             drop: function (event, ui) {
             }
         });
-        var properties = new FormDesigner.main.Properties(FormDesigner.main.TypesControl.cell, cell, cell[0]);
+        properties = new FormDesigner.main.Properties(FormDesigner.main.TypesControl.cell, cell, cell[0]);
         properties.onSet = function (prop, value) {
             if (prop === "colSpan" && properties[prop].node) {
                 //calculate colspan
@@ -220,10 +256,20 @@
         cell.data("properties", properties);
         cell.on("click", function (e) {
             e.stopPropagation();
-            $.designerSelectElement(this, function () {
+            $.designerSelectElement(this, function (row) {
+                var itemsToRemove;
                 that.validateRows();
                 that.validateDragDrop();
                 that.onRemoveCell();
+                itemsToRemove = that._items.asArray().filter(function (i) {
+                    return row.innerHTML.indexOf(i.html.parent().parent().get(0).innerHTML) !== -1;
+                });
+                itemsToRemove.forEach(function (item) {
+                    that._items.remove(item);
+                });
+                if (!that.checkForDeprecatedControls()) {
+                    that.hideDeprecationMessage();
+                }
             }, function () {
                 if (that.disabled === true) {
                     return false;
@@ -235,7 +281,9 @@
         return cell;
     };
     Form.prototype.drawDroppedItem = function (render, data) {
-        var that = this, properties = null;
+        var that = this,
+            properties = null,
+            target = null;
         switch (render) {
             case that.inTypesControl(render):
                 var formItem = new FormDesigner.main.FormItem({
@@ -247,21 +295,23 @@
                     }
                 });
                 formItem.onRemove = function () {
-                    that.onRemoveItem();
+                    that.onRemoveItem(this);
                 };
                 formItem.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(formItem.html);
                 properties = formItem.properties;
+                target = formItem;
                 break;
             case FormDesigner.main.TypesControl.grid:
                 var grid = new FormDesigner.main.Grid(that);
                 grid.onRemove = function () {
+                    this.clearItemsDeprecated();
                     that.onRemoveItem();
                 };
-                grid.onRemoveItem = function () {
-                    that.onRemoveItem();
+                grid.onRemoveItem = function (gridItem) {
+                    that.onRemoveItem(gridItem, "grid");
                 };
                 grid.onSelect = function (properties) {
                     that.onSelect(properties);
@@ -275,15 +325,20 @@
                 grid.onDrawControl = function (properties) {
                     that.onDrawControl(properties);
                 };
+                grid.onDrawDroppedItem = function (render, target) {
+                    that.onDrawDroppedItem(render, target, "grid");
+                };
                 grid.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(grid.body);
                 properties = grid.properties;
+                target = grid;
                 break;
             case FormDesigner.main.TypesControl.form:
-                var form = new FormDesigner.main.Form();
+                var form = new FormDesigner.main.Form(that);
                 form.onRemove = function () {
+                    form.clearItemsDeprecated();
                     that.onRemoveItem();
                 };
                 form.onRemoveItem = function () {
@@ -297,6 +352,9 @@
                 };
                 form.onDrawControl = function (properties) {
                     that.onDrawControl(properties);
+                };
+                form.onDrawDroppedItem = function (render, target) {
+                    that.onDrawDroppedItem(render, target, "form");
                 };
                 form.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
@@ -313,6 +371,7 @@
                 that.validateRows();
                 that.variable = null;
                 properties = form.properties;
+                target = form;
                 break;
             case FormDesigner.main.TypesControl.variable:
                 if (that.isVariableUsed(that.variable.var_uid)) {
@@ -338,6 +397,7 @@
                     that.validateRows();
                     that.variable = null;
                 };
+                target = dialogTypeControl;
                 break;
             case FormDesigner.main.TypesControl.subform:
                 if (that.subformSupport === false) {
@@ -347,7 +407,9 @@
                 that.stopValidateRows = true;
                 var dialogDynaforms = new FormDesigner.main.DialogDynaforms(null, that.properties.id.value);
                 dialogDynaforms.onSelectItem = function (event, item) {
-                    var subDynaform = JSON.parse(item.attr("dynaform"));
+                    var prop,
+                        subDynaform;
+                    subDynaform = JSON.parse(item.attr("dynaform"));
                     //todo validation form with subform
                     var sf, sfi, sfj, jsp;
                     jsp = JSON.parse(subDynaform.dyn_content);
@@ -362,7 +424,7 @@
                             }
                         }
                     }
-                    var prop = that.drawDroppedItem(FormDesigner.main.TypesControl.form, subDynaform);
+                    prop = that.drawDroppedItem(FormDesigner.main.TypesControl.form, subDynaform);
                     prop.owner.subformSupport = false;
                 };
                 dialogDynaforms.onClose = function () {
@@ -370,8 +432,10 @@
                     that.validateRows();
                     that.variable = null;
                 };
+                target = dialogDynaforms;
                 break;
         }
+        that.onDrawDroppedItem(render, target);
         return properties;
     };
     Form.prototype.validateDragDrop = function () {
@@ -419,42 +483,20 @@
             that.addRow().append(that.addCell());
         }
     };
+    /**
+     * Init controls supported
+     * @param val
+     * @return {*}
+     */
     Form.prototype.inTypesControl = function (val) {
-        if (
-            val === FormDesigner.main.TypesControl.title ||
-            val === FormDesigner.main.TypesControl.subtitle ||
-            val === FormDesigner.main.TypesControl.label ||
-            val === FormDesigner.main.TypesControl.link ||
-            val === FormDesigner.main.TypesControl.image ||
-            val === FormDesigner.main.TypesControl.file ||
-            val === FormDesigner.main.TypesControl.multipleFile ||
-            val === FormDesigner.main.TypesControl.submit ||
-            val === FormDesigner.main.TypesControl.button ||
-            val === FormDesigner.main.TypesControl.text ||
-            val === FormDesigner.main.TypesControl.textarea ||
-            val === FormDesigner.main.TypesControl.dropdown ||
-            val === FormDesigner.main.TypesControl.checkbox ||
-            val === FormDesigner.main.TypesControl.checkgroup ||
-            val === FormDesigner.main.TypesControl.radio ||
-            val === FormDesigner.main.TypesControl.datetime ||
-            val === FormDesigner.main.TypesControl.suggest ||
-            val === FormDesigner.main.TypesControl.hidden ||
-            val === FormDesigner.main.TypesControl.annotation ||
-            val === FormDesigner.main.TypesControl.geomap ||
-            val === FormDesigner.main.TypesControl.qrcode ||
-            val === FormDesigner.main.TypesControl.signature ||
-            val === FormDesigner.main.TypesControl.imagem ||
-            val === FormDesigner.main.TypesControl.audiom ||
-            val === FormDesigner.main.TypesControl.videom ||
-            val === FormDesigner.main.TypesControl.panel ||
-            val === FormDesigner.main.TypesControl.msgPanel
-        ) {
+        if ($.inArray(val, this.typesControlSupported) > -1) {
             return val;
         }
         return null;
     };
     Form.prototype.getData = function () {
-        var data, fieldObject, rows, i, j, k, itemsrow, itemsTable, dataCell, flag, propertiesForm, property, cells, variables;
+        var data, fieldObject, rows, i, j, k, itemsrow, itemsTable, dataCell, flag, propertiesForm, property, cells,
+            variables;
         data = {};
         itemsTable = [];
         variables = [];
@@ -918,7 +960,7 @@
             b.node.textContent = variable.var_field_type;
     };
     Form.prototype.setNextLabel = function (properties) {
-        var nextLabel, 
+        var nextLabel,
             that = this;
         nextLabel = FormDesigner.getNextNumber(that.getData(), properties.type.value, "id") + 1;
         nextLabel = nextLabel.toString();
@@ -965,6 +1007,46 @@
         FormDesigner.getNextNumberVar(that.getData(), properties, function (nextVar) {
             dialogCreateVariable.setVarName(nextVar);
         });
+    };
+    /**
+     * Creates the alert message to notify about deprecated controls being used in current form.
+     * @private
+     */
+    Form.prototype.showDeprecationMessage = function () {
+        var message = '<strong>' + 'Warning!'.translate() + '</strong>'
+            + ('<span class="sr-only">Error:</span>' + ' '
+            + 'This form contains deprecated controls marked with the'.translate() + ' '
+            + '<span class="fa fa-exclamation-circle" style="color:red;" aria-hidden="true"></span> ' + 'icon.'.translate() + ' '
+            + 'Those controls will no longer be supported and probably will not be available in future versions.'.translate() + ' '
+            + 'Please refer to the following link to get more information:').translate()
+            + '<br/><a href="' + FormDesigner.DEPRECATION_LINK + '" target="_blank">' + FormDesigner.DEPRECATION_LINK + '</a>';
+        this.notice.show(message);
+    };
+    /**
+     * Hide the alert message about deprecated controls.
+     */
+    Form.prototype.hideDeprecationMessage = function () {
+        this.notice.close();
+    };
+    /**
+     * Verify if we have deprecated controls in the form.
+     * @return {boolean}
+     */
+    Form.prototype.checkForDeprecatedControls = function () {
+        return this._items.asArray().length > 0;
+    };
+    /**
+     * Clear list of deprecated control in the Form.
+     */
+    Form.prototype.clearItemsDeprecated = function () {
+        var itemsForm = this._items.asArray(),
+            i;
+        for (i = 0; i < itemsForm.length; i+= 1) {
+            if (this.parent) {
+                this.parent._items.remove(itemsForm[i])
+            }
+        }
+        this._items.clear();
     };
     FormDesigner.extendNamespace('FormDesigner.main.Form', Form);
 }());

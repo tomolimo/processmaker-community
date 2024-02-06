@@ -40,7 +40,7 @@
  */
 class IsoCountry extends BaseIsoCountry
 {
-    public function findById($UID)
+    public static function findById($UID)
     {
         $oCriteria = new Criteria('workflow');
         $oCriteria->addSelectColumn(IsoCountryPeer::IC_UID);

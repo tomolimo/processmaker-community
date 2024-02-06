@@ -212,14 +212,21 @@
         )
       });
 
-
-      startDateRender = function(v){
-        var dateString = "-";
-          if(v != "-" && v != null){
-            dateString = _DF(v,"m/d/Y H:i:s");
-          }
+    /**
+     * This applies the date format from the global configuration.
+     * @param {String} value
+     * @return {String}
+     */
+    startDateRender = function (value) {
+        var dateString,
+            date;
+        dateString = "-";
+        if (value !== "-" && value !== null) {
+            date = convertDate(value);
+            dateString = date.dateFormat(FORMATS.casesListDateFormat);
+        }
         return dateString;
-      }
+    }
 
       actionRenderingTranslation = function(v){
         var actionTranslate = "";

@@ -466,7 +466,7 @@ class PmTable
                     }
 
                     if (empty($line)) {
-                        continue;
+                        break;
                     }
 
                     if (strpos($line, "#") === 0) {
@@ -474,7 +474,7 @@ class PmTable
                     }
 
                     if (empty($line)) {
-                        continue;
+                        break;
                     }
 
                     // Concatenate the previous line, if any, with the current
@@ -487,7 +487,7 @@ class PmTable
                     // with the next one, thus supporting multi-line statements.
                     if (strrpos($line, ";") != strlen($line) - 1) {
                         $previous = $line;
-                        continue;
+                        break;
                     }
 
                     $line = substr($line, 0, strrpos($line, ";"));
@@ -513,7 +513,7 @@ class PmTable
                     }
 
                     if (empty($line)) {
-                        continue;
+                        break;
                     }
 
                     if (strpos($line, "#") === 0) {
@@ -521,7 +521,7 @@ class PmTable
                     }
 
                     if (empty($line)) {
-                        continue;
+                        break;
                     }
 
                     // Concatenate the previous line, if any, with the current
@@ -534,13 +534,13 @@ class PmTable
                     // with the next one, thus supporting multi-line statements.
                     if (strrpos($line, ";") != strlen($line) - 1) {
                         $previous = $line;
-                        continue;
+                        break;
                     }
 
                     $line = substr($line, 0, strrpos($line, ";"));
 
                     if (strpos($line, $this->tableName) == false) {
-                        continue;
+                        break;
                     }
 
                     $auxCreate = explode('CREATE', $line);
@@ -553,7 +553,7 @@ class PmTable
                 case 'oracle':
                     $line = trim($line); // Remove comments from the script
                     if (empty($line)) {
-                        continue;
+                        break;
                     }
                     switch (true) {
                         case preg_match("/^CREATE TABLE\s/i", $line):
@@ -1025,5 +1025,14 @@ class PmTable
         }
 
         return $type;
+    }
+
+    /**
+     * Remove the folder "pmt-folder" and all the content inside
+     */
+    public static function removePmtPropelFolder()
+    {
+        $pmtPropelFolder = PATH_DB . config('system.workspace') . PATH_SEP . 'pmt-propel';
+        G::rm_dir($pmtPropelFolder);
     }
 }

@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
  */
 abstract class Extension implements ExtensionInterface, ConfigurationExtensionInterface
 {
-    private $processedConfigs = array();
+    private $processedConfigs = [];
 
     /**
      * {@inheritdoc}
@@ -82,11 +82,23 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
         $class = \get_class($this);
         $class = substr_replace($class, '\Configuration', strrpos($class, '\\'));
         $class = $container->getReflectionClass($class);
-        $constructor = $class ? $class->getConstructor() : null;
 
-        if ($class && (!$constructor || !$constructor->getNumberOfRequiredParameters())) {
+        if (!$class) {
+            return null;
+        }
+
+        if (!$class->implementsInterface(ConfigurationInterface::class)) {
+            @trigger_error(sprintf('Not implementing "%s" in the extension configuration class "%s" is deprecated since Symfony 4.1.', ConfigurationInterface::class, $class->getName()), E_USER_DEPRECATED);
+            //throw new LogicException(sprintf('The extension configuration class "%s" must implement "%s".', $class->getName(), ConfigurationInterface::class));
+
+            return null;
+        }
+
+        if (!($constructor = $class->getConstructor()) || !$constructor->getNumberOfRequiredParameters()) {
             return $class->newInstance();
         }
+
+        return null;
     }
 
     final protected function processConfiguration(ConfigurationInterface $configuration, array $configs)
@@ -104,7 +116,7 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
         try {
             return $this->processedConfigs;
         } finally {
-            $this->processedConfigs = array();
+            $this->processedConfigs = [];
         }
     }
 
@@ -115,7 +127,7 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
      */
     protected function isConfigEnabled(ContainerBuilder $container, array $config)
     {
-        if (!array_key_exists('enabled', $config)) {
+        if (!\array_key_exists('enabled', $config)) {
             throw new InvalidArgumentException("The config array has no 'enabled' key.");
         }
 

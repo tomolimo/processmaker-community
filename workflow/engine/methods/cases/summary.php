@@ -25,7 +25,6 @@ try {
     $viewSummaryForm = 0;
     $applicationFields = $case->loadCase( $_REQUEST['APP_UID'], $_REQUEST['DEL_INDEX'] );
 
-    /*----------------------------------********---------------------------------*/
 
     //Check if the user has the Process Permissions - Summary Form
     if ($viewSummaryForm == 0) {

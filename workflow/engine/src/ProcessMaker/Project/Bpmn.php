@@ -1594,7 +1594,7 @@ class Bpmn extends Handler
         }
     }
 
-    private function __getElementsBetweenElementOriginAndElementDest(
+    private function getElementsBetweenElementOriginAndElementDestPriv(
         $elementOriginUid,
         $elementOriginType,
         $elementDestUid,
@@ -1632,7 +1632,7 @@ class Bpmn extends Handler
                 foreach ($arrayFlow as $value) {
                     $arrayFlowData = $value->toArray();
 
-                    $arrayEvent = $this->__getElementsBetweenElementOriginAndElementDest(
+                    $arrayEvent = $this->getElementsBetweenElementOriginAndElementDestPriv(
                         $arrayFlowData["FLO_ELEMENT_DEST"],
                         $arrayFlowData["FLO_ELEMENT_DEST_TYPE"],
                         $elementDestUid,
@@ -1668,7 +1668,7 @@ class Bpmn extends Handler
             $this->arrayElementOriginChecked = [];
 
             //Return
-            return call_user_func_array([$this, "__getElementsBetweenElementOriginAndElementDest"], array_merge(func_get_args(), [0]));
+            return call_user_func_array([$this, "getElementsBetweenElementOriginAndElementDestPriv"], array_merge(func_get_args(), [0]));
         } catch (\Exception $e) {
             self::log("Exception: ", $e->getMessage(), "Trace: ", $e->getTraceAsString());
 

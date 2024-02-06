@@ -26,6 +26,7 @@ class AbeConfiguration extends BaseAbeConfiguration
         'DYN_UID',
         'ABE_EMAIL_FIELD',
         'ABE_ACTION_FIELD',
+        'ABE_ACTION_BODY_FIELD',
         'ABE_CASE_NOTE_IN_RESPONSE',
         'ABE_FORCE_LOGIN',
         'ABE_CREATE_DATE',
@@ -33,7 +34,8 @@ class AbeConfiguration extends BaseAbeConfiguration
         'ABE_SUBJECT_FIELD',
         'ABE_MAILSERVER_OR_MAILCURRENT',
         'ABE_CUSTOM_GRID',
-        'ABE_EMAIL_SERVER_UID'
+        'ABE_EMAIL_SERVER_UID',
+        'ABE_EMAIL_SERVER_RECEIVER_UID'
     ];
 
     public function load($abeUid)
@@ -152,6 +154,7 @@ class AbeConfiguration extends BaseAbeConfiguration
         $criteria->addSelectColumn(AbeConfigurationPeer::DYN_UID);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_EMAIL_FIELD);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_ACTION_FIELD);
+        $criteria->addSelectColumn(AbeConfigurationPeer::ABE_ACTION_BODY_FIELD);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_SUBJECT_FIELD);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_MAILSERVER_OR_MAILCURRENT);
         $criteria->addSelectColumn(AbeConfigurationPeer::ABE_CUSTOM_GRID);

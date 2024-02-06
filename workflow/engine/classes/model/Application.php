@@ -439,6 +439,5 @@ class Application extends BaseApplication
         return $this->getAppUid();
     }
 
-    /*----------------------------------********---------------------------------*/
 }
 

@@ -1,6 +1,110 @@
 CHANGELOG
 =========
 
+4.3.0
+-----
+
+ * added `%env(trim:...)%` processor to trim a string value
+ * added `%env(default:param_name:...)%` processor to fallback to a parameter or to null when using `%env(default::...)%`
+ * added `%env(url:...)%` processor to convert an URL or DNS into an array of components
+ * added `%env(query_string:...)%` processor to convert a query string into an array of key values
+ * added support for deprecating aliases
+ * made `ContainerParametersResource` final and not implement `Serializable` anymore
+ * added `ReverseContainer`: a container that turns services back to their ids
+ * added ability to define an index for a tagged collection
+ * added ability to define an index for services in an injected service locator argument
+ * made `ServiceLocator` implement `ServiceProviderInterface`
+ * deprecated support for non-string default env() parameters
+ * added `%env(require:...)%` processor to `require()` a PHP file and use the value returned from it
+
+4.2.0
+-----
+
+ * added `ContainerBuilder::registerAliasForArgument()` to support autowiring by type+name
+ * added support for binding by type+name
+ * added `ServiceSubscriberTrait` to ease implementing `ServiceSubscriberInterface` using methods' return types
+ * added `ServiceLocatorArgument` and `!service_locator` config tag for creating optimized service-locators
+ * added support for autoconfiguring bindings
+ * added `%env(key:...)%` processor to fetch a specific key from an array
+ * deprecated `ServiceSubscriberInterface`, use the same interface from the `Symfony\Contracts\Service` namespace instead
+ * deprecated `ResettableContainerInterface`, use `Symfony\Contracts\Service\ResetInterface` instead
+
+4.1.0
+-----
+
+ * added support for variadics in named arguments
+ * added PSR-11 `ContainerBagInterface` and its `ContainerBag` implementation to access parameters as-a-service
+ * added support for service's decorators autowiring
+ * deprecated the `TypedReference::canBeAutoregistered()` and  `TypedReference::getRequiringClass()` methods
+ * environment variables are validated when used in extension configuration
+ * deprecated support for auto-discovered extension configuration class which does not implement `ConfigurationInterface`
+
+4.0.0
+-----
+
+ * Relying on service auto-registration while autowiring is not supported anymore.
+   Explicitly inject your dependencies or create services whose ids are
+   their fully-qualified class name.
+
+   Before:
+
+   ```php
+   namespace App\Controller;
+
+   use App\Mailer;
+
+   class DefaultController
+   {
+       public function __construct(Mailer $mailer) {
+           // ...
+       }
+
+       // ...
+   }
+   ```
+   ```yml
+   services:
+       App\Controller\DefaultController:
+           autowire: true
+   ```
+
+   After:
+
+   ```php
+   // same PHP code
+   ```
+   ```yml
+   services:
+       App\Controller\DefaultController:
+           autowire: true
+
+       # or
+       # App\Controller\DefaultController:
+       #     arguments: { $mailer: "@App\Mailer" }
+
+       App\Mailer:
+           autowire: true
+    ```
+ * removed autowiring services based on the types they implement
+ * added a third `$methodName` argument to the `getProxyFactoryCode()` method
+   of the `DumperInterface`
+ * removed support for autowiring types
+ * removed `Container::isFrozen`
+ * removed support for dumping an ucompiled container in `PhpDumper`
+ * removed support for generating a dumped `Container` without populating the method map
+ * removed support for case insensitive service identifiers
+ * removed the `DefinitionDecorator` class, replaced by `ChildDefinition`
+ * removed the `AutowireServiceResource` class and related `AutowirePass::createResourceForClass()` method
+ * removed `LoggingFormatter`, `Compiler::getLoggingFormatter()` and `addLogMessage()` class and methods, use the `ContainerBuilder::log()` method instead
+ * removed `FactoryReturnTypePass`
+ * removed `ContainerBuilder::addClassResource()`, use the `addObjectResource()` or the `getReflectionClass()` method instead.
+ * removed support for top-level anonymous services
+ * removed silent behavior for unused attributes and elements
+ * removed support for setting and accessing private services in `Container`
+ * removed support for setting pre-defined services in `Container`
+ * removed support for case insensitivity of parameter names
+ * removed `AutowireExceptionPass` and `AutowirePass::getAutowiringExceptions()`, use `Definition::addError()` and the `DefinitionErrorExceptionPass` instead
+
 3.4.0
 -----
 

@@ -3,8 +3,9 @@
 namespace Illuminate\Contracts\Cache;
 
 use Closure;
+use Psr\SimpleCache\CacheInterface;
 
-interface Repository
+interface Repository extends CacheInterface
 {
     /**
      * Determine if an item exists in the cache.
@@ -37,7 +38,7 @@ interface Repository
      *
      * @param  string  $key
      * @param  mixed   $value
-     * @param  \DateTime|float|int  $minutes
+     * @param  \DateTimeInterface|\DateInterval|float|int  $minutes
      * @return void
      */
     public function put($key, $value, $minutes);
@@ -47,7 +48,7 @@ interface Repository
      *
      * @param  string  $key
      * @param  mixed   $value
-     * @param  \DateTime|float|int  $minutes
+     * @param  \DateTimeInterface|\DateInterval|float|int  $minutes
      * @return bool
      */
     public function add($key, $value, $minutes);
@@ -80,28 +81,28 @@ interface Repository
     public function forever($key, $value);
 
     /**
-     * Get an item from the cache, or store the default value.
+     * Get an item from the cache, or execute the given Closure and store the result.
      *
      * @param  string  $key
-     * @param  \DateTime|float|int  $minutes
+     * @param  \DateTimeInterface|\DateInterval|float|int  $minutes
      * @param  \Closure  $callback
      * @return mixed
      */
     public function remember($key, $minutes, Closure $callback);
 
     /**
-     * Get an item from the cache, or store the default value forever.
+     * Get an item from the cache, or execute the given Closure and store the result forever.
      *
-     * @param  string   $key
+     * @param  string  $key
      * @param  \Closure  $callback
      * @return mixed
      */
     public function sear($key, Closure $callback);
 
     /**
-     * Get an item from the cache, or store the default value forever.
+     * Get an item from the cache, or execute the given Closure and store the result forever.
      *
-     * @param  string   $key
+     * @param  string  $key
      * @param  \Closure  $callback
      * @return mixed
      */
@@ -114,4 +115,11 @@ interface Repository
      * @return bool
      */
     public function forget($key);
+
+    /**
+     * Get the cache store implementation.
+     *
+     * @return \Illuminate\Contracts\Cache\Store
+     */
+    public function getStore();
 }

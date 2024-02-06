@@ -8,6 +8,7 @@ use G;
 use PMmemcached;
 use ProcessPeer;
 use ResultSet;
+use UsersPropertiesPeer;
 
 class Process
 {
@@ -2159,5 +2160,22 @@ class Process
         }
 
         return $processes;
+    }
+
+    /**
+     * Set for the first time the user opened the dynaform editor.
+     *
+     * @param string $usrUid
+     * @param string $seen
+     */
+    public function setIfFirstTimeConsumed($usrUid, $seen)
+    {
+        if ($seen === '1') {
+            $userProperties = UsersPropertiesPeer::retrieveByPk($usrUid);
+            if ($userProperties) {
+                $userProperties->setPmDynaformFirstTime('1');
+                $userProperties->save();
+            }
+        }
     }
 }

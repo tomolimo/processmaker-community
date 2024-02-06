@@ -6,7 +6,6 @@ global $G_TMP_MENU;
 global $RBAC;
 $partnerFlag = (defined('PARTNER_FLAG')) ? PARTNER_FLAG : false;
 
-/*----------------------------------********---------------------------------*/
 if ($RBAC->userCanAccess('PM_SETUP') === 1) {
     $pmSetupPermission = true;
     if ($RBAC->userCanAccess('PM_SETUP_LOGO') === 1) {
@@ -97,7 +96,6 @@ if ($RBAC->userCanAccess('PM_SETUP') === 1) {
             ucfirst(G::LoadTranslation('ID_DASHBOARD')),
             '', '', 'settings'
         );
-        /*----------------------------------********---------------------------------*/
     }
 }
 //tools options
@@ -143,14 +141,16 @@ if ($RBAC->userCanAccess('PM_USERS') === 1) {
     );
 }
 
-if ($RBAC->userCanAccess('PM_SETUP_ADVANCE') === 1 && $RBAC->userCanAccess('PM_USERS') === 1 && $RBAC->userCanAccess
-    ('PM_SETUP_USERS_AUTHENTICATION_SOURCES') === 1) {
+if ($RBAC->userCanAccess('PM_USERS') === 1 && $RBAC->userCanAccess('PM_SETUP_USERS_AUTHENTICATION_SOURCES') === 1) {
     $G_TMP_MENU->AddIdRawOption(
         'AUTHSOURCES', '../authSources/authSources_List',
         G::LoadTranslation('ID_AUTH_SOURCES'),
         '', '', 'users'
     );
     $G_TMP_MENU->AddIdRawOption('UX', '../admin/uxList', G::LoadTranslation('ID_USER_EXPERIENCE'), '', '', 'users');
+}
+
+if ($RBAC->userCanAccess('PM_SETUP_ADVANCE') === 1) {
     $G_TMP_MENU->AddIdRawOption('SYSTEM', '../admin/system', G::LoadTranslation('ID_SYSTEM'), '', '', 'settings');
     $G_TMP_MENU->AddIdRawOption(
         'INFORMATION', '../setup/systemInfo?option=processInfo',
@@ -173,10 +173,8 @@ if ($RBAC->userCanAccess('PM_SETUP') === 1 && $RBAC->userCanAccess('PM_SETUP_LOG
         ucfirst(strtolower(G::LoadTranslation('ID_EMAILS'))),
         '', '', 'logs'
     );
-    /*----------------------------------********---------------------------------*/
 }
 
-/*----------------------------------********---------------------------------*/
 
 
 if ($RBAC->userCanAccess('PM_SETUP') === 1) {
@@ -190,11 +188,7 @@ if ($RBAC->userCanAccess('PM_SETUP') === 1) {
         G::LoadTranslation('ID_PHP_INFO'),
         '', '', 'settings'
     );
-    /*----------------------------------********---------------------------------*/
 }
-/*----------------------------------********---------------------------------*/
 if ($RBAC->userCanAccess('PM_SETUP') == 1) {
-    /*----------------------------------********---------------------------------*/
 }
 
-/*----------------------------------********---------------------------------*/

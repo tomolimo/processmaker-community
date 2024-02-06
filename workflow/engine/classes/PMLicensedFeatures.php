@@ -334,5 +334,4 @@ class PMLicensedFeatures
         }
         return self::$instancefeature;
     }
-    /*----------------------------------********---------------------------------*/
 }

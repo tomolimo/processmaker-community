@@ -76,12 +76,10 @@ $ID_REQUIRED_FIELDS_ERROR = $filter->xssFilterHard(G::LoadTranslation('ID_REQUIR
 	$previouspage = $_POST['previous_step']['PAGE'];
 
 	$html .= '</td></tr><tr><td align="center">';
-	/*----------------------------------********---------------------------------*/
 
 		$html .= '<input type="button" value="Back" class="module_app_button___gray" onclick="javascript:history.back()">';
 		$html .= '<input type="button" value="Continue" class="module_app_button___gray" onclick="javascript:location.href=\''.$netxpage.'\'">';
 
-	/*----------------------------------********---------------------------------*/
 
     echo '<div class="grid" style="width:'.$width_content.'">
 	<div class="boxTop"><div class="a"></div><div class="b"></div><div class="c"></div></div>

@@ -50,8 +50,9 @@
                     return;
                 }
                 $(tr).remove();
-                if (fn)
-                    fn();
+                if (fn) {
+                    fn(tr);
+                }
             };
         } else {
             $.fmoldborder = el.style.border;
@@ -277,12 +278,18 @@
         Designer.prototype.init.call(this);
     };
     Designer.prototype.init = function () {
+        var that = this,
+            listControls,
+            listMobileControls,
+            listProperties;
         this.loadDynaforms();
-        var that = this;
         this.container = $("<div style='position:absolute;top:0;right:0;bottom:0;left:0;z-index:100;'></div>");
         this.center = $("<div class='ui-layout-center'></div>");
         this.north = $("<div class='ui-layout-north fd-toolbar-designer' style='overflow:hidden;background-color:#3397e1;padding:0px;'></div>");
         this.west = $("<div class='ui-layout-west' style='padding:0px;overflow-y:scroll;'></div>");
+        this.west.on("scroll", function () {
+            $(document).trigger("pm.fd.scroll");
+        });
         this.container.append(this.center);
         this.container.append(this.north);
         this.container.append(this.west);
@@ -308,9 +315,9 @@
         this.center[0].style.width = "";//todo
 
         //new objects
-        var listControls = new FormDesigner.main.ListControls();
-        var listMobileControls = new FormDesigner.main.ListMobileControls();
-        var listProperties = new FormDesigner.main.ListProperties();
+        listControls = new FormDesigner.main.ListControls();
+        listMobileControls = new FormDesigner.main.ListMobileControls();
+        listProperties = new FormDesigner.main.ListProperties();
         this.form1 = new FormDesigner.main.Form();
         this.title = $("<div style='float:left;font-family:Montserrat,sans-serif;font-size:20px;color:white;margin:5px;white-space:nowrap;'>Titulo</div>");
         this.areaButtons = new FormDesigner.main.AreaButtons();
@@ -483,6 +490,8 @@
                             dyn_uid: dynaform.id,
                             dyn_version: 2
                         });
+                        //patch to clear _items because is duplicating the items
+                        that.form1._items.clear();
                         that.form1.synchronizeVariables();
                     };
                     reader.onerror = function (evt) {
@@ -522,6 +531,10 @@
                 var a = new FormDesigner.main.DialogConfirmClear();
                 a.onAccept = function () {
                     that.form1.clear();
+                    that.form1.clearItemsDeprecated();
+                    if (!that.form1.checkForDeprecatedControls()) {
+                        that.form1.hideDeprecationMessage();
+                    }
                     listProperties.clear();
                 };
             }
@@ -562,7 +575,16 @@
         this.form1.onRemove = function () {
             return false;
         };
-        this.form1.onRemoveItem = function () {
+        this.form1.onRemoveItem = function (formItem) {
+            if (formItem) {
+                if (arguments.length > 1) {
+                    formItem.parent._items.remove(formItem);
+                }
+                that.form1._items.remove(formItem);
+            }
+            if (!that.form1.checkForDeprecatedControls()) {
+                that.form1.hideDeprecationMessage();
+            }
             listProperties.clear();
         };
         this.form1.onRemoveCell = function () {
@@ -576,6 +598,29 @@
                 that.form1.setNextVar(properties);
             }
         };
+        this.form1.onDrawDroppedItem = function (render, target) {
+            var i,
+                controls = listControls.controls.concat(listMobileControls.controls);
+            if (Array.isArray(controls)) {
+                for (i = 0; i < controls.length; i++) {
+                    if (controls[i].render === render &&
+                        controls[i].deprecated === true) {
+                        if (typeof target.deprecated === "function") {
+                            target.deprecated(true);
+                            if (arguments.length > 2) {
+                                target.parent._items.insert(target);
+                                // TODO forced way if a form has three levels, Will not work with fourth levels
+                                if (target.parent.parent.parent) {
+                                    target.parent.parent._items.insert(target);
+                                 }
+                            }
+                            that.form1._items.insert(target);
+                        }
+                        that.form1.showDeprecationMessage();
+                    }
+                }
+            }
+        };
         this.form1.onSetProperty = function (prop, value, target) {
             var dialogMessage,
                 object,
@@ -585,7 +630,9 @@
                 regExp,
                 type,
                 existRegExp,
-                dateLimit;
+                dateLimit,
+                messageDialog,
+                validateValue;
             switch (prop) {
                 case "name":
                     if (target.properties[prop].node && target instanceof FormDesigner.main.Form) {
@@ -613,7 +660,7 @@
                             required = value === "";
                             duplicated = $.countValue(that.getData(), prop, value, true) > 1;
                             regExp = target.properties[prop].regExp && target.properties[prop].regExp.test(target.properties[prop].value) === false;
-                            type = required? "required" : duplicated? "duplicated" : regExp? "invalid" : "";
+                            type = required ? "required" : duplicated ? "duplicated" : regExp ? "invalid" : "";
                             if (type !== "") {
                                 dialogMessage = new FormDesigner.main.DialogInvalid(null, prop, type);
                                 dialogMessage.onClose = function () {
@@ -804,25 +851,23 @@
                                 }
                             }
                         }
-                       
+
                     }
                     break;
                 case "maxDate":
                     if (target.properties[prop].node) {
                         if (target.properties.type.value === FormDesigner.main.TypesControl.datetime) {
-                            if (target.properties.type.value === FormDesigner.main.TypesControl.datetime) {
-                                dateLimit = that.thereIsMaxDateLimit(
-                                    target.properties.minDate.value,
-                                    target.properties.maxDate.value,
-                                    target.properties.defaultDate.value
-                                );
-                                if (dateLimit) {
-                                    dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Max date must be greater than the min and default date".translate());
-                                    dialogMessage.onClose = function () {
-                                        target.properties.set("maxDate", dateLimit);
-                                        target.properties.maxDate.node.value = dateLimit;
-                                    };
-                                }
+                            dateLimit = that.thereIsMaxDateLimit(
+                                target.properties.minDate.value,
+                                target.properties.maxDate.value,
+                                target.properties.defaultDate.value
+                            );
+                            if (dateLimit) {
+                                dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Max date must be greater than the min and default date".translate());
+                                dialogMessage.onClose = function () {
+                                    target.properties.set("maxDate", dateLimit);
+                                    target.properties.maxDate.node.value = dateLimit;
+                                };
                             }
                         }
                     }
@@ -848,6 +893,26 @@
                 case "required":
                     if (target.properties["requiredFieldErrorMessage"].node) {
                         target.properties.requiredFieldErrorMessage.node.disabled = !value;
+                    }
+                    break;
+                case "resultsLimit":
+                    validateValue = !isNaN(parseInt(value)) ? target.properties[prop].regExpNumber.test(value) :
+                        target.properties[prop].regExpString.test(value);
+                    if (!validateValue) {
+                        messageDialog = 'The value provided for the Results limit property of the field "'.translate() + target.properties.id.value + '" is invalid'.translate();
+                        dialogMessage = new FormDesigner.main.DialogMessage(null, 'success', messageDialog);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
+                        dialogMessage.onAccept = function () {
+                            dialogMessage.dialog.dialog("close");
+                        };
+                    } else {
+                        target.properties[prop].value = value;
                     }
                     break;
                 case "size":
@@ -918,6 +983,8 @@
             tooltipClass: "fd-tooltip",
             position: {my: "left top+1"}
         });
+
+        $(document).on("pm.fd.show", that.onShowHandler.bind(this, listControls, listMobileControls));
     };
     Designer.prototype._getAuxForm = function () {
         var form;
@@ -939,6 +1006,7 @@
         for (var i = 0; i < a.length; i++)
             $(a[i]).hide();
         $(this.container).show();
+        $(document).trigger("pm.fd.show");
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
@@ -962,9 +1030,11 @@
         return data;
     };
     Designer.prototype.loadDynaforms = function () {
+        var isSeen = 1;
         $.ajax({
             async: false,
-            url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id + "/dynaforms",
+            url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id
+                + "/dynaforms?seen=" + isSeen,
             method: "GET",
             contentType: "application/json",
             beforeSend: function (xhr) {
@@ -978,7 +1048,7 @@
     /**
      * Validate the date
      * @param date
-     * 
+     *
      */
     Designer.prototype.parseDate = function (stringDate) {
         var parts;
@@ -1040,12 +1110,12 @@
                 if (maxDate < defaultDate) {
                     result = defaultDateString;
                 }
-            } 
+            }
             if (!result && this.isValidDate(minDate)) {
                 if (maxDate < minDate) {
                     result = minDateString;
                 }
-          }
+            }
         }
         return result;
     };
@@ -1065,20 +1135,42 @@
             if (this.isValidDate(minDate)) {
                 if (defaultDate < minDate) {
                     result = minDateString;
-                } 
+                }
             }
             if (!result && this.isValidDate(maxDate)) {
-              if (defaultDate > maxDate) {
-                result = maxDateString;
-              }
+                if (defaultDate > maxDate) {
+                    result = maxDateString;
+                }
             }
         }
         return result;
     };
     /**
-     * Validate Max File Size, if the value exceeds the allowed limit, an alert message 
+     * Handler for on show trigger.
+     * @param {array} listControls
+     * @param {array} listMobileControls
+     */
+    Designer.prototype.onShowHandler = function (listControls, listMobileControls) {
+        var i,
+            popOver,
+            controls = listControls.controls.concat(listMobileControls.controls);
+        if (Array.isArray(controls)) {
+            for (i = 0; i < controls.length; i += 1) {
+                if (controls[i].deprecated === true) {
+                    popOver = controls[i].target.getPopOver();
+                    $(document).on('pm.fd.scroll', popOver.hide.bind(popOver));
+                    if (!PMDYNAFORM_FIRST_TIME) {
+                        popOver.show();
+                    }
+                }
+            }
+        }
+        PMDYNAFORM_FIRST_TIME = true;
+    };
+    /**
+     * Validate Max File Size, if the value exceeds the allowed limit, an alert message
      * is displayed.
-     * 
+     *
      * @param object target
      * @param object maxFileSizeInformation
      * @param function callback
@@ -1102,9 +1194,9 @@
         }
     };
     /**
-     * Returns true if the value of Max files Size, satisfies the configuration of 
+     * Returns true if the value of Max files Size, satisfies the configuration of
      * the php ini directives, false otherwise.
-     * 
+     *
      * @param {object} maxFileSizeInformation
      * @param {object} properties
      * @returns {Boolean}
@@ -1133,7 +1225,7 @@
     };
     /**
      * Set Minimal File Size.
-     * 
+     *
      * @param object target
      * @param object maxFileSizeInformation
      */

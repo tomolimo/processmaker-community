@@ -22,7 +22,6 @@
  * Coral Gables, FL, 33134, USA, or email info@colosa.com.
  *
  */
-/*----------------------------------********---------------------------------*/
 if (isset ($_POST['form']['USER_ENV'])) {
     $data = base64_encode(serialize($_POST));
     $url = sprintf('/sys%s/%s/%s/login/sysLoginVerify?d=%s', $_POST['form']['USER_ENV'], SYS_LANG, SYS_SKIN, $data);
@@ -33,11 +32,11 @@ if (isset ($_POST['form']['USER_ENV'])) {
 //Save session variables
 $arraySession = array();
 
-if (isset($_SESSION["G_MESSAGE"])) {
+if (!empty($_SESSION['G_MESSAGE'])) {
     $arraySession["G_MESSAGE"] = $_SESSION["G_MESSAGE"];
 }
 
-if (isset($_SESSION["G_MESSAGE_TYPE"])) {
+if (!empty($_SESSION['G_MESSAGE_TYPE'])) {
     $arraySession["G_MESSAGE_TYPE"] = $_SESSION["G_MESSAGE_TYPE"];
 }
 

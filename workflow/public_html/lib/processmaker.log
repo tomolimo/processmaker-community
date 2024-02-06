@@ -1,30 +1,30 @@
-[9 days ago] 1a1de6c  (origin/bugfix/PMC-748) PMC-748 <Paula Quispe>
-[10 days ago] 557eee1  (origin/bugfix/PMC-112) PMC-112 <Paula Quispe>
-[13 days ago] 283c0a3  (origin/bugfix/PMC-695) PMC-695 <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 3cc90d2  (origin/bugfix/PMC-693-A) PMC-693-A <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] fedf113  (origin/bugfix/PMC-387-A) PMC-387 <Paula Quispe>
-[3 weeks ago] 63ceef5  (origin/bugfix/PMC-705) PMC-705 <Andrea Adamczyk>
-[3 weeks ago] 90b1abb  (origin/bugfix/PMC-711) PMC-711 <Paula Quispe>
-[3 weeks ago] 0ee9f85  PMC-141:[Mantis - 25511] The time in the email logs is incorrectly being shown in UTC+00 despite the user's timezone <Fabio Guachalla>
-[3 weeks ago] 5dc261c  (origin/bugfix/PMC-703) PMC-703 <Julio Cesar Laura Avendaño>
-[3 weeks ago] 7169e72  PMC-387:[Mantis 26619] Date labels show inconsistency by showing one date in UTC and others in user based time zone <Fabio Guachalla>
-[3 weeks ago] cd3d6cb  (origin/bugfix/PMC-704) PMC-704 <Paula Quispe>
-[3 weeks ago] a7a205c  (origin/bugfix/PMC-359) PMC-359 <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 4e6a07a  (origin/bugfix/PMC-440) PMC-440 <Israel Bernabe>
-[4 weeks ago] 0529f25  (origin/bugfix/PMC-593) PMC-593 <Julio Cesar Laura Avendaño>
-[4 weeks ago] 6be09d3  (origin/bugfix/PMC-379-A) PMC-379-A <Israel Bernabe>
-[4 weeks ago] 48502bb  (origin/bugfix/PMC-601) PMC-601 <Paula Quispe>
-[4 weeks ago] 09987b8  (origin/bugfix/PMC-680) PMC-680 <Paula Quispe>
-[4 weeks ago] 1fc2f0c  (origin/bugfix/PMC-678) PMC-678 <Paula Quispe>
-[5 weeks ago] 8e069da  (origin/bugfix/PMC-32) PMC-32 <Israel Bernabe>
-[5 weeks ago] 0612317  (origin/bugfix/PMC-615) PMC-615 <Andrea Adamczyk>
-[5 weeks ago] c0918e1  PMC-115:Files uploaded in ABE cannot be fetched in Script task or IEE <Fabio Guachalla>
-[5 weeks ago] 9ceb114  (origin/bugfix/PMC-614) PMC-614 <Julio Cesar Laura Avendaño>
-[6 weeks ago] 04fa8e1  (origin/bugfix/PMC-557-B) PMC-557 <Paula Quispe>
-[6 weeks ago] 7867093  (origin/bugfix/PMC-143-A) PMC-143 <Paula Quispe>
-[6 weeks ago] a90e696  (origin/bugfix/PMC-541-B) PMC-541-B <Roly Rudy Gutierrez Pinto>
-[7 weeks ago] cb439fa  (origin/bugfix/PMC-608) PMC-608 <Paula Quispe>
-[7 weeks ago] 82fe93a  (origin/bugfix/PMC-425) PMC-425 <Roly Rudy Gutierrez Pinto>
-[7 weeks ago] a5a8c42  (origin/bugfix/PMC-597) PMC-597 <Paula Quispe>
-[7 weeks ago] 2ce5d4e  (origin/bugfix/PMC-541-A) PMC-541-A <Roly Rudy Gutierrez Pinto>
-[7 weeks ago] cb95200  (origin/bugfix/PMC-379) PMC-379 <Paula Quispe>
+[19 hours ago] de8ce865e  (origin/bugfix/PMC-1503) PMC-1503 <Andrea Adamczyk>
+[3 days ago] 635b36534  (origin/bugfix/PMC-1498) PMC-1498 <Paula Quispe>
+[2 weeks ago] 796405a01  (origin/bugfix/PMC-1452) PMC-1452 <Andrea Adamczyk>
+[3 weeks ago] 7fde8b45d  (origin/bugfix/PMC-1447) PMC-1447 Warning in processes_Import_Ajax.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] b00def4ad  (origin/bugfix/PMC-1446) PMC-1446 PHP Warning: count(): Parameter must be an array or an object that implements Countable <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 96a29a453  (origin/bugfix/PMC-1445) PMC-1445 Update gitignore file <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 09a1398e1  (origin/bugfix/PMC-1441) PMC-1441 get_class() expects parameter 1 to be object <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 2dd0d34bf  (origin/bugfix/PMC-1418) PMC-1418 Use of __autoload() function is deprecated since PHP 7.2 <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 08639eba0  (origin/bugfix/PMC-1404) PMC-1404 <Andrea Adamczyk>
+[3 weeks ago] 4cbf1f6f5  (origin/bugfix/PMC-1416) PMC-1416 <Andrea Adamczyk>
+[3 weeks ago] 95a7f10ad  (origin/bugfix/PMC-1422) PMC-1422 Warning in charts.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] db90c5554  (origin/bugfix/PMC-1423) PMC-1423 Warning in processTemplate.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 9d5faa60f  (origin/bugfix/PMC-1406_B) PMC-1406_B <Andrea Adamczyk>
+[3 weeks ago] 5da22ee5b  (origin/bugfix/PMC-1419) PMC-1419 Warning in Cases.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 7c617f236  (origin/bugfix/PMC-1428) PMC-1428 <Paula Quispe>
+[3 weeks ago] eea2b70c7  (origin/bugfix/PMC-1430) PMC-1430 <Julio Cesar Laura Avendaño>
+[3 weeks ago] 18a16a598  (origin/bugfix/PMC-1414) PMC-1414 <Andrea Adamczyk>
+[3 weeks ago] 1ffe41698  (origin/bugfix/PMC-1415) PMC-1415 Warning in class.controller.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] d1e70f9bc  (origin/bugfix/PMC-1405) PMC-1405 The body of a heredoc/nowdoc can not contain the heredoc/nowdoc closing marker as text at the start of a line since PHP 7.3. <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 5b67edbb5  (origin/bugfix/PMC-1417) PMC-1417 <Paula Quispe>
+[3 weeks ago] 22c02f306  (origin/bugfix/PMC-1425) PMC-1425 <Paula Quispe>
+[3 weeks ago] 4da3d9cf6  (origin/bugfix/PMC-1424) PMC-1424 <Paula Quispe>
+[3 weeks ago] 30e859779  (origin/bugfix/PMC-1427) PMC-1427 <Paula Quispe>
+[3 weeks ago] a3796b57d  (origin/bugfix/PMC-1426) PMC-1426 <Paula Quispe>
+[3 weeks ago] 9af3fb3f6  (origin/bugfix/PMC-1407) PMC-1407 "$this" can no longer be used in a plain function or method since PHP 7.1. <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] f7d0bb6ab  (origin/bugfix/PMC-1354) PMC-1354 <Andrea Adamczyk>
+[3 weeks ago] 0b28a2ba9  (origin/bugfix/PMC-1403) PMC-1403 Targeting a 'switch' control structure with a 'continue' statement is strongly discouraged and will throw a warning as of PHP 7.3. <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 710c33b3b  (origin/bugfix/PMC-1401) PMC-1401 warning issues in class.phpSqlParser.php <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 1283bc5d2  (origin/bugfix/PMC-1395) PMC-1395 Fatal error: Declaration of remove() <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 3b3dd1b0a  (origin/bugfix/PMC-1398) PMC-1398 <Andrea Adamczyk>

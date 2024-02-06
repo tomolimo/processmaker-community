@@ -56,7 +56,6 @@ $conf = new Configurations();
 $headPublisher = headPublisher::getSingleton();
 
 $urlToRedirectAfterPause = 'casesListExtJs';
-/*----------------------------------********---------------------------------*/
 
 $headPublisher->assign('urlToRedirectAfterPause', $urlToRedirectAfterPause);
 $headPublisher->addExtJsScript('app/main', true);
@@ -138,7 +137,6 @@ $isBpmn = $fields['PRO_BPMN'] === 1 ? true : false;
  */
 $showCustomForm = false;
 
-/*----------------------------------********---------------------------------*/
 
 $step = new Step();
 $step = $step->loadByProcessTaskPosition($case['PRO_UID'], $case['TAS_UID'], 1);

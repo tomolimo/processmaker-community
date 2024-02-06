@@ -25,20 +25,53 @@ use Symfony\Component\DependencyInjection\TypedReference;
  */
 class ResolveBindingsPass extends AbstractRecursivePass
 {
-    private $usedBindings = array();
-    private $unusedBindings = array();
-    private $errorMessages = array();
+    private $usedBindings = [];
+    private $unusedBindings = [];
+    private $errorMessages = [];
 
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
+        $this->usedBindings = $container->getRemovedBindingIds();
+
         try {
             parent::process($container);
 
-            foreach ($this->unusedBindings as list($key, $serviceId)) {
-                $message = sprintf('Unused binding "%s" in service "%s".', $key, $serviceId);
+            foreach ($this->unusedBindings as list($key, $serviceId, $bindingType, $file)) {
+                $argumentType = $argumentName = $message = null;
+
+                if (false !== strpos($key, ' ')) {
+                    list($argumentType, $argumentName) = explode(' ', $key, 2);
+                } elseif ('$' === $key[0]) {
+                    $argumentName = $key;
+                } else {
+                    $argumentType = $key;
+                }
+
+                if ($argumentType) {
+                    $message .= sprintf('of type "%s" ', $argumentType);
+                }
+
+                if ($argumentName) {
+                    $message .= sprintf('named "%s" ', $argumentName);
+                }
+
+                if (BoundArgument::DEFAULTS_BINDING === $bindingType) {
+                    $message .= 'under "_defaults"';
+                } elseif (BoundArgument::INSTANCEOF_BINDING === $bindingType) {
+                    $message .= 'under "_instanceof"';
+                } else {
+                    $message .= sprintf('for service "%s"', $serviceId);
+                }
+
+                if ($file) {
+                    $message .= sprintf(' in file "%s"', $file);
+                }
+
+                $message = sprintf('A binding is configured for an argument %s, but no corresponding argument has been found. It may be unused and should be removed, or it may have a typo.', $message);
+
                 if ($this->errorMessages) {
                     $message .= sprintf("\nCould be related to%s:", 1 < \count($this->errorMessages) ? ' one of' : '');
                 }
@@ -48,9 +81,9 @@ class ResolveBindingsPass extends AbstractRecursivePass
                 throw new InvalidArgumentException($message);
             }
         } finally {
-            $this->usedBindings = array();
-            $this->unusedBindings = array();
-            $this->errorMessages = array();
+            $this->usedBindings = [];
+            $this->unusedBindings = [];
+            $this->errorMessages = [];
         }
     }
 
@@ -59,7 +92,7 @@ class ResolveBindingsPass extends AbstractRecursivePass
      */
     protected function processValue($value, $isRoot = false)
     {
-        if ($value instanceof TypedReference && $value->getType() === $this->container->normalizeId($value)) {
+        if ($value instanceof TypedReference && $value->getType() === (string) $value) {
             // Already checked
             $bindings = $this->container->getDefinition($this->currentId)->getBindings();
 
@@ -75,15 +108,15 @@ class ResolveBindingsPass extends AbstractRecursivePass
         }
 
         foreach ($bindings as $key => $binding) {
-            list($bindingValue, $bindingId, $used) = $binding->getValues();
+            list($bindingValue, $bindingId, $used, $bindingType, $file) = $binding->getValues();
             if ($used) {
                 $this->usedBindings[$bindingId] = true;
                 unset($this->unusedBindings[$bindingId]);
             } elseif (!isset($this->usedBindings[$bindingId])) {
-                $this->unusedBindings[$bindingId] = array($key, $this->currentId);
+                $this->unusedBindings[$bindingId] = [$key, $this->currentId, $bindingType, $file];
             }
 
-            if (isset($key[0]) && '$' === $key[0]) {
+            if (preg_match('/^(?:(?:array|bool|float|int|string) )?\$/', $key)) {
                 continue;
             }
 
@@ -100,7 +133,7 @@ class ResolveBindingsPass extends AbstractRecursivePass
 
         try {
             if ($constructor = $this->getConstructor($value, false)) {
-                $calls[] = array($constructor, $value->getArguments());
+                $calls[] = [$constructor, $value->getArguments()];
             }
         } catch (RuntimeException $e) {
             $this->errorMessages[] = $e->getMessage();
@@ -115,23 +148,36 @@ class ResolveBindingsPass extends AbstractRecursivePass
             if ($method instanceof \ReflectionFunctionAbstract) {
                 $reflectionMethod = $method;
             } else {
-                $reflectionMethod = $this->getReflectionMethod($value, $method);
+                try {
+                    $reflectionMethod = $this->getReflectionMethod($value, $method);
+                } catch (RuntimeException $e) {
+                    if ($value->getFactory()) {
+                        continue;
+                    }
+                    throw $e;
+                }
             }
 
             foreach ($reflectionMethod->getParameters() as $key => $parameter) {
-                if (array_key_exists($key, $arguments) && '' !== $arguments[$key]) {
+                if (\array_key_exists($key, $arguments) && '' !== $arguments[$key]) {
                     continue;
                 }
 
-                if (array_key_exists('$'.$parameter->name, $bindings)) {
+                $typeHint = ProxyHelper::getTypeHint($reflectionMethod, $parameter);
+
+                if (\array_key_exists($k = ltrim($typeHint, '\\').' $'.$parameter->name, $bindings)) {
+                    $arguments[$key] = $this->getBindingValue($bindings[$k]);
+
+                    continue;
+                }
+
+                if (\array_key_exists('$'.$parameter->name, $bindings)) {
                     $arguments[$key] = $this->getBindingValue($bindings['$'.$parameter->name]);
 
                     continue;
                 }
 
-                $typeHint = ProxyHelper::getTypeHint($reflectionMethod, $parameter, true);
-
-                if (!isset($bindings[$typeHint])) {
+                if (!$typeHint || '\\' !== $typeHint[0] || !isset($bindings[$typeHint = substr($typeHint, 1)])) {
                     continue;
                 }
 

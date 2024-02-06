@@ -1,28 +1,4 @@
 <?php
-/**
- * defaultAjax.php
- *
- * ProcessMaker Open Source Edition
- * Copyright (C) 2004 - 2008 Colosa Inc.23
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * For more information, contact Colosa Inc, 2566 Le Jeune Rd.,
- * Coral Gables, FL, 33134, USA, or email info@colosa.com.
- */
-
-/*NEXT LINE: Runs any configuration defined to be executed before dependent fields recalc*/
 
 use ProcessMaker\Plugins\PluginRegistry;
 
@@ -30,8 +6,6 @@ if (isset($_SESSION['CURRENT_PAGE_INITILIZATION'])) {
     eval($_SESSION['CURRENT_PAGE_INITILIZATION']);
 }
 
-
-// $json=new Services_JSON();
 if (!defined('XMLFORM_AJAX_PATH')) {
     define('XMLFORM_AJAX_PATH', PATH_XMLFORM);
 }
@@ -63,11 +37,11 @@ $G_FORM->values = isset($_SESSION[$G_FORM->id]) ? $_SESSION[$G_FORM->id] : array
 $newValues = (Bootstrap::json_decode(urlDecode(stripslashes($_POST['fields']))));
 
 if (isset($_POST['grid'])) {
-    $_POST['row'] = (int)$_POST['row'];
+    $_POST['row'] = (int) $_POST['row'];
     $aAux = array();
 
     foreach ($newValues as $sKey => $newValue) {
-        $newValue = (array)$newValue;
+        $newValue = (array) $newValue;
         $aKeys = array_keys($newValue);
         if (count($aKeys) > 0) {
             $aValues = array();
@@ -88,7 +62,7 @@ if (count($newValues) > 1 && isset($_POST['grid'])) {
         for ($r2 = 1; $r2 <= $_POST['row']; $r2++) {
             foreach ($values as $class => $value) {
                 if ($class == $_POST['grid']) {
-                    $value = (array)$value;
+                    $value = (array) $value;
                     $arrayK = $value[$r2];
                     foreach ($arrayK as $key2 => $val) {
                         $fieldBase[$r2][$key2] = is_array($val) ? $val[$key2] : $val;
@@ -107,7 +81,7 @@ if (count($newValues) > 1 && isset($_POST['grid'])) {
 $dependentFields = array();
 $aux = array();
 for ($r = 0; $r < count($newValues); $r++) {
-    $newValues[$r] = (array)$newValues[$r];
+    $newValues[$r] = (array) $newValues[$r];
     $G_FORM->setValues($newValues[$r]);
     //Search dependent fields
     foreach ($newValues[$r] as $k => $v) {
@@ -117,7 +91,11 @@ for ($r = 0; $r < count($newValues); $r++) {
         } else {
             foreach ($v[$_POST['row']] as $k1 => $v1) {
                 $myDependentFields = subDependencies($k1, $G_FORM, $aux, $_POST['grid']);
-                $_SESSION[$G_FORM->id][$_POST['grid']][$_POST['row']][$k1] = $v1;
+                $_SESSION[$G_FORM->id][$_POST['grid']] = [
+                    $_POST['row'] => [
+                        $k1 => $v1
+                    ]
+                ];
                 $G_FORM->values[$_POST['grid']][$_POST['row']][$k1] = $v1;
             }
         }
@@ -142,12 +120,12 @@ $G_FORM->values = $newForm;
 $arrayFieldSubDependent = array();
 
 if (isset($_POST["grid"])) {
-    $arrayField = (array)(Bootstrap::json_decode(urlDecode(stripslashes($_POST["fields"]))));
+    $arrayField = (array) (Bootstrap::json_decode(urlDecode(stripslashes($_POST["fields"]))));
     $arrayDependentField = array();
     $ereg = null;
 
     foreach ($arrayField as $fieldData) {
-        $arrayAux = (array)($fieldData);
+        $arrayAux = (array) ($fieldData);
 
         foreach ($arrayAux as $index => $value) {
             $ereg = $ereg . (($ereg != null) ? "|" : null) . $index; //Concatenate field
@@ -185,7 +163,7 @@ if (isset($_POST["grid"])) {
 //Completed all fields of the grid
 if (isset($_POST["grid"]) && isset($_POST["gridField"])) {
     //Completed all fields of the grid
-    $arrayGridField = (array)(Bootstrap::json_decode(urldecode(stripslashes($_POST["gridField"]))));
+    $arrayGridField = (array) (Bootstrap::json_decode(urldecode(stripslashes($_POST["gridField"]))));
 
     foreach ($arrayGridField as $index => $value) {
         $G_FORM->values[$_POST["grid"]][$_POST["row"]][$index] = $value;

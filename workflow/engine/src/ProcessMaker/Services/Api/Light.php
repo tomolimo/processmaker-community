@@ -119,13 +119,11 @@ class Light extends Api
         try {
             $userId = $this->getUserId();
 
-                /*----------------------------------********---------------------------------*/
                 $case = new BusinessModelCases();
                 $arrayListCounter = $case->getListCounters(
                     $userId,
                     ['to_do', 'draft', 'sent', 'selfservice', 'paused', 'completed', 'cancelled']
                 );
-            /*----------------------------------********---------------------------------*/
 
             $result = $this->parserCountersCases($arrayListCounter);
         } catch (Exception $e) {
@@ -234,10 +232,8 @@ class Light extends Api
             Validator::throwExceptionIfDataNotMetIso8601Format($dataList, $this->arrayFieldIso8601);
             $dataList = DateTime::convertDataToUtc($dataList, $this->arrayFieldIso8601);
 
-                /*----------------------------------********---------------------------------*/
                 $case = new BusinessModelCases();
                 $response = $case->getList($dataList);
-            /*----------------------------------********---------------------------------*/
 
             //Complete the list information with some task properties
             $response['data'] = $this->addTaskProperties($response['data']);
@@ -340,10 +336,8 @@ class Light extends Api
             Validator::throwExceptionIfDataNotMetIso8601Format($dataList, $this->arrayFieldIso8601);
             $dataList = DateTime::convertDataToUtc($dataList, $this->arrayFieldIso8601);
 
-                /*----------------------------------********---------------------------------*/
                 $case = new BusinessModelCases();
                 $response = $case->getList($dataList);
-            /*----------------------------------********---------------------------------*/
 
             //Complete the list information with some task properties
             $response['data'] = $this->addTaskProperties($response['data']);
@@ -442,10 +436,8 @@ class Light extends Api
             Validator::throwExceptionIfDataNotMetIso8601Format($dataList, $this->arrayFieldIso8601);
             $dataList = DateTime::convertDataToUtc($dataList, $this->arrayFieldIso8601);
 
-                /*----------------------------------********---------------------------------*/
                 $case = new BusinessModelCases();
                 $response = $case->getList($dataList);
-            /*----------------------------------********---------------------------------*/
 
             $result = $this->parserDataParticipated($response['data']);
 
@@ -535,10 +527,8 @@ class Light extends Api
             $dataList['newerThan'] = $newerThan;
             $dataList['oldestthan'] = $oldestthan;
 
-                /*----------------------------------********---------------------------------*/
                 $case = new BusinessModelCases();
                 $response = $case->getList($dataList);
-            /*----------------------------------********---------------------------------*/
 
             $result = $this->parserDataParticipated($response['data']);
 
@@ -607,10 +597,11 @@ class Light extends Api
             if (preg_match($this->regexNull, $newerThan)) {
                 return [];
             }
+            $paged = ($start === 0 && $limit === 0) ? false : true;
 
             $dataList['userId'] = $this->getUserId();
             $dataList['action'] = 'unassigned';
-            $dataList['paged'] = false;
+            $dataList['paged'] = $paged;
 
             $dataList['start'] = $start;
             $dataList['limit'] = $limit;
@@ -624,10 +615,11 @@ class Light extends Api
             Validator::throwExceptionIfDataNotMetIso8601Format($dataList, $this->arrayFieldIso8601);
             $dataList = DateTime::convertDataToUtc($dataList, $this->arrayFieldIso8601);
 
-                /*----------------------------------********---------------------------------*/
                 $oCases = new BusinessModelCases();
                 $response = $oCases->getList($dataList);
-            /*----------------------------------********---------------------------------*/
+            if ($paged === true) {
+                $response = $response['data'];
+            }
             $result = $this->parserDataUnassigned($response);
 
             return DateTime::convertUtcToIso8601($result, $this->arrayFieldIso8601);

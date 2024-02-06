@@ -79,7 +79,6 @@ class Activity extends Api
     {
         try {
             $configurations = array();
-            /*----------------------------------********---------------------------------*/
             return $configurations;
         } catch (\Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
@@ -110,7 +109,6 @@ class Activity extends Api
             }
             $task = new \ProcessMaker\BusinessModel\Task();
             $properties = $task->updateProperties($prj_uid, $act_uid, $request_data);
-            /*----------------------------------********---------------------------------*/
         } catch (\Exception $e) {
             throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
         }

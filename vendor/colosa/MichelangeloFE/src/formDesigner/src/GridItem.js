@@ -10,7 +10,9 @@
         GridItem.prototype.init.call(this);
     };
     GridItem.prototype.init = function () {
-        var that = this, html;
+        var that = this,
+            html;
+
         switch (this.render) {
             case FormDesigner.main.TypesControl.text:
                 html = "<input type='text' value='' class='fd-gridForm-grid-text-column'>";
@@ -85,6 +87,7 @@
             });
             that.onSelect(that.properties, that);
         });
+
         this.properties = new FormDesigner.main.Properties(this.render, this.html, that);
         this.properties.onClick = function (property) {
             var a, b, fields, dialog;
@@ -249,6 +252,7 @@
                 });
             }
         };
+        this.createDeprecatedIcon();
     };
     GridItem.prototype.getData = function () {
         var prop = {};
@@ -296,6 +300,38 @@
                     }
                     break;
             }
+        }
+    };
+    /**
+     * Create deprecation icon.
+     */
+    GridItem.prototype.createDeprecatedIcon = function () {
+        this.deprecatedIcon = $("<div class='mafe-deprecated-control'></div>");
+        this.deprecatedIcon.attr('title', "");
+        this.deprecatedIcon.hide();
+        this.deprecatedIcon.tooltip({
+            content: FormDesigner.DEPRECATION_TEXT,
+            close: function (event, ui) {
+                ui.tooltip.hover(function () {
+                    $(this).stop(true).fadeTo(400, 1);
+                }, function () {
+                    $(this).fadeOut("400", function () {
+                        $(this).remove();
+                    });
+                });
+            }
+        });
+        this.html.find('.fd-gridForm-grid-griditem-columnLabel').parent().prepend(this.deprecatedIcon);
+    };
+    /**
+     * Enable or disable deprecated icon.
+     * @param {boolean} status
+     */
+    GridItem.prototype.deprecated = function (status) {
+        if (status === true) {
+            this.deprecatedIcon.show();
+        } else {
+            this.deprecatedIcon.hide();
         }
     };
     FormDesigner.extendNamespace('FormDesigner.main.GridItem', GridItem);

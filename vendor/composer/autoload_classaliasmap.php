@@ -78,7 +78,6 @@ return array (
     'toolbar' => 'ToolBar',
     'tree' => 'PmTree',
     'triggerlibrary' => 'TriggerLibrary',
-    'upgrade' => 'Upgrade',
     'workspacetools' => 'WorkspaceTools',
     'wsbase' => 'WsBase',
     'wsresponse' => 'WsResponse',
@@ -445,10 +444,6 @@ return array (
     'TriggerLibrary' => 
     array (
       'triggerlibrary' => 'triggerlibrary',
-    ),
-    'Upgrade' => 
-    array (
-      'upgrade' => 'upgrade',
     ),
     'WorkspaceTools' => 
     array (

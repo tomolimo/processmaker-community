@@ -213,7 +213,7 @@ class AppNotes extends BaseAppNotes
             $configNoteNotification['subject'] = G::LoadTranslation('ID_MESSAGE_SUBJECT_NOTE_NOTIFICATION') . " @#APP_TITLE ";
             //Define the body for the notification
             $configNoteNotification['body'] = $this->getBodyCaseNote($authorName, $noteContent);
-            $body = nl2br(G::replaceDataField($configNoteNotification['body'], $fieldCase));
+            $body = nl2br(G::replaceDataField($configNoteNotification['body'], $fieldCase, 'mysql', false));
 
             $users = new Users();
             $recipientsArray = explode(",", $noteRecipients);
@@ -229,7 +229,7 @@ class AppNotes extends BaseAppNotes
                     $appUid,
                     $delIndex,
                     WsBase::MESSAGE_TYPE_CASE_NOTE,
-                    G::replaceDataField($configNoteNotification['subject'], $fieldCase),
+                    G::replaceDataField($configNoteNotification['subject'], $fieldCase, 'mysql', false),
                     G::buildFrom($configuration, $from),
                     $to,
                     $body,

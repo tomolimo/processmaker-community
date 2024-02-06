@@ -340,7 +340,7 @@ class UsersProperties extends BaseUsersProperties
             global $RBAC;
             $oConf = new Configurations();
             $oConf->loadConfig($x, 'USER_PREFERENCES', '', '', $_SESSION['USER_LOGGED'], '');
-            if (sizeof($oConf->aConfig) > 0) {
+            if (isset($oConf->aConfig['DEFAULT_MENU'])) {
                 if ($oConf->aConfig['DEFAULT_MENU'] == 'PM_USERS') {
                     $oConf->aConfig['DEFAULT_MENU'] = 'PM_SETUP';
                 }
@@ -474,7 +474,7 @@ class UsersProperties extends BaseUsersProperties
         }
         $url = '';
 
-        if (sizeof($oConf->aConfig) > 0) {
+        if (isset($oConf->aConfig['DEFAULT_MENU'])) {
             // this user has a configuration record
             // backward compatibility, because now, we don't have user and dashboard menu.
             if ($oConf->aConfig['DEFAULT_MENU'] == 'PM_USERS') {
@@ -507,7 +507,6 @@ class UsersProperties extends BaseUsersProperties
                         $url = 'dashboard/main';
                     }
                     break;
-                /*----------------------------------********---------------------------------*/
             }
         }
 

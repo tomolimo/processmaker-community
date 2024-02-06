@@ -30,10 +30,8 @@ try {
 	if(empty($_GET)){
 		$proUid = Bootstrap::json_decode( $_POST['data']);
 		$_GET["pro_uid"] = $proUid->pro_uid;
-        /*----------------------------------********---------------------------------*/
 	}
     if (\BpmnProject::exists($_GET["pro_uid"]) && isset($_GET['objects'])) {
-        /*----------------------------------********---------------------------------*/
             $exporter = new ProcessMaker\Exporter\XmlExporter($_GET["pro_uid"]);
             $projectName = $exporter->getProjectName();
             $getProjectName = $exporter->truncateName($projectName, false);
@@ -41,7 +39,6 @@ try {
             $version = Common::getLastVersionSpecialCharacters($outputDir, $getProjectName, "pmx") + 1;
             $outputFilename = sprintf("%s-%s.%s", str_replace(" ", "_", $getProjectName), $version, "pmx");
             $outputFilename = $exporter->saveExport($outputDir . $outputFilename);
-        /*----------------------------------********---------------------------------*/
         G::auditLog('ExportProcess','Export process "' . $projectName . '"');
     } else {
         $oProcess = new Processes();

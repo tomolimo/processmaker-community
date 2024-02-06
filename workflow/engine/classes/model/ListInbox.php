@@ -34,7 +34,7 @@ class ListInbox extends BaseListInbox implements ListInterface
             if (isset($data['APP_TITLE'])) {
                 $oCase = new Cases();
                 $aData = $oCase->loadCase($data["APP_UID"]);
-                $data['APP_TITLE'] = G::replaceDataField($data['APP_TITLE'], $aData['APP_DATA']);
+                $data['APP_TITLE'] = G::replaceDataField($data['APP_TITLE'], $aData['APP_DATA'], 'mysql', false);
             }
             if (!empty($data['PRO_UID']) && empty($data['PRO_ID'])) {
                 $p = new Process();
@@ -124,7 +124,7 @@ class ListInbox extends BaseListInbox implements ListInterface
         if (isset($data['APP_TITLE'])) {
             $oCase = new Cases();
             $aData = $oCase->loadCase($data["APP_UID"]);
-            $data['APP_TITLE'] = G::replaceDataField($data['APP_TITLE'], $aData['APP_DATA']);
+            $data['APP_TITLE'] = G::replaceDataField($data['APP_TITLE'], $aData['APP_DATA'], 'mysql', false);
         }
         if ($isSelfService) {
             $listParticipatedLast = new ListParticipatedLast();

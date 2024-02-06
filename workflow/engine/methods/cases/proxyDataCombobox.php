@@ -23,7 +23,7 @@ $aFields = $oCase->loadCase($appUid);
 foreach ($G_FORM->fields as $key => $val) {
     if ($fieldName == $val->name) {
         if ($G_FORM->fields[$key]->sql != null) {
-            $sqlQuery = G::replaceDataField($G_FORM->fields[$key]->sql, $aFields ["APP_DATA"]);
+            $sqlQuery = G::replaceDataField($G_FORM->fields[$key]->sql, $aFields ["APP_DATA"], 'mysql', false);
         }
         //$coma = "";
         //$data1 = "";

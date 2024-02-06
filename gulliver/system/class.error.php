@@ -77,12 +77,12 @@ class G_Error extends PEAR_Error
      *
      * @see PEAR_Error
      */
-    public function G_Error ($code = G_ERROR, $mode = PEAR_ERROR_RETURN, $level = E_USER_NOTICE, $debuginfo = null)
+    public function __construct($code = G_ERROR, $mode = PEAR_ERROR_RETURN, $level = E_USER_NOTICE, $debuginfo = null)
     {
-        if (is_int( $code )) {
-            $this->PEAR_Error( 'G Error: ' . G_Error::errorMessage( $code ), $code, $mode, $level, $debuginfo );
+        if (is_int($code)) {
+            $this->PEAR_Error('G Error: ' . G_Error::errorMessage($code), $code, $mode, $level, $debuginfo);
         } else {
-            $this->PEAR_Error( "G Error: $code", DB_ERROR, $mode, $level, $debuginfo );
+            $this->PEAR_Error("G Error: $code", DB_ERROR, $mode, $level, $debuginfo);
         }
     }
 

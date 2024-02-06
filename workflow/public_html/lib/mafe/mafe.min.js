@@ -36961,6 +36961,9 @@ RestApi = (function () {
 
 var FormDesigner = {};
 FormDesigner.version = '0.1';
+FormDesigner.DEPRECATION_LINK = 'http://wiki.processmaker.com/Deprecated_Features';
+FormDesigner.DEPRECATION_TEXT = 'Control Deprecated. Refer to '.translate() + '<a href="'
+    + FormDesigner.DEPRECATION_LINK + '" target="_blank">' + FormDesigner.DEPRECATION_LINK + '</a>.';
 FormDesigner.extendNamespace = function (path, newClass) {
     var current,
         pathArray,
@@ -37075,7 +37078,7 @@ FormDesigner.generateUniqueId = function () {
     return sUID;
 };
 FormDesigner.getNextNumber = function (string, type, field, max) {
-    var a, 
+    var a,
         i;
     if (max === undefined) {
         max = 0;
@@ -37135,14 +37138,17 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.parent = options.parentObject;
         this.onSelect = new Function();
         this.onSetProperty = new Function();
-        if (options.onSelect)
+        if (options.onSelect) {
             this.onSelect = options.onSelect;
+        }
         this.onRemove = new Function();
         this.disabled = false;
         FormItem.prototype.init.call(this);
     };
     FormItem.prototype.init = function () {
-        var that = this, html, label = "";
+        var that = this,
+            html,
+            label = "";
         switch (this.render) {
             case FormDesigner.main.TypesControl.text:
                 label = "<span class='fd-gridForm-field-label'></span>";
@@ -37259,9 +37265,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         });
         this.properties = new FormDesigner.main.Properties(this.render, this.html, that);
         this.properties.onClick = function (property) {
-            var a, 
-                b, 
-                fields, 
+            var a,
+                b,
+                fields,
                 dialogCreateVariable,
                 dialog;
             if (property === "formula") {
@@ -37498,6 +37504,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 });
             }
         };
+        this.createDeprecatedIcon();
     };
     FormItem.prototype.getData = function () {
         var data = {}, property, prop = this.properties.get();
@@ -37607,6 +37614,38 @@ FormDesigner.leftPad = function (string, length, fill) {
                     }
                     break;
             }
+        }
+    };
+    /**
+     * Create deprecation icon.
+     */
+    FormItem.prototype.createDeprecatedIcon = function () {
+        this.deprecatedIcon = $("<div class='mafe-deprecated-control'></div>");
+        this.deprecatedIcon.attr('title', "");
+        this.deprecatedIcon.hide();
+        this.deprecatedIcon.tooltip({
+            content: FormDesigner.DEPRECATION_TEXT,
+            close: function (event, ui) {
+                ui.tooltip.hover(function () {
+                    $(this).stop(true).fadeTo(400, 1);
+                }, function () {
+                    $(this).fadeOut("400", function () {
+                        $(this).remove();
+                    });
+                });
+            }
+        });
+        this.html.prepend(this.deprecatedIcon);
+    };
+    /**
+     * Enable or disable deprecated icon.
+     * @param {boolean} status
+     */
+    FormItem.prototype.deprecated = function (status) {
+        if (status === true) {
+            this.deprecatedIcon.show();
+        } else {
+            this.deprecatedIcon.hide();
         }
     };
     FormDesigner.extendNamespace('FormDesigner.main.FormItem', FormItem);
@@ -37796,6 +37835,14 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.var_uid = {label: "var_uid".translate(), value: "", type: "hidden"};
         this.protectedValue = {label: "protected value".translate(), value: false, type: "checkbox"};
         this.delay = {label: "Delay".translate(), value: 0, type: "text", regExp: /^[0-9]+$/};
+        this.resultsLimit = {
+            label: "Results Limit".translate(),
+            value: 10,
+            type: "text",
+            regExpNumber: /^\d*[0-9]\d*$/,
+            regExpString: /^[@][@%=]+[a-zA-Z\_]{1}\w+$/
+        };
+        this.forceSelection = {label: "force selection".translate(), value: false, type: "checkbox"};
         this.alt = {label: "title (mouseover)".translate(), value: "", type: "text"};
         this.multiple = {label: "multiple".translate(), value: false, type: "hidden"};
         this.script = {label: "javascript".translate(), value: "", type: "button", labelButton: "edit...".translate()};
@@ -38177,7 +38224,8 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.suggest) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label",
                 "defaultValue", "placeholder", "hint", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay"];
+                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay", "resultsLimit",
+                "forceSelection"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
             }
@@ -38323,8 +38371,9 @@ FormDesigner.leftPad = function (string, length, fill) {
                     return;
                 }
                 $(tr).remove();
-                if (fn)
-                    fn();
+                if (fn) {
+                    fn(tr);
+                }
             };
         } else {
             $.fmoldborder = el.style.border;
@@ -38550,12 +38599,18 @@ FormDesigner.leftPad = function (string, length, fill) {
         Designer.prototype.init.call(this);
     };
     Designer.prototype.init = function () {
+        var that = this,
+            listControls,
+            listMobileControls,
+            listProperties;
         this.loadDynaforms();
-        var that = this;
         this.container = $("<div style='position:absolute;top:0;right:0;bottom:0;left:0;z-index:100;'></div>");
         this.center = $("<div class='ui-layout-center'></div>");
         this.north = $("<div class='ui-layout-north fd-toolbar-designer' style='overflow:hidden;background-color:#3397e1;padding:0px;'></div>");
         this.west = $("<div class='ui-layout-west' style='padding:0px;overflow-y:scroll;'></div>");
+        this.west.on("scroll", function () {
+            $(document).trigger("pm.fd.scroll");
+        });
         this.container.append(this.center);
         this.container.append(this.north);
         this.container.append(this.west);
@@ -38581,9 +38636,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.center[0].style.width = "";//todo
 
         //new objects
-        var listControls = new FormDesigner.main.ListControls();
-        var listMobileControls = new FormDesigner.main.ListMobileControls();
-        var listProperties = new FormDesigner.main.ListProperties();
+        listControls = new FormDesigner.main.ListControls();
+        listMobileControls = new FormDesigner.main.ListMobileControls();
+        listProperties = new FormDesigner.main.ListProperties();
         this.form1 = new FormDesigner.main.Form();
         this.title = $("<div style='float:left;font-family:Montserrat,sans-serif;font-size:20px;color:white;margin:5px;white-space:nowrap;'>Titulo</div>");
         this.areaButtons = new FormDesigner.main.AreaButtons();
@@ -38756,6 +38811,8 @@ FormDesigner.leftPad = function (string, length, fill) {
                             dyn_uid: dynaform.id,
                             dyn_version: 2
                         });
+                        //patch to clear _items because is duplicating the items
+                        that.form1._items.clear();
                         that.form1.synchronizeVariables();
                     };
                     reader.onerror = function (evt) {
@@ -38795,6 +38852,10 @@ FormDesigner.leftPad = function (string, length, fill) {
                 var a = new FormDesigner.main.DialogConfirmClear();
                 a.onAccept = function () {
                     that.form1.clear();
+                    that.form1.clearItemsDeprecated();
+                    if (!that.form1.checkForDeprecatedControls()) {
+                        that.form1.hideDeprecationMessage();
+                    }
                     listProperties.clear();
                 };
             }
@@ -38835,7 +38896,16 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.form1.onRemove = function () {
             return false;
         };
-        this.form1.onRemoveItem = function () {
+        this.form1.onRemoveItem = function (formItem) {
+            if (formItem) {
+                if (arguments.length > 1) {
+                    formItem.parent._items.remove(formItem);
+                }
+                that.form1._items.remove(formItem);
+            }
+            if (!that.form1.checkForDeprecatedControls()) {
+                that.form1.hideDeprecationMessage();
+            }
             listProperties.clear();
         };
         this.form1.onRemoveCell = function () {
@@ -38849,6 +38919,29 @@ FormDesigner.leftPad = function (string, length, fill) {
                 that.form1.setNextVar(properties);
             }
         };
+        this.form1.onDrawDroppedItem = function (render, target) {
+            var i,
+                controls = listControls.controls.concat(listMobileControls.controls);
+            if (Array.isArray(controls)) {
+                for (i = 0; i < controls.length; i++) {
+                    if (controls[i].render === render &&
+                        controls[i].deprecated === true) {
+                        if (typeof target.deprecated === "function") {
+                            target.deprecated(true);
+                            if (arguments.length > 2) {
+                                target.parent._items.insert(target);
+                                // TODO forced way if a form has three levels, Will not work with fourth levels
+                                if (target.parent.parent.parent) {
+                                    target.parent.parent._items.insert(target);
+                                 }
+                            }
+                            that.form1._items.insert(target);
+                        }
+                        that.form1.showDeprecationMessage();
+                    }
+                }
+            }
+        };
         this.form1.onSetProperty = function (prop, value, target) {
             var dialogMessage,
                 object,
@@ -38858,7 +38951,9 @@ FormDesigner.leftPad = function (string, length, fill) {
                 regExp,
                 type,
                 existRegExp,
-                dateLimit;
+                dateLimit,
+                messageDialog,
+                validateValue;
             switch (prop) {
                 case "name":
                     if (target.properties[prop].node && target instanceof FormDesigner.main.Form) {
@@ -38886,7 +38981,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                             required = value === "";
                             duplicated = $.countValue(that.getData(), prop, value, true) > 1;
                             regExp = target.properties[prop].regExp && target.properties[prop].regExp.test(target.properties[prop].value) === false;
-                            type = required? "required" : duplicated? "duplicated" : regExp? "invalid" : "";
+                            type = required ? "required" : duplicated ? "duplicated" : regExp ? "invalid" : "";
                             if (type !== "") {
                                 dialogMessage = new FormDesigner.main.DialogInvalid(null, prop, type);
                                 dialogMessage.onClose = function () {
@@ -39077,25 +39172,23 @@ FormDesigner.leftPad = function (string, length, fill) {
                                 }
                             }
                         }
-                       
+
                     }
                     break;
                 case "maxDate":
                     if (target.properties[prop].node) {
                         if (target.properties.type.value === FormDesigner.main.TypesControl.datetime) {
-                            if (target.properties.type.value === FormDesigner.main.TypesControl.datetime) {
-                                dateLimit = that.thereIsMaxDateLimit(
-                                    target.properties.minDate.value,
-                                    target.properties.maxDate.value,
-                                    target.properties.defaultDate.value
-                                );
-                                if (dateLimit) {
-                                    dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Max date must be greater than the min and default date".translate());
-                                    dialogMessage.onClose = function () {
-                                        target.properties.set("maxDate", dateLimit);
-                                        target.properties.maxDate.node.value = dateLimit;
-                                    };
-                                }
+                            dateLimit = that.thereIsMaxDateLimit(
+                                target.properties.minDate.value,
+                                target.properties.maxDate.value,
+                                target.properties.defaultDate.value
+                            );
+                            if (dateLimit) {
+                                dialogMessage = new FormDesigner.main.DialogMessage(null, "success", "Max date must be greater than the min and default date".translate());
+                                dialogMessage.onClose = function () {
+                                    target.properties.set("maxDate", dateLimit);
+                                    target.properties.maxDate.node.value = dateLimit;
+                                };
                             }
                         }
                     }
@@ -39121,6 +39214,26 @@ FormDesigner.leftPad = function (string, length, fill) {
                 case "required":
                     if (target.properties["requiredFieldErrorMessage"].node) {
                         target.properties.requiredFieldErrorMessage.node.disabled = !value;
+                    }
+                    break;
+                case "resultsLimit":
+                    validateValue = !isNaN(parseInt(value)) ? target.properties[prop].regExpNumber.test(value) :
+                        target.properties[prop].regExpString.test(value);
+                    if (!validateValue) {
+                        messageDialog = 'The value provided for the Results limit property of the field "'.translate() + target.properties.id.value + '" is invalid'.translate();
+                        dialogMessage = new FormDesigner.main.DialogMessage(null, 'success', messageDialog);
+                        dialogMessage.onClose = function () {
+                            oldValue = target.properties[prop].oldValue;
+                            object = target.properties.set(prop, oldValue);
+                            if (object.node) {
+                                object.node.value = oldValue;
+                            }
+                        };
+                        dialogMessage.onAccept = function () {
+                            dialogMessage.dialog.dialog("close");
+                        };
+                    } else {
+                        target.properties[prop].value = value;
                     }
                     break;
                 case "size":
@@ -39191,6 +39304,8 @@ FormDesigner.leftPad = function (string, length, fill) {
             tooltipClass: "fd-tooltip",
             position: {my: "left top+1"}
         });
+
+        $(document).on("pm.fd.show", that.onShowHandler.bind(this, listControls, listMobileControls));
     };
     Designer.prototype._getAuxForm = function () {
         var form;
@@ -39212,6 +39327,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         for (var i = 0; i < a.length; i++)
             $(a[i]).hide();
         $(this.container).show();
+        $(document).trigger("pm.fd.show");
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
@@ -39235,9 +39351,11 @@ FormDesigner.leftPad = function (string, length, fill) {
         return data;
     };
     Designer.prototype.loadDynaforms = function () {
+        var isSeen = 1;
         $.ajax({
             async: false,
-            url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id + "/dynaforms",
+            url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id
+                + "/dynaforms?seen=" + isSeen,
             method: "GET",
             contentType: "application/json",
             beforeSend: function (xhr) {
@@ -39251,7 +39369,7 @@ FormDesigner.leftPad = function (string, length, fill) {
     /**
      * Validate the date
      * @param date
-     * 
+     *
      */
     Designer.prototype.parseDate = function (stringDate) {
         var parts;
@@ -39313,12 +39431,12 @@ FormDesigner.leftPad = function (string, length, fill) {
                 if (maxDate < defaultDate) {
                     result = defaultDateString;
                 }
-            } 
+            }
             if (!result && this.isValidDate(minDate)) {
                 if (maxDate < minDate) {
                     result = minDateString;
                 }
-          }
+            }
         }
         return result;
     };
@@ -39338,20 +39456,42 @@ FormDesigner.leftPad = function (string, length, fill) {
             if (this.isValidDate(minDate)) {
                 if (defaultDate < minDate) {
                     result = minDateString;
-                } 
+                }
             }
             if (!result && this.isValidDate(maxDate)) {
-              if (defaultDate > maxDate) {
-                result = maxDateString;
-              }
+                if (defaultDate > maxDate) {
+                    result = maxDateString;
+                }
             }
         }
         return result;
     };
     /**
-     * Validate Max File Size, if the value exceeds the allowed limit, an alert message 
+     * Handler for on show trigger.
+     * @param {array} listControls
+     * @param {array} listMobileControls
+     */
+    Designer.prototype.onShowHandler = function (listControls, listMobileControls) {
+        var i,
+            popOver,
+            controls = listControls.controls.concat(listMobileControls.controls);
+        if (Array.isArray(controls)) {
+            for (i = 0; i < controls.length; i += 1) {
+                if (controls[i].deprecated === true) {
+                    popOver = controls[i].target.getPopOver();
+                    $(document).on('pm.fd.scroll', popOver.hide.bind(popOver));
+                    if (!PMDYNAFORM_FIRST_TIME) {
+                        popOver.show();
+                    }
+                }
+            }
+        }
+        PMDYNAFORM_FIRST_TIME = true;
+    };
+    /**
+     * Validate Max File Size, if the value exceeds the allowed limit, an alert message
      * is displayed.
-     * 
+     *
      * @param object target
      * @param object maxFileSizeInformation
      * @param function callback
@@ -39375,9 +39515,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         }
     };
     /**
-     * Returns true if the value of Max files Size, satisfies the configuration of 
+     * Returns true if the value of Max files Size, satisfies the configuration of
      * the php ini directives, false otherwise.
-     * 
+     *
      * @param {object} maxFileSizeInformation
      * @param {object} properties
      * @returns {Boolean}
@@ -39406,7 +39546,7 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     /**
      * Set Minimal File Size.
-     * 
+     *
      * @param object target
      * @param object maxFileSizeInformation
      */
@@ -39592,8 +39732,53 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     FormDesigner.extendNamespace('FormDesigner.main.DialogTypeControl', DialogTypeControl);
 }());
+
 (function () {
-    var Form = function () {
+    /**
+     * Represents an item in the list of controls.
+     *
+     * @param {object} control
+     * @returns {NoticeL#1.Notice}
+     * @constructor
+     */
+    var Notice = function () {
+        Notice.prototype.init.call(this);
+    };
+    /**
+     * Initialize the class.
+     */
+    Notice.prototype.init = function () {
+        var element;
+        this.message = $("<div></div>");
+        element = $("<div class='mafe-alert'></div>");
+        element.append('<button class="button-close"><span class="fa fa-times"></span></button>')
+            .append(this.message)
+            .on('click', '.button-close', function () {
+                element.fadeOut();
+            });
+        element.hide();
+        this.body = element;
+    };
+    /**
+     * Show message.
+     * @param {type} message
+     */
+    Notice.prototype.show = function (message) {
+        this.message.empty();
+        this.message.append(message);
+        this.body.show();
+    };
+    /**
+     * Close message.
+     */
+    Notice.prototype.close = function () {
+        this.body.fadeOut();
+    };
+    FormDesigner.extendNamespace('FormDesigner.main.Notice', Notice);
+}());
+
+(function () {
+    var Form = function (parent) {
         this.id = PMUI.generateUniqueId();
         this.onRemove = new Function();
         this.onRemoveItem = new Function();
@@ -39602,8 +39787,10 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.onDrawControl = new Function();
         this.onSetProperty = new Function();
         this.onSynchronizeVariables = new Function();
+        this.onDrawDroppedItem = new Function();
         this.sourceNode = null;
         this.targetNode = null;
+        this.parent = parent;
         this.stopValidateRows = false;
         this.variable = null;
         this.dirty = null;
@@ -39611,6 +39798,36 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.disabled = false;
         this.recovery = false;
         this.checkColspan = true;
+        this.typesControlSupported = [
+            FormDesigner.main.TypesControl.title,
+            FormDesigner.main.TypesControl.subtitle,
+            FormDesigner.main.TypesControl.label,
+            FormDesigner.main.TypesControl.link,
+            FormDesigner.main.TypesControl.image,
+            FormDesigner.main.TypesControl.file,
+            FormDesigner.main.TypesControl.multipleFile,
+            FormDesigner.main.TypesControl.submit,
+            FormDesigner.main.TypesControl.button,
+            FormDesigner.main.TypesControl.text,
+            FormDesigner.main.TypesControl.textarea,
+            FormDesigner.main.TypesControl.dropdown,
+            FormDesigner.main.TypesControl.checkbox,
+            FormDesigner.main.TypesControl.checkgroup,
+            FormDesigner.main.TypesControl.radio,
+            FormDesigner.main.TypesControl.datetime,
+            FormDesigner.main.TypesControl.suggest,
+            FormDesigner.main.TypesControl.hidden,
+            FormDesigner.main.TypesControl.annotation,
+            FormDesigner.main.TypesControl.geomap,
+            FormDesigner.main.TypesControl.qrcode,
+            FormDesigner.main.TypesControl.signature,
+            FormDesigner.main.TypesControl.imagem,
+            FormDesigner.main.TypesControl.audiom,
+            FormDesigner.main.TypesControl.videom,
+            FormDesigner.main.TypesControl.panel,
+            FormDesigner.main.TypesControl.msgPanel
+        ];
+        this._items = new PMUI.util.ArrayList();
         Form.prototype.init.call(this);
     };
     Form.prototype.init = function () {
@@ -39693,6 +39910,8 @@ FormDesigner.leftPad = function (string, length, fill) {
             that.onSetProperty(prop, value, that);
         };
         this.clear();
+        this.notice = new FormDesigner.main.Notice();
+        this.notice.body.insertBefore(this.table);
     };
     Form.prototype.addRow = function () {
         var row = $("<tr style='padding:5px;'></tr>");
@@ -39700,7 +39919,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         return row;
     };
     Form.prototype.addCell = function () {
-        var that = this, cell;
+        var that = this,
+            cell,
+            properties;
         cell = $("<td style='height:56px;background:white;position:relative;vertical-align:top;border:1px dotted gray;' class='itemVariables itemControls cellDragDrop colspan-12' colspan='12'></td>");
         cell[0].disabled = false;
         cell[0].setDisabled = function (disabled) {
@@ -39731,7 +39952,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             drop: function (event, ui) {
             }
         });
-        var properties = new FormDesigner.main.Properties(FormDesigner.main.TypesControl.cell, cell, cell[0]);
+        properties = new FormDesigner.main.Properties(FormDesigner.main.TypesControl.cell, cell, cell[0]);
         properties.onSet = function (prop, value) {
             if (prop === "colSpan" && properties[prop].node) {
                 //calculate colspan
@@ -39814,10 +40035,20 @@ FormDesigner.leftPad = function (string, length, fill) {
         cell.data("properties", properties);
         cell.on("click", function (e) {
             e.stopPropagation();
-            $.designerSelectElement(this, function () {
+            $.designerSelectElement(this, function (row) {
+                var itemsToRemove;
                 that.validateRows();
                 that.validateDragDrop();
                 that.onRemoveCell();
+                itemsToRemove = that._items.asArray().filter(function (i) {
+                    return row.innerHTML.indexOf(i.html.parent().parent().get(0).innerHTML) !== -1;
+                });
+                itemsToRemove.forEach(function (item) {
+                    that._items.remove(item);
+                });
+                if (!that.checkForDeprecatedControls()) {
+                    that.hideDeprecationMessage();
+                }
             }, function () {
                 if (that.disabled === true) {
                     return false;
@@ -39829,7 +40060,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         return cell;
     };
     Form.prototype.drawDroppedItem = function (render, data) {
-        var that = this, properties = null;
+        var that = this,
+            properties = null,
+            target = null;
         switch (render) {
             case that.inTypesControl(render):
                 var formItem = new FormDesigner.main.FormItem({
@@ -39841,21 +40074,23 @@ FormDesigner.leftPad = function (string, length, fill) {
                     }
                 });
                 formItem.onRemove = function () {
-                    that.onRemoveItem();
+                    that.onRemoveItem(this);
                 };
                 formItem.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(formItem.html);
                 properties = formItem.properties;
+                target = formItem;
                 break;
             case FormDesigner.main.TypesControl.grid:
                 var grid = new FormDesigner.main.Grid(that);
                 grid.onRemove = function () {
+                    this.clearItemsDeprecated();
                     that.onRemoveItem();
                 };
-                grid.onRemoveItem = function () {
-                    that.onRemoveItem();
+                grid.onRemoveItem = function (gridItem) {
+                    that.onRemoveItem(gridItem, "grid");
                 };
                 grid.onSelect = function (properties) {
                     that.onSelect(properties);
@@ -39869,15 +40104,20 @@ FormDesigner.leftPad = function (string, length, fill) {
                 grid.onDrawControl = function (properties) {
                     that.onDrawControl(properties);
                 };
+                grid.onDrawDroppedItem = function (render, target) {
+                    that.onDrawDroppedItem(render, target, "grid");
+                };
                 grid.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(grid.body);
                 properties = grid.properties;
+                target = grid;
                 break;
             case FormDesigner.main.TypesControl.form:
-                var form = new FormDesigner.main.Form();
+                var form = new FormDesigner.main.Form(that);
                 form.onRemove = function () {
+                    form.clearItemsDeprecated();
                     that.onRemoveItem();
                 };
                 form.onRemoveItem = function () {
@@ -39891,6 +40131,9 @@ FormDesigner.leftPad = function (string, length, fill) {
                 };
                 form.onDrawControl = function (properties) {
                     that.onDrawControl(properties);
+                };
+                form.onDrawDroppedItem = function (render, target) {
+                    that.onDrawDroppedItem(render, target, "form");
                 };
                 form.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
@@ -39907,6 +40150,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 that.validateRows();
                 that.variable = null;
                 properties = form.properties;
+                target = form;
                 break;
             case FormDesigner.main.TypesControl.variable:
                 if (that.isVariableUsed(that.variable.var_uid)) {
@@ -39932,6 +40176,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                     that.validateRows();
                     that.variable = null;
                 };
+                target = dialogTypeControl;
                 break;
             case FormDesigner.main.TypesControl.subform:
                 if (that.subformSupport === false) {
@@ -39941,7 +40186,9 @@ FormDesigner.leftPad = function (string, length, fill) {
                 that.stopValidateRows = true;
                 var dialogDynaforms = new FormDesigner.main.DialogDynaforms(null, that.properties.id.value);
                 dialogDynaforms.onSelectItem = function (event, item) {
-                    var subDynaform = JSON.parse(item.attr("dynaform"));
+                    var prop,
+                        subDynaform;
+                    subDynaform = JSON.parse(item.attr("dynaform"));
                     //todo validation form with subform
                     var sf, sfi, sfj, jsp;
                     jsp = JSON.parse(subDynaform.dyn_content);
@@ -39956,7 +40203,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                             }
                         }
                     }
-                    var prop = that.drawDroppedItem(FormDesigner.main.TypesControl.form, subDynaform);
+                    prop = that.drawDroppedItem(FormDesigner.main.TypesControl.form, subDynaform);
                     prop.owner.subformSupport = false;
                 };
                 dialogDynaforms.onClose = function () {
@@ -39964,8 +40211,10 @@ FormDesigner.leftPad = function (string, length, fill) {
                     that.validateRows();
                     that.variable = null;
                 };
+                target = dialogDynaforms;
                 break;
         }
+        that.onDrawDroppedItem(render, target);
         return properties;
     };
     Form.prototype.validateDragDrop = function () {
@@ -40013,42 +40262,20 @@ FormDesigner.leftPad = function (string, length, fill) {
             that.addRow().append(that.addCell());
         }
     };
+    /**
+     * Init controls supported
+     * @param val
+     * @return {*}
+     */
     Form.prototype.inTypesControl = function (val) {
-        if (
-            val === FormDesigner.main.TypesControl.title ||
-            val === FormDesigner.main.TypesControl.subtitle ||
-            val === FormDesigner.main.TypesControl.label ||
-            val === FormDesigner.main.TypesControl.link ||
-            val === FormDesigner.main.TypesControl.image ||
-            val === FormDesigner.main.TypesControl.file ||
-            val === FormDesigner.main.TypesControl.multipleFile ||
-            val === FormDesigner.main.TypesControl.submit ||
-            val === FormDesigner.main.TypesControl.button ||
-            val === FormDesigner.main.TypesControl.text ||
-            val === FormDesigner.main.TypesControl.textarea ||
-            val === FormDesigner.main.TypesControl.dropdown ||
-            val === FormDesigner.main.TypesControl.checkbox ||
-            val === FormDesigner.main.TypesControl.checkgroup ||
-            val === FormDesigner.main.TypesControl.radio ||
-            val === FormDesigner.main.TypesControl.datetime ||
-            val === FormDesigner.main.TypesControl.suggest ||
-            val === FormDesigner.main.TypesControl.hidden ||
-            val === FormDesigner.main.TypesControl.annotation ||
-            val === FormDesigner.main.TypesControl.geomap ||
-            val === FormDesigner.main.TypesControl.qrcode ||
-            val === FormDesigner.main.TypesControl.signature ||
-            val === FormDesigner.main.TypesControl.imagem ||
-            val === FormDesigner.main.TypesControl.audiom ||
-            val === FormDesigner.main.TypesControl.videom ||
-            val === FormDesigner.main.TypesControl.panel ||
-            val === FormDesigner.main.TypesControl.msgPanel
-        ) {
+        if ($.inArray(val, this.typesControlSupported) > -1) {
             return val;
         }
         return null;
     };
     Form.prototype.getData = function () {
-        var data, fieldObject, rows, i, j, k, itemsrow, itemsTable, dataCell, flag, propertiesForm, property, cells, variables;
+        var data, fieldObject, rows, i, j, k, itemsrow, itemsTable, dataCell, flag, propertiesForm, property, cells,
+            variables;
         data = {};
         itemsTable = [];
         variables = [];
@@ -40512,7 +40739,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             b.node.textContent = variable.var_field_type;
     };
     Form.prototype.setNextLabel = function (properties) {
-        var nextLabel, 
+        var nextLabel,
             that = this;
         nextLabel = FormDesigner.getNextNumber(that.getData(), properties.type.value, "id") + 1;
         nextLabel = nextLabel.toString();
@@ -40560,186 +40787,301 @@ FormDesigner.leftPad = function (string, length, fill) {
             dialogCreateVariable.setVarName(nextVar);
         });
     };
+    /**
+     * Creates the alert message to notify about deprecated controls being used in current form.
+     * @private
+     */
+    Form.prototype.showDeprecationMessage = function () {
+        var message = '<strong>' + 'Warning!'.translate() + '</strong>'
+            + ('<span class="sr-only">Error:</span>' + ' '
+            + 'This form contains deprecated controls marked with the'.translate() + ' '
+            + '<span class="fa fa-exclamation-circle" style="color:red;" aria-hidden="true"></span> ' + 'icon.'.translate() + ' '
+            + 'Those controls will no longer be supported and probably will not be available in future versions.'.translate() + ' '
+            + 'Please refer to the following link to get more information:').translate()
+            + '<br/><a href="' + FormDesigner.DEPRECATION_LINK + '" target="_blank">' + FormDesigner.DEPRECATION_LINK + '</a>';
+        this.notice.show(message);
+    };
+    /**
+     * Hide the alert message about deprecated controls.
+     */
+    Form.prototype.hideDeprecationMessage = function () {
+        this.notice.close();
+    };
+    /**
+     * Verify if we have deprecated controls in the form.
+     * @return {boolean}
+     */
+    Form.prototype.checkForDeprecatedControls = function () {
+        return this._items.asArray().length > 0;
+    };
+    /**
+     * Clear list of deprecated control in the Form.
+     */
+    Form.prototype.clearItemsDeprecated = function () {
+        var itemsForm = this._items.asArray(),
+            i;
+        for (i = 0; i < itemsForm.length; i+= 1) {
+            if (this.parent) {
+                this.parent._items.remove(itemsForm[i])
+            }
+        }
+        this._items.clear();
+    };
     FormDesigner.extendNamespace('FormDesigner.main.Form', Form);
 }());
+
+(function () {
+    /**
+     * Represents an item in the list of controls.
+     *
+     * @param {object} control
+     * @returns {ListItemL#1.ListItem}
+     * @constructor
+     */
+    var ListItem = function (control) {
+        this.control = control;
+        ListItem.prototype.init.call(this);
+    };
+    /**
+     * Initialize the class.
+     */
+    ListItem.prototype.init = function () {
+        this.deprecatedControlClassName = 'mafe-deprecated-control';
+        this.body = $(
+            "<div class='fd-list-responsive'>" +
+            "<div style=''><img src='" + this.control.url + "'></img></div>" +
+            "<div style=''>" + this.control.label + "</div>" +
+            "<div class='" + this.deprecatedControlClassName + "'>" +
+            "</div>");
+        this.body.attr("render", this.control.render);
+        this.body.draggable({
+            appendTo: document.body,
+            revert: "invalid",
+            helper: "clone",
+            cursor: "move",
+            zIndex: 1000,
+            connectToSortable: ".itemControls,.itemsVariablesControls"
+        });
+        this.deprecated(this.control.deprecated);
+        this.createPopOver();
+    };
+    /**
+     * Enable or disable deprecated icon.
+     * @param {boolean} status
+     */
+    ListItem.prototype.deprecated = function (status) {
+        var element = this.body.find("." + this.deprecatedControlClassName);
+        if (status === true) {
+            element.show();
+        } else {
+            element.hide();
+        }
+    };
+    /**
+     * Create FormDesigner.main.PMPopOver element.
+     */
+    ListItem.prototype.createPopOver = function () {
+        var content = $('<div><div class="mafe-deprecated-title">' + 'Warning!'.translate() + '</div><p>'
+            + this.control.deprecationMessage + ' For additional information:'.translate() + '</p><p><a href="'
+            + FormDesigner.DEPRECATION_LINK + '" target="_blank">' + FormDesigner.DEPRECATION_LINK
+            + '</a></p><button type="button" class="deprecated-ok-btn">' + 'Got it'.translate() + '</button></div>');
+        this.pmPopOver = new FormDesigner.main.PMPopOver({
+            body: content,
+            targetElement: this.body.find("." + this.deprecatedControlClassName),
+            placement: "right",
+            class: "deprecated"
+        });
+        content.find('button').data('parentBody', this.pmPopOver);
+        content.on('click', 'button', function () {
+            $(this).data('parentBody').hide();
+        });
+    };
+    /**
+     * Get FormDesigner.main.PMPopOver instance.
+     * @returns {FormDesigner.main.PMPopOver}
+     */
+    ListItem.prototype.getPopOver = function () {
+        return this.pmPopOver;
+    };
+    FormDesigner.extendNamespace('FormDesigner.main.ListItem', ListItem);
+}());
+
 (function () {
     var ListControls = function () {
         ListControls.prototype.init.call(this);
     };
+    /**
+     * Initialize controls.
+     */
     ListControls.prototype.init = function () {
         this.body = $("<div style='background:#262932;overflow:hidden;padding:4px;'></div>");
+        this.controls = [
+            {
+                url: "" + $.imgUrl + "fd-text.png",
+                label: "textbox".translate(),
+                render: FormDesigner.main.TypesControl.text
+            }, {
+                url: "" + $.imgUrl + "fd-textarea.png",
+                label: "textarea".translate(),
+                render: FormDesigner.main.TypesControl.textarea
+            }, {
+                url: "" + $.imgUrl + "fd-dropdown.png",
+                label: "dropdown".translate(),
+                render: FormDesigner.main.TypesControl.dropdown
+            }, {
+                url: "" + $.imgUrl + "fd-checkbox.png",
+                label: "checkbox".translate(),
+                render: FormDesigner.main.TypesControl.checkbox
+            }, {
+                url: "" + $.imgUrl + "fd-checkgroup.png",
+                label: "checkgroup".translate(),
+                render: FormDesigner.main.TypesControl.checkgroup
+            }, {
+                url: "" + $.imgUrl + "fd-radio.png",
+                label: "radio".translate(),
+                render: FormDesigner.main.TypesControl.radio
+            }, {
+                url: "" + $.imgUrl + "fd-datetime.png",
+                label: "datetime".translate(),
+                render: FormDesigner.main.TypesControl.datetime
+            }, {
+                url: "" + $.imgUrl + "fd-suggest.png",
+                label: "suggest".translate(),
+                render: FormDesigner.main.TypesControl.suggest
+            }, {
+                url: "" + $.imgUrl + "fd-hidden.png",
+                label: "hidden".translate(),
+                render: FormDesigner.main.TypesControl.hidden
+            }, {
+                url: "" + $.imgUrl + "fd-h1.png",
+                label: "title".translate(),
+                render: FormDesigner.main.TypesControl.title
+            }, {
+                url: "" + $.imgUrl + "fd-h2.png",
+                label: "subtitle".translate(),
+                render: FormDesigner.main.TypesControl.subtitle
+            }, {
+                url: "" + $.imgUrl + "fd-label.png",
+                label: "label".translate(),
+                render: FormDesigner.main.TypesControl.annotation
+            }, {
+                url: "" + $.imgUrl + "fd-link.png",
+                label: "link".translate(),
+                render: FormDesigner.main.TypesControl.link
+            }, {
+                url: "" + $.imgUrl + "fd-image2.png",
+                label: "image".translate(),
+                render: FormDesigner.main.TypesControl.image
+            }, {
+                url: "" + $.imgUrl + "fd-file.png",
+                label: "file".translate(),
+                render: FormDesigner.main.TypesControl.file,
+                deprecated: true,
+                deprecationMessage: "This control is being deprecated. Please use FileUpload instead."
+            }, {
+                url: "" + $.imgUrl + "fd-file-upload.png",
+                label: "fileupload".translate(),
+                render: FormDesigner.main.TypesControl.multipleFile
+            }, {
+                url: "" + $.imgUrl + "fd-submit.png",
+                label: "submit".translate(),
+                render: FormDesigner.main.TypesControl.submit
+            }, {
+                url: "" + $.imgUrl + "fd-button.png",
+                label: "button".translate(),
+                render: FormDesigner.main.TypesControl.button
+            }, {
+                url: "" + $.imgUrl + "fd-grid.png",
+                label: "grid".translate(),
+                render: FormDesigner.main.TypesControl.grid
+            }, {
+                url: "" + $.imgUrl + "fd-panel32.png",
+                label: "panel".translate(),
+                render: FormDesigner.main.TypesControl.panel
+            }, {
+                url: "" + $.imgUrl + "fd-subform.png",
+                label: "subform".translate(),
+                render: FormDesigner.main.TypesControl.subform
+            }
+        ];
         this.load();
     };
     ListControls.prototype.load = function () {
-        var controls = [{
-            url: "" + $.imgUrl + "fd-text.png",
-            label: "textbox".translate(),
-            render: FormDesigner.main.TypesControl.text
-        }, {
-            url: "" + $.imgUrl + "fd-textarea.png",
-            label: "textarea".translate(),
-            render: FormDesigner.main.TypesControl.textarea
-        }, {
-            url: "" + $.imgUrl + "fd-dropdown.png",
-            label: "dropdown".translate(),
-            render: FormDesigner.main.TypesControl.dropdown
-        }, {
-            url: "" + $.imgUrl + "fd-checkbox.png",
-            label: "checkbox".translate(),
-            render: FormDesigner.main.TypesControl.checkbox
-        }, {
-            url: "" + $.imgUrl + "fd-checkgroup.png",
-            label: "checkgroup".translate(),
-            render: FormDesigner.main.TypesControl.checkgroup
-        }, {
-            url: "" + $.imgUrl + "fd-radio.png",
-            label: "radio".translate(),
-            render: FormDesigner.main.TypesControl.radio
-        }, {
-            url: "" + $.imgUrl + "fd-datetime.png",
-            label: "datetime".translate(),
-            render: FormDesigner.main.TypesControl.datetime
-        }, {
-            url: "" + $.imgUrl + "fd-suggest.png",
-            label: "suggest".translate(),
-            render: FormDesigner.main.TypesControl.suggest
-        }, {
-            url: "" + $.imgUrl + "fd-hidden.png",
-            label: "hidden".translate(),
-            render: FormDesigner.main.TypesControl.hidden
-        }, {
-            url: "" + $.imgUrl + "fd-h1.png",
-            label: "title".translate(),
-            render: FormDesigner.main.TypesControl.title
-        }, {
-            url: "" + $.imgUrl + "fd-h2.png",
-            label: "subtitle".translate(),
-            render: FormDesigner.main.TypesControl.subtitle
-        }, {
-            url: "" + $.imgUrl + "fd-label.png",
-            label: "label".translate(),
-            render: FormDesigner.main.TypesControl.annotation
-        }, {
-            url: "" + $.imgUrl + "fd-link.png",
-            label: "link".translate(),
-            render: FormDesigner.main.TypesControl.link
-        }, {
-            url: "" + $.imgUrl + "fd-image2.png",
-            label: "image".translate(),
-            render: FormDesigner.main.TypesControl.image
-        }, {
-            url: "" + $.imgUrl + "fd-file.png",
-            label: "file".translate(),
-            render: FormDesigner.main.TypesControl.file
-        }, {
-            url: "" + $.imgUrl + "fd-file-upload.png",
-            label: "fileupload".translate(),
-            render: FormDesigner.main.TypesControl.multipleFile
-        }, {
-            url: "" + $.imgUrl + "fd-submit.png",
-            label: "submit".translate(),
-            render: FormDesigner.main.TypesControl.submit
-        }, {
-            url: "" + $.imgUrl + "fd-button.png",
-            label: "button".translate(),
-            render: FormDesigner.main.TypesControl.button
-        }, {
-            url: "" + $.imgUrl + "fd-grid.png",
-            label: "grid".translate(),
-            render: FormDesigner.main.TypesControl.grid
-        }, {
-            url: "" + $.imgUrl + "fd-panel32.png",
-            label: "panel".translate(),
-            render: FormDesigner.main.TypesControl.panel
-        }, {
-            url: "" + $.imgUrl + "fd-subform.png",
-            label: "subform".translate(),
-            render: FormDesigner.main.TypesControl.subform
-        }
-        ];
-        for (var i = 0; i < controls.length; i++) {
-            this.addItem(controls[i]);
+        var i;
+        for (i = 0; i < this.controls.length; i += 1) {
+            this.controls[i].target = this.addItem(this.controls[i]);
         }
     };
     ListControls.prototype.addItem = function (control) {
-        var item = $(
-            "<div class='fd-list-responsive'>" +
-            "<div style=''><img src='" + control.url + "'></img></div>" +
-            "<div style=''>" + control.label + "</div>" +
-            "</div>");
-        item.attr("render", control.render);
-        item.draggable({
-            appendTo: document.body,
-            revert: "invalid",
-            helper: "clone",
-            cursor: "move",
-            zIndex: 1000,
-            connectToSortable: ".itemControls,.itemsVariablesControls"
-        });
-        this.body.append(item);
+        var item;
+        item = new FormDesigner.main.ListItem(control);
+        this.body.append(item.body);
         return item;
     };
     FormDesigner.extendNamespace('FormDesigner.main.ListControls', ListControls);
 }());
+
 (function () {
     var ListMobileControls = function () {
         ListMobileControls.prototype.init.call(this);
     };
+    /**
+     * Initialize mobile controls.
+     */
     ListMobileControls.prototype.init = function () {
         this.body = $("<div style='background:#262932;overflow:hidden;padding:4px;'></div>");
+        this.controls = [
+            {
+                url: "" + $.imgUrl + "fd-geomap-mobile.png",
+                label: "geomap".translate(),
+                render: FormDesigner.main.TypesControl.geomap
+            }, {
+                url: "" + $.imgUrl + "fd-qrcode-mobile.png",
+                label: "qr code".translate(),
+                render: FormDesigner.main.TypesControl.qrcode
+            }, {
+                url: "" + $.imgUrl + "fd-signature-mobile.png",
+                label: "signature".translate(),
+                render: FormDesigner.main.TypesControl.signature
+            }, {
+                url: "" + $.imgUrl + "fd-image2.png",
+                label: "image".translate(),
+                render: FormDesigner.main.TypesControl.imagem
+            }, {
+                url: "" + $.imgUrl + "fd-audio-mobile.png",
+                label: "audio".translate(),
+                render: FormDesigner.main.TypesControl.audiom
+            }, {
+                url: "" + $.imgUrl + "fd-video-mobile.png",
+                label: "video".translate(),
+                render: FormDesigner.main.TypesControl.videom
+            }
+        ];
         this.load();
     };
+    /**
+     * Load mobile controls.
+     */
     ListMobileControls.prototype.load = function () {
-        var controls = [{
-            url: "" + $.imgUrl + "fd-geomap-mobile.png",
-            label: "geomap".translate(),
-            render: FormDesigner.main.TypesControl.geomap
-        }, {
-            url: "" + $.imgUrl + "fd-qrcode-mobile.png",
-            label: "qr code".translate(),
-            render: FormDesigner.main.TypesControl.qrcode
-        }, {
-            url: "" + $.imgUrl + "fd-signature-mobile.png",
-            label: "signature".translate(),
-            render: FormDesigner.main.TypesControl.signature
-        }, {
-            url: "" + $.imgUrl + "fd-image2.png",
-            label: "image".translate(),
-            render: FormDesigner.main.TypesControl.imagem
-        }, {
-            url: "" + $.imgUrl + "fd-audio-mobile.png",
-            label: "audio".translate(),
-            render: FormDesigner.main.TypesControl.audiom
-        }, {
-            url: "" + $.imgUrl + "fd-video-mobile.png",
-            label: "video".translate(),
-            render: FormDesigner.main.TypesControl.videom
-        }
-        ];
-        for (var i = 0; i < controls.length; i++) {
-            this.addItem(controls[i]);
+        var i;
+        for (i = 0; i < this.controls.length; i += 1) {
+            this.controls[i].target = this.addItem(this.controls[i]);
         }
     };
+    /**
+     * Add mobile control.
+     * @param control
+     * @return {PMUI.item.ListItem|ListItemL#1.ListItem}
+     */
     ListMobileControls.prototype.addItem = function (control) {
-        var item = $(
-            "<div class='fd-list-responsive'>" +
-            "<div style=''><img src='" + control.url + "'></img></div>" +
-            "<div style=''>" + control.label + "</div>" +
-            "</div>");
-        item.attr("render", control.render);
-        item.draggable({
-            appendTo: document.body,
-            revert: "invalid",
-            helper: "clone",
-            cursor: "move",
-            zIndex: 1000,
-            connectToSortable: ".itemControls,.itemsVariablesControls"
-        });
-        this.body.append(item);
+        var item;
+        item = new FormDesigner.main.ListItem(control);
+        this.body.append(item.body);
         return item;
     };
     FormDesigner.extendNamespace('FormDesigner.main.ListMobileControls', ListMobileControls);
 }());
+
 (function () {
     var ListProperties = function () {
         ListProperties.prototype.init.call(this);
@@ -40780,7 +41122,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 break;
             case "text":
                 input = $("<input type='text' style='" + width + "' id='" + id + "'>").val(propertiesGot[property].value);
-                input.on(propertiesGot[property].on ? propertiesGot[property].on : "keyup", function () {
+                input.on(propertiesGot[property].on ? propertiesGot[property].on : "change", function () {
                     properties.set(property, this.value);
                 });
                 input.attr("placeholder", propertiesGot[property].placeholder ? propertiesGot[property].placeholder : "");
@@ -40949,7 +41291,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                             minDate = that.getDateByParam(cellValue, "minDate");
                             break;
                     }
-                    
+
                     that.datepicker = that.dateComponentFactory(cellValue, {
                         minDate: minDate,
                         maxDate: maxDate,
@@ -41148,6 +41490,7 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     FormDesigner.extendNamespace('FormDesigner.main.TypesControl', TypesControl);
 }());
+
 (function () {
     var DialogStyle = function (dialog, type) {
         var bo = dialog[0].parentNode;
@@ -41224,11 +41567,25 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.onSetProperty = new Function();
         this.onVariableDrawDroppedItem = new Function();
         this.onDrawControl = new Function();
+        this.onDrawDroppedItem = new Function();
         this.parent = parent;
         this.properties = null;
         this.variable = parent.variable;
         this.disabled = false;
+        this.typesControlSupported = [
+            FormDesigner.main.TypesControl.link,
+            FormDesigner.main.TypesControl.file,
+            FormDesigner.main.TypesControl.multipleFile,
+            FormDesigner.main.TypesControl.text,
+            FormDesigner.main.TypesControl.textarea,
+            FormDesigner.main.TypesControl.dropdown,
+            FormDesigner.main.TypesControl.checkbox,
+            FormDesigner.main.TypesControl.datetime,
+            FormDesigner.main.TypesControl.suggest,
+            FormDesigner.main.TypesControl.hidden
+        ];
         Grid.prototype.init.call(this);
+        this._items = new PMUI.util.ArrayList();
     };
     Grid.prototype.init = function () {
         var that = this;
@@ -41312,7 +41669,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         };
     };
     Grid.prototype.drawDroppedItem = function (render) {
-        var that = this, properties = null;
+        var that = this,
+            properties = null,
+            target = null;
         switch (render) {
             case FormDesigner.main.TypesControl.variable:
                 if (that.onVariableDrawDroppedItem(that.variable) === false)
@@ -41332,6 +41691,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 dialogTypeControl.onClose = function () {
                     that.variable = null;
                 };
+                target = dialogTypeControl;
                 break;
             case that.inTypesControl(render):
                 var gridItem = new FormDesigner.main.GridItem(render, that.variable, that);
@@ -41339,46 +41699,21 @@ FormDesigner.leftPad = function (string, length, fill) {
                     that.onSelect(properties);
                 };
                 gridItem.onRemove = function () {
-                    that.onRemoveItem();
+                    that.onRemoveItem(this);
                 };
                 gridItem.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(gridItem.html);
                 properties = gridItem.properties;
+                target = gridItem;
                 break;
         }
+        that.onDrawDroppedItem(render, target);
         return properties;
     };
     Grid.prototype.inTypesControl = function (val) {
-        //uncomment to add new elements
-        if (
-            //val === FormDesigner.main.TypesControl.title ||
-        //val === FormDesigner.main.TypesControl.subtitle ||
-        //val === FormDesigner.main.TypesControl.label ||
-        val === FormDesigner.main.TypesControl.link ||
-            //val === FormDesigner.main.TypesControl.image ||
-        val === FormDesigner.main.TypesControl.file ||
-        val === FormDesigner.main.TypesControl.multipleFile ||
-            //val === FormDesigner.main.TypesControl.submit ||
-            //val === FormDesigner.main.TypesControl.button ||
-        val === FormDesigner.main.TypesControl.text ||
-        val === FormDesigner.main.TypesControl.textarea ||
-        val === FormDesigner.main.TypesControl.dropdown ||
-        val === FormDesigner.main.TypesControl.checkbox ||
-            //render === FormDesigner.main.TypesControl.checkgroup ||
-            //val === FormDesigner.main.TypesControl.radio ||
-        val === FormDesigner.main.TypesControl.datetime ||
-        val === FormDesigner.main.TypesControl.suggest ||
-        val === FormDesigner.main.TypesControl.hidden
-        //val === FormDesigner.main.TypesControl.annotation ||
-        //val === FormDesigner.main.TypesControl.geomap ||
-        //val === FormDesigner.main.TypesControl.qrcode ||
-        //val === FormDesigner.main.TypesControl.signature ||
-        //val === FormDesigner.main.TypesControl.imagem ||
-        //val === FormDesigner.main.TypesControl.audiom ||
-        //val === FormDesigner.main.TypesControl.videom
-        ) {
+        if ($.inArray(val, this.typesControlSupported) > -1) {
             return val;
         }
         new FormDesigner.main.DialogUnsupported();//todo
@@ -41469,8 +41804,27 @@ FormDesigner.leftPad = function (string, length, fill) {
             b.node.value = variable.var_name;
         that.properties.set("name", variable.var_name);
     };
+    /**
+     * Verify if in the grid exist a deprecated control.
+     * @return {number}
+     */
+    Grid.prototype.checkForDeprecatedControls = function () {
+        return this._items.asArray().length;
+    };
+    /**
+     * Clear list of deprecated control in the grid.
+     */
+    Grid.prototype.clearItemsDeprecated = function () {
+        var itemsGrid = this._items.asArray(),
+            i;
+        for (i = 0; i < itemsGrid.length; i+= 1) {
+            this.parent._items.remove(itemsGrid[i])
+        }
+        this._items.clear();
+    };
     FormDesigner.extendNamespace('FormDesigner.main.Grid', Grid);
 }());
+
 (function () {
     var GridItem = function (render, variable, parent) {
         this.onSelect = new Function();
@@ -41483,7 +41837,9 @@ FormDesigner.leftPad = function (string, length, fill) {
         GridItem.prototype.init.call(this);
     };
     GridItem.prototype.init = function () {
-        var that = this, html;
+        var that = this,
+            html;
+
         switch (this.render) {
             case FormDesigner.main.TypesControl.text:
                 html = "<input type='text' value='' class='fd-gridForm-grid-text-column'>";
@@ -41558,6 +41914,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             });
             that.onSelect(that.properties, that);
         });
+
         this.properties = new FormDesigner.main.Properties(this.render, this.html, that);
         this.properties.onClick = function (property) {
             var a, b, fields, dialog;
@@ -41722,6 +42079,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 });
             }
         };
+        this.createDeprecatedIcon();
     };
     GridItem.prototype.getData = function () {
         var prop = {};
@@ -41771,8 +42129,41 @@ FormDesigner.leftPad = function (string, length, fill) {
             }
         }
     };
+    /**
+     * Create deprecation icon.
+     */
+    GridItem.prototype.createDeprecatedIcon = function () {
+        this.deprecatedIcon = $("<div class='mafe-deprecated-control'></div>");
+        this.deprecatedIcon.attr('title', "");
+        this.deprecatedIcon.hide();
+        this.deprecatedIcon.tooltip({
+            content: FormDesigner.DEPRECATION_TEXT,
+            close: function (event, ui) {
+                ui.tooltip.hover(function () {
+                    $(this).stop(true).fadeTo(400, 1);
+                }, function () {
+                    $(this).fadeOut("400", function () {
+                        $(this).remove();
+                    });
+                });
+            }
+        });
+        this.html.find('.fd-gridForm-grid-griditem-columnLabel').parent().prepend(this.deprecatedIcon);
+    };
+    /**
+     * Enable or disable deprecated icon.
+     * @param {boolean} status
+     */
+    GridItem.prototype.deprecated = function (status) {
+        if (status === true) {
+            this.deprecatedIcon.show();
+        } else {
+            this.deprecatedIcon.hide();
+        }
+    };
     FormDesigner.extendNamespace('FormDesigner.main.GridItem', GridItem);
 }());
+
 (function () {
     var Preview = function (dyn_uid, dyn_title, prj_uid, iframeOptions) {
         this.dyn_uid = dyn_uid;
@@ -42956,15 +43347,17 @@ FormDesigner.leftPad = function (string, length, fill) {
     FormDesigner.extendNamespace('FormDesigner.main.DialogConfirmDeleteOption', DialogConfirmDeleteOption);
 }());
 (function () {
-    var DialogInvalid = function (appendTo, property, type) {
+    var DialogInvalid = function (appendTo, property, type, config) {
         this.property = property;
         this.type = type;
+        this.config = config || null;
         this.onAccept = new Function();
         this.onClose = new Function();
         DialogInvalid.prototype.init.call(this, appendTo);
     };
     DialogInvalid.prototype.init = function (appendTo) {
-        var that = this;
+        var that = this,
+            configDialog = this.getErrorMessage(this.type, this.property, this.config);
         this.accept = $("<a href='#' class='fd-button fd-button-success'>" + "Ok".translate() + "</a>");
         this.accept.on("click", function () {
             that.onAccept();
@@ -42973,7 +43366,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.buttons = $("<div class='fd-button-panel'><div></div></div>");
         this.buttons.find("div:nth-child(1)").append(this.accept);
 
-        this.dialog = $("<div title='" + "Errors".translate() + "'></div>");
+        this.dialog = $("<div title='" + configDialog.title + "'></div>");
         this.dialog.dialog({
             appendTo: appendTo ? appendTo : document.body,
             modal: true,
@@ -42988,20 +43381,41 @@ FormDesigner.leftPad = function (string, length, fill) {
         });
         FormDesigner.main.DialogStyle(this.dialog, "alert");
 
-        var msg = "The " + that.property + " is invalid.".translate();
-        if (this.type === "required")
-            msg = "The " + that.property + " is required.".translate();
-        if (this.type === "duplicated")
-            msg = "The " + that.property + " is duplicated.".translate();
-
         this.dialog.append("<div style='font-size:14px;margin:20px;'>" +
-            msg +
+            configDialog.message +
             "</div>");
         this.dialog.append(this.buttons);
         this.accept.focus();
     };
+    /**
+     * Get error message
+     * @param type
+     * @param property
+     * @param config
+     * @returns {Object}
+     */
+    DialogInvalid.prototype.getErrorMessage = function (type, property, config) {
+        var conf = {};
+        conf.title = (config) ? this.config.title.translate() : 'Errors'.translate();
+        switch (type) {
+            case 'required':
+                conf.message = "The ".translate() + property + " is required.".translate();
+                break;
+            case 'invalid':
+                conf.message = "The ".translate() + property + " is invalid.".translate();
+                break;
+            case 'duplicated':
+                conf.message = "The ".translate() + property + " is duplicated.".translate();
+                break;
+            case 'custom':
+                conf.message = (config) ? config.msg.translate() : '';
+                break;
+        }
+        return conf;
+    };
     FormDesigner.extendNamespace('FormDesigner.main.DialogInvalid', DialogInvalid);
 }());
+
 (function () {
     var DialogRegularExpression = function (appendTo, dataType) {
         this.dataType = dataType;
@@ -43611,7 +44025,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         });
         FormDesigner.main.DialogStyle(this.dialog, this.type);
 
-        this.dialog.append("<div style='font-size:14px;margin:20px;'>" +
+        this.dialog.append("<div style='font-size:14px;margin:20px;text-align:center'>" +
             this.message +
             "</div>");
         this.dialog.append(this.buttons);
@@ -43619,6 +44033,7 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     FormDesigner.extendNamespace('FormDesigner.main.DialogMessage', DialogMessage);
 }());
+
 (function () {
     var DialogConfirm = function (appendTo, type, message) {
         this.type = type;
@@ -43746,6 +44161,255 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     FormDesigner.extendNamespace('FormDesigner.main.DialogInputDocument', DialogInputDocument);
 }());
+(function () {
+    /**
+     * PopOver for PM Dynaform's designer.
+     * @param {Object} settings An object containing the config options for the new PopOver.
+     * @cfg {String|JQuery Object| Element} body The content for the PopOver, it casn be an HTML string, a JQuery Object
+     * or an Element.
+     * @cfg {String} [class=""] The class name for the popover, useful for applying custom styles through a css class.
+     * @cfg {String} [placement=PMPopOver.PLACEMENT.RIGHT] A string that determines the placement of the popover related
+     * to its target element. Please Use one of the keys defined under PMPopOver.PLACEMENT.
+     *
+     * @constructor
+     */
+    var PMPopOver = function (settings) {
+        this._body = null;
+        this._targetElement = null;
+        this._dom = {};
+        this._class = null;
+        this._placement = null;
+        this._visible = false;
+
+        PMPopOver.prototype._init.call(this, settings);
+    };
+    /**
+     * All the possible values for placement config option.
+     * @type {{TOP: string, RIGHT: string, BOTTOM: string, LEFT: string}}
+     */
+    PMPopOver.PLACEMENT = {
+        TOP: 'top',
+        RIGHT: 'right',
+        BOTTOM: 'bottom',
+        LEFT: 'left'
+    };
+    /**
+     * Initialize the class
+     * @param settings
+     * @private
+     */
+    PMPopOver.prototype._init = function (settings) {
+        settings = $.extend({
+            body: "",
+            class: "",
+            placement: PMPopOver.PLACEMENT.RIGHT
+        }, settings);
+
+        this._placement = settings.placement;
+        this._class = settings.class;
+
+        this.setBody(settings.body)
+            .setTargetElement(settings.targetElement);
+    };
+    /**
+     * Sets the element the PopOver belongs to.
+     * @param targetElement
+     * @chainable
+     */
+    PMPopOver.prototype.setTargetElement = function (targetElement) {
+        if (!targetElement) {
+            throw new Error('setTargetElement(): Invalid parameter.');
+        }
+
+        this._clickHandler = this._clickHandler || this.toggleVisible.bind(this);
+
+        if (this._targetElement) {
+            $(this._targetElement).off("click", this._clickHandler);
+        }
+
+        this._targetElement = targetElement;
+
+        $(this._targetElement).on("click", this._clickHandler);
+
+        return this;
+    };
+    /**
+     * Sets the PopOver body.
+     * @param body
+     * @chainable
+     */
+    PMPopOver.prototype.setBody = function (body) {
+        if (!(body instanceof Element || body instanceof jQuery || typeof body === 'string')) {
+            throw new Error("setBody(): The parameter must be a DOM Element, jQuery element or a string.");
+        }
+
+        this._body = body;
+
+        if (this._dom.content) {
+            $(this._dom.content).empty().append(body);
+        }
+
+        return this;
+    };
+    /**
+     * Returns the position of the PopOver target element.
+     * @returns {Object}
+     * @private
+     */
+    PMPopOver.prototype._getTargetPosition = function () {
+        var $element = this._targetElement instanceof jQuery ? this._targetElement : $(this._targetElement),
+            element = this._targetElement instanceof jQuery ? this._targetElement.get(0) : this._targetElement;
+
+        return $.extend(element.getBoundingClientRect ? element.getBoundingClientRect() : {
+            width: element.offsetWidth,
+            height: element.offsetHeight
+        }, $element.offset());
+    };
+    /**
+     * Returns the final position for the popover.
+     * @returns {{top: *, left: *}}
+     * @private
+     */
+    PMPopOver.prototype._getPosition = function () {
+        var targetPosition = this._getTargetPosition(),
+            arrowOffset = 10,
+            html = this.getHTML(),
+            htmlWidth,
+            htmlHeight,
+            placement,
+            top,
+            left;
+
+        document.body.appendChild(html);
+        html.style.display = 'block';
+
+        htmlWidth = html.offsetWidth;
+        htmlHeight = html.offsetHeight;
+        placement = this._placement;
+
+        switch (placement) {
+            case PMPopOver.PLACEMENT.TOP:
+                top = targetPosition.top - htmlHeight - arrowOffset;
+                left = targetPosition.left + (targetPosition.width / 2) - (htmlWidth / 2);
+                break;
+            case PMPopOver.PLACEMENT.RIGHT:
+                top = targetPosition.top + (targetPosition.height / 2) - (htmlHeight / 2);
+                left = targetPosition.left + targetPosition.width + arrowOffset;
+                break;
+            case PMPopOver.PLACEMENT.BOTTOM:
+                top = targetPosition.top + targetPosition.height + arrowOffset;
+                left = targetPosition.left + (targetPosition.width / 2) - (htmlWidth / 2);
+                break;
+            case PMPopOver.PLACEMENT.LEFT:
+                top = targetPosition.top + (targetPosition.height / 2) - (htmlHeight / 2);
+                left = targetPosition.left - htmlWidth - arrowOffset;
+                break;
+            default:
+                throw new Error('_getPosition(): Invalid placement parameter.');
+        }
+
+        return {
+            top: top,
+            left: left
+        };
+    };
+    /**
+     * Displays the PopOver.
+     * @chainable
+     * @return {body}
+     */
+    PMPopOver.prototype.show = function () {
+        var position = this._getPosition();
+
+        $(this._html).removeClass("top right bottom left").addClass(this._placement).addClass("in");
+        this._html.style.top = position.top + 'px';
+        this._html.style.left = position.left + 'px';
+
+        this._visible = true;
+
+        return this;
+    };
+    /**
+     * Hides the PopOver.
+     * @chainable
+     * @return {body}
+     */
+    PMPopOver.prototype.hide = function () {
+        if (this._html) {
+            $(this._html).fadeOut(150, "linear", function () {
+                this.style.display = 'none';
+                $(this).removeClass('in');
+            });
+        }
+
+        this._visible = false;
+
+        return this;
+    };
+    /**
+     * Toggles the PopOver visibility.
+     * @chainable
+     */
+    PMPopOver.prototype.toggleVisible = function () {
+        return this._visible ? this.hide() : this.show();
+    };
+    /**
+     * Creates the PopOver HTML.
+     * @chainable
+     * @return {body}
+     * @private
+     */
+    PMPopOver.prototype._createHTML = function () {
+        var container,
+            arrow,
+            content;
+
+        if (this._html) {
+            return this;
+        }
+
+        container = document.createElement('div');
+        arrow = document.createElement('div');
+        content = document.createElement('div');
+
+        container.className = "mafe-popover fade " + this._class;
+        arrow.className = "arrow";
+        content.className = "mafe-popover-content";
+
+        container.appendChild(arrow);
+        container.appendChild(content);
+
+        this._dom.container = container;
+        this._dom.arrow = arrow;
+        this._dom.content = content;
+
+        this._html = container;
+
+        this.setBody(this._body);
+
+        this._html.addEventListener("mousedown", function (e) {
+            e.stopPropagation();
+        });
+
+        document.addEventListener("mousedown", this.hide.bind(this), false);
+
+        return this;
+    };
+    /**
+     * Returns the PopOver HTML.
+     * @returns {Element}
+     */
+    PMPopOver.prototype.getHTML = function () {
+        if (!this._html) {
+            this._createHTML();
+        }
+
+        return this._html;
+    };
+
+    FormDesigner.extendNamespace('FormDesigner.main.PMPopOver', PMPopOver);
+})();
+
 /**
  * @class ItemRule
  * @param object

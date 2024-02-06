@@ -25,7 +25,7 @@ abstract class BaseTaskUserPeer
     const CLASS_DEFAULT = 'classes.model.TaskUser';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 4;
+    const NUM_COLUMNS = 6;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -33,6 +33,9 @@ abstract class BaseTaskUserPeer
 
     /** the column name for the TAS_UID field */
     const TAS_UID = 'TASK_USER.TAS_UID';
+
+    /** the column name for the TAS_ID field */
+    const TAS_ID = 'TASK_USER.TAS_ID';
 
     /** the column name for the USR_UID field */
     const USR_UID = 'TASK_USER.USR_UID';
@@ -42,6 +45,9 @@ abstract class BaseTaskUserPeer
 
     /** the column name for the TU_RELATION field */
     const TU_RELATION = 'TASK_USER.TU_RELATION';
+
+    /** the column name for the ASSIGNED_ID field */
+    const ASSIGNED_ID = 'TASK_USER.ASSIGNED_ID';
 
     /** The PHP to DB Name Mapping */
     private static $phpNameMap = null;
@@ -54,10 +60,10 @@ abstract class BaseTaskUserPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('TasUid', 'UsrUid', 'TuType', 'TuRelation', ),
-        BasePeer::TYPE_COLNAME => array (TaskUserPeer::TAS_UID, TaskUserPeer::USR_UID, TaskUserPeer::TU_TYPE, TaskUserPeer::TU_RELATION, ),
-        BasePeer::TYPE_FIELDNAME => array ('TAS_UID', 'USR_UID', 'TU_TYPE', 'TU_RELATION', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('TasUid', 'TasId', 'UsrUid', 'TuType', 'TuRelation', 'AssignedId', ),
+        BasePeer::TYPE_COLNAME => array (TaskUserPeer::TAS_UID, TaskUserPeer::TAS_ID, TaskUserPeer::USR_UID, TaskUserPeer::TU_TYPE, TaskUserPeer::TU_RELATION, TaskUserPeer::ASSIGNED_ID, ),
+        BasePeer::TYPE_FIELDNAME => array ('TAS_UID', 'TAS_ID', 'USR_UID', 'TU_TYPE', 'TU_RELATION', 'ASSIGNED_ID', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
     );
 
     /**
@@ -67,10 +73,10 @@ abstract class BaseTaskUserPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('TasUid' => 0, 'UsrUid' => 1, 'TuType' => 2, 'TuRelation' => 3, ),
-        BasePeer::TYPE_COLNAME => array (TaskUserPeer::TAS_UID => 0, TaskUserPeer::USR_UID => 1, TaskUserPeer::TU_TYPE => 2, TaskUserPeer::TU_RELATION => 3, ),
-        BasePeer::TYPE_FIELDNAME => array ('TAS_UID' => 0, 'USR_UID' => 1, 'TU_TYPE' => 2, 'TU_RELATION' => 3, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('TasUid' => 0, 'TasId' => 1, 'UsrUid' => 2, 'TuType' => 3, 'TuRelation' => 4, 'AssignedId' => 5, ),
+        BasePeer::TYPE_COLNAME => array (TaskUserPeer::TAS_UID => 0, TaskUserPeer::TAS_ID => 1, TaskUserPeer::USR_UID => 2, TaskUserPeer::TU_TYPE => 3, TaskUserPeer::TU_RELATION => 4, TaskUserPeer::ASSIGNED_ID => 5, ),
+        BasePeer::TYPE_FIELDNAME => array ('TAS_UID' => 0, 'TAS_ID' => 1, 'USR_UID' => 2, 'TU_TYPE' => 3, 'TU_RELATION' => 4, 'ASSIGNED_ID' => 5, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
     );
 
     /**
@@ -173,11 +179,15 @@ abstract class BaseTaskUserPeer
 
         $criteria->addSelectColumn(TaskUserPeer::TAS_UID);
 
+        $criteria->addSelectColumn(TaskUserPeer::TAS_ID);
+
         $criteria->addSelectColumn(TaskUserPeer::USR_UID);
 
         $criteria->addSelectColumn(TaskUserPeer::TU_TYPE);
 
         $criteria->addSelectColumn(TaskUserPeer::TU_RELATION);
+
+        $criteria->addSelectColumn(TaskUserPeer::ASSIGNED_ID);
 
     }
 

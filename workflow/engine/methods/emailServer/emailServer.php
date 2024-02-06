@@ -20,6 +20,5 @@ $headPublisher->addContent("emailServer/emailServer"); //Adding a HTML file
 $headPublisher->addExtJsScript("emailServer/emailServer", false); //Adding a JavaScript file
 $headPublisher->assign("CONFIG", $arrayConfig);
 
-/*----------------------------------********---------------------------------*/
 
 G::RenderPage("publish", "extJs");

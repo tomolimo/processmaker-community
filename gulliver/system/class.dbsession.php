@@ -52,12 +52,12 @@ class DBSession
      * @return void
      *
      */
-    function DBSession ($objConnection = null, $strDBName = '')
+    public function __construct($objConnection = null, $strDBName = '')
     {
         if ($strDBName != '') {
             $strDBName = $objConnection->db->_db;
         }
-        $this->setTo( $objConnection, $strDBName );
+        $this->setTo($objConnection, $strDBName);
     }
 
     /**

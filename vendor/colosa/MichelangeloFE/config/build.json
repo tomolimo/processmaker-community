@@ -96,7 +96,9 @@
             "src/formDesigner/src/Designer.js",
             "src/formDesigner/src/DialogDynaforms.js",
             "src/formDesigner/src/DialogTypeControl.js",
+            "src/formDesigner/src/Notice.js",
             "src/formDesigner/src/Form.js",
+            "src/formDesigner/src/ListItem.js",
             "src/formDesigner/src/ListControls.js",
             "src/formDesigner/src/ListMobileControls.js",
             "src/formDesigner/src/ListProperties.js",
@@ -131,6 +133,7 @@
             "src/formDesigner/src/DialogMessage.js",
             "src/formDesigner/src/DialogConfirm.js",
             "src/formDesigner/src/DialogInputDocument.js",
+            "src/formDesigner/src/PMPopOver.js",
             // VALIDATOR FILES
             "src/extensions/validator/itemRule.js",
             "src/extensions/validator/collectionRules.js",

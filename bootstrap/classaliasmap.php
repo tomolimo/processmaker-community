@@ -80,7 +80,6 @@ return array(
     'ToolBar' => ToolBar::class,
     'Tree' => PmTree::class,
     'triggerLibrary' => TriggerLibrary::class,
-    'Upgrade' => Upgrade::class,
     'workspaceTools' => WorkspaceTools::class,
     'wsBase' => WsBase::class,
     'wsResponse' => WsResponse::class,

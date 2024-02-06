@@ -29,7 +29,6 @@ systemInfo.application = {
                         case "SYS":
                             Ext.getCmp("php").setValue(fieldFormatValue(dataResponse.php.version, dataResponse.php.result));
                             Ext.getCmp("mysql").setValue(fieldFormatValue(dataResponse.mysql.version, dataResponse.mysql.result));
-                            //Ext.getCmp("mssql").setValue(fieldFormatValue(dataResponse.mssql.version, dataResponse.mssql.result));
                             Ext.getCmp("curl").setValue(fieldFormatValue(dataResponse.curl.version, dataResponse.curl.result));
                             Ext.getCmp("openssl").setValue(fieldFormatValue(dataResponse.openssl.version, dataResponse.openssl.result));
                             Ext.getCmp("dom").setValue(fieldFormatValue(dataResponse.dom.version, dataResponse.dom.result));
@@ -100,14 +99,6 @@ systemInfo.application = {
                     fieldLabel: _("ID_PROCESSMAKER_REQUIREMENTS_MYSQL"),
                     value: eval("fieldFormatValue(" + SYSINFO_MYSQL + ");")
                 },
-                /*
-                {
-                    xtype: "displayfield",
-                    id: "mssql",
-                    fieldLabel: _("ID_PROCESSMAKER_REQUIREMENTS_MSSQL"),
-                    value: eval("fieldFormatValue(" + SYSINFO_MSSQL + ");")
-                },
-                */
                 {
                     xtype: "displayfield",
                     id: "curl",

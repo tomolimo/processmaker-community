@@ -63,7 +63,7 @@ class Console_Getopt {
      * @access public
      *
      */
-    function getopt2($args, $short_options, $long_options = null)
+    public static function getopt2($args, $short_options, $long_options = null)
     {
         return Console_Getopt::doGetopt(2, $args, $short_options, $long_options);
     }
@@ -72,7 +72,7 @@ class Console_Getopt {
      * This function expects $args to start with the script name (POSIX-style).
      * Preserved for backwards compatibility.
      * @see getopt2()
-     */    
+     */
     function getopt($args, $short_options, $long_options = null)
     {
         return Console_Getopt::doGetopt(1, $args, $short_options, $long_options);
@@ -81,7 +81,7 @@ class Console_Getopt {
     /**
      * The actual implementation of the argument parsing code.
      */
-    function doGetopt($version, $args, $short_options, $long_options = null)
+    public static function doGetopt($version, $args, $short_options, $long_options = null)
     {
         // in case you pass directly readPHPArgv() as the first arg
         if (PEAR::isError($args)) {
@@ -141,7 +141,7 @@ class Console_Getopt {
      * @access private
      *
      */
-    function _parseShortOption($arg, $short_options, &$opts, &$args)
+    public static function _parseShortOption($arg, $short_options, &$opts, &$args)
     {
         for ($i = 0; $i < strlen($arg); $i++) {
             $opt = $arg{$i};

@@ -398,7 +398,10 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
         $c->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID, Criteria::LEFT_JOIN);
         $c->add(ProcessPeer::PRO_STATUS, 'ACTIVE');
         $c->add(TaskPeer::TAS_ASSIGN_TYPE, 'SELF_SERVICE');
-        $c->add(TaskPeer::TAS_GROUP_VARIABLE, '');
+        $c->add(
+            $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, '')->addOr(
+                $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, null, Criteria::ISNULL))
+        );
         $c->add(TaskUserPeer::USR_UID, $userUid);
         //TU_TYPE = 2 is a AdHoc task
         if (!$adHocUsers) {
@@ -430,7 +433,10 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
         $c->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID, Criteria::LEFT_JOIN);
         $c->add(ProcessPeer::PRO_STATUS, 'ACTIVE');
         $c->add(TaskPeer::TAS_ASSIGN_TYPE, 'SELF_SERVICE');
-        $c->add(TaskPeer::TAS_GROUP_VARIABLE, '');
+        $c->add(
+            $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, '')->addOr(
+                $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, null, Criteria::ISNULL))
+        );
         $c->add(TaskUserPeer::USR_UID, $groupsList, Criteria::IN);
         //TU_TYPE = 2 is a AdHoc task
         if (!$adHocUsers) {

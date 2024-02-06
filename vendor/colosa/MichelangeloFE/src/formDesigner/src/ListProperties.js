@@ -38,7 +38,7 @@
                 break;
             case "text":
                 input = $("<input type='text' style='" + width + "' id='" + id + "'>").val(propertiesGot[property].value);
-                input.on(propertiesGot[property].on ? propertiesGot[property].on : "keyup", function () {
+                input.on(propertiesGot[property].on ? propertiesGot[property].on : "change", function () {
                     properties.set(property, this.value);
                 });
                 input.attr("placeholder", propertiesGot[property].placeholder ? propertiesGot[property].placeholder : "");
@@ -207,7 +207,7 @@
                             minDate = that.getDateByParam(cellValue, "minDate");
                             break;
                     }
-                    
+
                     that.datepicker = that.dateComponentFactory(cellValue, {
                         minDate: minDate,
                         maxDate: maxDate,

@@ -196,7 +196,7 @@ class FilesLogs extends Files
      */
     private function size($size, $format = null)
     {
-        $sizes = ['Bytes', 'Kbytes', 'Mbytes', 'Gbytes', 'Tbytes', 'Pbytes', 'Ebytes', 'Zbytes', 'Ybytes'];
+        $sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         if ($format === null) {
             $format = ' % 01.2f % s';
         }

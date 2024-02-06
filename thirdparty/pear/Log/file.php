@@ -319,7 +319,12 @@ class Log_file extends Log
                 $request .= ($request!='' ? "\t" : '') . $k . '='.$v;
             }
         }
-        foreach( $_GET  as $k => $v ) $request .= ($request!='' ? "\t" : '') . $k . '='.$v; 
+        foreach ($_GET as $k => $v) {
+            if (is_array($v)) {
+                $v = json_encode($v);
+            }
+            $request .= ($request != '' ? "\t" : '') . $k . '=' . $v;
+        }
 
         //exact time with microseconds        
         $t = explode(' ',microtime(false));

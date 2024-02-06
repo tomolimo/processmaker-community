@@ -28,7 +28,7 @@ abstract class FileLoader extends BaseFileLoader
 {
     protected $container;
     protected $isLoadingInstanceof = false;
-    protected $instanceof = array();
+    protected $instanceof = [];
 
     public function __construct(ContainerBuilder $container, FileLocatorInterface $locator)
     {
@@ -40,10 +40,10 @@ abstract class FileLoader extends BaseFileLoader
     /**
      * Registers a set of classes as services using PSR-4 for discovery.
      *
-     * @param Definition $prototype A definition to use as template
-     * @param string     $namespace The namespace prefix of classes in the scanned directory
-     * @param string     $resource  The directory to look for classes, glob-patterns allowed
-     * @param string     $exclude   A globed path of files to exclude
+     * @param Definition           $prototype A definition to use as template
+     * @param string               $namespace The namespace prefix of classes in the scanned directory
+     * @param string               $resource  The directory to look for classes, glob-patterns allowed
+     * @param string|string[]|null $exclude   A globbed path of files to exclude or an array of globbed paths of files to exclude
      */
     public function registerClasses(Definition $prototype, $namespace, $resource, $exclude = null)
     {
@@ -54,11 +54,11 @@ abstract class FileLoader extends BaseFileLoader
             throw new InvalidArgumentException(sprintf('Namespace is not a valid PSR-4 prefix: %s.', $namespace));
         }
 
-        $classes = $this->findClasses($namespace, $resource, $exclude);
+        $classes = $this->findClasses($namespace, $resource, (array) $exclude);
         // prepare for deep cloning
         $serializedPrototype = serialize($prototype);
-        $interfaces = array();
-        $singlyImplemented = array();
+        $interfaces = [];
+        $singlyImplemented = [];
 
         foreach ($classes as $class => $errorMessage) {
             if (interface_exists($class, false)) {
@@ -91,6 +91,8 @@ abstract class FileLoader extends BaseFileLoader
      */
     protected function setDefinition($id, Definition $definition)
     {
+        $this->container->removeBindings($id);
+
         if ($this->isLoadingInstanceof) {
             if (!$definition instanceof ChildDefinition) {
                 throw new InvalidArgumentException(sprintf('Invalid type definition "%s": ChildDefinition expected, "%s" given.', $id, \get_class($definition)));
@@ -101,15 +103,15 @@ abstract class FileLoader extends BaseFileLoader
         }
     }
 
-    private function findClasses($namespace, $pattern, $excludePattern)
+    private function findClasses($namespace, $pattern, array $excludePatterns)
     {
         $parameterBag = $this->container->getParameterBag();
 
-        $excludePaths = array();
+        $excludePaths = [];
         $excludePrefix = null;
-        if ($excludePattern) {
-            $excludePattern = $parameterBag->unescapeValue($parameterBag->resolveValue($excludePattern));
-            foreach ($this->glob($excludePattern, true, $resource) as $path => $info) {
+        $excludePatterns = $parameterBag->unescapeValue($parameterBag->resolveValue($excludePatterns));
+        foreach ($excludePatterns as $excludePattern) {
+            foreach ($this->glob($excludePattern, true, $resource, false, true) as $path => $info) {
                 if (null === $excludePrefix) {
                     $excludePrefix = $resource->getPrefix();
                 }
@@ -120,10 +122,10 @@ abstract class FileLoader extends BaseFileLoader
         }
 
         $pattern = $parameterBag->unescapeValue($parameterBag->resolveValue($pattern));
-        $classes = array();
-        $extRegexp = \defined('HHVM_VERSION') ? '/\\.(?:php|hh)$/' : '/\\.php$/';
+        $classes = [];
+        $extRegexp = '/\\.php$/';
         $prefixLen = null;
-        foreach ($this->glob($pattern, true, $resource) as $path => $info) {
+        foreach ($this->glob($pattern, true, $resource, false, false, $excludePaths) as $path => $info) {
             if (null === $prefixLen) {
                 $prefixLen = \strlen($resource->getPrefix());
 

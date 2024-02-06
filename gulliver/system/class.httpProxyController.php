@@ -142,8 +142,8 @@ class HttpProxyController
     public function setHttpRequestData($data)
     {
         if (is_array($data)) {
-            while ($var = each($data)) {
-                $this->__request__->{$var['key']} = $var['value'];
+            foreach ($data as $key => $value) {
+                $this->__request__->{$key} = $value;
             }
         } else {
             $this->__request__ = $data;

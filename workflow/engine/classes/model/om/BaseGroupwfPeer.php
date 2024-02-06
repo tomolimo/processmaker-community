@@ -25,7 +25,7 @@ abstract class BaseGroupwfPeer
     const CLASS_DEFAULT = 'classes.model.Groupwf';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 6;
+    const NUM_COLUMNS = 7;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -42,6 +42,9 @@ abstract class BaseGroupwfPeer
 
     /** the column name for the GRP_STATUS field */
     const GRP_STATUS = 'GROUPWF.GRP_STATUS';
+
+    /** the column name for the GRP_STATUS_ID field */
+    const GRP_STATUS_ID = 'GROUPWF.GRP_STATUS_ID';
 
     /** the column name for the GRP_LDAP_DN field */
     const GRP_LDAP_DN = 'GROUPWF.GRP_LDAP_DN';
@@ -60,10 +63,10 @@ abstract class BaseGroupwfPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('GrpUid', 'GrpId', 'GrpTitle', 'GrpStatus', 'GrpLdapDn', 'GrpUx', ),
-        BasePeer::TYPE_COLNAME => array (GroupwfPeer::GRP_UID, GroupwfPeer::GRP_ID, GroupwfPeer::GRP_TITLE, GroupwfPeer::GRP_STATUS, GroupwfPeer::GRP_LDAP_DN, GroupwfPeer::GRP_UX, ),
-        BasePeer::TYPE_FIELDNAME => array ('GRP_UID', 'GRP_ID', 'GRP_TITLE', 'GRP_STATUS', 'GRP_LDAP_DN', 'GRP_UX', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+        BasePeer::TYPE_PHPNAME => array ('GrpUid', 'GrpId', 'GrpTitle', 'GrpStatus', 'GrpStatusId', 'GrpLdapDn', 'GrpUx', ),
+        BasePeer::TYPE_COLNAME => array (GroupwfPeer::GRP_UID, GroupwfPeer::GRP_ID, GroupwfPeer::GRP_TITLE, GroupwfPeer::GRP_STATUS, GroupwfPeer::GRP_STATUS_ID, GroupwfPeer::GRP_LDAP_DN, GroupwfPeer::GRP_UX, ),
+        BasePeer::TYPE_FIELDNAME => array ('GRP_UID', 'GRP_ID', 'GRP_TITLE', 'GRP_STATUS', 'GRP_STATUS_ID', 'GRP_LDAP_DN', 'GRP_UX', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
     );
 
     /**
@@ -73,10 +76,10 @@ abstract class BaseGroupwfPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('GrpUid' => 0, 'GrpId' => 1, 'GrpTitle' => 2, 'GrpStatus' => 3, 'GrpLdapDn' => 4, 'GrpUx' => 5, ),
-        BasePeer::TYPE_COLNAME => array (GroupwfPeer::GRP_UID => 0, GroupwfPeer::GRP_ID => 1, GroupwfPeer::GRP_TITLE => 2, GroupwfPeer::GRP_STATUS => 3, GroupwfPeer::GRP_LDAP_DN => 4, GroupwfPeer::GRP_UX => 5, ),
-        BasePeer::TYPE_FIELDNAME => array ('GRP_UID' => 0, 'GRP_ID' => 1, 'GRP_TITLE' => 2, 'GRP_STATUS' => 3, 'GRP_LDAP_DN' => 4, 'GRP_UX' => 5, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, )
+        BasePeer::TYPE_PHPNAME => array ('GrpUid' => 0, 'GrpId' => 1, 'GrpTitle' => 2, 'GrpStatus' => 3, 'GrpStatusId' => 4, 'GrpLdapDn' => 5, 'GrpUx' => 6, ),
+        BasePeer::TYPE_COLNAME => array (GroupwfPeer::GRP_UID => 0, GroupwfPeer::GRP_ID => 1, GroupwfPeer::GRP_TITLE => 2, GroupwfPeer::GRP_STATUS => 3, GroupwfPeer::GRP_STATUS_ID => 4, GroupwfPeer::GRP_LDAP_DN => 5, GroupwfPeer::GRP_UX => 6, ),
+        BasePeer::TYPE_FIELDNAME => array ('GRP_UID' => 0, 'GRP_ID' => 1, 'GRP_TITLE' => 2, 'GRP_STATUS' => 3, 'GRP_STATUS_ID' => 4, 'GRP_LDAP_DN' => 5, 'GRP_UX' => 6, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, )
     );
 
     /**
@@ -184,6 +187,8 @@ abstract class BaseGroupwfPeer
         $criteria->addSelectColumn(GroupwfPeer::GRP_TITLE);
 
         $criteria->addSelectColumn(GroupwfPeer::GRP_STATUS);
+
+        $criteria->addSelectColumn(GroupwfPeer::GRP_STATUS_ID);
 
         $criteria->addSelectColumn(GroupwfPeer::GRP_LDAP_DN);
 

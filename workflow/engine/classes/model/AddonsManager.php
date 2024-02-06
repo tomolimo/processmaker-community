@@ -385,13 +385,7 @@ class AddonsManager extends BaseAddonsManager
 
             $this->setState();
         } else {
-            if ($this->getAddonType() == "core") {
-                $upgrade = new Upgrade($this);
-
-                $upgrade->install();
-            } else {
-                throw new Exception("Addon type {$this->getAddonType()} not supported.");
-            }
+            throw new Exception("Addon type {$this->getAddonType()} not supported.");
         }
     }
 

@@ -21,9 +21,9 @@
  */
 class ZipFile extends Archive
 {
-    public function ZipFile($name)
+    public function __construct($name)
     {
-        $this->archive($name);
+        parent::__construct($name);
         $this->options['type'] = "zip";
     }
 

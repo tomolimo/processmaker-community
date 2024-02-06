@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Http\Kernel;
 use ProcessMaker\Core\AppEvent;
-/*----------------------------------********---------------------------------*/
+use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Validation\ValidationUploadedFiles;
 
@@ -301,7 +301,6 @@ if (!(array_key_exists('REMOTE_USER', $_SERVER) && (string)($_SERVER['REMOTE_USE
 }
 
 //Set Time Zone
-/*----------------------------------********---------------------------------*/
 
 // Do not change any of these settings directly, use env.ini instead
 ini_set('display_errors', $config['display_errors']);
@@ -700,6 +699,11 @@ if (defined('DEBUG_SQL_LOG') && DEBUG_SQL_LOG) {
     Propel::init(PATH_CORE . "config/databases.php");
 }
 
+/**
+ * JobsManager
+ */
+JobsManager::getSingleton()->init();
+
 //here we are loading all plugins registered
 //the singleton has a list of enabled plugins
 $oPluginRegistry = PluginRegistry::loadSingleton();
@@ -708,7 +712,6 @@ Bootstrap::LoadTranslationPlugins(defined('SYS_LANG') ? SYS_LANG : "en", $attrib
 // Initialization functions plugins
 $oPluginRegistry->init();
 
-/*----------------------------------********---------------------------------*/
 
 Creole::registerDriver('dbarray', 'creole.contrib.DBArrayConnection');
 
@@ -1035,7 +1038,6 @@ if (!defined('EXECUTE_BY_CRON')) {
     }
     $_SESSION['phpLastFileFound'] = $_SERVER['REQUEST_URI'];
 
-    /*----------------------------------********---------------------------------*/
 
     // Initialization functions plugins
     $oPluginRegistry->init();
@@ -1056,7 +1058,6 @@ if (!defined('EXECUTE_BY_CRON')) {
     } else {
         //NewRelic Snippet - By JHL
         transactionLog($phpFile);
-        /*----------------------------------********---------------------------------*/
         ValidationUploadedFiles::getValidationUploadedFiles()
                 ->runRulesToAllUploadedFiles();
         require_once $phpFile;

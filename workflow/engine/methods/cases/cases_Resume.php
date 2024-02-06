@@ -1,49 +1,56 @@
 <?php
 
+/**
+ * cases_Resume.php
+ *
+ * Shows a brief information about the case
+ *
+ * @link https://wiki.processmaker.com/3.2/Cases/Cases#Participated
+ */
+
+use ProcessMaker\BusinessModel\Cases as BmCases;
 use ProcessMaker\BusinessModel\Task as BusinessModelTask;
 use ProcessMaker\Util\DateTime;
 
-/* Permissions */
+/** Permissions */
 switch ($RBAC->userCanAccess('PM_CASES')) {
-    case - 2:
+    case -2:
         G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_SYSTEM', 'error', 'labels');
         G::header('location: ../login/login');
         die();
         break;
-    case - 1:
+    case -1:
         G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels');
         G::header('location: ../login/login');
         die();
         break;
 }
 
-/* GET , POST & $_SESSION Vars */
-
-/* Menues */
+/** Menu's */
 $_SESSION['bNoShowSteps'] = true;
 $G_MAIN_MENU = 'processmaker';
 $G_SUB_MENU = 'caseOptions';
 $G_ID_MENU_SELECTED = 'CASES';
 $G_ID_SUB_MENU_SELECTED = '_';
 
-/* Prepare page before to show */
-$oCase = new Cases();
-//Check the authorization
-$objCase = new \ProcessMaker\BusinessModel\Cases();
-$aUserCanAccess = $objCase->userAuthorization(
+/** Prepare page before to show */
+// Check the authorization
+$objCase = new BmCases();
+$userCanAccess = $objCase->userAuthorization(
     $_SESSION['USER_LOGGED'],
     $_SESSION['PROCESS'],
     $_GET['APP_UID'],
-    array('PM_ALLCASES'),
-    array('SUMMARY_FORM' => 'VIEW')
+    ['PM_ALLCASES'],
+    ['SUMMARY_FORM' => 'VIEW']
 );
 
+$cases = new Cases();
 if (isset($_SESSION['ACTION']) && ($_SESSION['ACTION'] == 'jump')) {
-    $Fields = $oCase->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['ACTION']);
+    $Fields = $cases->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['ACTION']);
     $process = new Process();
     $processData = $process->load($Fields['PRO_UID']);
     if (isset($processData['PRO_DYNAFORMS']['PROCESS']) && $processData['PRO_DYNAFORMS']['PROCESS'] != '' &&
-        $aUserCanAccess['objectPermissions']['SUMMARY_FORM']
+        $userCanAccess['objectPermissions']['SUMMARY_FORM']
     ) {
         $_REQUEST['APP_UID'] = $Fields['APP_UID'];
         $_REQUEST['DEL_INDEX'] = $Fields['DEL_INDEX'];
@@ -52,25 +59,21 @@ if (isset($_SESSION['ACTION']) && ($_SESSION['ACTION'] == 'jump')) {
         exit();
     }
 } else {
-    $Fields = $oCase->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX']);
+    $Fields = $cases->loadCase($_SESSION['APPLICATION'], $_SESSION['INDEX']);
 }
 
-if (!$aUserCanAccess['participated'] && !$aUserCanAccess['supervisor'] && !$aUserCanAccess['rolesPermissions']['PM_ALLCASES'] && !$aUserCanAccess['objectPermissions']['SUMMARY_FORM']) {
-    $aMessage['MESSAGE'] = G::LoadTranslation('ID_NO_PERMISSION_NO_PARTICIPATED');
+if (
+    !$userCanAccess['participated'] &&
+    !$userCanAccess['supervisor'] &&
+    !$userCanAccess['rolesPermissions']['PM_ALLCASES'] &&
+    !$userCanAccess['objectPermissions']['SUMMARY_FORM']
+) {
+    $message = [];
+    $message['MESSAGE'] = G::LoadTranslation('ID_NO_PERMISSION_NO_PARTICIPATED');
     $G_PUBLISH = new Publisher();
-    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', $aMessage);
+    $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', $message);
     G::RenderPage('publishBlank', 'blank');
     die();
-}
-if (isset($aRow['APP_TYPE'])) {
-    switch ($aRow['APP_TYPE']) {
-        case 'PAUSE':
-            $Fields['STATUS'] = ucfirst(strtolower(G::LoadTranslation('ID_PAUSED')));
-            break;
-        case 'CANCEL':
-            $Fields['STATUS'] = ucfirst(strtolower(G::LoadTranslation('ID_CANCELLED')));
-            break;
-    }
 }
 
 $actions = 'false';
@@ -78,9 +81,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'paused') {
     $actions = 'true';
 }
 
-    /* Render page */
+/** Render page */
 $oHeadPublisher = headPublisher::getSingleton();
-
 $oHeadPublisher->addScriptCode("
   if (typeof parent != 'undefined') {
     if (parent.showCaseNavigatorPanel) {
@@ -103,11 +105,11 @@ $oHeadPublisher->addScriptCode('
 require_once 'classes/model/Process.php';
 
 $objProc = new Process();
-$aProc = $objProc->load($Fields['PRO_UID']);
-$Fields['PRO_TITLE'] = $aProc['PRO_TITLE'];
+$processFields = $objProc->load($Fields['PRO_UID']);
+$Fields['PRO_TITLE'] = $processFields['PRO_TITLE'];
 
 $objTask = new Task();
-if (!isset($Fields['TAS_UID']) || $Fields['TAS_UID'] == '') {
+if (!isset($Fields['TAS_UID']) || empty($Fields['TAS_UID'])) {
     $Fields['TAS_UID'] = $Fields['APP_DATA']['TASK'];
 }
 
@@ -118,12 +120,12 @@ $tasksInParallel = array_filter($tasksInParallel, function ($value) {
 $nTasksInParallel = count($tasksInParallel);
 
 if ($nTasksInParallel > 1) {
-    $aTask = $objTask->load($tasksInParallel[$nTasksInParallel - 1]);
+    $taskInfo = $objTask->load($tasksInParallel[$nTasksInParallel - 1]);
 } else {
-    $aTask = $objTask->load($Fields['TAS_UID']);
+    $taskInfo = $objTask->load($Fields['TAS_UID']);
 }
 
-$Fields['TAS_TITLE'] = $aTask['TAS_TITLE'];
+$Fields['TAS_TITLE'] = $taskInfo['TAS_TITLE'];
 $Fields = DateTime::convertUtcToTimeZone($Fields);
 
 $objUser = new Users();
@@ -153,9 +155,9 @@ if ($Fields['APP_STATUS'] != 'COMPLETED') {
             }
         }
         $FieldsPar['DEL_DELEGATE_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_DELEGATE_DATE']);
-        $FieldsPar['DEL_INIT_DATE']     = DateTime::convertUtcToTimeZone($row['DEL_INIT_DATE']);
+        $FieldsPar['DEL_INIT_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_INIT_DATE']);
         $FieldsPar['DEL_TASK_DUE_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_TASK_DUE_DATE']);
-        $FieldsPar['DEL_FINISH_DATE']   = DateTime::convertUtcToTimeZone($row['DEL_FINISH_DATE']);
+        $FieldsPar['DEL_FINISH_DATE'] = DateTime::convertUtcToTimeZone($row['DEL_FINISH_DATE']);
         $G_PUBLISH->AddContent('xmlform', 'xmlform', 'cases/cases_Resume_Current_Task.xml', '', $FieldsPar);
     }
 }

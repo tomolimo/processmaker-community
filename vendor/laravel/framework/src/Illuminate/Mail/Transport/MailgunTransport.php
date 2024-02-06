@@ -2,7 +2,7 @@
 
 namespace Illuminate\Mail\Transport;
 
-use Swift_Mime_Message;
+use Swift_Mime_SimpleMessage;
 use GuzzleHttp\ClientInterface;
 
 class MailgunTransport extends Transport
@@ -22,18 +22,18 @@ class MailgunTransport extends Transport
     protected $key;
 
     /**
-     * The Mailgun domain.
+     * The Mailgun email domain.
      *
      * @var string
      */
     protected $domain;
 
     /**
-     * THe Mailgun API end-point.
+     * The Mailgun API end-point.
      *
      * @var string
      */
-    protected $url;
+    protected $endpoint;
 
     /**
      * Create a new Mailgun transport instance.
@@ -41,19 +41,22 @@ class MailgunTransport extends Transport
      * @param  \GuzzleHttp\ClientInterface  $client
      * @param  string  $key
      * @param  string  $domain
+     * @param  string|null  $endpoint
      * @return void
      */
-    public function __construct(ClientInterface $client, $key, $domain)
+    public function __construct(ClientInterface $client, $key, $domain, $endpoint = null)
     {
         $this->key = $key;
         $this->client = $client;
+        $this->endpoint = $endpoint ?? 'api.mailgun.net';
+
         $this->setDomain($domain);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function send(Swift_Mime_Message $message, &$failedRecipients = null)
+    public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
         $this->beforeSendPerformed($message);
 
@@ -61,7 +64,11 @@ class MailgunTransport extends Transport
 
         $message->setBcc([]);
 
-        $this->client->post($this->url, $this->payload($message, $to));
+        $this->client->request(
+            'POST',
+            "https://{$this->endpoint}/v3/{$this->domain}/messages.mime",
+            $this->payload($message, $to)
+        );
 
         $this->sendPerformed($message);
 
@@ -71,11 +78,11 @@ class MailgunTransport extends Transport
     /**
      * Get the HTTP payload for sending the Mailgun message.
      *
-     * @param  \Swift_Mime_Message  $message
+     * @param  \Swift_Mime_SimpleMessage  $message
      * @param  string  $to
      * @return array
      */
-    protected function payload(Swift_Mime_Message $message, $to)
+    protected function payload(Swift_Mime_SimpleMessage $message, $to)
     {
         return [
             'auth' => [
@@ -99,10 +106,10 @@ class MailgunTransport extends Transport
     /**
      * Get the "to" payload field for the API request.
      *
-     * @param  \Swift_Mime_Message  $message
+     * @param  \Swift_Mime_SimpleMessage  $message
      * @return string
      */
-    protected function getTo(Swift_Mime_Message $message)
+    protected function getTo(Swift_Mime_SimpleMessage $message)
     {
         return collect($this->allContacts($message))->map(function ($display, $address) {
             return $display ? $display." <{$address}>" : $address;
@@ -112,10 +119,10 @@ class MailgunTransport extends Transport
     /**
      * Get all of the contacts for the message.
      *
-     * @param  \Swift_Mime_Message  $message
+     * @param  \Swift_Mime_SimpleMessage  $message
      * @return array
      */
-    protected function allContacts(Swift_Mime_Message $message)
+    protected function allContacts(Swift_Mime_SimpleMessage $message)
     {
         return array_merge(
             (array) $message->getTo(), (array) $message->getCc(), (array) $message->getBcc()
@@ -157,12 +164,10 @@ class MailgunTransport extends Transport
      * Set the domain being used by the transport.
      *
      * @param  string  $domain
-     * @return void
+     * @return string
      */
     public function setDomain($domain)
     {
-        $this->url = 'https://api.mailgun.net/v3/'.$domain.'/messages.mime';
-
         return $this->domain = $domain;
     }
 }

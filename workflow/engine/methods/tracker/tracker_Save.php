@@ -25,4 +25,3 @@ if($sValue['CT_MESSAGE_HISTORY'] == 1) {
     $type[] = "Messages History";
 }
 G::auditLog('CaseTrackers','Save Case Tracker Properties ('.$sValue['CT_MAP_TYPE'].' - '.implode(', ',$type).') in Process "'.$resultProcess['PRO_TITLE'].'"');
-

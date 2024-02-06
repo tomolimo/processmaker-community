@@ -197,9 +197,9 @@ class FilesystemTest extends FilesystemTestCase
     public function testMkdirCreatesDirectoriesFromArray()
     {
         $basePath = $this->workspace.\DIRECTORY_SEPARATOR;
-        $directories = array(
+        $directories = [
             $basePath.'1', $basePath.'2', $basePath.'3',
-        );
+        ];
 
         $this->filesystem->mkdir($directories);
 
@@ -211,9 +211,9 @@ class FilesystemTest extends FilesystemTestCase
     public function testMkdirCreatesDirectoriesFromTraversableObject()
     {
         $basePath = $this->workspace.\DIRECTORY_SEPARATOR;
-        $directories = new \ArrayObject(array(
+        $directories = new \ArrayObject([
             $basePath.'1', $basePath.'2', $basePath.'3',
-        ));
+        ]);
 
         $this->filesystem->mkdir($directories);
 
@@ -257,9 +257,9 @@ class FilesystemTest extends FilesystemTestCase
     public function testTouchCreatesEmptyFilesFromArray()
     {
         $basePath = $this->workspace.\DIRECTORY_SEPARATOR;
-        $files = array(
+        $files = [
             $basePath.'1', $basePath.'2', $basePath.'3',
-        );
+        ];
 
         $this->filesystem->touch($files);
 
@@ -271,9 +271,9 @@ class FilesystemTest extends FilesystemTestCase
     public function testTouchCreatesEmptyFilesFromTraversableObject()
     {
         $basePath = $this->workspace.\DIRECTORY_SEPARATOR;
-        $files = new \ArrayObject(array(
+        $files = new \ArrayObject([
             $basePath.'1', $basePath.'2', $basePath.'3',
-        ));
+        ]);
 
         $this->filesystem->touch($files);
 
@@ -302,9 +302,9 @@ class FilesystemTest extends FilesystemTestCase
         mkdir($basePath.'dir');
         touch($basePath.'file');
 
-        $files = array(
+        $files = [
             $basePath.'dir', $basePath.'file',
-        );
+        ];
 
         $this->filesystem->remove($files);
 
@@ -319,9 +319,9 @@ class FilesystemTest extends FilesystemTestCase
         mkdir($basePath.'dir');
         touch($basePath.'file');
 
-        $files = new \ArrayObject(array(
+        $files = new \ArrayObject([
             $basePath.'dir', $basePath.'file',
-        ));
+        ]);
 
         $this->filesystem->remove($files);
 
@@ -335,9 +335,9 @@ class FilesystemTest extends FilesystemTestCase
 
         mkdir($basePath.'dir');
 
-        $files = array(
+        $files = [
             $basePath.'dir', $basePath.'file',
-        );
+        ];
 
         $this->filesystem->remove($files);
 
@@ -409,9 +409,9 @@ class FilesystemTest extends FilesystemTestCase
         mkdir($basePath.'dir');
         touch($basePath.'file');
 
-        $files = new \ArrayObject(array(
+        $files = new \ArrayObject([
             $basePath.'dir', $basePath.'file',
-        ));
+        ]);
 
         $this->assertTrue($this->filesystem->exists($files));
     }
@@ -424,9 +424,9 @@ class FilesystemTest extends FilesystemTestCase
         touch($basePath.'file');
         touch($basePath.'file2');
 
-        $files = new \ArrayObject(array(
+        $files = new \ArrayObject([
             $basePath.'dir', $basePath.'file', $basePath.'file2',
-        ));
+        ]);
 
         unlink($basePath.'file');
 
@@ -459,10 +459,6 @@ class FilesystemTest extends FilesystemTestCase
     public function testChmodWithWrongModLeavesPreviousPermissionsUntouched()
     {
         $this->markAsSkippedIfChmodIsMissing();
-
-        if (\defined('HHVM_VERSION')) {
-            $this->markTestSkipped('chmod() changes permissions even when passing invalid modes on HHVM');
-        }
 
         $dir = $this->workspace.\DIRECTORY_SEPARATOR.'file';
         touch($dir);
@@ -507,7 +503,7 @@ class FilesystemTest extends FilesystemTestCase
 
         $directory = $this->workspace.\DIRECTORY_SEPARATOR.'directory';
         $file = $this->workspace.\DIRECTORY_SEPARATOR.'file';
-        $files = array($directory, $file);
+        $files = [$directory, $file];
 
         mkdir($directory);
         touch($file);
@@ -524,7 +520,7 @@ class FilesystemTest extends FilesystemTestCase
 
         $directory = $this->workspace.\DIRECTORY_SEPARATOR.'directory';
         $file = $this->workspace.\DIRECTORY_SEPARATOR.'file';
-        $files = new \ArrayObject(array($directory, $file));
+        $files = new \ArrayObject([$directory, $file]);
 
         mkdir($directory);
         touch($file);
@@ -979,7 +975,7 @@ class FilesystemTest extends FilesystemTestCase
 
         touch($file);
 
-        $this->filesystem->hardlink($file, array($link1, $link2));
+        $this->filesystem->hardlink($file, [$link1, $link2]);
 
         $this->assertTrue(is_file($link1));
         $this->assertEquals(fileinode($file), fileinode($link1));
@@ -997,7 +993,7 @@ class FilesystemTest extends FilesystemTestCase
         touch($file);
 
         // practically same as testLinkIsNotOverwrittenIfAlreadyCreated
-        $this->filesystem->hardlink($file, array($link, $link));
+        $this->filesystem->hardlink($file, [$link, $link]);
 
         $this->assertTrue(is_file($link));
         $this->assertEquals(fileinode($file), fileinode($link));
@@ -1106,80 +1102,68 @@ class FilesystemTest extends FilesystemTestCase
 
     public function providePathsForMakePathRelative()
     {
-        $paths = array(
-            array('/var/lib/symfony/src/Symfony/', '/var/lib/symfony/src/Symfony/Component', '../'),
-            array('/var/lib/symfony/src/Symfony/', '/var/lib/symfony/src/Symfony/Component/', '../'),
-            array('/var/lib/symfony/src/Symfony', '/var/lib/symfony/src/Symfony/Component', '../'),
-            array('/var/lib/symfony/src/Symfony', '/var/lib/symfony/src/Symfony/Component/', '../'),
-            array('/usr/lib/symfony/', '/var/lib/symfony/src/Symfony/Component', '../../../../../../usr/lib/symfony/'),
-            array('/var/lib/symfony/src/Symfony/', '/var/lib/symfony/', 'src/Symfony/'),
-            array('/aa/bb', '/aa/bb', './'),
-            array('/aa/bb', '/aa/bb/', './'),
-            array('/aa/bb/', '/aa/bb', './'),
-            array('/aa/bb/', '/aa/bb/', './'),
-            array('/aa/bb/cc', '/aa/bb/cc/dd', '../'),
-            array('/aa/bb/cc', '/aa/bb/cc/dd/', '../'),
-            array('/aa/bb/cc/', '/aa/bb/cc/dd', '../'),
-            array('/aa/bb/cc/', '/aa/bb/cc/dd/', '../'),
-            array('/aa/bb/cc', '/aa', 'bb/cc/'),
-            array('/aa/bb/cc', '/aa/', 'bb/cc/'),
-            array('/aa/bb/cc/', '/aa', 'bb/cc/'),
-            array('/aa/bb/cc/', '/aa/', 'bb/cc/'),
-            array('/a/aab/bb', '/a/aa', '../aab/bb/'),
-            array('/a/aab/bb', '/a/aa/', '../aab/bb/'),
-            array('/a/aab/bb/', '/a/aa', '../aab/bb/'),
-            array('/a/aab/bb/', '/a/aa/', '../aab/bb/'),
-            array('/a/aab/bb/', '/', 'a/aab/bb/'),
-            array('/a/aab/bb/', '/b/aab', '../../a/aab/bb/'),
-            array('/aab/bb', '/aa', '../aab/bb/'),
-            array('/aab', '/aa', '../aab/'),
-            array('/aa/bb/cc', '/aa/dd/..', 'bb/cc/'),
-            array('/aa/../bb/cc', '/aa/dd/..', '../bb/cc/'),
-            array('/aa/bb/../../cc', '/aa/../dd/..', 'cc/'),
-            array('/../aa/bb/cc', '/aa/dd/..', 'bb/cc/'),
-            array('/../../aa/../bb/cc', '/aa/dd/..', '../bb/cc/'),
-            array('C:/aa/bb/cc', 'C:/aa/dd/..', 'bb/cc/'),
-            array('c:/aa/../bb/cc', 'c:/aa/dd/..', '../bb/cc/'),
-            array('C:/aa/bb/../../cc', 'C:/aa/../dd/..', 'cc/'),
-            array('C:/../aa/bb/cc', 'C:/aa/dd/..', 'bb/cc/'),
-            array('C:/../../aa/../bb/cc', 'C:/aa/dd/..', '../bb/cc/'),
-        );
+        $paths = [
+            ['/var/lib/symfony/src/Symfony/', '/var/lib/symfony/src/Symfony/Component', '../'],
+            ['/var/lib/symfony/src/Symfony/', '/var/lib/symfony/src/Symfony/Component/', '../'],
+            ['/var/lib/symfony/src/Symfony', '/var/lib/symfony/src/Symfony/Component', '../'],
+            ['/var/lib/symfony/src/Symfony', '/var/lib/symfony/src/Symfony/Component/', '../'],
+            ['/usr/lib/symfony/', '/var/lib/symfony/src/Symfony/Component', '../../../../../../usr/lib/symfony/'],
+            ['/var/lib/symfony/src/Symfony/', '/var/lib/symfony/', 'src/Symfony/'],
+            ['/aa/bb', '/aa/bb', './'],
+            ['/aa/bb', '/aa/bb/', './'],
+            ['/aa/bb/', '/aa/bb', './'],
+            ['/aa/bb/', '/aa/bb/', './'],
+            ['/aa/bb/cc', '/aa/bb/cc/dd', '../'],
+            ['/aa/bb/cc', '/aa/bb/cc/dd/', '../'],
+            ['/aa/bb/cc/', '/aa/bb/cc/dd', '../'],
+            ['/aa/bb/cc/', '/aa/bb/cc/dd/', '../'],
+            ['/aa/bb/cc', '/aa', 'bb/cc/'],
+            ['/aa/bb/cc', '/aa/', 'bb/cc/'],
+            ['/aa/bb/cc/', '/aa', 'bb/cc/'],
+            ['/aa/bb/cc/', '/aa/', 'bb/cc/'],
+            ['/a/aab/bb', '/a/aa', '../aab/bb/'],
+            ['/a/aab/bb', '/a/aa/', '../aab/bb/'],
+            ['/a/aab/bb/', '/a/aa', '../aab/bb/'],
+            ['/a/aab/bb/', '/a/aa/', '../aab/bb/'],
+            ['/a/aab/bb/', '/', 'a/aab/bb/'],
+            ['/a/aab/bb/', '/b/aab', '../../a/aab/bb/'],
+            ['/aab/bb', '/aa', '../aab/bb/'],
+            ['/aab', '/aa', '../aab/'],
+            ['/aa/bb/cc', '/aa/dd/..', 'bb/cc/'],
+            ['/aa/../bb/cc', '/aa/dd/..', '../bb/cc/'],
+            ['/aa/bb/../../cc', '/aa/../dd/..', 'cc/'],
+            ['/../aa/bb/cc', '/aa/dd/..', 'bb/cc/'],
+            ['/../../aa/../bb/cc', '/aa/dd/..', '../bb/cc/'],
+            ['C:/aa/bb/cc', 'C:/aa/dd/..', 'bb/cc/'],
+            ['c:/aa/../bb/cc', 'c:/aa/dd/..', '../bb/cc/'],
+            ['C:/aa/bb/../../cc', 'C:/aa/../dd/..', 'cc/'],
+            ['C:/../aa/bb/cc', 'C:/aa/dd/..', 'bb/cc/'],
+            ['C:/../../aa/../bb/cc', 'C:/aa/dd/..', '../bb/cc/'],
+        ];
 
         if ('\\' === \DIRECTORY_SEPARATOR) {
-            $paths[] = array('c:\var\lib/symfony/src/Symfony/', 'c:/var/lib/symfony/', 'src/Symfony/');
+            $paths[] = ['c:\var\lib/symfony/src/Symfony/', 'c:/var/lib/symfony/', 'src/Symfony/'];
         }
 
         return $paths;
     }
 
     /**
-     * @group legacy
-     * @dataProvider provideLegacyPathsForMakePathRelativeWithRelativePaths
-     * @expectedDeprecation Support for passing relative paths to Symfony\Component\Filesystem\Filesystem::makePathRelative() is deprecated since Symfony 3.4 and will be removed in 4.0.
+     * @expectedException \Symfony\Component\Filesystem\Exception\InvalidArgumentException
+     * @expectedExceptionMessage The start path "var/lib/symfony/src/Symfony/Component" is not absolute.
      */
-    public function testMakePathRelativeWithRelativePaths($endPath, $startPath, $expectedPath)
+    public function testMakePathRelativeWithRelativeStartPath()
     {
-        $path = $this->filesystem->makePathRelative($endPath, $startPath);
-
-        $this->assertEquals($expectedPath, $path);
+        $this->assertSame('../../../', $this->filesystem->makePathRelative('/var/lib/symfony/', 'var/lib/symfony/src/Symfony/Component'));
     }
 
-    public function provideLegacyPathsForMakePathRelativeWithRelativePaths()
+    /**
+     * @expectedException \Symfony\Component\Filesystem\Exception\InvalidArgumentException
+     * @expectedExceptionMessage The end path "var/lib/symfony/" is not absolute.
+     */
+    public function testMakePathRelativeWithRelativeEndPath()
     {
-        return array(
-            array('usr/lib/symfony/', 'var/lib/symfony/src/Symfony/Component', '../../../../../../usr/lib/symfony/'),
-            array('aa/bb', 'aa/cc', '../bb/'),
-            array('aa/cc', 'bb/cc', '../../aa/cc/'),
-            array('aa/bb', 'aa/./cc', '../bb/'),
-            array('aa/./bb', 'aa/cc', '../bb/'),
-            array('aa/./bb', 'aa/./cc', '../bb/'),
-            array('../../', '../../', './'),
-            array('../aa/bb/', 'aa/bb/', '../../../aa/bb/'),
-            array('../../../', '../../', '../'),
-            array('', '', './'),
-            array('', 'aa/', '../'),
-            array('aa/', '', 'aa/'),
-        );
+        $this->assertSame('../../../', $this->filesystem->makePathRelative('var/lib/symfony/', '/var/lib/symfony/src/Symfony/Component'));
     }
 
     public function testMirrorCopiesFilesAndDirectoriesRecursively()
@@ -1205,19 +1189,19 @@ class FilesystemTest extends FilesystemTestCase
 
         $this->filesystem->remove($file1);
 
-        $this->filesystem->mirror($sourcePath, $targetPath, null, array('delete' => false));
+        $this->filesystem->mirror($sourcePath, $targetPath, null, ['delete' => false]);
         $this->assertTrue($this->filesystem->exists($targetPath.'directory'.\DIRECTORY_SEPARATOR.'file1'));
 
-        $this->filesystem->mirror($sourcePath, $targetPath, null, array('delete' => true));
+        $this->filesystem->mirror($sourcePath, $targetPath, null, ['delete' => true]);
         $this->assertFalse($this->filesystem->exists($targetPath.'directory'.\DIRECTORY_SEPARATOR.'file1'));
 
         file_put_contents($file1, 'FILE1');
 
-        $this->filesystem->mirror($sourcePath, $targetPath, null, array('delete' => true));
+        $this->filesystem->mirror($sourcePath, $targetPath, null, ['delete' => true]);
         $this->assertTrue($this->filesystem->exists($targetPath.'directory'.\DIRECTORY_SEPARATOR.'file1'));
 
         $this->filesystem->remove($directory);
-        $this->filesystem->mirror($sourcePath, $targetPath, null, array('delete' => true));
+        $this->filesystem->mirror($sourcePath, $targetPath, null, ['delete' => true]);
         $this->assertFalse($this->filesystem->exists($targetPath.'directory'));
         $this->assertFalse($this->filesystem->exists($targetPath.'directory'.\DIRECTORY_SEPARATOR.'file1'));
     }
@@ -1339,13 +1323,59 @@ class FilesystemTest extends FilesystemTestCase
         $oldPath = getcwd();
         chdir($this->workspace);
 
-        $this->filesystem->mirror('source', 'target', null, array('delete' => true));
+        $this->filesystem->mirror('source', 'target', null, ['delete' => true]);
 
         chdir($oldPath);
 
         $this->assertTrue(is_dir($targetPath));
         $this->assertFileExists($targetPath.'source');
         $this->assertFileNotExists($targetPath.'target');
+    }
+
+    public function testMirrorAvoidCopyingTargetDirectoryIfInSourceDirectory()
+    {
+        $sourcePath = $this->workspace.\DIRECTORY_SEPARATOR.'source'.\DIRECTORY_SEPARATOR;
+        $directory = $sourcePath.'directory'.\DIRECTORY_SEPARATOR;
+        $file1 = $directory.'file1';
+        $file2 = $sourcePath.'file2';
+
+        mkdir($sourcePath);
+        mkdir($directory);
+        file_put_contents($file1, 'FILE1');
+        file_put_contents($file2, 'FILE2');
+
+        $targetPath = $sourcePath.'target'.\DIRECTORY_SEPARATOR;
+
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            $this->filesystem->symlink($targetPath, $sourcePath.'target_simlink');
+        }
+
+        $this->filesystem->mirror($sourcePath, $targetPath, null, ['delete' => true]);
+
+        $this->assertTrue($this->filesystem->exists($targetPath));
+        $this->assertTrue($this->filesystem->exists($targetPath.'directory'));
+
+        $this->assertFileEquals($file1, $targetPath.'directory'.\DIRECTORY_SEPARATOR.'file1');
+        $this->assertFileEquals($file2, $targetPath.'file2');
+
+        $this->assertFalse($this->filesystem->exists($targetPath.'target_simlink'));
+        $this->assertFalse($this->filesystem->exists($targetPath.'target'));
+    }
+
+    public function testMirrorFromSubdirectoryInToParentDirectory()
+    {
+        $targetPath = $this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR;
+        $sourcePath = $targetPath.'bar'.\DIRECTORY_SEPARATOR;
+        $file1 = $sourcePath.'file1';
+        $file2 = $sourcePath.'file2';
+
+        $this->filesystem->mkdir($sourcePath);
+        file_put_contents($file1, 'FILE1');
+        file_put_contents($file2, 'FILE2');
+
+        $this->filesystem->mirror($sourcePath, $targetPath);
+
+        $this->assertFileEquals($file1, $targetPath.'file1');
     }
 
     /**
@@ -1360,15 +1390,15 @@ class FilesystemTest extends FilesystemTestCase
 
     public function providePathsForIsAbsolutePath()
     {
-        return array(
-            array('/var/lib', true),
-            array('c:\\\\var\\lib', true),
-            array('\\var\\lib', true),
-            array('var/lib', false),
-            array('../var/lib', false),
-            array('', false),
-            array(null, false),
-        );
+        return [
+            ['/var/lib', true],
+            ['c:\\\\var\\lib', true],
+            ['\\var\\lib', true],
+            ['var/lib', false],
+            ['../var/lib', false],
+            ['', false],
+            [null, false],
+        ];
     }
 
     public function testTempnam()
@@ -1494,11 +1524,15 @@ class FilesystemTest extends FilesystemTestCase
         }
     }
 
+    /**
+     * @group legacy
+     * @expectedDeprecation Calling "Symfony\Component\Filesystem\Filesystem::dumpFile()" with an array in the $content argument is deprecated since Symfony 4.3.
+     */
     public function testDumpFileWithArray()
     {
         $filename = $this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR.'baz.txt';
 
-        $this->filesystem->dumpFile($filename, array('bar'));
+        $this->filesystem->dumpFile($filename, ['bar']);
 
         $this->assertFileExists($filename);
         $this->assertStringEqualsFile($filename, 'bar');
@@ -1532,10 +1566,6 @@ class FilesystemTest extends FilesystemTestCase
 
     public function testDumpFileWithFileScheme()
     {
-        if (\defined('HHVM_VERSION')) {
-            $this->markTestSkipped('HHVM does not handle the file:// scheme correctly');
-        }
-
         $scheme = 'file://';
         $filename = $scheme.$this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR.'baz.txt';
 
@@ -1580,12 +1610,62 @@ class FilesystemTest extends FilesystemTestCase
         }
     }
 
-    public function testAppendToFileWithScheme()
+    /**
+     * @group legacy
+     * @expectedDeprecation Calling "Symfony\Component\Filesystem\Filesystem::appendToFile()" with an array in the $content argument is deprecated since Symfony 4.3.
+     */
+    public function testAppendToFileWithArray()
     {
-        if (\defined('HHVM_VERSION')) {
-            $this->markTestSkipped('HHVM does not handle the file:// scheme correctly');
+        $filename = $this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR.'bar.txt';
+
+        // skip mode check on Windows
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            $oldMask = umask(0002);
         }
 
+        $this->filesystem->dumpFile($filename, 'foo');
+
+        $this->filesystem->appendToFile($filename, ['bar']);
+
+        $this->assertFileExists($filename);
+        $this->assertStringEqualsFile($filename, 'foobar');
+
+        // skip mode check on Windows
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            $this->assertFilePermissions(664, $filename);
+            umask($oldMask);
+        }
+    }
+
+    public function testAppendToFileWithResource()
+    {
+        $filename = $this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR.'bar.txt';
+
+        // skip mode check on Windows
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            $oldMask = umask(0002);
+        }
+
+        $this->filesystem->dumpFile($filename, 'foo');
+
+        $resource = fopen('php://memory', 'rw');
+        fwrite($resource, 'bar');
+        fseek($resource, 0);
+
+        $this->filesystem->appendToFile($filename, $resource);
+
+        $this->assertFileExists($filename);
+        $this->assertStringEqualsFile($filename, 'foobar');
+
+        // skip mode check on Windows
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            $this->assertFilePermissions(664, $filename);
+            umask($oldMask);
+        }
+    }
+
+    public function testAppendToFileWithScheme()
+    {
         $scheme = 'file://';
         $filename = $scheme.$this->workspace.\DIRECTORY_SEPARATOR.'foo'.\DIRECTORY_SEPARATOR.'baz.txt';
         $this->filesystem->dumpFile($filename, 'foo');
@@ -1662,12 +1742,8 @@ class FilesystemTest extends FilesystemTestCase
 
     /**
      * Normalize the given path (transform each blackslash into a real directory separator).
-     *
-     * @param string $path
-     *
-     * @return string
      */
-    private function normalize($path)
+    private function normalize(string $path): string
     {
         return str_replace('/', \DIRECTORY_SEPARATOR, $path);
     }

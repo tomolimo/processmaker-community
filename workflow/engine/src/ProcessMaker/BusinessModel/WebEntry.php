@@ -1,7 +1,9 @@
 <?php
 namespace ProcessMaker\BusinessModel;
 
+use Criteria;
 use ProcessMaker\Core\System;
+use ResultSet;
 use WebEntryPeer;
 
 class WebEntry
@@ -962,31 +964,35 @@ class WebEntry
      * Check the existence of a file of type web entry, returns true if it exists 
      * and false otherwise. Verification is done by the field WE_DATA and PRO_UID.
      * The PRO_UID key and the file path are required.
-     * @param type $proUid
-     * @param type $filePath
-     * @return boolean
+     *
+     * @param string $proUid
+     * @param string $filePath
+     *
+     * @return bool
      */
     public static function isWebEntry($proUid, $filePath)
     {
+        // Validate if path file is valid
         $fileName = basename($filePath);
         if (empty($proUid) || empty($fileName)) {
             return false;
         }
+
+        // Transform the sent filename to a valid web entry filename
         $fileName = trim($fileName);
-        $postfix = "Post.php";
-        $n = strlen($postfix);
-        $string = substr($fileName, 0, -$n);
-        if ($string . $postfix === $fileName) {
-            $fileName = $string . ".php";
-        }
-        $criteria = new \Criteria("workflow");
-        $criteria->addSelectColumn(\WebEntryPeer::WE_DATA);
-        $criteria->add(\WebEntryPeer::PRO_UID, $proUid, \Criteria::EQUAL);
-        $criteria->add(\WebEntryPeer::WE_DATA, $fileName, \Criteria::EQUAL);
-        $resultSet = \WebEntryPeer::doSelectRS($criteria);
-        $resultSet->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
+        $fileName = str_replace(['Post.php', 'Info.php'], '.php', $fileName);
+
+        // Search in DB the filename
+        $criteria = new Criteria("workflow");
+        $criteria->addSelectColumn(WebEntryPeer::WE_DATA);
+        $criteria->add(WebEntryPeer::PRO_UID, $proUid, Criteria::EQUAL);
+        $criteria->add(WebEntryPeer::WE_DATA, $fileName, Criteria::EQUAL);
+        $resultSet = WebEntryPeer::doSelectRS($criteria);
+        $resultSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
         $resultSet->next();
         $row = $resultSet->getRow();
+
+        // Web entry file exists?
         return isset($row["WE_DATA"]);
     }
 

@@ -226,7 +226,7 @@ class Department
      * @param array $record Record
      * @return array Return an array with custom record
      */
-    private function __getUserCustomRecordFromRecord(array $record)
+    private function getUserCustomRecordFromRecord(array $record)
     {
         try {
             $recordc = [
@@ -414,7 +414,7 @@ class Department
                         break;
                 }
 
-                $arrayUser[] = ($flagRecord)? $record : $this->__getUserCustomRecordFromRecord($record);
+                $arrayUser[] = ($flagRecord)? $record : $this->getUserCustomRecordFromRecord($record);
             }
 
             //Return

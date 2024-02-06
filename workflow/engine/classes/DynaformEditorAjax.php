@@ -30,7 +30,7 @@ class DynaformEditorAjax extends DynaformEditor implements IDynaformEditorAjax
      */
     public function _run($post)
     {
-        WebResource::WebResource($_SERVER['REQUEST_URI'], $post);
+        WebResource::__construct($_SERVER['REQUEST_URI'], $post);
     }
 
     /**

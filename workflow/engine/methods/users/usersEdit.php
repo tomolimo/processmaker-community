@@ -19,6 +19,9 @@ $mul = substr($UPLOAD_MAX_SIZE, - 1);
 $mul = ($mul == 'M' ? 1048576 : ($mul == 'K' ? 1024 : ($mul == 'G' ? 1073741824 : 1)));
 $uploadMaxSize = (int) $UPLOAD_MAX_SIZE * $mul;
 
+//We need to use the following abbreviations: Bytes, KB, MB, GB
+$maxFileSize = changeAbbreviationOfDirectives(ini_get('upload_max_filesize'));
+
 if ($postMaxSize < $uploadMaxSize) {
     $uploadMaxSize = $postMaxSize;
 }
@@ -33,7 +36,6 @@ if (file_exists($envFile)) {
 }
 
 $languageManagement = 0;
-/*----------------------------------********---------------------------------*/
 
 $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
 
@@ -41,7 +43,7 @@ $oHeadPublisher = headPublisher::getSingleton();
 $oHeadPublisher->addExtJsScript('users/users', true); //adding a javascript file .js
 $oHeadPublisher->assign('USR_UID', $_GET['USR_UID']);
 $oHeadPublisher->assign('MODE', $_GET['MODE']);
-$oHeadPublisher->assign('MAX_FILES_SIZE', ' (' . $UPLOAD_MAX_SIZE . ') ');
+$oHeadPublisher->assign('MAX_FILES_SIZE', ' (' . $maxFileSize . ') ');
 $oHeadPublisher->assign('SYSTEM_TIME_ZONE', $arraySystemConfiguration['time_zone']);
 $oHeadPublisher->assign('TIME_ZONE_DATA', array_map(function ($value) {
     return [$value, $value];

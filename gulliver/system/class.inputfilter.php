@@ -25,13 +25,13 @@ class InputFilter
     /**
      * Constructor for inputFilter class. Only first parameter is required.
      * @access constructor
-     * @param Array $tagsArray - list of user-defined tags
-     * @param Array $attrArray - list of user-defined attributes
+     * @param array $tagsArray - list of user-defined tags
+     * @param array $attrArray - list of user-defined attributes
      * @param int $tagsMethod - 0= allow just user-defined, 1= allow all but user-defined
      * @param int $attrMethod - 0= allow just user-defined, 1= allow all but user-defined
      * @param int $xssAuto - 0= only auto clean essentials, 1= allow clean blacklisted tags/attr
      */
-    public function inputFilter($tagsArray = array(), $attrArray = array(), $tagsMethod = 0, $attrMethod = 0, $xssAuto = 1)
+    public function __construct($tagsArray = [], $attrArray = [], $tagsMethod = 0, $attrMethod = 0, $xssAuto = 1)
     {
         // make sure user defined arrays are in lowercase
         for ($i = 0; $i < count($tagsArray); $i++) {

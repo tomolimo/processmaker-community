@@ -873,6 +873,8 @@ class Roles extends BaseRoles
         $criteria->addSelectColumn(RbacUsersPeer::USR_UID);
         $criteria->add(RolesPeer::ROL_UID, '', Criteria::NOT_EQUAL);
         $criteria->add(RolesPeer::ROL_UID, $rolUid);
+        // If the username is empty, the user was deleted in the application
+        $criteria->add(RbacUsersPeer::USR_USERNAME, '', Criteria::NOT_EQUAL);
         $criteria->addJoin(RolesPeer::ROL_UID, UsersRolesPeer::ROL_UID);
         $criteria->addJoin(UsersRolesPeer::USR_UID, RbacUsersPeer::USR_UID);
 

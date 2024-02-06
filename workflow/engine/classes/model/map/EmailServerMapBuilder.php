@@ -73,6 +73,10 @@ class EmailServerMapBuilder
 
         $tMap->addColumn('MESS_PORT', 'MessPort', 'int', CreoleTypes::INTEGER, true, null);
 
+        $tMap->addColumn('MESS_INCOMING_SERVER', 'MessIncomingServer', 'string', CreoleTypes::VARCHAR, true, 256);
+
+        $tMap->addColumn('MESS_INCOMING_PORT', 'MessIncomingPort', 'int', CreoleTypes::INTEGER, true, null);
+
         $tMap->addColumn('MESS_RAUTH', 'MessRauth', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addColumn('MESS_ACCOUNT', 'MessAccount', 'string', CreoleTypes::VARCHAR, true, 256);

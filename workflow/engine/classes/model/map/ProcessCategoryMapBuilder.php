@@ -63,9 +63,11 @@ class ProcessCategoryMapBuilder
         $tMap = $this->dbMap->addTable('PROCESS_CATEGORY');
         $tMap->setPhpName('ProcessCategory');
 
-        $tMap->setUseIdGenerator(false);
+        $tMap->setUseIdGenerator(true);
 
         $tMap->addPrimaryKey('CATEGORY_UID', 'CategoryUid', 'string', CreoleTypes::VARCHAR, true, 32);
+
+        $tMap->addColumn('CATEGORY_ID', 'CategoryId', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addColumn('CATEGORY_PARENT', 'CategoryParent', 'string', CreoleTypes::VARCHAR, true, 32);
 

@@ -14,9 +14,9 @@ global $RBAC;
 
 $viewSteps = true;
 $statusSendAndUnassigned = false;
-
+$listName = $_SESSION['actionCaseOptions'];
 //caseOptions
-switch ($_SESSION['actionCaseOptions']) {
+switch ($listName) {
     case 'todo':
     case 'draft':
         if (isset($_SESSION['bNoShowSteps'])) {
@@ -73,3 +73,7 @@ if ((($sStatus === 'DRAFT') || ($sStatus === 'TO_DO')) && !$statusSendAndUnassig
 }
 //Menu: Cases Notes
 $G_TMP_MENU->AddIdOption('NOTES', G::LoadTranslation('ID_NOTES'), 'javascript:showNotes();', 'absolute');
+//Menu: Return to advanced search button
+if ($listName === 'search'){
+    $G_TMP_MENU->AddIdOption('RETURN_ADVANCED_SEARCH', G::LoadTranslation('ID_RETURN_ADVANCED_SEARCH'), 'javascript:showReturnAdvancedSearch();', 'absolute');
+}

@@ -7,7 +7,6 @@ switch ($action) {
     case 'getAllCounters':
         getAllCounters();
         break;
-    /*----------------------------------********---------------------------------*/
     default: //this is the starting call
         getLoadTreeMenuData();
         break;
@@ -27,7 +26,6 @@ function getLoadTreeMenuData()
     //'to_reassign'
     $aTypesID = array('CASES_INBOX' => 'to_do','CASES_DRAFT' => 'draft','CASES_CANCELLED' => 'cancelled','CASES_SENT' => 'sent','CASES_PAUSED' => 'paused','CASES_COMPLETED' => 'completed','CASES_SELFSERVICE' => 'selfservice');
 
-    /*----------------------------------********---------------------------------*/
 
     //'CASES_TO_REVISE'=>'to_revise',
     //'CASES_TO_REASSIGN'=>'to_reassign'
@@ -174,7 +172,6 @@ function getLoadTreeMenuData()
     die;
 }
 
-/*----------------------------------********---------------------------------*/
 
 function getAllCounters()
 {

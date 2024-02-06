@@ -13,7 +13,6 @@ class Authentication
     {
         $responseToken = array('msg' => \G::LoadTranslation( 'ID_UPGRADE_ENTERPRISE' ));
 
-        /*----------------------------------********---------------------------------*/
 
         return $responseToken;
     }

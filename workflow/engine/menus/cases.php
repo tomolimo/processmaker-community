@@ -38,7 +38,6 @@ G::LoadTranslation('ID_NEW_CASE'),
     ''
 );
 
-/*----------------------------------********---------------------------------*/
 
 $G_TMP_MENU->AddIdRawOption(
     'CASES_INBOX',

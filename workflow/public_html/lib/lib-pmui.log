@@ -1,30 +1,30 @@
-[2 weeks ago] 581a6f2  (origin/bugfix/PMC-166) PMC-166 <Andrea Adamczyk>
-[5 months ago] 62cc5a8  PMC-322:[Mantis 25900] Add the labels for some English fields in the English .po file} <Fabio Guachalla>
-[5 months ago] bcb7202  PMC-320:Does not works the "Del/Supr" Key after press "Enter" key in the "Confirm" frame <Fabio Guachalla>
-[5 months ago] be0c147  PMC-171:The line to connect elements BPMN aren't delete using the Del/Supr key <Fabio Guachalla>
-[6 months ago] 984ddb1  FBI-2394:Task deleted on CTRL+ALT+DELETE - Windows 10 <Fabio Guachalla>
-[6 months ago] 29bcda8  (origin/bugfix/PMC-4) PMC-4: [Mantis-25811]When assigning triggers to execute before a dynaform, the sequence is getting out of order and the cardinal number is repeated or misplaced <Rodrigo Quelca>
-[1 year, 1 month ago] 9eb86aa  FBI-2383:Triggers > when we are going to edit the code of a trigger, the code is superimposed on the alert "required field" <Fabio Guachalla>
-[1 year, 7 months ago] 0aad8c9  (origin/improvement/FBI-2144) FBI-2144 <Daniel>
-[1 year, 9 months ago] f78ce30  FBI-636 <duhnnie>
-[1 year, 9 months ago] 9c30bd3  FBI-1140 (Task Steps) Label "No Records Found" even if there is a trigger assigned <dheeyi william>
-[1 year, 9 months ago] 809acfe  FBI-1464: Improved solution <duhnnie>
-[2 years ago] 31cf982  FBI-927: Add validation to avoid duplicated items in canvas <duhnnie>
-[2 years ago] 85b88ac  FBI-1781 <duhnnie>
-[2 years, 2 months ago] d347bbe  FBI-992: Fix "Required field" to be permanently visible <duhnnie>
-[2 years, 2 months ago] 1db5a6b  FBI-1513 Grammar mistakes found in the Create a Variable window <Marco A. Nina Mena>
-[2 years, 3 months ago] 7e5e9d3  FBI-1008 <alex_santos>
-[2 years, 4 months ago] 73fa18e  FBI-1415: The lasso does not work when we move the process flow <Rodrigo Quelca>
-[2 years, 6 months ago] e1d0f9a  FBI-1237: [PMUI] No es posible adicionar una nueva opcin en un checkgroupField <richardnoel>
-[2 years, 8 months ago] f8386bc  FBI-1074 <alex_santos>
-[2 years, 8 months ago] 6813490  FBI-1041: Cost&Units: Al hacer click en SAVE después de dejar vacíos estos elementos, no es posible editarlos <alex_santos>
-[2 years, 8 months ago] 612abd3  FBI-1009 <duhnnie>
-[2 years, 8 months ago] de682c1  FBI-961: [Process Designer] Error guardar la fecha del datepicker de PMUI <richardnoel>
-[2 years, 8 months ago] 1d06ba1  FBI-898 <jonathan>
-[2 years, 8 months ago] f8b8c64  FBI-847: Variable no permite editar el Name en IE 11 <Daniel>
-[2 years, 9 months ago] 3951a24  FBI-801: Fixes <duhnnie>
-[2 years, 9 months ago] 2eaddf4  FBI-789 <jonathan>
-[2 years, 9 months ago] 5e3e5f0  FBI-393: Fix connection decorator positioning <Daniel>
-[2 years, 9 months ago] c482452  FBI-670:(Custom Trigger) No se actualizan las listas de los triggers <richardnoel>
-[2 years, 10 months ago] 01c03b5  FBI-570:Action takes too much time when trying to assign  steps in the task. <richardnoel>
-[2 years, 10 months ago] 6a183ce  FBI-597: Modify the PMUI's Rakefile in order to get along with new ProcessMaker's gulp implementation <Daniel>
+[8 months ago] 581a6f26  (origin/bugfix/PMC-166) PMC-166 <Andrea Adamczyk>
+[1 year ago] 62cc5a80  PMC-322:[Mantis 25900] Add the labels for some English fields in the English .po file} <Fabio Guachalla>
+[1 year ago] bcb72023  PMC-320:Does not works the "Del/Supr" Key after press "Enter" key in the "Confirm" frame <Fabio Guachalla>
+[1 year ago] be0c1479  PMC-171:The line to connect elements BPMN aren't delete using the Del/Supr key <Fabio Guachalla>
+[1 year, 1 month ago] 984ddb1f  FBI-2394:Task deleted on CTRL+ALT+DELETE - Windows 10 <Fabio Guachalla>
+[1 year, 1 month ago] 29bcda88  (origin/bugfix/PMC-4) PMC-4: [Mantis-25811]When assigning triggers to execute before a dynaform, the sequence is getting out of order and the cardinal number is repeated or misplaced <Rodrigo Quelca>
+[1 year, 8 months ago] 9eb86aa8  FBI-2383:Triggers > when we are going to edit the code of a trigger, the code is superimposed on the alert "required field" <Fabio Guachalla>
+[2 years, 2 months ago] 0aad8c90  (origin/improvement/FBI-2144) FBI-2144 <Daniel>
+[2 years, 4 months ago] f78ce304  FBI-636 <duhnnie>
+[2 years, 5 months ago] 9c30bd36  FBI-1140 (Task Steps) Label "No Records Found" even if there is a trigger assigned <dheeyi william>
+[2 years, 5 months ago] 809acfe1  FBI-1464: Improved solution <duhnnie>
+[2 years, 7 months ago] 31cf982c  FBI-927: Add validation to avoid duplicated items in canvas <duhnnie>
+[2 years, 7 months ago] 85b88acb  FBI-1781 <duhnnie>
+[2 years, 9 months ago] d347bbef  FBI-992: Fix "Required field" to be permanently visible <duhnnie>
+[2 years, 10 months ago] 1db5a6b7  FBI-1513 Grammar mistakes found in the Create a Variable window <Marco A. Nina Mena>
+[2 years, 10 months ago] 7e5e9d35  FBI-1008 <alex_santos>
+[2 years, 11 months ago] 73fa18e2  FBI-1415: The lasso does not work when we move the process flow <Rodrigo Quelca>
+[3 years, 2 months ago] e1d0f9ae  FBI-1237: [PMUI] No es posible adicionar una nueva opcin en un checkgroupField <richardnoel>
+[3 years, 3 months ago] f8386bca  FBI-1074 <alex_santos>
+[3 years, 3 months ago] 68134906  FBI-1041: Cost&Units: Al hacer click en SAVE después de dejar vacíos estos elementos, no es posible editarlos <alex_santos>
+[3 years, 4 months ago] 612abd38  FBI-1009 <duhnnie>
+[3 years, 4 months ago] de682c10  FBI-961: [Process Designer] Error guardar la fecha del datepicker de PMUI <richardnoel>
+[3 years, 4 months ago] 1d06ba1f  FBI-898 <jonathan>
+[3 years, 4 months ago] f8b8c64c  FBI-847: Variable no permite editar el Name en IE 11 <Daniel>
+[3 years, 4 months ago] 3951a241  FBI-801: Fixes <duhnnie>
+[3 years, 4 months ago] 2eaddf4e  FBI-789 <jonathan>
+[3 years, 4 months ago] 5e3e5f0d  FBI-393: Fix connection decorator positioning <Daniel>
+[3 years, 5 months ago] c4824521  FBI-670:(Custom Trigger) No se actualizan las listas de los triggers <richardnoel>
+[3 years, 5 months ago] 01c03b52  FBI-570:Action takes too much time when trying to assign  steps in the task. <richardnoel>
+[3 years, 5 months ago] 6a183ce1  FBI-597: Modify the PMUI's Rakefile in order to get along with new ProcessMaker's gulp implementation <Daniel>

@@ -174,7 +174,7 @@ class Padl
      *
      * @access private
      * */
-    public function padl()
+    public function __construct()
     {
         # check to see if the class has been secured
         $this->_check_secure();
@@ -531,21 +531,21 @@ class Padl
         # check to see if mycrypt exists
         if ($this->USE_MCRYPT) {
             # openup mcrypt
-            $td = mcrypt_module_open($this->ALGORITHM, '', 'ecb', '');
-            $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
+            $td = @mcrypt_module_open($this->ALGORITHM, '', 'ecb', '');
+            $iv = @mcrypt_create_iv(@mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
             # process the key
-            $key = substr($key, 0, mcrypt_enc_get_key_size($td));
+            $key = substr($key, 0, @mcrypt_enc_get_key_size($td));
             # init mcrypt
-            mcrypt_generic_init($td, $key, $iv);
+            @mcrypt_generic_init($td, $key, $iv);
 
             # encrypt data
             # double base64 gets makes all the characters alpha numeric
             # and gets rig of the special characters
-            $crypt = mcrypt_generic($td, serialize($src_array));
+            $crypt = @mcrypt_generic($td, serialize($src_array));
 
             # shutdown mcrypt
-            mcrypt_generic_deinit($td);
-            mcrypt_module_close($td);
+            @mcrypt_generic_deinit($td);
+            @mcrypt_module_close($td);
         } else {
             # if mcrypt doesn't exist use regular encryption method
             # init the vars
@@ -586,19 +586,19 @@ class Padl
         # check to see if mycrypt exists
         if ($this->USE_MCRYPT) {
             # openup mcrypt
-            $td = mcrypt_module_open($this->ALGORITHM, '', 'ecb', '');
-            $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
+            $td = @mcrypt_module_open($this->ALGORITHM, '', 'ecb', '');
+            $iv = @mcrypt_create_iv(@mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
             # process the key
-            $key = substr($key, 0, mcrypt_enc_get_key_size($td));
+            $key = substr($key, 0, @mcrypt_enc_get_key_size($td));
             # init mcrypt
-            mcrypt_generic_init($td, $key, $iv);
+            @mcrypt_generic_init($td, $key, $iv);
 
             # decrypt the data and return
-            $decrypt = mdecrypt_generic($td, $str);
+            $decrypt = @mdecrypt_generic($td, $str);
 
             # shutdown mcrypt
-            mcrypt_generic_deinit($td);
-            mcrypt_module_close($td);
+            @mcrypt_generic_deinit($td);
+            @mcrypt_module_close($td);
         } else {
             # if mcrypt doesn't exist use regular decryption method
             # init the decrypt vars

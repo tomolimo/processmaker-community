@@ -1,7 +1,6 @@
 <script>
 if (typeof window.parent != 'undefined') {
 <?php
-/*----------------------------------********---------------------------------*/
 if (isset($_GET['ux'])) {
     switch ($_GET['ux']) {
         case 'SIMPLIFIED':
@@ -12,7 +11,6 @@ if (isset($_GET['ux'])) {
         default:
             $url = 'casesListExtJs';
     }
-    /*----------------------------------********---------------------------------*/
 } else {
     $url = 'casesListExtJs';
 }
@@ -21,9 +19,7 @@ if (isset($_GET['ux'])) {
 }
 echo "  window.parent.location.href = '$url';";
 if (isset($_GET['ux'])) {
-        /*----------------------------------********---------------------------------*/
         echo '} else { window.parent.location.href = \'casesListExtJs\'; }';
-    /*----------------------------------********---------------------------------*/
 }
 ?>
 }

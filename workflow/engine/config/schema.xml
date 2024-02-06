@@ -94,6 +94,24 @@
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
         </index>
+        <index name="indexAppStatusId">
+            <index-column name="APP_STATUS_ID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APPLICATION"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexAppStatusId"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <fulltext name="indexAppTitle">
+            <index-column name="APP_TITLE"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APPLICATION"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexAppTitle"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </fulltext>
         <unique name="INDEX_APP_NUMBER">
             <unique-column name="APP_NUMBER"/>
         </unique>
@@ -309,6 +327,10 @@
             <index-column name="DOC_UID"/>
             <index-column name="DOC_VERSION"/>
             <index-column name="APP_DOC_TYPE"/>
+        </index>
+        <index name="indexFolderUidDocStatus">
+            <index-column name="FOLDER_UID"/>
+            <index-column name="APP_DOC_STATUS"/>
         </index>
     </table>
     <table name="APP_MESSAGE" idMethod="native">
@@ -621,6 +643,7 @@
         <column name="GRP_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="GRP_TITLE" type="LONGVARCHAR" required="true"/>
         <column name="GRP_STATUS" type="CHAR" size="8" required="true" default="ACTIVE"/>
+        <column name="GRP_STATUS_ID" type="INTEGER" required="false" default="0"/>
         <column name="GRP_LDAP_DN" type="VARCHAR" size="255" required="true" default=""/>
         <column name="GRP_UX" type="VARCHAR" size="128" default="NORMAL"/>
         <validator column="GRP_STATUS">
@@ -655,6 +678,7 @@
         <column name="GRP_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="0"/>
         <column name="GRP_ID" type="INTEGER" required="false" default="0"/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="0"/>
+        <column name="USR_ID" type="INTEGER" required="false" default="0"/>
         <validator column="GRP_UID">
             <rule name="maxLength" value="32" message="Group UID can be no larger than ${value} in size"/>
             <rule name="required" message="Group UID is required."/>
@@ -991,6 +1015,7 @@
         <column name="PRO_TIME" type="DOUBLE" required="true" default="1"/>
         <column name="PRO_TIMEUNIT" type="VARCHAR" size="20" required="true" null="yes" default="DAYS"/>
         <column name="PRO_STATUS" type="VARCHAR" size="20" required="true" default="ACTIVE"/>
+        <column name="PRO_STATUS_ID" type="INTEGER" required="false" default="1"/>
         <column name="PRO_TYPE_DAY" type="CHAR" size="1" required="true" default="0"/>
         <column name="PRO_TYPE" type="VARCHAR" size="256" required="true" default="NORMAL"/>
         <column name="PRO_ASSIGNMENT" type="VARCHAR" size="20" required="true" default="FALSE"/>
@@ -1024,9 +1049,28 @@
         <column name="PRO_UNIT_COST" type="VARCHAR" size="50" required="false" default=""/>
         <column name="PRO_ITEE" type="INTEGER" required="true" default="0"/>
         <column name="PRO_ACTION_DONE" type="LONGVARCHAR"/>
+        <column name="CATEGORY_ID" type="INTEGER" required="false" default="0"/>
         <unique name="INDEX_PRO_ID">
             <unique-column name="PRO_ID"/>
         </unique>
+        <index name="indexProStatus">
+            <index-column name="PRO_STATUS"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="PROCESS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexProStatus"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <index name="indexProStatusId">
+            <index-column name="PRO_STATUS_ID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="PROCESS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexProStatusId"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
         <validator column="PRO_TIMEUNIT">
             <rule name="validValues" value="WEEKS|MONTHS|DAYS|HOURS|MINUTES"
                   message="Please select a valid Time Unit."/>
@@ -1270,6 +1314,16 @@
             <rule name="validValues" value="DYNAFORM|INPUT_DOCUMENT|MESSAGE|OUTPUT_DOCUMENT|EXTERNAL"
                   message="Please select a valid value for STEP_TYPE_OBJ."/>
         </validator>
+        <index name="indexTasUidTypeUidObj">
+            <index-column name="TAS_UID"/>
+            <index-column name="STEP_TYPE_OBJ"/>
+            <index-column name="STEP_UID_OBJ"/>
+        </index>
+        <index name="indexProUidTasUidPosition">
+            <index-column name="PRO_UID"/>
+            <index-column name="TAS_UID"/>
+            <index-column name="STEP_POSITION"/>
+        </index>
     </table>
     <table name="STEP_TRIGGER">
         <vendor type="mysql">
@@ -1376,6 +1430,7 @@
             <parameter name="Comment" value="Task of workflow"/>
         </vendor>
         <column name="PRO_UID" type="VARCHAR" size="32" required="true" default=""/>
+        <column name="PRO_ID" type="INTEGER" required="false" default="0"/>
         <column name="TAS_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="TAS_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="TAS_TITLE" type="LONGVARCHAR" required="true"/>
@@ -1518,6 +1573,10 @@
             <rule name="validValues" value="NORMAL|FAST|AUTOMATIC"
                   message="Please select a valid value for TAS_DERIVATION."/>
         </validator>
+        <index name="indexAssgTypeGrpVar">
+            <index-column name="TAS_ASSIGN_TYPE"/>
+            <index-column name="TAS_GROUP_VARIABLE"/>
+        </index>
     </table>
     <table name="TASK_USER">
         <vendor type="mysql">
@@ -1541,9 +1600,11 @@
             <parameter name="Comment" value=""/>
         </vendor>
         <column name="TAS_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
+        <column name="TAS_ID" type="INTEGER" required="false" default="0"/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="TU_TYPE" type="INTEGER" required="true" primaryKey="true" default="1"/>
         <column name="TU_RELATION" type="INTEGER" required="true" primaryKey="true" default="0"/>
+        <column name="ASSIGNED_ID" type="INTEGER" required="false" default="0"/>
         <validator column="TAS_UID">
             <rule name="maxLength" value="32" message="Task UID can be no larger than ${value} in size"/>
             <rule name="required" message="Task UID is required."/>
@@ -1560,6 +1621,10 @@
             <rule name="validValues" value="1|2" message="Please select a valid relation."/>
             <rule name="required" message="Relation is required."/>
         </validator>
+        <index name="indexUsrUidType">
+            <index-column name="USR_UID"/>
+            <index-column name="TU_TYPE"/>
+        </index>
     </table>
     <table name="TRANSLATION">
         <vendor type="mysql">
@@ -1669,6 +1734,7 @@
         <column name="USR_CREATE_DATE" type="TIMESTAMP" required="true"/>
         <column name="USR_UPDATE_DATE" type="TIMESTAMP" required="true"/>
         <column name="USR_STATUS" type="VARCHAR" size="32" required="true" default="ACTIVE"/>
+        <column name="USR_STATUS_ID" type="INTEGER" required="false" default="1"/>
         <column name="USR_COUNTRY" type="VARCHAR" size="3" required="true" default=""/>
         <column name="USR_CITY" type="VARCHAR" size="3" required="true" default=""/>
         <column name="USR_LOCATION" type="VARCHAR" size="3" required="true" default=""/>
@@ -1704,6 +1770,24 @@
         <unique name="INDEX_USR_ID">
             <unique-column name="USR_ID"/>
         </unique>
+        <index name="indexUsrStatus">
+            <index-column name="USR_STATUS"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="USERS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexUsrStatus"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <index name="indexUsrStatusId">
+            <index-column name="USR_STATUS_ID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="USERS"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexUsrStatusId"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
         <index name="indexUsrUid">
             <index-column name="USR_UID"/>
         </index>
@@ -2399,6 +2483,7 @@
         <column name="USR_LOGGED_NEXT_TIME" type="INTEGER" default="0"/>
         <column name="USR_PASSWORD_HISTORY" type="LONGVARCHAR" required="false"/>
         <column name="USR_SETTING_DESIGNER" type="LONGVARCHAR"/>
+        <column name="PMDYNAFORM_FIRST_TIME" type="CHAR" size="1" default="0"/>
     </table>
     <table name="ADDITIONAL_TABLES">
         <vendor type="mysql">
@@ -3155,7 +3240,7 @@
         <column name="CALENDAR_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="OBJECT_TYPE" type="VARCHAR" size="100" required="true" default=""/>
     </table>
-    <table name="PROCESS_CATEGORY">
+    <table name="PROCESS_CATEGORY" idMethod="native">
         <vendor type="mysql">
             <parameter name="Name" value="PROCESS_CATEGORY"/>
             <parameter name="Engine" value="InnoDB"/>
@@ -3177,9 +3262,13 @@
             <parameter name="Comment" value="Calendar Holidays"/>
         </vendor>
         <column name="CATEGORY_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
+        <column name="CATEGORY_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="CATEGORY_PARENT" type="VARCHAR" size="32" required="true" default="0"/>
         <column name="CATEGORY_NAME" type="VARCHAR" size="100" required="true" default=""/>
         <column name="CATEGORY_ICON" type="VARCHAR" size="100" default=""/>
+        <unique name="INDEX_CATEGORY_ID">
+            <unique-column name="CATEGORY_ID"/>
+        </unique>
     </table>
     <table name="APP_NOTES">
         <vendor type="mysql">
@@ -4165,6 +4254,16 @@
         <column name="VAR_DEFAULT" type="VARCHAR" size="32" default=""/>
         <column name="VAR_ACCEPTED_VALUES" type="LONGVARCHAR"/>
         <column name="INP_DOC_UID" type="VARCHAR" size="32" default=""/>
+        <index name="indexPrjUidVarName">
+            <index-column name="PRJ_UID"/>
+            <index-column name="VAR_NAME"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="PROCESS_VARIABLES"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexPrjUidVarName"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
     </table>
 
     <table name="APP_TIMEOUT_ACTION_EXECUTED">
@@ -4239,6 +4338,15 @@
         <column name="TAS_UID" type="VARCHAR" size="32" required="true"/>
         <column name="TAS_ID" type="INTEGER" required="false" default="0"/>
         <column name="GRP_UID" type="LONGVARCHAR" required="true"/>
+        <index name="indexAppUid">
+            <index-column name="APP_UID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="APP_ASSIGN_SELF_SERVICE_VALUE"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexAppUid"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
     </table>
 
     <table name="APP_ASSIGN_SELF_SERVICE_VALUE_GROUP" idMethod="native">
@@ -4338,6 +4446,15 @@
                 <parameter name="Table" value="LIST_INBOX"/>
                 <parameter name="Non_unique" value="1"/>
                 <parameter name="Key_name" value="indexInboxUserStatusUpdateDate"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <index name="indexAppNumber">
+            <index-column name="APP_NUMBER"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="LIST_INBOX"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexAppNumber"/>
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
         </index>
@@ -4481,6 +4598,16 @@
                 <parameter name="Table" value="LIST_PARTICIPATED_LAST"/>
                 <parameter name="Non_unique" value="1"/>
                 <parameter name="Key_name" value="delDelegateDate"/>
+                <parameter name="Seq_in_index" value="1"/>
+            </vendor>
+        </index>
+        <index name="indexDelegateDateUsrUid">
+            <index-column name="DEL_DELEGATE_DATE"/>
+            <index-column name="USR_UID"/>
+            <vendor type="mysql">
+                <parameter name="Table" value="LIST_PARTICIPATED_LAST"/>
+                <parameter name="Non_unique" value="1"/>
+                <parameter name="Key_name" value="indexDelegateDateUsrUid"/>
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
         </index>
@@ -4866,6 +4993,8 @@
         <column name="MESS_ENGINE" type="VARCHAR" size="256" required="true" default=""/>
         <column name="MESS_SERVER" type="VARCHAR" size="256" required="true" default=""/>
         <column name="MESS_PORT" type="INTEGER" required="true" default="0"/>
+        <column name="MESS_INCOMING_SERVER" type="VARCHAR" size="256" required="true" default=""/>
+        <column name="MESS_INCOMING_PORT" type="INTEGER" required="true" default="0"/>
         <column name="MESS_RAUTH" type="INTEGER" required="true" default="0"/>
         <column name="MESS_ACCOUNT" type="VARCHAR" size="256" required="true" default=""/>
         <column name="MESS_PASSWORD" type="VARCHAR" size="256" required="true" default=""/>
@@ -5094,6 +5223,16 @@
                 <parameter name="Extra" value=""/>
             </vendor>
         </column>
+        <column name="ABE_ACTION_BODY_FIELD" type="VARCHAR" size="255" required="false" default="">
+            <vendor type="mysql">
+                <parameter name="Field" value="ABE_ACTION_BODY_FIELD"/>
+                <parameter name="Type" value="varchar(255)"/>
+                <parameter name="Null" value="YES"/>
+                <parameter name="Key" value=""/>
+                <parameter name="Default" value=""/>
+                <parameter name="Extra" value=""/>
+            </vendor>
+        </column>
         <column name="ABE_CASE_NOTE_IN_RESPONSE" type="INTEGER" default="0"/>
         <column name="ABE_FORCE_LOGIN" type="INTEGER" default="0"/>
         <column name="ABE_CREATE_DATE" type="TIMESTAMP" required="true">
@@ -5141,6 +5280,7 @@
             </vendor>
         </column>
         <column name="ABE_EMAIL_SERVER_UID" type="VARCHAR" size="32" required="false" default=""/>
+        <column name="ABE_EMAIL_SERVER_RECEIVER_UID" type="VARCHAR" size="32" required="false" default=""/>
         <index name="indexAbeProcess">
             <index-column name="PRO_UID"/>
         </index>
@@ -5769,7 +5909,7 @@
         <column name="PLUGIN_TASK_EXTENDED_PROPERTIES" type="LONGVARCHAR"/>
         <column name="PLUGIN_ATTRIBUTES" type="LONGVARCHAR"/>
     </table>
-    
+
     <table name="APP_DATA_CHANGE_LOG" idMethod="native">
         <vendor type="mysql">
             <parameter name="Name" value="APP_DATA_CHANGE_LOG"/>
@@ -5827,5 +5967,33 @@
         <index name="indexSourceId">
             <index-column name="SOURCE_ID"/>
         </index>
+    </table>
+    <table name="JOBS_PENDING" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="id" type="BIGINT" size="20" required="true" autoIncrement="true" primaryKey="true"/>
+        <column name="queue" type="VARCHAR" size="255" required="true"/>
+        <column name="payload" type="LONGVARCHAR" required="true"/>
+        <column name="attempts" type="TINYINT" size="3" required="true"/>
+        <column name="reserved_at" type="BIGINT" size="10" required="false"/>
+        <column name="available_at" type="BIGINT" size="10" required="true"/>
+        <column name="created_at" type="BIGINT" size="10" required="true"/>
+        <index name="jobs_queue_index">
+            <index-column name="queue"/>
+        </index>
+    </table>
+    <table name="JOBS_FAILED" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="id" type="BIGINT" size="20" required="true" autoIncrement="true" primaryKey="true"/>
+        <column name="connection" type="LONGVARCHAR" required="true"/>
+        <column name="queue" type="LONGVARCHAR" required="true"/>
+        <column name="payload" type="LONGVARCHAR" required="true"/>
+        <column name="exception" type="LONGVARCHAR" required="true"/>
+        <column name="failed_at" type="TIMESTAMP" required="true"/>
     </table>
 </database>

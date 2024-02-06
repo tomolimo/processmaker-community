@@ -360,7 +360,7 @@ class Form extends XmlForm
 
                                     //Execute just if a query was set, it should be not empty
                                     if (trim($query) == "") {
-                                        continue; //if it is empty string skip it
+                                        break; //if it is empty string skip it
                                     }
 
                                     //We do the query to the external connection and we've got the label
@@ -438,7 +438,7 @@ class Form extends XmlForm
 
                                     // execute just if a query was set, it should be not empty
                                     if (trim( $query ) == '') {
-                                        continue; //if it is  empty string skip it
+                                        break; //if it is  empty string skip it
                                     }
 
                                     //we do the query to the external connection and we've got the label
@@ -491,7 +491,7 @@ class Form extends XmlForm
                                                                     //Execute just if a query was set, it should be not empty
                                                                     if (trim( $query ) == "") {
                                                                         //if it is  empty string skip it
-                                                                        continue;
+                                                                        break;
                                                                     }
 
                                                                     $rs = $stmt->executeQuery( ResultSet::FETCHMODE_NUM );

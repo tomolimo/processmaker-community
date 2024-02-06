@@ -155,39 +155,6 @@ if (! (isset( $fields->Fields['XMLNODE_NAME'] ) && ($fields->Fields['XMLNODE_NAM
         }
     }
 
-    if ($type == 'suggest' && isset( $Fields['PME_SQLCONNECTION'] ) && $Fields['PME_SQLCONNECTION'] != '') {
-        //define the dbArray with the table fields
-        //g::pr($Fields);
-
-
-        $tableExists = true;
-        $sDataBase = 'database_' . strtolower( DB_ADAPTER );
-        if (G::LoadSystemExist( $sDataBase )) {
-
-            $oDataBase = new database();
-            $dataBase = $Fields['PME_SQLCONNECTION'];
-            if ($Fields['PME_SQLCONNECTION'] == 'workflow') {
-                $dataBase = DB_NAME;
-            }
-            $tableExists = $oDataBase->tableExists( 'USERS', $dataBase );
-        }
-        if ($tableExists) {
-            $con = Propel::getConnection( $Fields['PME_SQLCONNECTION'] );
-            if ($Fields['PME_SQLCONNECTION'] == 'rbac') {
-                $rs = $con->executeQuery( "SHOW COLUMNS FROM RBAC_USERS" );
-            } else {
-                $rs = $con->executeQuery( "SHOW COLUMNS FROM USERS" );
-            }
-            $result = Array ();
-            $i = 0;
-            while ($rs->next()) {
-                $result[$i ++] = $rs->getRow();
-            }
-        }
-    }
-    //g::pr($result);
-
-
     if (isset( $Fields['PME_HINT'] )) {
         $Fields['PME_HINT'] = stripslashes( $Fields['PME_HINT'] );
         $Fields['PME_HINT'] = htmlspecialchars_decode( $Fields['PME_HINT'] );

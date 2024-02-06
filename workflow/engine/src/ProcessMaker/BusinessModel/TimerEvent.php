@@ -1230,7 +1230,7 @@ class TimerEvent
             //Start Timer-Event (start new case) ///////////////////////////////////////////////////////////////////////
             $common->frontEndShow("START");
 
-            $this->log("START-NEW-CASES", "Date \"$datetime (UTC +00:00)\": Start new cases");
+            $this->log("START-NEW-CASES", "Start new cases");
             $aInfo = array(
                 'ip'       => \G::getIpAddress()
                 ,'action'   => 'START-NEW-CASES'
@@ -1506,7 +1506,7 @@ class TimerEvent
 
             //Intermediate Catch Timer-Event (continue the case) ///////////////////////////////////////////////////////
             $action = "START-CONTINUE-CASES";
-            $this->log($action, "Date \"$datetime (UTC +00:00)\": Start continue the cases");
+            $this->log($action, "Start continue the cases");
             $aInfo = array(
                 'ip'        => \G::getIpAddress()
                 ,'action'   => $action

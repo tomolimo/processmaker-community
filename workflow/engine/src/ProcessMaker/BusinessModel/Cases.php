@@ -11,6 +11,7 @@ use AppDelegationPeer;
 use AppDocument;
 use AppDocumentPeer;
 use AppHistoryPeer;
+use Application;
 use ApplicationPeer;
 use Applications;
 use AppNotesPeer;
@@ -39,12 +40,12 @@ use ProcessMaker\BusinessModel\Task as BmTask;
 use ProcessMaker\BusinessModel\User as BmUser;
 use ProcessMaker\Core\System;
 use ProcessMaker\Exception\UploadException;
+use ProcessMaker\Model\Delegation;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services\OAuth2\Server;
 use ProcessMaker\Util\DateTime as UtilDateTime;
 use ProcessMaker\Validation\ExceptionRestApi;
 use ProcessMaker\Validation\Validator as FileValidator;
-
 use ProcessPeer;
 use ProcessUser;
 use ProcessUserPeer;
@@ -1732,7 +1733,7 @@ class Cases
      * @return array
      * @throws Exception
      */
-    private function __getFieldsAndValuesByDynaFormAndAppData(array $form, array $appData, array $caseVariable)
+    private function getFieldsAndValuesByDynaFormAndAppData(array $form, array $appData, array $caseVariable)
     {
         try {
             foreach ($form['items'] as $value) {
@@ -1753,7 +1754,7 @@ class Cases
                                 }
                             }
                         } else {
-                            $caseVariableAux = $this->__getFieldsAndValuesByDynaFormAndAppData($field, $appData,
+                            $caseVariableAux = $this->getFieldsAndValuesByDynaFormAndAppData($field, $appData,
                                 $caseVariable);
                             $caseVariable = array_merge($caseVariable, $caseVariableAux);
                         }
@@ -1826,7 +1827,7 @@ class Cases
 
             $arrayAppData = $fields['APP_DATA'];
 
-            $arrayCaseVariable = $this->__getFieldsAndValuesByDynaFormAndAppData(
+            $arrayCaseVariable = $this->getFieldsAndValuesByDynaFormAndAppData(
                 $arrayDynContent['items'][0], $arrayAppData, $arrayCaseVariable
             );
         } else {
@@ -1856,6 +1857,11 @@ class Cases
                 $dateHistory['SYS_VAR_UPDATE_DATE'] = null;
             }
             $arrayCaseVariable = array_merge($arrayCaseVariable, $dateHistory);
+        }
+
+        // Get the SYS_LANG defined, it can be updated
+        if (defined('SYS_LANG')) {
+            $arrayCaseVariable['SYS_LANG'] = SYS_LANG;
         }
 
         return $arrayCaseVariable;
@@ -2400,7 +2406,7 @@ class Cases
      * @return array
      * @throws Exception
     */
-    private function __getStatusInfoDataByRsCriteria($rsCriteria)
+    private function getStatusInfoDataByRsCriteria($rsCriteria)
     {
         try {
             $arrayData = [];
@@ -2438,6 +2444,14 @@ class Cases
      *
      * @return array Return an array with status info Case, array empty otherwise
      * @throws Exception
+     *
+     * @see workflow/engine/methods/cases/main_init.php
+     * @see workflow/engine/methods/cases/opencase.php
+     * @see ProcessMaker\BusinessModel\Cases->setCaseVariables()
+     * @see ProcessMaker\BusinessModel\Cases\InputDocument->getCasesInputDocuments()
+     * @see ProcessMaker\BusinessModel\Cases\InputDocument->throwExceptionIfHaventPermissionToDelete()
+     * @see ProcessMaker\BusinessModel\Cases\OutputDocument->throwExceptionIfCaseNotIsInInbox()
+     * @see ProcessMaker\BusinessModel\Cases\OutputDocument->throwExceptionIfHaventPermissionToDelete()
      */
     public function getStatusInfo($applicationUid, $delIndex = 0, $userUid = "")
     {
@@ -2475,7 +2489,7 @@ class Cases
             $rsCriteria = AppDelayPeer::doSelectRS($criteria);
             $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-            $arrayData = $this->__getStatusInfoDataByRsCriteria($rsCriteria);
+            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
 
             if (!empty($arrayData)) {
                 return $arrayData;
@@ -2508,7 +2522,7 @@ class Cases
             $rsCriteria = AppCacheViewPeer::doSelectRS($criteria);
             $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-            $arrayData = $this->__getStatusInfoDataByRsCriteria($rsCriteria);
+            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
 
             if (!empty($arrayData)) {
                 return $arrayData;
@@ -2551,7 +2565,7 @@ class Cases
             $rsCriteria = ApplicationPeer::doSelectRS($criteria);
             $rsCriteria->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-            $arrayData = $this->__getStatusInfoDataByRsCriteria($rsCriteria);
+            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria);
 
             if (!empty($arrayData)) {
                 return $arrayData;
@@ -2591,26 +2605,14 @@ class Cases
             $rsCriteria2 = ApplicationPeer::doSelectRS($criteria2);
             $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
 
-            $arrayData = $this->__getStatusInfoDataByRsCriteria($rsCriteria2);
+            $arrayData = $this->getStatusInfoDataByRsCriteria($rsCriteria2);
 
             if (!empty($arrayData)) {
                 return $arrayData;
             }
 
             //Status is PARTICIPATED
-            $criteria2 = clone $criteria;
-
-            $criteria2->setDistinct();
-            $criteria2->clearSelectColumns();
-            $criteria2->addSelectColumn($delimiter . 'PARTICIPATED' . $delimiter . ' AS APP_STATUS');
-            $criteria2->addSelectColumn(AppDelegationPeer::DEL_INDEX);
-            $criteria2->addSelectColumn(ApplicationPeer::APP_UID);
-            $criteria2->addSelectColumn(ApplicationPeer::PRO_UID);
-
-            $rsCriteria2 = ApplicationPeer::doSelectRS($criteria2);
-            $rsCriteria2->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-
-            $arrayData = $this->__getStatusInfoDataByRsCriteria($rsCriteria2);
+            $arrayData = Delegation::getParticipatedInfo($applicationUid);
 
             if (!empty($arrayData)) {
                 return $arrayData;
@@ -3150,7 +3152,7 @@ class Cases
      *
      * @return array Returns array with Case data updated
      */
-    private function __applicationDataDeleteMultipleFile(
+    private function applicationDataDeleteMultipleFile(
         array $arrayApplicationData,
         $variable1,
         $variable2,
@@ -3196,7 +3198,7 @@ class Cases
                 case 'GRID':
                     foreach ($arrayApplicationData[$variable1] as $key => $value) {
                         if (array_key_exists($variable2, $value)) {
-                            $arrayApplicationData[$variable1][$key] = $this->__applicationDataDeleteMultipleFile(
+                            $arrayApplicationData[$variable1][$key] = $this->applicationDataDeleteMultipleFile(
                                 $value, $variable2, null, 'NORMAL', $arrayDocumentToDelete
                             );
                         }
@@ -3252,7 +3254,7 @@ class Cases
                         foreach ($arrayDocumentDelete as $value2) {
                             $appDocument->remove($value2['appDocUid'], (int)($value2['version']));
 
-                            $arrayApplicationData['APP_DATA'] = $this->__applicationDataDeleteMultipleFile(
+                            $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
                                 $arrayApplicationData['APP_DATA'], $variable, null, $type, $value2
                             );
 
@@ -3270,7 +3272,7 @@ class Cases
                                 foreach ($arrayDocumentDelete as $value4) {
                                     $appDocument->remove($value4['appDocUid'], (int)($value4['version']));
 
-                                    $arrayApplicationData['APP_DATA'] = $this->__applicationDataDeleteMultipleFile(
+                                    $arrayApplicationData['APP_DATA'] = $this->applicationDataDeleteMultipleFile(
                                         $arrayApplicationData['APP_DATA'], $grid, $variable, $type, $value4
                                     );
 
@@ -3320,6 +3322,7 @@ class Cases
      * @param array $objectPermissions, the permissions that we need to review
      * @param boolean $objectSupervisor, if we need to get all the objects supervisor
      * @param string $tasUid
+     *
      * @return array
      */
     public function userAuthorization(
@@ -3333,23 +3336,21 @@ class Cases
     ) {
         $arrayAccess = [];
 
-        //User has participated
-        $participated = new ListParticipatedLast();
-        $listParticipated = $participated->loadList($usrUid, [], null, $appUid);
-        $arrayAccess['participated'] = (count($listParticipated) == 0) ? false : true;
+        // User has participated
+        $arrayAccess['participated'] = Delegation::participation($appUid, $usrUid);
 
-        //User is supervisor
+        // User is supervisor
         $supervisor = new BmProcessSupervisor();
         $isSupervisor = $supervisor->isUserProcessSupervisor($proUid, $usrUid);
         $arrayAccess['supervisor'] = ($isSupervisor) ? true : false;
 
-        //If the user is supervisor we will to return the object assigned
+        // If the user is supervisor we will to return the object assigned
         if ($isSupervisor && $objectSupervisor) {
             $ps = new BmProcessSupervisor();
             $arrayAccess['objectSupervisor']  = $ps->getObjectSupervisor($proUid);
         }
 
-        //Roles Permissions
+        // Roles Permissions
         if (count($rolesPermissions) > 0) {
             global $RBAC;
             foreach ($rolesPermissions as $value) {
@@ -3357,7 +3358,7 @@ class Cases
             }
         }
 
-        //Object Permissions
+        // Object Permissions
         if (count($objectPermissions) > 0) {
             $case = new ClassesCases();
             foreach ($objectPermissions as $key => $value) {

@@ -25,7 +25,7 @@ abstract class BaseGroupUserPeer
     const CLASS_DEFAULT = 'classes.model.GroupUser';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 3;
+    const NUM_COLUMNS = 4;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -40,6 +40,9 @@ abstract class BaseGroupUserPeer
     /** the column name for the USR_UID field */
     const USR_UID = 'GROUP_USER.USR_UID';
 
+    /** the column name for the USR_ID field */
+    const USR_ID = 'GROUP_USER.USR_ID';
+
     /** The PHP to DB Name Mapping */
     private static $phpNameMap = null;
 
@@ -51,10 +54,10 @@ abstract class BaseGroupUserPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('GrpUid', 'GrpId', 'UsrUid', ),
-        BasePeer::TYPE_COLNAME => array (GroupUserPeer::GRP_UID, GroupUserPeer::GRP_ID, GroupUserPeer::USR_UID, ),
-        BasePeer::TYPE_FIELDNAME => array ('GRP_UID', 'GRP_ID', 'USR_UID', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, )
+        BasePeer::TYPE_PHPNAME => array ('GrpUid', 'GrpId', 'UsrUid', 'UsrId', ),
+        BasePeer::TYPE_COLNAME => array (GroupUserPeer::GRP_UID, GroupUserPeer::GRP_ID, GroupUserPeer::USR_UID, GroupUserPeer::USR_ID, ),
+        BasePeer::TYPE_FIELDNAME => array ('GRP_UID', 'GRP_ID', 'USR_UID', 'USR_ID', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
     );
 
     /**
@@ -64,10 +67,10 @@ abstract class BaseGroupUserPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('GrpUid' => 0, 'GrpId' => 1, 'UsrUid' => 2, ),
-        BasePeer::TYPE_COLNAME => array (GroupUserPeer::GRP_UID => 0, GroupUserPeer::GRP_ID => 1, GroupUserPeer::USR_UID => 2, ),
-        BasePeer::TYPE_FIELDNAME => array ('GRP_UID' => 0, 'GRP_ID' => 1, 'USR_UID' => 2, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, )
+        BasePeer::TYPE_PHPNAME => array ('GrpUid' => 0, 'GrpId' => 1, 'UsrUid' => 2, 'UsrId' => 3, ),
+        BasePeer::TYPE_COLNAME => array (GroupUserPeer::GRP_UID => 0, GroupUserPeer::GRP_ID => 1, GroupUserPeer::USR_UID => 2, GroupUserPeer::USR_ID => 3, ),
+        BasePeer::TYPE_FIELDNAME => array ('GRP_UID' => 0, 'GRP_ID' => 1, 'USR_UID' => 2, 'USR_ID' => 3, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
     );
 
     /**
@@ -173,6 +176,8 @@ abstract class BaseGroupUserPeer
         $criteria->addSelectColumn(GroupUserPeer::GRP_ID);
 
         $criteria->addSelectColumn(GroupUserPeer::USR_UID);
+
+        $criteria->addSelectColumn(GroupUserPeer::USR_ID);
 
     }
 

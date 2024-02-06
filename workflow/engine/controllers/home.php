@@ -325,7 +325,6 @@ class Home extends Controller
         // settings vars and rendering
         $this->setVar('statusValues', $this->getStatusArray($httpData->t, $this->userUid));
         $this->setVar('categoryValues', $this->getCategoryArray());
-        $this->setVar('allUsersValues', $this->getAllUsersArray('search'));
         $this->setVar('categoryTitle', G::LoadTranslation("ID_CATEGORY"));
         $this->setVar('processTitle', G::LoadTranslation("ID_PROCESS"));
         $this->setVar('statusTitle', G::LoadTranslation("ID_STATUS"));
@@ -483,13 +482,11 @@ class Home extends Controller
             $dataList['category'] = $category;
             $dataList['action'] = $type;
             $dataList['dir'] = 'DESC';
-                /*----------------------------------********---------------------------------*/
                 $case = new \ProcessMaker\BusinessModel\Cases();
                 $cases = $case->getList($dataList);
                 foreach ($cases['data'] as &$value) {
                     $value = array_change_key_case($value, CASE_UPPER);
                 }
-            /*----------------------------------********---------------------------------*/
         }
 
         if (empty($cases) && $type == 'search') {
@@ -648,34 +645,6 @@ class Home extends Controller
             $dataset->next();
         }
         return $category;
-    }
-
-    public function getAllUsersArray($action)
-    {
-        global $oAppCache;
-        $users = array();
-        $users[] = array("CURRENT_USER",G::LoadTranslation("ID_CURRENT_USER"));
-        $users[] = array("",G::LoadTranslation("ID_ALL_USERS"));
-
-        if ($action == 'to_reassign') {
-            //now get users, just for the Search action
-            $cUsers = $oAppCache->getToReassignListCriteria(null);
-            $cUsers->addSelectColumn(AppCacheViewPeer::USR_UID);
-
-            if (g::MySQLSintaxis()) {
-                $cUsers->addGroupByColumn(AppCacheViewPeer::USR_UID);
-            }
-
-            $cUsers->addAscendingOrderByColumn(AppCacheViewPeer::APP_CURRENT_USER);
-            $oDataset = AppCacheViewPeer::doSelectRS($cUsers);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $oDataset->next();
-            while ($aRow = $oDataset->getRow()) {
-                $users[] = array($aRow['USR_UID'],$aRow['APP_CURRENT_USER']);
-                $oDataset->next();
-            }
-        }
-        return $users;
     }
 
     public function getStatusArray($action, $userUid)

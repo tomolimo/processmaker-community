@@ -114,7 +114,6 @@ if ($oServerConf->isRtl(SYS_LANG)) {
 }
 
 $urlProxy = 'casesMenuLoader?action=getAllCounters&r=';
-/*----------------------------------********---------------------------------*/
 
 $oHeadPublisher->assign('regionTreePanel', $regionTreePanel);
 $oHeadPublisher->assign('regionDebug', $regionDebug);
@@ -128,4 +127,3 @@ $_SESSION["current_ux"] = "NORMAL";
 
 G::RenderPage("publish", "extJs");
 
-/*----------------------------------********---------------------------------*/

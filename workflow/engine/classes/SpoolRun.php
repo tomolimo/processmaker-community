@@ -92,6 +92,36 @@ class SpoolRun
     }
 
     /**
+     * Set the $spoolId
+     *
+     * @param string
+     */
+    public function setSpoolId($v)
+    {
+        $this->spoolId = $v;
+    }
+
+    /**
+     * Get the $spoolId
+     *
+     * @return string
+     */
+    public function getSpoolId()
+    {
+        return $this->spoolId;
+    }
+
+    /**
+     * Get the fileData property
+     *
+     * @return array
+     */
+    public function getFileData()
+    {
+        return $this->fileData;
+    }
+
+    /**
      * get all files into spool in a list
      *
      * @param none
@@ -212,32 +242,52 @@ class SpoolRun
     }
 
     /**
-     * set email parameters
+     * Set email parameters
      *
-     * @param string $sAppMsgUid , $sSubject, $sFrom, $sTo, $sBody, $sDate, $sCC, $sBCC, $sTemplate
-     * @return none
+     * @param string $appMsgUid
+     * @param string $subject
+     * @param string $from
+     * @param string $to
+     * @param string $body
+     * @param string $date
+     * @param string $cc
+     * @param string $bcc
+     * @param string $template
+     * @param array $attachments
+     * @param bool $contentTypeIsHtml
+     * @param string $error
+     *
+     * @see SpoolRun->create()
+     * @see SpoolRun->resendEmails()
      */
-    public function setData($sAppMsgUid, $sSubject, $sFrom, $sTo, $sBody, $sDate = "", $sCC = "", $sBCC = "", $sTemplate = "", $aAttachment = array(), $bContentTypeIsHtml = true, $sError = "")
+    public function setData($appMsgUid, $subject, $from, $to, $body, $date = '', $cc = '', $bcc = '', $template = '', $attachments = [],
+        $contentTypeIsHtml = true, $error = '')
     {
-        $this->spoolId = $sAppMsgUid;
-        $this->fileData['subject'] = $sSubject;
-        $this->fileData['from'] = $sFrom;
-        $this->fileData['to'] = $sTo;
-        $this->fileData['body'] = $sBody;
-        $this->fileData['date'] = ($sDate != '' ? $sDate : date('Y-m-d H:i:s'));
-        $this->fileData['cc'] = $sCC;
-        $this->fileData['bcc'] = $sBCC;
-        $this->fileData['template'] = $sTemplate;
-        $this->fileData['attachments'] = $aAttachment;
-        $this->fileData['envelope_to'] = array();
-        $this->fileData["contentTypeIsHtml"] = $bContentTypeIsHtml;
-        $this->fileData["error"] = $sError;
+        // Fill "fileData" property
+        $this->spoolId = $appMsgUid;
+        $this->fileData['subject'] = $subject;
+        $this->fileData['from'] = $from;
+        $this->fileData['to'] = $to;
+        $this->fileData['body'] = $body;
+        $this->fileData['date'] = (!empty($date) ? $date : date('Y-m-d H:i:s'));
+        $this->fileData['cc'] = $cc;
+        $this->fileData['bcc'] = $bcc;
+        $this->fileData['template'] = $template;
+        $this->fileData['attachments'] = $attachments;
+        $this->fileData["contentTypeIsHtml"] = $contentTypeIsHtml;
+        $this->fileData["error"] = $error;
 
+        // Initialize some values used internally
+        $this->fileData['envelope_to'] = [];
+        $this->fileData['envelope_cc'] = [];
+        $this->fileData['envelope_bcc'] = [];
+
+        // Domain validation when the email engine is "OpenMail"
         if (array_key_exists('MESS_ENGINE', $this->config)) {
-            if ($this->config['MESS_ENGINE'] == 'OPENMAIL') {
-                if ($this->config['MESS_SERVER'] != '') {
-                    if (($sAux = @gethostbyaddr($this->config['MESS_SERVER']))) {
-                        $this->fileData['domain'] = $sAux;
+            if ($this->config['MESS_ENGINE'] === 'OPENMAIL') {
+                if (!empty($this->config['MESS_SERVER'])) {
+                    if (($domain = @gethostbyaddr($this->config['MESS_SERVER']))) {
+                        $this->fileData['domain'] = $domain;
                     } else {
                         $this->fileData['domain'] = $this->config['MESS_SERVER'];
                     }
@@ -459,11 +509,13 @@ class SpoolRun
                 switch ($this->config['MESS_ENGINE']) {
                     case 'MAIL':
                     case 'PHPMAILER':
+                    case 'IMAP':
                         switch ($this->config['MESS_ENGINE']) {
                             case 'MAIL':
                                 $phpMailer = new PHPMailer();
                                 $phpMailer->Mailer = 'mail';
                                 break;
+                            case 'IMAP':
                             case 'PHPMAILER':
                                 $phpMailer = new PHPMailer(true);
                                 $phpMailer->Mailer = 'smtp';
@@ -475,6 +527,7 @@ class SpoolRun
                         switch ($this->config['MESS_ENGINE']) {
                             case 'MAIL':
                                 break;
+                            case 'IMAP':
                             case 'PHPMAILER':
                                 //Posible Options for SMTPSecure are: "", "ssl" or "tls"
                                 if (isset($this->config['SMTPSecure']) && preg_match('/^(ssl|tls)$/', $this->config['SMTPSecure'])) {
@@ -817,5 +870,13 @@ class SpoolRun
         }
 
         return $appMsgUid;
+    }
+
+    /**
+     * Run the private method "handleEnvelopeTo", this method was created in order to use in the unit tests
+     */
+    public function runHandleEnvelopeTo()
+    {
+        $this->handleEnvelopeTo();
     }
 }

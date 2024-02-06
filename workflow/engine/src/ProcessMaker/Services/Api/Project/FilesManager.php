@@ -40,6 +40,36 @@ class FilesManager extends Api
     }
 
     /**
+     * Upload a file to templates or public files
+     *
+     * @url POST /:prj_uid/process-files-manager
+     * @url POST /:prj_uid/process-files-manager/:main_path
+     *
+     * @param string $prj_uid
+     * @param string $main_path
+     *
+     * @return array
+     * @throws RestException
+     *
+     * @access protected
+     * @class AccessControl {@permission PM_FACTORY}
+     */
+    public function uploadDocumentToProject($prj_uid, $main_path = 'templates')
+    {
+        try {
+            $userUid = $this->getUserId();
+            $filesManager = new FilesManagerBusinessModel();
+            $response = $filesManager->uploadFilesManager($userUid, $prj_uid, $main_path);
+        } catch (ExceptionRestApi $e) {
+            throw new RestException($e->getCode(), $e->getMessage());
+        } catch (Exception $e) {
+            throw new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage());
+        }
+
+        return $response;
+    }
+
+    /**
      * Creates a file in the File Manager.
      * 
      * @url POST /:prj_uid/file-manager

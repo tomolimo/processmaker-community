@@ -108,9 +108,8 @@ if (isset($request)) {
                 $aRows = [];
                 try {
                     $con = Propel::getConnection($bdUid);
-                    $con->begin();
-                    $rs = $con->executeQuery($sqlQuery);
-                    $con->commit();
+                    $stmt = $con->createStatement();
+                    $rs = $stmt->executeQuery($sqlQuery, \ResultSet::FETCHMODE_NUM);
 
                     while ($rs->next()) {
                         array_push($aRows, $rs->getRow());

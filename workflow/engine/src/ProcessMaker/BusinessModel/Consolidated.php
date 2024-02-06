@@ -1108,7 +1108,7 @@ class Consolidated
         foreach ($G_FORM->fields as $key => $val) {
             if ($fieldName == $val->name) {
                 if ($G_FORM->fields[$key]->sql != "") {
-                    $sqlQuery = G::replaceDataField($G_FORM->fields[$key]->sql, $aFields ["APP_DATA"]);
+                    $sqlQuery = G::replaceDataField($G_FORM->fields[$key]->sql, $aFields ["APP_DATA"], 'mysql', false);
                 }
                 if ((is_array($val->options)) && (!empty($val->options))) {
                     foreach ($val->options as $key1 => $val1) {

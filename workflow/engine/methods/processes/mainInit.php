@@ -32,9 +32,7 @@ $conf = new Configurations();
 
 $pmVersion = (preg_match("/^([\d\.]+).*$/", System::getVersion(), $arrayMatch)) ? $arrayMatch[1] : ""; //Otherwise: Branch master
 
-    /*----------------------------------********---------------------------------*/
     $arrayFlagImportFileExtension = array("pm", "pmx", "bpmn");
-/*----------------------------------********---------------------------------*/
 
 $arrayFlagMenuNewOption = array("pm" => true, "bpmn" => true);
 
@@ -107,7 +105,6 @@ if (count($callBackFile)) {
 $oHeadPublisher->assign("importProcessCallbackFile", $file);
 
 $isGranularFeature = false;
-/*----------------------------------********---------------------------------*/
 $oHeadPublisher->assign("isGranularFeature", $isGranularFeature);
 
 G::RenderPage('publish', 'extJs');

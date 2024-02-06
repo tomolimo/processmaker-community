@@ -37,6 +37,7 @@ class SqlServerProcessor extends Processor
      *
      * @param  \Illuminate\Database\Connection  $connection
      * @return int
+     *
      * @throws \Exception
      */
     protected function processInsertGetIdForOdbc(Connection $connection)
@@ -63,7 +64,7 @@ class SqlServerProcessor extends Processor
     public function processColumnListing($results)
     {
         return array_map(function ($result) {
-            return with((object) $result)->name;
+            return ((object) $result)->name;
         }, $results);
     }
 }

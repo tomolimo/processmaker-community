@@ -17,9 +17,9 @@ use ProcessMaker\Core\System;
 
 class PushMessageAndroid
 {
-    private $url = 'https://android.googleapis.com/gcm/send';
-    private $serverApiKey = "AIzaSyBO-VLXGhjf0PPlwmPFTPQEKIBfVDydLAk";
-    private $devices = array();
+    private $url = 'https://fcm.googleapis.com/fcm/send';
+    private $serverApiKey = "AAAAshotYCU:APA91bH25JoNzd_mTIwhMraFdWL7Bu4Fugw6kzTeXyS2x4AUM-FkdB-CWUrI4SeTLsTpFRkT3IH68P6E97Wb7E1ZIc0TpBnZXA3Q3tzrLB8mT4SHkrzVpdbaBnNz8_ih2-FcwYwREoEv";
+    private $devices = [];
     private $numberDevices = 0;
 
     /**
@@ -78,24 +78,24 @@ class PushMessageAndroid
         }
 
         if (!is_null($data)) {
-            $fields = array(
+            $fields = [
                 'registration_ids' => $this->devices,
-                'data' => array(
-                    "message" => $message,
-                    "data" => $data
-                ),
-            );
+                'notification' => [
+                    "body" => $message,
+                    "data" => $data,
+                ],
+            ];
         } else {
-            $fields = array(
+            $fields = [
                 'registration_ids' => $this->devices,
-                'data' => array("message" => $message),
-            );
+                'data' => ["message" => $message],
+            ];
         }
 
-        $headers = array(
+        $headers = [
             'Authorization: key=' . $this->serverApiKey,
             'Content-Type: application/json'
-        );
+        ];
         // Open connection
         $ch = curl_init();
 

@@ -40,7 +40,9 @@ CREATE TABLE `APPLICATION`
 	KEY `indexApp`(`PRO_UID`, `APP_STATUS`, `APP_UID`),
 	KEY `indexAppNumber`(`APP_NUMBER`),
 	KEY `indexAppStatus`(`APP_STATUS`),
-	KEY `indexAppCreateDate`(`APP_CREATE_DATE`)
+	KEY `indexAppCreateDate`(`APP_CREATE_DATE`),
+	KEY `indexAppStatusId`(`APP_STATUS_ID`),
+	FULLTEXT `indexAppTitle`(`APP_TITLE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='The application';
 #-----------------------------------------------------------------------------
 #-- APP_SEQUENCE
@@ -134,7 +136,8 @@ CREATE TABLE `APP_DOCUMENT`
 	PRIMARY KEY (`APP_DOC_UID`,`DOC_VERSION`),
 	KEY `indexAppDocument`(`FOLDER_UID`, `APP_DOC_UID`),
 	KEY `indexAppUid`(`APP_UID`),
-	KEY `indexAppUidDocUidDocVersionDocType`(`APP_UID`, `DOC_UID`, `DOC_VERSION`, `APP_DOC_TYPE`)
+	KEY `indexAppUidDocUidDocVersionDocType`(`APP_UID`, `DOC_UID`, `DOC_VERSION`, `APP_DOC_TYPE`),
+	KEY `indexFolderUidDocStatus`(`FOLDER_UID`, `APP_DOC_STATUS`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Documents in an Application';
 #-----------------------------------------------------------------------------
 #-- APP_MESSAGE
@@ -285,6 +288,7 @@ CREATE TABLE `GROUPWF`
 	`GRP_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`GRP_TITLE` MEDIUMTEXT  NOT NULL,
 	`GRP_STATUS` CHAR(8) default 'ACTIVE' NOT NULL,
+	`GRP_STATUS_ID` INTEGER default 0,
 	`GRP_LDAP_DN` VARCHAR(255) default '' NOT NULL,
 	`GRP_UX` VARCHAR(128) default 'NORMAL',
 	PRIMARY KEY (`GRP_UID`),
@@ -302,6 +306,7 @@ CREATE TABLE `GROUP_USER`
 	`GRP_UID` VARCHAR(32) default '0' NOT NULL,
 	`GRP_ID` INTEGER default 0,
 	`USR_UID` VARCHAR(32) default '0' NOT NULL,
+	`USR_ID` INTEGER default 0,
 	PRIMARY KEY (`GRP_UID`,`USR_UID`),
 	KEY `indexForUsrUid`(`USR_UID`),
 	KEY `INDEX_GRP_ID`(`GRP_ID`)
@@ -479,6 +484,7 @@ CREATE TABLE `PROCESS`
 	`PRO_TIME` DOUBLE default 1 NOT NULL,
 	`PRO_TIMEUNIT` VARCHAR(20) default 'DAYS' NOT NULL,
 	`PRO_STATUS` VARCHAR(20) default 'ACTIVE' NOT NULL,
+	`PRO_STATUS_ID` INTEGER default 1,
 	`PRO_TYPE_DAY` CHAR(1) default '0' NOT NULL,
 	`PRO_TYPE` VARCHAR(256) default 'NORMAL' NOT NULL,
 	`PRO_ASSIGNMENT` VARCHAR(20) default 'FALSE' NOT NULL,
@@ -512,8 +518,11 @@ CREATE TABLE `PROCESS`
 	`PRO_UNIT_COST` VARCHAR(50) default '',
 	`PRO_ITEE` INTEGER default 0 NOT NULL,
 	`PRO_ACTION_DONE` MEDIUMTEXT,
+	`CATEGORY_ID` INTEGER default 0,
 	PRIMARY KEY (`PRO_UID`),
-	UNIQUE KEY `INDEX_PRO_ID` (`PRO_ID`)
+	UNIQUE KEY `INDEX_PRO_ID` (`PRO_ID`),
+	KEY `indexProStatus`(`PRO_STATUS`),
+	KEY `indexProStatusId`(`PRO_STATUS_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Store process Information';
 #-----------------------------------------------------------------------------
 #-- PROCESS_OWNER
@@ -611,7 +620,9 @@ CREATE TABLE `STEP`
 	`STEP_CONDITION` MEDIUMTEXT  NOT NULL,
 	`STEP_POSITION` INTEGER default 0 NOT NULL,
 	`STEP_MODE` VARCHAR(10) default 'EDIT',
-	PRIMARY KEY (`STEP_UID`)
+	PRIMARY KEY (`STEP_UID`),
+	KEY `indexTasUidTypeUidObj`(`TAS_UID`, `STEP_TYPE_OBJ`, `STEP_UID_OBJ`),
+	KEY `indexProUidTasUidPosition`(`PRO_UID`, `TAS_UID`, `STEP_POSITION`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
 #-- STEP_TRIGGER
@@ -659,6 +670,7 @@ DROP TABLE IF EXISTS `TASK`;
 CREATE TABLE `TASK`
 (
 	`PRO_UID` VARCHAR(32) default '' NOT NULL,
+	`PRO_ID` INTEGER default 0,
 	`TAS_UID` VARCHAR(32) default '' NOT NULL,
 	`TAS_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`TAS_TITLE` MEDIUMTEXT  NOT NULL,
@@ -726,7 +738,8 @@ CREATE TABLE `TASK`
 	`TAS_RECEIVE_MESSAGE` MEDIUMTEXT,
 	PRIMARY KEY (`TAS_UID`),
 	UNIQUE KEY `INDEX_TAS_ID` (`TAS_ID`),
-	KEY `indexTasUid`(`TAS_UID`)
+	KEY `indexTasUid`(`TAS_UID`),
+	KEY `indexAssgTypeGrpVar`(`TAS_ASSIGN_TYPE`, `TAS_GROUP_VARIABLE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Task of workflow';
 #-----------------------------------------------------------------------------
 #-- TASK_USER
@@ -738,10 +751,13 @@ DROP TABLE IF EXISTS `TASK_USER`;
 CREATE TABLE `TASK_USER`
 (
 	`TAS_UID` VARCHAR(32) default '' NOT NULL,
+	`TAS_ID` INTEGER default 0,
 	`USR_UID` VARCHAR(32) default '' NOT NULL,
 	`TU_TYPE` INTEGER default 1 NOT NULL,
 	`TU_RELATION` INTEGER default 0 NOT NULL,
-	PRIMARY KEY (`TAS_UID`,`USR_UID`,`TU_TYPE`,`TU_RELATION`)
+	`ASSIGNED_ID` INTEGER default 0,
+	PRIMARY KEY (`TAS_UID`,`USR_UID`,`TU_TYPE`,`TU_RELATION`),
+	KEY `indexUsrUidType`(`USR_UID`, `TU_TYPE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
 #-- TRANSLATION
@@ -797,6 +813,7 @@ CREATE TABLE `USERS`
 	`USR_CREATE_DATE` DATETIME  NOT NULL,
 	`USR_UPDATE_DATE` DATETIME  NOT NULL,
 	`USR_STATUS` VARCHAR(32) default 'ACTIVE' NOT NULL,
+	`USR_STATUS_ID` INTEGER default 1,
 	`USR_COUNTRY` VARCHAR(3) default '' NOT NULL,
 	`USR_CITY` VARCHAR(3) default '' NOT NULL,
 	`USR_LOCATION` VARCHAR(3) default '' NOT NULL,
@@ -822,6 +839,8 @@ CREATE TABLE `USERS`
 	`USR_LAST_LOGIN` DATETIME,
 	PRIMARY KEY (`USR_UID`),
 	UNIQUE KEY `INDEX_USR_ID` (`USR_ID`),
+	KEY `indexUsrStatus`(`USR_STATUS`),
+	KEY `indexUsrStatusId`(`USR_STATUS_ID`),
 	KEY `indexUsrUid`(`USR_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Users';
 #-----------------------------------------------------------------------------
@@ -1115,6 +1134,7 @@ CREATE TABLE `USERS_PROPERTIES`
 	`USR_LOGGED_NEXT_TIME` INTEGER default 0,
 	`USR_PASSWORD_HISTORY` MEDIUMTEXT,
 	`USR_SETTING_DESIGNER` MEDIUMTEXT,
+	`PMDYNAFORM_FIRST_TIME` CHAR(1) default '0',
 	PRIMARY KEY (`USR_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
@@ -1540,10 +1560,12 @@ DROP TABLE IF EXISTS `PROCESS_CATEGORY`;
 CREATE TABLE `PROCESS_CATEGORY`
 (
 	`CATEGORY_UID` VARCHAR(32) default '' NOT NULL,
+	`CATEGORY_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`CATEGORY_PARENT` VARCHAR(32) default '0' NOT NULL,
 	`CATEGORY_NAME` VARCHAR(100) default '' NOT NULL,
 	`CATEGORY_ICON` VARCHAR(100) default '',
-	PRIMARY KEY (`CATEGORY_UID`)
+	PRIMARY KEY (`CATEGORY_UID`),
+	UNIQUE KEY `INDEX_CATEGORY_ID` (`CATEGORY_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Calendar Holidays';
 #-----------------------------------------------------------------------------
 #-- APP_NOTES
@@ -2261,7 +2283,8 @@ CREATE TABLE `PROCESS_VARIABLES`
 	`VAR_DEFAULT` VARCHAR(32) default '',
 	`VAR_ACCEPTED_VALUES` MEDIUMTEXT,
 	`INP_DOC_UID` VARCHAR(32) default '',
-	PRIMARY KEY (`VAR_UID`)
+	PRIMARY KEY (`VAR_UID`),
+	KEY `indexPrjUidVarName`(`PRJ_UID`, `VAR_NAME`)
 )ENGINE=InnoDB ;
 #-----------------------------------------------------------------------------
 #-- APP_TIMEOUT_ACTION_EXECUTED
@@ -2361,7 +2384,8 @@ CREATE TABLE `APP_ASSIGN_SELF_SERVICE_VALUE`
 	`TAS_UID` VARCHAR(32)  NOT NULL,
 	`TAS_ID` INTEGER default 0,
 	`GRP_UID` MEDIUMTEXT  NOT NULL,
-	PRIMARY KEY (`ID`)
+	PRIMARY KEY (`ID`),
+	KEY `indexAppUid`(`APP_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 #-----------------------------------------------------------------------------
 #-- APP_ASSIGN_SELF_SERVICE_VALUE_GROUP
@@ -2416,6 +2440,7 @@ CREATE TABLE `LIST_INBOX`
 	KEY `indexUser`(`USR_UID`),
 	KEY `indexInboxUser`(`USR_UID`, `DEL_DELEGATE_DATE`),
 	KEY `indexInboxUserStatusUpdateDate`(`USR_UID`, `APP_STATUS`, `APP_UPDATE_DATE`),
+	KEY `indexAppNumber`(`APP_NUMBER`),
 	KEY `INDEX_PRO_ID`(`PRO_ID`),
 	KEY `INDEX_USR_ID`(`USR_ID`),
 	KEY `INDEX_TAS_ID`(`TAS_ID`),
@@ -2498,6 +2523,7 @@ CREATE TABLE `LIST_PARTICIPATED_LAST`
 	PRIMARY KEY (`APP_UID`,`USR_UID`,`DEL_INDEX`),
 	KEY `usrIndex`(`USR_UID`),
 	KEY `delDelegateDate`(`DEL_DELEGATE_DATE`),
+	KEY `indexDelegateDateUsrUid`(`DEL_DELEGATE_DATE`, `USR_UID`),
 	KEY `INDEX_PRO_ID`(`PRO_ID`),
 	KEY `INDEX_USR_ID`(`USR_ID`),
 	KEY `INDEX_TAS_ID`(`TAS_ID`)
@@ -2744,6 +2770,8 @@ CREATE TABLE `EMAIL_SERVER`
 	`MESS_ENGINE` VARCHAR(256) default '' NOT NULL,
 	`MESS_SERVER` VARCHAR(256) default '' NOT NULL,
 	`MESS_PORT` INTEGER default 0 NOT NULL,
+	`MESS_INCOMING_SERVER` VARCHAR(256) default '' NOT NULL,
+	`MESS_INCOMING_PORT` INTEGER default 0 NOT NULL,
 	`MESS_RAUTH` INTEGER default 0 NOT NULL,
 	`MESS_ACCOUNT` VARCHAR(256) default '' NOT NULL,
 	`MESS_PASSWORD` VARCHAR(256) default '' NOT NULL,
@@ -2865,6 +2893,7 @@ CREATE TABLE `ABE_CONFIGURATION`
 	`DYN_UID` VARCHAR(32) default '' NOT NULL,
 	`ABE_EMAIL_FIELD` VARCHAR(255) default '' NOT NULL,
 	`ABE_ACTION_FIELD` VARCHAR(255) default '',
+	`ABE_ACTION_BODY_FIELD` VARCHAR(255) default '',
 	`ABE_CASE_NOTE_IN_RESPONSE` INTEGER default 0,
 	`ABE_FORCE_LOGIN` INTEGER default 0,
 	`ABE_CREATE_DATE` DATETIME  NOT NULL,
@@ -2873,6 +2902,7 @@ CREATE TABLE `ABE_CONFIGURATION`
 	`ABE_MAILSERVER_OR_MAILCURRENT` INTEGER default 0,
 	`ABE_CUSTOM_GRID` MEDIUMTEXT,
 	`ABE_EMAIL_SERVER_UID` VARCHAR(32) default '',
+	`ABE_EMAIL_SERVER_RECEIVER_UID` VARCHAR(32) default '',
 	PRIMARY KEY (`ABE_UID`),
 	KEY `indexAbeProcess`(`PRO_UID`),
 	KEY `indexAbeProcessTask`(`PRO_UID`, `TAS_UID`)
@@ -3244,5 +3274,41 @@ CREATE TABLE `APP_DATA_CHANGE_LOG`
 	KEY `indexExecutedAt`(`EXECUTED_AT`),
 	KEY `indexSourceId`(`SOURCE_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Change log';
+#-----------------------------------------------------------------------------
+#-- JOBS_PENDING
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `JOBS_PENDING`;
+
+
+CREATE TABLE `JOBS_PENDING`
+(
+	`id` BIGINT(20)  NOT NULL AUTO_INCREMENT,
+	`queue` VARCHAR(255)  NOT NULL,
+	`payload` MEDIUMTEXT  NOT NULL,
+	`attempts` TINYINT(3)  NOT NULL,
+	`reserved_at` BIGINT(10),
+	`available_at` BIGINT(10)  NOT NULL,
+	`created_at` BIGINT(10)  NOT NULL,
+	PRIMARY KEY (`id`),
+	KEY `jobs_queue_index`(`queue`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
+#-----------------------------------------------------------------------------
+#-- JOBS_FAILED
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `JOBS_FAILED`;
+
+
+CREATE TABLE `JOBS_FAILED`
+(
+	`id` BIGINT(20)  NOT NULL AUTO_INCREMENT,
+	`connection` MEDIUMTEXT  NOT NULL,
+	`queue` MEDIUMTEXT  NOT NULL,
+	`payload` MEDIUMTEXT  NOT NULL,
+	`exception` MEDIUMTEXT  NOT NULL,
+	`failed_at` DATETIME  NOT NULL,
+	PRIMARY KEY (`id`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 # This restores the fkey checks, after having unset them earlier
 SET FOREIGN_KEY_CHECKS = 1;

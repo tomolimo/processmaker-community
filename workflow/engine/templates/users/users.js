@@ -412,7 +412,6 @@ Ext.onReady(function () {
         hidden: !(__SYSTEM_UTC_TIME_ZONE__ == 1)
     });
 
-  /*----------------------------------********---------------------------------*/
 
     var informationFields = new Ext.form.FieldSet({
       title : _('ID_PERSONAL_INFORMATION'),
@@ -526,10 +525,8 @@ Ext.onReady(function () {
         comboStatus,
         comboRole,
         cboTimeZone
-        /*----------------------------------********---------------------------------*/
       ]
   });
-    /*----------------------------------********---------------------------------*/
   var passwordFields = new Ext.form.FieldSet({
     title : _('ID_CHANGE_PASSWORD'),
     items : [
@@ -774,7 +771,6 @@ Ext.onReady(function () {
     items : [
       csrfToken,
       informationFields,
-      /*----------------------------------********---------------------------------*/
       passwordFields,
       accountOptions,
       profileFields,
@@ -938,7 +934,6 @@ Ext.onReady(function () {
       }
     ]
   });
-    /*----------------------------------********---------------------------------*/
   passwordFields2 = new Ext.form.FieldSet({
     title : _('ID_PASSWORD'),
     items : [
@@ -987,7 +982,6 @@ Ext.onReady(function () {
       box2,
       //profileFields2,
       informationFields2,
-      /*----------------------------------********---------------------------------*/
       //passwordFields2,
       preferencesFields2
            ],
@@ -1179,7 +1173,6 @@ function saveUser()
         return false;
       }
     }
-    /*----------------------------------********---------------------------------*/
 
     if (USR_UID == '00000000000000000000000000000001') {
         if (Ext.getCmp('USR_ROLE').getValue() != PROCESSMAKER_ADMIN) {
@@ -1309,7 +1302,6 @@ function loadData()
     });
     comboRole.store.load();
 
-    /*----------------------------------********---------------------------------*/
 
     setPreferencesData(false, null);
 }
@@ -1340,7 +1332,6 @@ function loadUserData() {
                 USR_POSITION: data.user.USR_POSITION,
                 USR_DUE_DATE: data.user.USR_DUE_DATE,
                 USR_STATUS: data.user.USR_STATUS,
-                /*----------------------------------********---------------------------------*/
                 USR_LOGGED_NEXT_TIME: data.user.USR_LOGGED_NEXT_TIME
             });
 
@@ -1365,7 +1356,6 @@ function loadUserData() {
                 Ext.getCmp("USR_STATUS2").setText(_('ID_' + data.user.USR_STATUS));
                 Ext.getCmp("USR_ROLE2").setText(data.user.USR_ROLE_NAME);
                 Ext.getCmp("USR_TIME_ZONE2").setText((data.user.USR_TIME_ZONE != "") ? data.user.USR_TIME_ZONE : SYSTEM_TIME_ZONE);
-                /*----------------------------------********---------------------------------*/
                 Ext.getCmp("USR_CALENDAR2").setText(data.user.CALENDAR_NAME);
                 Ext.getCmp("PREF_DEFAULT_MAIN_MENU_OPTION2").setText(data.user.MENUSELECTED_NAME);
                 Ext.getCmp("PREF_DEFAULT_CASES_MENUSELECTED2").setText(data.user.CASES_MENUSELECTED_NAME);
@@ -1406,7 +1396,6 @@ function loadUserData() {
 
             cboTimeZone.setValue((data.user.USR_TIME_ZONE != "") ? data.user.USR_TIME_ZONE : SYSTEM_TIME_ZONE);
 
-            /*----------------------------------********---------------------------------*/
             setPreferencesData(true, data);
             previousUsername = Ext.getCmp("USR_USERNAME").getValue();
 
@@ -1429,7 +1418,6 @@ function loadUserData() {
 
             storeRole.load();
 
-            /*----------------------------------********---------------------------------*/
         },
         failure: function (r, o) {
             //viewport.getEl().unmask();

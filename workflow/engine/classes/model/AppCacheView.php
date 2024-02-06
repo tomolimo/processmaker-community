@@ -288,7 +288,10 @@ class AppCacheView extends BaseAppCacheView
         $c->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID, Criteria::LEFT_JOIN);
         $c->add(ProcessPeer::PRO_STATUS, 'ACTIVE');
         $c->add(TaskPeer::TAS_ASSIGN_TYPE, 'SELF_SERVICE');
-        $c->add(TaskPeer::TAS_GROUP_VARIABLE, '');
+        $c->add(
+            $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, '')->addOr(
+                $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, null, Criteria::ISNULL))
+        );
         $c->add(TaskUserPeer::USR_UID, $userUid);
 
         $rs = TaskPeer::doSelectRS($c);
@@ -314,7 +317,10 @@ class AppCacheView extends BaseAppCacheView
         $c->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID, Criteria::LEFT_JOIN);
         $c->add(ProcessPeer::PRO_STATUS, 'ACTIVE');
         $c->add(TaskPeer::TAS_ASSIGN_TYPE, 'SELF_SERVICE');
-        $c->add(TaskPeer::TAS_GROUP_VARIABLE, '');
+        $c->add(
+            $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, '')->addOr(
+                $c->getNewCriterion(TaskPeer::TAS_GROUP_VARIABLE, null, Criteria::ISNULL))
+        );
         $c->add(TaskUserPeer::USR_UID, $aGroups, Criteria::IN);
 
         $rs = TaskPeer::doSelectRS($c);
@@ -1735,7 +1741,7 @@ class AppCacheView extends BaseAppCacheView
                 $arrayAppField = $app->Load($appcvAppUid);
 
                 $appTitle    = (!empty($appTitle))? $appTitle : "#" . $arrayAppField["APP_NUMBER"];
-                $appTitleNew = G::replaceDataField($appTitle, unserialize($arrayAppField["APP_DATA"]));
+                $appTitleNew = G::replaceDataField($appTitle, unserialize($arrayAppField["APP_DATA"]), 'mysql', false);
 
                 if (isset($arrayAppField["APP_TITLE"]) && $arrayAppField["APP_TITLE"] != $appTitleNew) {
                     //Updating the value in content, where...
@@ -1796,6 +1802,5 @@ class AppCacheView extends BaseAppCacheView
         return $criteria;
     }
 
-    /*----------------------------------********---------------------------------*/
 }
 

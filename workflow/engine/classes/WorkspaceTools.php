@@ -3,11 +3,12 @@
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use ProcessMaker\BusinessModel\Process as BmProcess;
-/*----------------------------------********---------------------------------*/
 use ProcessMaker\Core\Installer;
+use ProcessMaker\Core\ProcessesManager;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\Adapters\PluginAdapter;
 use ProcessMaker\Project\Adapter\BpmnWorkflow;
+use ProcessMaker\Upgrade\RunProcessUpgradeQuery;
 use ProcessMaker\Util\FixReferencePath;
 
 /**
@@ -62,6 +63,23 @@ class WorkspaceTools
         'UPDATE LIST_UNASSIGNED_GROUP SET
             USR_ID=(SELECT USR_ID FROM USERS WHERE USERS.USR_UID=LIST_UNASSIGNED_GROUP.USR_UID)',
     );
+    public static $triggers = [
+        'APP_DELEGATION_UPDATE',
+        'APPLICATION_UPDATE',
+        'CONTENT_UPDATE'
+    ];
+    public static $bigTables = [
+        'APPLICATION',
+        'APP_ASSIGN_SELF_SERVICE_VALUE_GROUP',
+        'APP_CACHE_VIEW',
+        'APP_DELEGATION',
+        'APP_DELAY',
+        'APP_DOCUMENT',
+        'APP_HISTORY',
+        'APP_MESSAGE',
+        'GROUP_USER',
+        'LOGIN_LOG'
+    ];
     private $lastContentMigrateTable = false;
     private $listContentMigrateTable = [];
 
@@ -216,147 +234,124 @@ class WorkspaceTools
     /**
      * Upgrade this workspace to the latest system version
      *
-     * @param bool $buildCacheView
-     * @param string $workSpace
-     * @param bool $onedb
+     * @param string $workspace
      * @param string $lang
      * @param array $arrayOptTranslation
+     * @param array $optionMigrateHistoryData
      *
      * @return void
      */
-    public function upgrade($buildCacheView = false, $workSpace = null, $onedb = false, $lang = 'en', array $arrayOptTranslation = null, $optionMigrateHistoryData = [])
+    public function upgrade($workspace, $lang = 'en', array $arrayOptTranslation = null, $optionMigrateHistoryData = [])
     {
-        if ($workSpace === null) {
-            $workSpace = config("system.workspace");
-        }
         if (is_null($arrayOptTranslation)) {
             $arrayOptTranslation = ['updateXml' => true, 'updateMafe' => true];
         }
 
+        CLI::logging("* Start updating database schema...\n");
         $start = microtime(true);
-        CLI::logging("> Remove deprecated files...\n");
-        $this->removeDeprecatedFiles();
-        $stop = microtime(true);
-        CLI::logging("<*>   Remove deprecated files took " . ($stop - $start) . " seconds.\n");
+        $this->upgradeDatabase(false);
+        CLI::logging("* End updating database schema...(Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start updating translations...\n");
         $start = microtime(true);
-        CLI::logging("> Updating database...\n");
-        $this->upgradeDatabase($onedb);
-        $stop = microtime(true);
-        CLI::logging("<*>   Database Upgrade Process took " . ($stop - $start) . " seconds.\n");
-
-        $start = microtime(true);
-        CLI::logging("> Check Intermediate Email Event...\n");
-        $this->checkIntermediateEmailEvent();
-        $stop = microtime(true);
-        CLI::logging("<*>   Database Upgrade Process took " . ($stop - $start) . " seconds.\n");
-
-        $start = microtime(true);
-        CLI::logging("> Verify enterprise old...\n");
-        $this->verifyFilesOldEnterprise($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Verify took " . ($stop - $start) . " seconds.\n");
-
-        $start = microtime(true);
-        CLI::logging("> Updating translations...\n");
         $this->upgradeTranslation($arrayOptTranslation['updateXml'], $arrayOptTranslation['updateMafe']);
-        $stop = microtime(true);
-        $final = $stop - $start;
-        CLI::logging("<*>   Updating Translations Process took $final seconds.\n");
+        CLI::logging("* End updating translations...(Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start checking MAFE requirements...\n");
         $start = microtime(true);
-        CLI::logging("> Updating Content...\n");
-        $this->upgradeContent($workSpace);
-        $stop = microtime(true);
-        $final = $stop - $start;
-        CLI::logging("<*>   Updating Content Process took $final seconds.\n");
+        $this->checkMafeRequirements($workspace, $lang);
+        CLI::logging("* End checking MAFE requirements...(Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start deleting MySQL triggers: " . implode(', ', self::$triggers) . "...\n");
         $start = microtime(true);
-        CLI::logging("> Check Mafe Requirements...\n");
-        $this->checkMafeRequirements($workSpace, $lang);
-        $stop = microtime(true);
-        $final = $stop - $start;
-        CLI::logging("<*>   Check Mafe Requirements Process took $final seconds.\n");
+        $this->deleteTriggersMySQL(self::$triggers);
+        CLI::logging("* End deleting MySQL triggers: " . implode(', ', self::$triggers) . "... (Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start deleting indexes from big tables: " . implode(', ', self::$bigTables) . "...\n");
         $start = microtime(true);
-        CLI::logging("> Updating Triggers...\n");
-        $this->updateTriggers(true, $lang);
-        $stop = microtime(true);
-        $final = $stop - $start;
-        CLI::logging("<*>   Updating Triggers Process took $final seconds.\n");
+        $this->deleteIndexes(self::$bigTables);
+        CLI::logging("* End deleting indexes from big tables: " . implode(', ', self::$bigTables) . "... (Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start to update CONTENT table...\n");
         $start = microtime(true);
-        CLI::logging("> Backup log files...\n");
-        $this->backupLogFiles();
-        $stop = microtime(true);
-        $final = $stop - $start;
-        CLI::logging("<*>   Backup log files Process took $final seconds.\n");
+        $this->upgradeContent($workspace);
+        CLI::logging("* End to update CONTENT table... (Completed on  " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start to migrate texts/values from 'CONTENT' table to the corresponding object tables...\n");
         $start = microtime(true);
-        CLI::logging("> Optimizing content data...\n");
-        $this->migrateContent($workSpace, $lang);
-        $stop = microtime(true);
-        CLI::logging("<*>   Optimizing content data took " . ($stop - $start) . " seconds.\n");
+        $this->migrateContent($lang);
+        CLI::logging("* End to migrate texts/values from 'CONTENT' table to the corresponding object tables... (Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start updating rows in Web Entry table for classic processes...\n");
         $start = microtime(true);
-        CLI::logging("> Migrating and populating indexing for avoiding the use of table APP_CACHE_VIEW...\n");
-        $this->migratePopulateIndexingACV($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Migrating an populating indexing for avoiding the use of table APP_CACHE_VIEW process took " . ($stop - $start) . " seconds.\n");
+        $this->updatingWebEntryClassicModel(true);
+        CLI::logging("* End updating rows in Web Entry table for classic processes...(Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
 
-        /*----------------------------------********---------------------------------*/
-
+        CLI::logging("* Start to update Files Manager...\n");
         $start = microtime(true);
-        CLI::logging("> Updating Files Manager...\n");
-        $this->processFilesUpgrade();
-        $stop = microtime(true);
-        CLI::logging("<*>   Updating Files Manager took " . ($stop - $start) . " seconds.\n");
+        $this->processFilesUpgrade($workspace);
+        CLI::logging("* End to update Files Manager... (Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start migrating and populating plugin singleton data...\n");
         $start = microtime(true);
-        CLI::logging("> Clean access and refresh tokens...\n");
-        $this->cleanTokens($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Clean access and refresh tokens took " . ($stop - $start) . " seconds.\n");
+        $this->migrateSingleton($workspace);
+        CLI::logging("* End migrating and populating plugin singleton data...(Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start cleaning expired tokens...\n");
         $start = microtime(true);
-        CLI::logging("> Optimizing Self-Service data...\n");
-        $this->migrateSelfServiceRecordsRun($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Migrating Self-Service records Process took " . ($stop - $start) . " seconds.\n");
+        $this->cleanTokens();
+        CLI::logging("* End cleaning expired tokens...(Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start to check Intermediate Email Event...\n");
         $start = microtime(true);
-        CLI::logging("> Updating rows in Web Entry table for classic processes...\n");
-        $this->updatingWebEntryClassicModel($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Updating rows in Web Entry table for classic processes took " . ($stop - $start) . " seconds.\n");
+        $this->checkIntermediateEmailEvent();
+        CLI::logging("* End to check Intermediate Email Event... (Completed on " . (microtime(true) - $start) . " seconds)\n");
 
+        CLI::logging("* Start cleaning DYN_CONTENT in APP_HISTORY...\n");
         $start = microtime(true);
-        CLI::logging("> Update framework paths...\n");
-        $this->updateFrameworkPaths($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Update framework paths took " . ($stop - $start) . " seconds.\n");
-
-        $start = microtime(true);
-        CLI::logging("> Migrating and populating plugin singleton data...\n");
-        $this->migrateSingleton($workSpace);
-        $stop = microtime(true);
-        CLI::logging("<*>   Migrating and populating plugin singleton data took " . ($stop - $start) . " seconds.\n");
-
         $keepDynContent = isset($optionMigrateHistoryData['keepDynContent']) && $optionMigrateHistoryData['keepDynContent'] === true;
-        //Review if we need to remove the 'History of use' from APP_HISTORY
-        $start = microtime(true);
-        CLI::logging("> Clearing History of Use from APP_HISTORY table...\n");
         $this->clearDynContentHistoryData(false, $keepDynContent);
-        $stop = microtime(true);
-        CLI::logging("<*>   Clearing History of Use from APP_HISTORY table took " . ($stop - $start) . " seconds.\n");
+        CLI::logging("* End cleaning DYN_CONTENT in APP_HISTORY...(Completed on " . (microtime(true) - $start) . " seconds)\n");
 
-        /*----------------------------------********---------------------------------*/
 
+        CLI::logging("* Start migrating and populating indexing for avoiding the use of table APP_CACHE_VIEW...\n");
         $start = microtime(true);
-        CLI::logging("> Optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....\n");
+        $this->migratePopulateIndexingACV();
+        CLI::logging("* End migrating and populating indexing for avoiding the use of table APP_CACHE_VIEW...(Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
+
+        CLI::logging("* Start optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....\n");
+        $start = microtime(true);
+        $this->migrateSelfServiceRecordsRun();
+        CLI::logging("* End optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....(Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
+
+        CLI::logging("* Start adding new fields and populating values in tables related to feature self service by value...\n");
+        $start = microtime(true);
         $this->upgradeSelfServiceData();
-        $stop = microtime(true);
-        CLI::logging("<*>   Optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP took " . ($stop - $start) . " seconds.\n");
+        CLI::logging("* End adding new fields and populating values in tables related to feature self service by value...(Completed on " .
+            (microtime(true) - $start) . " seconds)\n");
+
+        CLI::logging("* Start adding/replenishing all indexes...\n");
+        $start = microtime(true);
+        $systemSchema = System::getSystemSchema($this->dbAdapter);
+        $this->upgradeSchema($systemSchema);
+        CLI::logging("* End adding/replenishing all indexes...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+        CLI::logging("* Start migrating to new list tables...\n");
+        $start = microtime(true);
+        $this->migrateList(true, $lang);
+        CLI::logging("* End migrating to new list tables...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+        CLI::logging("* Start updating MySQL triggers...\n");
+        $start = microtime(true);
+        $this->updateTriggers(true, $lang);
+        CLI::logging("* End updating MySQL triggers...(" . (microtime(true) - $start) . " seconds)\n");
     }
 
     /**
@@ -376,6 +371,9 @@ class WorkspaceTools
         CLI::logging("<*>   Database Upgrade Structure Process took $final seconds.\n");
     }
 
+    /**
+     * Update the email events with the current email server
+     */
     public function checkIntermediateEmailEvent()
     {
         $oEmailEvent = new \ProcessMaker\BusinessModel\EmailEvent();
@@ -614,9 +612,11 @@ class WorkspaceTools
     }
 
     /**
-     * Upgrade this workspace Content.
+     * Upgrade this workspace Content
+     *
      * @param string $workspace
      * @param boolean $executeRegenerateContent
+     *
      * @return void
      */
     public function upgradeContent($workspace = null, $executeRegenerateContent = false)
@@ -668,7 +668,7 @@ class WorkspaceTools
     }
 
     /**
-     * Upgrade this workspace translations from all avaliable languages.
+     * Upgrade the workspace translations from all available languages
      *
      * @param bool $flagXml Update XML
      * @param bool $flagMafe Update MAFE
@@ -798,16 +798,17 @@ class WorkspaceTools
                 $oldSchema[$table][$field['Field']]['Default'] = $field['Default'];
             }
 
-            //get indexes of each table  SHOW INDEX FROM `ADDITIONAL_TABLES`;   -- WHERE Key_name <> 'PRIMARY'
+            // Get indexes of each table  SHOW INDEX FROM `ADDITIONAL_TABLES`;
             $description = $database->executeQuery($database->generateTableIndexSQL($table));
             foreach ($description as $field) {
-                if (!isset($oldSchema[$table]['INDEXES'])) {
-                    $oldSchema[$table]['INDEXES'] = [];
+                $type = $field['Index_type'] != 'FULLTEXT' ? 'INDEXES' : 'FULLTEXT';
+                if (!isset($oldSchema[$table][$type])) {
+                    $oldSchema[$table][$type] = [];
                 }
-                if (!isset($oldSchema[$table]['INDEXES'][$field['Key_name']])) {
-                    $oldSchema[$table]['INDEXES'][$field['Key_name']] = [];
+                if (!isset($oldSchema[$table][$type][$field['Key_name']])) {
+                    $oldSchema[$table][$type][$field['Key_name']] = [];
                 }
-                $oldSchema[$table]['INDEXES'][$field['Key_name']][] = $field['Column_name'];
+                $oldSchema[$table][$type][$field['Key_name']][] = $field['Column_name'];
             }
 
         }
@@ -1040,27 +1041,24 @@ class WorkspaceTools
     }
 
     /**
-     * Upgrade this workspace database to the latest system schema
+     * Upgrade the workspace database to the latest system schema
      *
-     * @param bool $checkOnly only check if the upgrade is needed if true
-     * @return array bool upgradeSchema for more information
+     * @param bool $includeIndexes
      */
-    public function upgradeDatabase($onedb = false, $checkOnly = false)
+    public function upgradeDatabase($includeIndexes = true)
     {
         $this->initPropel(true);
         P11835::$dbAdapter = $this->dbAdapter;
         P11835::isApplicable();
         $systemSchema = System::getSystemSchema($this->dbAdapter);
-        $systemSchemaRbac = System::getSystemSchemaRbac($this->dbAdapter);// get the Rbac Schema
+        $systemSchemaRbac = System::getSystemSchemaRbac($this->dbAdapter);// Get the RBAC Schema
         $this->registerSystemTables(array_merge($systemSchema, $systemSchemaRbac));
-        $this->upgradeSchema($systemSchema);
-        $this->upgradeSchema($systemSchemaRbac, false, true, $onedb); // perform Upgrade to Rbac
+        $this->upgradeSchema($systemSchema, false, false, $includeIndexes);
+        $this->upgradeSchema($systemSchemaRbac, false, true); // Perform upgrade to RBAC
         $this->upgradeData();
         $this->checkRbacPermissions();//check or add new permissions
         $this->checkSequenceNumber();
         $this->migrateIteeToDummytask($this->name);
-        $this->upgradeConfiguration();
-        /*----------------------------------********---------------------------------*/
 
         //There records in table "EMAIL_SERVER"
         $criteria = new Criteria("workflow");
@@ -1120,10 +1118,7 @@ class WorkspaceTools
                 $arrayData = $emailSever->create2($arrayData);
             }
         }
-
         P11835::execute();
-
-        return true;
     }
 
     private function setFormatRows()
@@ -1144,14 +1139,18 @@ class WorkspaceTools
     }
 
     /**
-     * Upgrade this workspace database from a schema
+     * Upgrade the workspace database according to the schema
      *
-     * @param array $schema the schema information, such as returned from getSystemSchema
-     * @param bool $checkOnly only check if the upgrade is needed if true
-     * @return array bool the changes if checkOnly is true, else return
-     * true on success
+     * @param array $schema The schema information, such as returned from getSystemSchema
+     * @param bool $checkOnly Only return the diff between current database and the schema
+     * @param bool $rbac Is RBAC database?
+     * @param bool $includeIndexes Include or no indexes in new tables
+     *
+     * @return bool|array
+     *
+     * @throws Exception
      */
-    public function upgradeSchema($schema, $checkOnly = false, $rbac = false, $onedb = false)
+    public function upgradeSchema($schema, $checkOnly = false, $rbac = false, $includeIndexes = true)
     {
         $dbInfo = $this->getDBInfo();
 
@@ -1187,7 +1186,9 @@ class WorkspaceTools
 
         $changes = System::compareSchema($workspaceSchema, $schema);
 
-        $changed = (count($changes['tablesToAdd']) > 0 || count($changes['tablesToAlter']) > 0 || count($changes['tablesWithNewIndex']) > 0 || count($changes['tablesToAlterIndex']) > 0);
+        $changed = (count($changes['tablesToAdd']) > 0 || count($changes['tablesToAlter']) > 0 ||
+                    count($changes['tablesWithNewIndex']) > 0 || count($changes['tablesToAlterIndex']) > 0 ||
+                    count($changes['tablesWithNewFulltext']) > 0 || count($changes['tablesToAlterFulltext']) > 0);
 
         if ($checkOnly || (!$changed)) {
             if ($changed) {
@@ -1206,11 +1207,11 @@ class WorkspaceTools
             CLI::logging("-> " . count($changes['tablesToAdd']) . " tables to add\n");
         }
 
-        foreach ($changes['tablesToAdd'] as $sTable => $aColumns) {
-            $database->executeQuery($database->generateCreateTableSQL($sTable, $aColumns));
-            if (isset($changes['tablesToAdd'][$sTable]['INDEXES'])) {
-                foreach ($changes['tablesToAdd'][$sTable]['INDEXES'] as $indexName => $aIndex) {
-                    $database->executeQuery($database->generateAddKeysSQL($sTable, $indexName, $aIndex));
+        foreach ($changes['tablesToAdd'] as $tableName => $columns) {
+            $database->executeQuery($database->generateCreateTableSQL($tableName, $columns));
+            if (isset($changes['tablesToAdd'][$tableName]['INDEXES']) && $includeIndexes) {
+                foreach ($changes['tablesToAdd'][$tableName]['INDEXES'] as $indexName => $keys) {
+                    $database->executeQuery($database->generateAddKeysSQL($tableName, $indexName, $keys));
                 }
             }
         }
@@ -1219,47 +1220,128 @@ class WorkspaceTools
             CLI::logging("-> " . count($changes['tablesToAlter']) . " tables to alter\n");
         }
 
-        foreach ($changes['tablesToAlter'] as $sTable => $aActions) {
-            foreach ($aActions as $sAction => $aAction) {
-                foreach ($aAction as $sColumn => $vData) {
-                    switch ($sAction) {
-                        case 'DROP':
-                            $database->executeQuery($database->generateDropColumnSQL($sTable, $vData));
-                            break;
-                        case 'ADD':
-                            if ($database->checkPatchHor1787($sTable, $sColumn, $vData)) {
-                                $database->executeQuery($database->generateCheckAddColumnSQL($sTable, $sColumn, $vData));
-                                $database->executeQuery($database->deleteAllIndexesIntable($sTable, $sColumn, $vData));
-                            }
-                            $database->executeQuery($database->generateAddColumnSQL($sTable, $sColumn, $vData));
-                            break;
-                        case 'CHANGE':
-                            $database->executeQuery($database->generateChangeColumnSQL($sTable, $sColumn, $vData));
-                            break;
+        $tablesToAddColumns = [];
+
+        // Drop or change columns
+        foreach ($changes['tablesToAlter'] as $tableName => $actions) {
+            foreach ($actions as $action => $actionData) {
+                if ($action == 'ADD') {
+                    $tablesToAddColumns[$tableName] = $actionData;
+
+                    // In a very old schema the primary key for table "LOGIN_LOG" was changed and we need to delete the
+                    // primary index to avoid errors in the database upgrade
+                    // TO DO: The change of a Primary Key in a table should be generic
+                    if ($tableName == 'LOGIN_LOG' && array_key_exists('LOG_ID', $actionData)) {
+                        $database->executeQuery('DROP INDEX `PRIMARY` ON LOGIN_LOG;');
+                    }
+                } else {
+                    foreach ($actionData as $columnName => $meta) {
+                        switch ($action) {
+                            case 'DROP':
+                                $database->executeQuery($database->generateDropColumnSQL($tableName, $meta));
+                                break;
+                            case 'CHANGE':
+                                $database->executeQuery($database->generateChangeColumnSQL($tableName, $columnName, $meta));
+                                break;
+                        }
                     }
                 }
             }
         }
 
-        if (!empty($changes['tablesWithNewIndex'])) {
-            CLI::logging("-> " . count($changes['tablesWithNewIndex']) . " indexes to add\n");
-        }
-        foreach ($changes['tablesWithNewIndex'] as $sTable => $aIndexes) {
-            foreach ($aIndexes as $sIndexName => $aIndexFields) {
-                $database->executeQuery($database->generateAddKeysSQL($sTable, $sIndexName, $aIndexFields));
+        // Add columns
+        if (!empty($tablesToAddColumns)) {
+            $upgradeQueries = [];
+            foreach ($tablesToAddColumns as $tableName => $tableColumn) {
+                // Normal indexes to add
+                $indexes = [];
+                if (!empty($changes['tablesWithNewIndex'][$tableName]) && $includeIndexes) {
+                    $indexes = $changes['tablesWithNewIndex'][$tableName];
+                    unset($changes['tablesWithNewIndex'][$tableName]);
+                }
+
+                // "fulltext" indexes to add
+                $fulltextIndexes = [];
+                if (!empty($changes['tablesWithNewFulltext'][$tableName]) && $includeIndexes) {
+                    $fulltextIndexes = $changes['tablesWithNewFulltext'][$tableName];
+                    unset($changes['tablesWithNewFulltext'][$tableName]);
+                }
+
+                // Instantiate the class to execute the query in background
+                $upgradeQueries[] = new RunProcessUpgradeQuery($this->name, $database->generateAddColumnsSql($tableName,
+                    $tableColumn, $indexes, $fulltextIndexes), $rbac);
+            }
+
+            // Run queries in multiple threads
+            $processesManager = new ProcessesManager($upgradeQueries);
+            $processesManager->run();
+
+            // If exists an error throw an exception
+            if (!empty($processesManager->getErrors())) {
+                $errorMessage = '';
+                foreach ($processesManager->getErrors() as $error) {
+                    $errorMessage .= $error['rawAnswer'] . PHP_EOL;
+                }
+                throw new Exception($errorMessage);
             }
         }
 
-        if (!empty($changes['tablesToAlterIndex'])) {
-            CLI::logging("-> " . count($changes['tablesToAlterIndex']) . " indexes to alter\n");
-        }
-        foreach ($changes['tablesToAlterIndex'] as $sTable => $aIndexes) {
-            foreach ($aIndexes as $sIndexName => $aIndexFields) {
-                $database->executeQuery($database->generateDropKeySQL($sTable, $sIndexName));
-                $database->executeQuery($database->generateAddKeysSQL($sTable, $sIndexName, $aIndexFields));
+        // Add indexes
+        if ((!empty($changes['tablesWithNewIndex']) || !empty($changes['tablesWithNewFulltext'])) && $includeIndexes) {
+            CLI::logging("-> " . (count($changes['tablesWithNewIndex']) + count($changes['tablesWithNewFulltext'])) .
+                " tables with indexes to add\n");
+            $upgradeQueries = [];
+
+            // Add normal indexes
+            foreach ($changes['tablesWithNewIndex'] as $tableName => $indexes) {
+                // Instantiate the class to execute the query in background
+                $upgradeQueries[] = new RunProcessUpgradeQuery($this->name, $database->generateAddColumnsSql($tableName, [], $indexes), $rbac);
+            }
+
+            // Add "fulltext" indexes
+            foreach ($changes['tablesWithNewFulltext'] as $tableName => $fulltextIndexes) {
+                // Instantiate the class to execute the query in background
+                $upgradeQueries[] = new RunProcessUpgradeQuery($this->name, $database->generateAddColumnsSql($tableName, [], [], $fulltextIndexes), $rbac);
+            }
+
+            // Run queries in multiple threads
+            $processesManager = new ProcessesManager($upgradeQueries);
+            $processesManager->run();
+
+            // If exists an error throw an exception
+            if (!empty($processesManager->getErrors())) {
+                $errorMessage = '';
+                foreach ($processesManager->getErrors() as $error) {
+                    $errorMessage .= $error['rawAnswer'] . PHP_EOL;
+                }
+                throw new Exception($errorMessage);
             }
         }
-        $this->closeDatabase();
+
+        // Change indexes
+        if ((!empty($changes['tablesToAlterIndex']) || !empty($changes['tablesToAlterFulltext'])) && $includeIndexes) {
+            CLI::logging("-> " . (count($changes['tablesToAlterIndex']) + count($changes['tablesToAlterFulltext'])) .
+                " tables with indexes to alter\n");
+
+            // Change normal indexes
+            foreach ($changes['tablesToAlterIndex'] as $tableName => $indexes) {
+                foreach ($indexes as $indexName => $indexFields) {
+                    $database->executeQuery($database->generateDropKeySQL($tableName, $indexName));
+                    $database->executeQuery($database->generateAddKeysSQL($tableName, $indexName, $indexFields));
+                }
+            }
+
+            // Change "fulltext" indexes
+            foreach ($changes['tablesToAlterFulltext'] as $tableName => $fulltextIndexes) {
+                foreach ($fulltextIndexes as $indexName => $indexFields) {
+                    $database->executeQuery($database->generateDropKeySQL($tableName, $indexName));
+                    $database->executeQuery($database->generateAddKeysSQL($tableName, $indexName, $indexFields, 'FULLTEXT'));
+                }
+            }
+        }
+
+        // Ending the schema update
+        CLI::logging("-> Schema Updated\n");
         return true;
     }
 
@@ -1269,7 +1351,6 @@ class WorkspaceTools
         if (file_exists(PATH_CORE . 'data' . PATH_SEP . 'check.data')) {
             $checkData = unserialize(file_get_contents(PATH_CORE . 'data' . PATH_SEP . 'check.data'));
             if (is_array($checkData)) {
-                /*----------------------------------********---------------------------------*/
                 foreach ($checkData as $checkThis) {
                     $this->updateThisRegistry($checkThis);
                 }
@@ -1805,7 +1886,7 @@ class WorkspaceTools
     }
 
     /**
-     * restore an archive into a workspace
+     * Restore a workspace
      *
      * Restores any database and files included in the backup, either as a new
      * workspace, or overwriting a previous one
@@ -1816,8 +1897,13 @@ class WorkspaceTools
      * @param boolean $overwrite if you need overwrite the database
      * @param string $lang for define the language
      * @param string $port of database if is empty take 3306
+     * @param array $optionMigrateHistoryData
      *
      * @throws Exception
+     *
+     * @see workflow/engine/bin/tasks/cliWorkspaces.php::run_workspace_restore()
+     *
+     * @link https://wiki.processmaker.com/3.0/Backing_up_and_Restoring_ProcessMaker#RestoringWorkspaces
      */
     public static function restore($filename, $srcWorkspace, $dstWorkspace = null, $overwrite = true, $lang = 'en', $port = '', $optionMigrateHistoryData = [])
     {
@@ -1980,108 +2066,127 @@ class WorkspaceTools
                     CLI::logging("+> Restoring database {$db->name} to $dbName\n");
                     $versionBackupEngine = (isset($metadata->backupEngineVersion)) ? $metadata->backupEngineVersion : 1;
                     $workspace->executeSQLScript($dbName, "$tempDirectory/{$db->name}.sql", $aParameters, $versionBackupEngine, $connection);
-                    $workspace->createDBUser($dbUser, ($workspace->dbGrantUserPassword != '' ? $workspace->dbGrantUserPassword : $db->pass), "localhost", $dbName, $connection);
-                    $workspace->createDBUser($dbUser, ($workspace->dbGrantUserPassword != '' ? $workspace->dbGrantUserPassword : $db->pass), "%", $dbName, $connection);
+                    // Define the password
+                    if (empty($workspace->dbGrantUserPassword)) {
+                        $bdPassword = $db->pass;
+                    } else {
+                        $bdPassword = $workspace->dbGrantUserPassword;
+                    }
+                    $workspace->createDBUser($dbUser, $bdPassword, "localhost", $dbName, $connection);
+                    $workspace->createDBUser($dbUser, $bdPassword, "%", $dbName, $connection);
                 }
             }
 
-            $start = microtime(true);
-            CLI::logging("> Remove deprecated files...\n");
-            $workspace->removeDeprecatedFiles();
-            $stop = microtime(true);
-            CLI::logging("<*>   Remove deprecated files took " . ($stop - $start) . " seconds.\n");
-
-            if (($pmVersionWorkspaceToRestore != '') && (version_compare(
-                        $pmVersionWorkspaceToRestore . "",
-                        $pmVersion . "",
-                        "<"
-                    ) || $pmVersion == "")
-            ) {
-                $start = microtime(true);
-                CLI::logging("> Updating database...\n");
-                $workspace->upgradeDatabase($onedb);
-                $stop = microtime(true);
-                CLI::logging("<*>   Database Upgrade Process took " . ($stop - $start) . " seconds.\n");
-            }
-
-            $start = microtime(true);
-            CLI::logging("> Verify files enterprise old...\n");
-            $workspace->verifyFilesOldEnterprise($workspaceName);
-            $stop = microtime(true);
-            CLI::logging("<*>   Verify took " . ($stop - $start) . " seconds.\n");
-
-            $start = microtime(true);
-            CLI::logging("> Verify License Enterprise...\n");
-            $workspace->verifyLicenseEnterprise($workspaceName);
-            $stop = microtime(true);
-            CLI::logging("<*>   Verify took " . ($stop - $start) . " seconds.\n");
-
-            $start = microtime(true);
-            CLI::logging("> Check Mafe Requirements...\n");
-            $workspace->checkMafeRequirements($workspaceName, $lang);
-            $stop = microtime(true);
-            CLI::logging("<*>   Check Mafe Requirements Process took " . ($stop - $start) . " seconds.\n");
-
-            if (($pmVersionWorkspaceToRestore != '') && (version_compare(
-                        $pmVersionWorkspaceToRestore . "",
-                        $pmVersion . "",
-                        "<"
-                    ) || $pmVersion == "")
-            ) {
-                $start = microtime(true);
-                CLI::logging("> Updating cache view...\n");
-                $workspace->upgradeCacheView(true, true, $lang);
-                $stop = microtime(true);
-                CLI::logging("<*>   Updating cache view Process took " . ($stop - $start) . " seconds.\n");
-            } else {
-                $workspace->upgradeTriggersOfTables(true, $lang);
-            }
-
-            if ($pmVersion == '' && strpos(strtoupper($version), 'BRANCH')) {
+            if (empty($pmVersion) && strpos(strtoupper($version), 'BRANCH')) {
                 $pmVersion = 'dev-version-backup';
             }
 
-            //Move the labels of content to the corresponding table
+            if (!empty($pmVersionWorkspaceToRestore) && (version_compare(
+                        $pmVersionWorkspaceToRestore . "",
+                        $pmVersion . "",
+                        "<"
+                    ) || empty($pmVersion)) || $pmVersion == "dev-version-backup"
+            ) {
+                // Upgrade the database schema and data
+                CLI::logging("* Start updating database schema...\n");
+                $start = microtime(true);
+                $workspace->upgradeDatabase(false);
+                CLI::logging("* End updating database schema...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start checking MAFE requirements...\n");
+                $start = microtime(true);
+                $workspace->checkMafeRequirements($workspaceName, $lang);
+                CLI::logging("* End checking MAFE requirements...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start deleting MySQL triggers: " . implode(', ', self::$triggers) . "...\n");
+                $start = microtime(true);
+                $workspace->deleteTriggersMySQL(self::$triggers);
+                CLI::logging("* End deleting MySQL triggers: " . implode(', ', self::$triggers) . "... (Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start deleting indexes from big tables: " . implode(', ', self::$bigTables) . "...\n");
+                $start = microtime(true);
+                $workspace->deleteIndexes(self::$bigTables);
+                CLI::logging("* End deleting indexes from big tables: " . implode(', ', self::$bigTables) . "... (Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start to migrate texts/values from 'CONTENT' table to the corresponding object tables...\n");
+                $start = microtime(true);
+                $workspace->migrateContent($lang);
+                CLI::logging("* End to migrate texts/values from 'CONTENT' table to the corresponding object tables... (Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start updating rows in Web Entry table for classic processes...\n");
+                $start = microtime(true);
+                $workspace->updatingWebEntryClassicModel(true);
+                CLI::logging("* End updating rows in Web Entry table for classic processes...(Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start to update Files Manager...\n");
+                $start = microtime(true);
+                $workspace->processFilesUpgrade($workspaceName);
+                CLI::logging("* End to update Files Manager... (Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start migrating and populating plugin singleton data...\n");
+                $start = microtime(true);
+                $workspace->migrateSingleton($workspaceName);
+                CLI::logging("* End migrating and populating plugin singleton data...(Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start to check Intermediate Email Event...\n");
+                $start = microtime(true);
+                $workspace->checkIntermediateEmailEvent();
+                CLI::logging("* End to check Intermediate Email Event... (Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start cleaning DYN_CONTENT in APP_HISTORY...\n");
+                $start = microtime(true);
+                $keepDynContent = isset($optionMigrateHistoryData['keepDynContent']) && $optionMigrateHistoryData['keepDynContent'] === true;
+                $workspace->clearDynContentHistoryData(false, $keepDynContent);
+                CLI::logging("* End cleaning DYN_CONTENT in APP_HISTORY...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+
+                CLI::logging("* Start migrating and populating indexing for avoiding the use of table APP_CACHE_VIEW...\n");
+                $start = microtime(true);
+                $workspace->migratePopulateIndexingACV();
+                CLI::logging("* End migrating and populating indexing for avoiding the use of table APP_CACHE_VIEW...(Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....\n");
+                $start = microtime(true);
+                $workspace->migrateSelfServiceRecordsRun();
+                CLI::logging("* End optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....(Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start adding new fields and populating values in tables related to feature self service by value...\n");
+                $start = microtime(true);
+                $workspace->upgradeSelfServiceData();
+                CLI::logging("* End adding new fields and populating values in tables related to feature self service by value...(Completed on " .
+                    (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start adding/replenishing all indexes...\n");
+                $start = microtime(true);
+                $systemSchema = System::getSystemSchema($workspace->dbAdapter);
+                $workspace->upgradeSchema($systemSchema);
+                CLI::logging("* End adding/replenishing all indexes...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start migrating to new list tables...\n");
+                $start = microtime(true);
+                $workspace->migrateList(true, $lang);
+                CLI::logging("* End migrating to new list tables...(Completed on " . (microtime(true) - $start) . " seconds)\n");
+
+                CLI::logging("* Start updating MySQL triggers...\n");
+                $start = microtime(true);
+                $workspace->updateTriggers(true, $lang);
+                CLI::logging("* End updating MySQL triggers...(" . (microtime(true) - $start) . " seconds)\n");
+            }
+
+            CLI::logging("> Start To Verify License Enterprise...\n");
             $start = microtime(true);
-            CLI::logging("> Optimizing content data...\n");
-            $workspace->migrateContent($workspace->name, $lang);
-            $stop = microtime(true);
-            CLI::logging("<*>   Optimizing content data took " . ($stop - $start) . " seconds.\n");
+            $workspace->verifyLicenseEnterprise($workspaceName);
+            CLI::logging("* End To Verify License Enterprise...(" . (microtime(true) - $start) . " seconds)\n");
 
-            //Populate the new fields for replace string UID to Interger ID
-            $start = microtime(true);
-            CLI::logging("> Migrating and populating indexing for APP_CACHE_VIEW...\n");
-            $workspace->migratePopulateIndexingACV($workspace->name);
-            $stop = microtime(true);
-            CLI::logging("<*>   Migrating an populating indexing for APP_CACHE_VIEW process took " . ($stop - $start) . " seconds.\n");
-
-            //Move the data of cases to the corresponding List
-            /*----------------------------------********---------------------------------*/
-
-            $start = microtime(true);
-            CLI::logging("> Updating Files Manager...\n");
-            $workspace->processFilesUpgrade();
-            $stop = microtime(true);
-            CLI::logging("<*>   Updating Files Manager took " . ($stop - $start) . " seconds.\n");
-
-            //Updating generated class files for PM Tables
-            passthru(PHP_BINARY . ' processmaker regenerate-pmtable-classes ' . $workspace->name);
-
-            $keepDynContent = isset($optionMigrateHistoryData['keepDynContent']) && $optionMigrateHistoryData['keepDynContent'] === true;
-            //Review if we need to remove the 'History of use' from APP_HISTORY
-            $start = microtime(true);
-            CLI::logging("> Clearing History of Use from APP_HISTORY table...\n");
-            $workspace->clearDynContentHistoryData(false, $keepDynContent);
-            $stop = microtime(true);
-            CLI::logging("<*>   Clearing History of Use from APP_HISTORY table took " . ($stop - $start) . " seconds.\n");
-
-            /*----------------------------------********---------------------------------*/
-
-            $start = microtime(true);
-            CLI::logging("> Optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP....\n");
-            $workspace->upgradeSelfServiceData();
-            $stop = microtime(true);
-            CLI::logging("<*>   Optimizing Self-Service data in table APP_ASSIGN_SELF_SERVICE_VALUE_GROUP took " . ($stop - $start) . " seconds.\n");
+            // Updating generated class files for PM Tables
+            passthru(PHP_BINARY . ' processmaker regenerate-pmtable-classes ' . $workspaceName);
         }
 
         CLI::logging("Removing temporary files\n");
@@ -2139,6 +2244,9 @@ class WorkspaceTools
         return $result;
     }
 
+    /**
+     * Backup the log files
+     */
     public function backupLogFiles()
     {
         $config = System::getSystemConfiguration();
@@ -2155,6 +2263,12 @@ class WorkspaceTools
         }
     }
 
+    /**
+     * Check if the workspace have the clients used by MAFE registered
+     *
+     * @param string  $workspace
+     * @param string $lang
+     */
     public function checkMafeRequirements($workspace, $lang)
     {
         $this->initPropel(true);
@@ -2221,13 +2335,11 @@ class WorkspaceTools
     {
         $this->initPropel(true);
         $licensedFeatures = PMLicensedFeatures::getSingleton();
-        /*----------------------------------********---------------------------------*/
         return true;
     }
 
-    public function verifyFilesOldEnterprise($workspace)
+    public function verifyFilesOldEnterprise()
     {
-        $this->initPropel(true);
         $pathBackup = PATH_DATA . 'backups';
         if (!file_exists($pathBackup)) {
             G::mk_dir($pathBackup, 0777);
@@ -2243,7 +2355,7 @@ class WorkspaceTools
         CLI::logging("    Migrating Enterprise Core version...\n");
         if (!file_exists($pathNewFile)) {
             CLI::logging("    Creating folder in $pathNewFile\n");
-            G::mk_dir($newDiretory, 0777);
+            G::mk_dir($pathNewFile, 0777);
         }
         $shared_stat = stat(PATH_DATA);
         if (file_exists($pathDirectoryEnterprise)) {
@@ -2320,9 +2432,14 @@ class WorkspaceTools
     }
 
     /**
-     * Get disabled code
+     * If the feature is enable and the code_scanner_scope was enable will check in the command
+     * Review when the command check-workspace-disabled-code was executed
      *
-     * @return array Returns an array with disabled code found, array empty otherwise
+     * @return array
+     * @throws Exception
+     *
+     * @link https://wiki.processmaker.com/3.3/processmaker_command#check-workspace-disabled-code
+     * @uses cliWorkspaces.php
      */
     public function getDisabledCode()
     {
@@ -2341,12 +2458,19 @@ class WorkspaceTools
     /**
      * Migrate all cases to New list
      *
-     * @param string $workSpace Workspace
      * @param bool $flagReinsert Flag that specifies the re-insertion
+     * @param string $lang
      *
      * @return void
+     *
+     * @throws Exception
+     *
+     * @see \WorkspaceTools->upgrade
+     * @see \WorkspaceTools->restore
+     * @see workflow/engine/bin/tasks/cliWorkspaces.php:migrate_new_cases_lists()
+     * @link https://wiki.processmaker.com/3.3/processmaker_command#migrate-new-cases-lists
      */
-    public function migrateList($workSpace, $flagReinsert = false, $lang = 'en')
+    public function migrateList($flagReinsert = false, $lang = 'en')
     {
         $this->initPropel(true);
 
@@ -2357,8 +2481,8 @@ class WorkspaceTools
             return;
         }
 
-        $arrayTable1 = ['ListInbox', 'ListMyInbox', 'ListCanceled', 'ListParticipatedLast', 'ListParticipatedHistory', 'ListPaused'];
-        $arrayTable2 = ['ListUnassigned', 'ListUnassignedGroup'];
+        $arrayTable1 = ['ListCanceled', 'ListInbox', 'ListParticipatedLast', 'ListPaused'];
+        $arrayTable2 = ['ListUnassigned'];
         $arrayTable = array_merge($arrayTable1, $arrayTable2);
 
         if ($flagReinsert) {
@@ -2382,26 +2506,71 @@ class WorkspaceTools
             }
         }
 
+        // Initialize queries array
+        $listQueries = [];
+
         if ($flagReinsert || !$flagListAll) {
-            $this->regenerateListCanceled($lang);
-            $this->regenerateListMyInbox(); //This list require no translation
-            $this->regenerateListInbox();   //This list require no translation
-            $this->regenerateListParticipatedHistory(); //This list require no translation
-            $this->regenerateListParticipatedLast();    //This list require no translation
-            $this->regenerateListPaused(); //This list require no translation
+            // Regenerate lists
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->regenerateListCanceled($lang));
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->regenerateListInbox());
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->regenerateListParticipatedLast());
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->regenerateListPaused());
         }
 
         if ($flagReinsert || !$flagListUnassigned) {
-            $this->regenerateListUnassigned(); //This list require no translation
+            // This list always is truncated
+            $con = Propel::getConnection("workflow");
+            $stmt = $con->createStatement();
+            $stmt->executeQuery('TRUNCATE ' . $this->dbName . '.LIST_UNASSIGNED');
+
+            // Regenerate list
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->regenerateListUnassigned());
         }
 
+        // Run queries in multiple threads for populate the list tables
+        $processesManager = new ProcessesManager($listQueries);
+        $processesManager->run();
+
+        // If exists an error throw an exception
+        if (!empty($processesManager->getErrors())) {
+            $errorMessage = '';
+            foreach ($processesManager->getErrors() as $error) {
+                $errorMessage .= $error['rawAnswer'] . PHP_EOL;
+            }
+            throw new Exception($errorMessage);
+        }
+
+        // Updating PRO_ID field
+        $this->runUpdateListField(['LIST_CANCELED', 'LIST_INBOX', 'LIST_PARTICIPATED_LAST', 'LIST_UNASSIGNED'], 'updateListProId');
+
+        // Updating TAS_ID field
+        $this->runUpdateListField(['LIST_CANCELED', 'LIST_INBOX', 'LIST_PARTICIPATED_LAST', 'LIST_UNASSIGNED'], 'updateListTasId');
+
+        // Updating USR_ID field
+        $this->runUpdateListField(['LIST_CANCELED', 'LIST_INBOX', 'LIST_PARTICIPATED_LAST'], 'updateListUsrId');
+
+        // Updating APP_STATUS_ID field
+        $this->runUpdateListField(['LIST_INBOX', 'LIST_PARTICIPATED_LAST'], 'updateListAppStatusId');
+
+        // Updating Last Current User Information
+        $this->runUpdateListField(['LIST_PARTICIPATED_LAST'], 'updateListParticipatedLastCurrentUser');
+
+        // Updating flags for the list population
         $this->listFirstExecution('insert');
         $this->listFirstExecution('insert', 'unassigned');
     }
 
+    /**
+     * Return query to populate canceled list
+     *
+     * @param string $lang
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
     public function regenerateListCanceled($lang = 'en')
     {
-        $this->initPropel(true);
         $query = 'INSERT INTO ' . $this->dbName . '.LIST_CANCELED
                     (APP_UID,
                     USR_UID,
@@ -2461,85 +2630,19 @@ class WorkspaceTools
                     WHERE
                         ACV.APP_STATUS = \'CANCELLED\'
                             AND ACV.DEL_LAST_INDEX = 1';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_CANCELED\n");
+
+        return $query;
     }
 
-    public function regenerateListMyInbox()
-    {
-        $this->initPropel(true);
-        $query = 'INSERT INTO ' . $this->dbName . '.LIST_MY_INBOX
-                    (APP_UID,
-                    USR_UID,
-                    TAS_UID,
-                    PRO_UID,
-                    APP_NUMBER,
-                    APP_TITLE,
-                    APP_PRO_TITLE,
-                    APP_TAS_TITLE,
-                    APP_CREATE_DATE,
-                    APP_UPDATE_DATE,
-                    APP_FINISH_DATE,
-                    APP_STATUS,
-                    DEL_INDEX,
-                    DEL_PREVIOUS_USR_UID,
-                    DEL_PREVIOUS_USR_USERNAME,
-                    DEL_PREVIOUS_USR_FIRSTNAME,
-                    DEL_PREVIOUS_USR_LASTNAME,
-                    DEL_CURRENT_USR_UID,
-                    DEL_CURRENT_USR_USERNAME,
-                    DEL_CURRENT_USR_FIRSTNAME,
-                    DEL_CURRENT_USR_LASTNAME,
-                    DEL_DELEGATE_DATE,
-                    DEL_INIT_DATE,
-                    DEL_DUE_DATE,
-                    DEL_PRIORITY)
-
-                    SELECT
-                        ACV.APP_UID,
-                        ACV.USR_UID,
-                        ACV.TAS_UID,
-                        ACV.PRO_UID,
-                        ACV.APP_NUMBER,
-                        ACV.APP_TITLE,
-                        ACV.APP_PRO_TITLE,
-                        ACV.APP_TAS_TITLE,
-                        ACV.APP_CREATE_DATE,
-                        ACV.APP_UPDATE_DATE,
-                        ACV.APP_FINISH_DATE,
-                        ACV.APP_STATUS,
-                        ACV.DEL_INDEX,
-                        ACV.PREVIOUS_USR_UID AS DEL_PREVIOUS_USR_UID,
-                        PRE_USR.USR_USERNAME AS DEL_PREVIOUS_USR_USERNAME,
-                        PRE_USR.USR_FIRSTNAME AS DEL_PREVIOUS_USR_FIRSTNAME,
-                        PRE_USR.USR_LASTNAME AS DEL_PREVIOUS_USR_LASTNAME,
-                        ACV.USR_UID AS DEL_CURRENT_USR_UID,
-                        CUR_USR.USR_USERNAME AS DEL_CURRENT_USR_USERNAME,
-                        CUR_USR.USR_FIRSTNAME AS DEL_CURRENT_USR_FIRSTNAME,
-                        CUR_USR.USR_LASTNAME AS DEL_CURRENT_USR_LASTNAME,
-                        ACV.DEL_DELEGATE_DATE AS DEL_DELEGATE_DATE,
-                        ACV.DEL_INIT_DATE AS DEL_INIT_DATE,
-                        ACV.DEL_TASK_DUE_DATE AS DEL_DUE_DATE,
-                        ACV.DEL_PRIORITY
-                    FROM
-                        ' . $this->dbName . '.APP_CACHE_VIEW ACV
-                            LEFT JOIN
-                        ' . $this->dbName . '.USERS CUR_USR ON ACV.USR_UID = CUR_USR.USR_UID
-                            LEFT JOIN
-                        ' . $this->dbName . '.USERS PRE_USR ON ACV.PREVIOUS_USR_UID = PRE_USR.USR_UID
-                    WHERE ACV.DEL_INDEX=1';
-
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_MY_INBOX\n");
-    }
-
+    /**
+     * Return query to populate inbox list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
     public function regenerateListInbox()
     {
-        $this->initPropel(true);
         $query = 'INSERT INTO ' . $this->dbName . '.LIST_INBOX
                     (APP_UID,
                     DEL_INDEX,
@@ -2589,190 +2692,19 @@ class WorkspaceTools
                         ' . $this->dbName . '.USERS USR ON ACV.PREVIOUS_USR_UID = USR.USR_UID
                     WHERE
                         ACV.DEL_THREAD_STATUS = \'OPEN\'';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_INBOX\n");
-    }
 
-    public function regenerateListParticipatedHistory()
-    {
-        $this->initPropel(true);
-        $query = 'INSERT INTO ' . $this->dbName . '.LIST_PARTICIPATED_HISTORY
-                    (APP_UID,
-                    DEL_INDEX,
-                    USR_UID,
-                    TAS_UID,
-                    PRO_UID,
-                    APP_NUMBER,
-                    APP_TITLE,
-                    APP_PRO_TITLE,
-                    APP_TAS_TITLE,
-                    DEL_PREVIOUS_USR_UID,
-                    DEL_PREVIOUS_USR_USERNAME,
-                    DEL_PREVIOUS_USR_FIRSTNAME,
-                    DEL_PREVIOUS_USR_LASTNAME,
-                    DEL_CURRENT_USR_USERNAME,
-                    DEL_CURRENT_USR_FIRSTNAME,
-                    DEL_CURRENT_USR_LASTNAME,
-                    DEL_DELEGATE_DATE,
-                    DEL_INIT_DATE,
-                    DEL_DUE_DATE,
-                    DEL_PRIORITY)
-
-                    SELECT
-                        ACV.APP_UID,
-                        ACV.DEL_INDEX,
-                        ACV.USR_UID,
-                        ACV.TAS_UID,
-                        ACV.PRO_UID,
-                        ACV.APP_NUMBER,
-                        ACV.APP_TITLE,
-                        ACV.APP_PRO_TITLE,
-                        ACV.APP_TAS_TITLE,
-                        ACV.PREVIOUS_USR_UID AS DEL_PREVIOUS_USR_UID,
-                        PRE_USR.USR_USERNAME AS DEL_PREVIOUS_USR_USERNAME,
-                        PRE_USR.USR_FIRSTNAME AS DEL_PREVIOUS_USR_FIRSTNAME,
-                        PRE_USR.USR_LASTNAME AS DEL_PREVIOUS_USR_LASTNAME,
-                        CUR_USR.USR_USERNAME AS DEL_CURRENT_USR_USERNAME,
-                        CUR_USR.USR_FIRSTNAME AS DEL_CURRENT_USR_FIRSTNAME,
-                        CUR_USR.USR_LASTNAME AS DEL_CURRENT_USR_LASTNAME,
-                        ACV.DEL_DELEGATE_DATE AS DEL_DELEGATE_DATE,
-                        ACV.DEL_INIT_DATE AS DEL_INIT_DATE,
-                        ACV.DEL_TASK_DUE_DATE AS DEL_DUE_DATE,
-                        ACV.DEL_PRIORITY
-                    FROM
-                        ' . $this->dbName . '.APP_CACHE_VIEW ACV
-                            LEFT JOIN
-                        ' . $this->dbName . '.USERS CUR_USR ON ACV.USR_UID = CUR_USR.USR_UID
-                            LEFT JOIN
-                        ' . $this->dbName . '.USERS PRE_USR ON ACV.PREVIOUS_USR_UID = PRE_USR.USR_UID';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_PARTICIPATED_HISTORY\n");
-    }
-
-    public function regenerateListParticipatedLast()
-    {
-        $this->initPropel(true);
-        $query = 'INSERT INTO ' . $this->dbName . '.LIST_PARTICIPATED_LAST
-                    (
-                      APP_UID,
-                      USR_UID,
-                      DEL_INDEX,
-                      TAS_UID,
-                      PRO_UID,
-                      APP_NUMBER,
-                      APP_TITLE,
-                      APP_PRO_TITLE,
-                      APP_TAS_TITLE,
-                      APP_STATUS,
-                      DEL_PREVIOUS_USR_UID,
-                      DEL_PREVIOUS_USR_USERNAME,
-                      DEL_PREVIOUS_USR_FIRSTNAME,
-                      DEL_PREVIOUS_USR_LASTNAME,
-                      DEL_CURRENT_USR_USERNAME,
-                      DEL_CURRENT_USR_FIRSTNAME,
-                      DEL_CURRENT_USR_LASTNAME,
-                      DEL_DELEGATE_DATE,
-                      DEL_INIT_DATE,
-                      DEL_DUE_DATE,
-                      DEL_CURRENT_TAS_TITLE,
-                      DEL_PRIORITY,
-                      DEL_THREAD_STATUS)
-                    
-                      SELECT
-                        ACV.APP_UID,
-                        IF(ACV.USR_UID=\'\', \'SELF_SERVICES\', ACV.USR_UID),
-                        ACV.DEL_INDEX,
-                        ACV.TAS_UID,
-                        ACV.PRO_UID,
-                        ACV.APP_NUMBER,
-                        ACV.APP_TITLE,
-                        ACV.APP_PRO_TITLE,
-                        ACV.APP_TAS_TITLE,
-                        ACV.APP_STATUS,
-                        DEL_PREVIOUS_USR_UID,
-                        IFNULL(PRE_USR.USR_USERNAME, CUR_USR.USR_USERNAME)   AS DEL_PREVIOUS_USR_USERNAME,
-                        IFNULL(PRE_USR.USR_FIRSTNAME, CUR_USR.USR_FIRSTNAME) AS DEL_PREVIOUS_USR_USERNAME,
-                        IFNULL(PRE_USR.USR_LASTNAME, CUR_USR.USR_LASTNAME)   AS DEL_PREVIOUS_USR_USERNAME,
-                        CUR_USR.USR_USERNAME                                 AS DEL_CURRENT_USR_USERNAME,
-                        CUR_USR.USR_FIRSTNAME                                AS DEL_CURRENT_USR_FIRSTNAME,
-                        CUR_USR.USR_LASTNAME                                 AS DEL_CURRENT_USR_LASTNAME,
-                        ACV.DEL_DELEGATE_DATE                                AS DEL_DELEGATE_DATE,
-                        ACV.DEL_INIT_DATE                                    AS DEL_INIT_DATE,
-                        ACV.DEL_TASK_DUE_DATE                                AS DEL_DUE_DATE,
-                        ACV.APP_TAS_TITLE                                    AS DEL_CURRENT_TAS_TITLE,
-                        ACV.DEL_PRIORITY,
-                        ACV.DEL_THREAD_STATUS
-                      FROM
-                        (
-                          SELECT
-                            CASE WHEN ACV1.PREVIOUS_USR_UID = \'\' AND ACV1.DEL_INDEX = 1
-                              THEN ACV1.USR_UID
-                            ELSE ACV1.PREVIOUS_USR_UID END AS DEL_PREVIOUS_USR_UID,
-                            ACV1.*
-                          FROM ' . $this->dbName . '.APP_CACHE_VIEW ACV1
-                            JOIN
-                            (SELECT
-                               ACV_INT.APP_UID,
-                               MAX(ACV_INT.DEL_INDEX) MAX_DEL_INDEX
-                             FROM
-                               ' . $this->dbName . '.APP_CACHE_VIEW ACV_INT
-                             GROUP BY
-                               ACV_INT.USR_UID,
-                               ACV_INT.APP_UID
-                            ) ACV2
-                              ON ACV2.APP_UID = ACV1.APP_UID AND ACV2.MAX_DEL_INDEX = ACV1.DEL_INDEX
-                        ) ACV
-                        LEFT JOIN ' . $this->dbName . '.USERS PRE_USR ON ACV.PREVIOUS_USR_UID = PRE_USR.USR_UID
-                        LEFT JOIN ' . $this->dbName . '.USERS CUR_USR ON ACV.USR_UID = CUR_USR.USR_UID';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging(">  Inserted data into table LIST_PARTICIPATED_LAST\n");
-        $query = 'UPDATE ' . $this->dbName . '.LIST_PARTICIPATED_LAST LPL, (
-                       SELECT
-                         TASK.TAS_TITLE,
-                         CUR_USER.APP_UID,
-                         USERS.USR_UID,
-                         USERS.USR_USERNAME,
-                         USERS.USR_FIRSTNAME,
-                         USERS.USR_LASTNAME
-                       FROM (
-                              SELECT
-                                APP_UID,
-                                TAS_UID,
-                                DEL_INDEX,
-                                USR_UID
-                              FROM ' . $this->dbName . '.APP_DELEGATION
-                              WHERE DEL_LAST_INDEX = 1
-                            ) CUR_USER
-                         LEFT JOIN ' . $this->dbName . '.USERS ON CUR_USER.USR_UID = USERS.USR_UID
-                         LEFT JOIN ' . $this->dbName . '.TASK ON CUR_USER.TAS_UID = TASK.TAS_UID) USERS_VALUES
-                    SET
-                      LPL.DEL_CURRENT_USR_USERNAME  = IFNULL(USERS_VALUES.USR_USERNAME, \'\'),
-                      LPL.DEL_CURRENT_USR_FIRSTNAME = IFNULL(USERS_VALUES.USR_FIRSTNAME, \'\'),
-                      LPL.DEL_CURRENT_USR_LASTNAME  = IFNULL(USERS_VALUES.USR_LASTNAME, \'\'),
-                      LPL.DEL_CURRENT_TAS_TITLE     = IFNULL(USERS_VALUES.TAS_TITLE, \'\')
-                    WHERE LPL.APP_UID = USERS_VALUES.APP_UID';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        CLI::logging("> Updating the current users data on table LIST_PARTICIPATED_LAST\n");
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_PARTICIPATED_LAST\n");
+        return $query;
     }
 
     /**
-     * This function overwrite the table LIST_PAUSED
-     * Get the principal information in the tables appDelay, appDelegation
-     * For the labels we use the tables user, process, task and application
-     * @return void
+     * Return query to populate paused list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
      */
     public function regenerateListPaused()
     {
-        $this->initPropel(true);
         $query = 'INSERT INTO ' . $this->dbName . '.LIST_PAUSED
                   (
                   APP_UID,
@@ -2847,13 +2779,325 @@ class WorkspaceTools
                        APP_DELAY.APP_DISABLE_ACTION_USER = "0" AND
                        APP_DELAY.APP_TYPE = "PAUSE"
                ';
-        $con = Propel::getConnection("workflow");
-        $stmt = $con->createStatement();
-        $stmt->executeQuery($query);
-        CLI::logging("> Completed table LIST_PAUSED\n");
+
+        return $query;
     }
 
-    /*----------------------------------********---------------------------------*/
+    /**
+     * Return query to populate participated last list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function regenerateListParticipatedLast()
+    {
+        $query = 'INSERT INTO ' . $this->dbName . '.LIST_PARTICIPATED_LAST
+                    (
+                      APP_UID,
+                      USR_UID,
+                      DEL_INDEX,
+                      TAS_UID,
+                      PRO_UID,
+                      APP_NUMBER,
+                      APP_TITLE,
+                      APP_PRO_TITLE,
+                      APP_TAS_TITLE,
+                      APP_STATUS,
+                      DEL_PREVIOUS_USR_UID,
+                      DEL_PREVIOUS_USR_USERNAME,
+                      DEL_PREVIOUS_USR_FIRSTNAME,
+                      DEL_PREVIOUS_USR_LASTNAME,
+                      DEL_CURRENT_USR_USERNAME,
+                      DEL_CURRENT_USR_FIRSTNAME,
+                      DEL_CURRENT_USR_LASTNAME,
+                      DEL_DELEGATE_DATE,
+                      DEL_INIT_DATE,
+                      DEL_DUE_DATE,
+                      DEL_CURRENT_TAS_TITLE,
+                      DEL_PRIORITY,
+                      DEL_THREAD_STATUS)
+                    
+                      SELECT
+                        ACV.APP_UID,
+                        IF(ACV.USR_UID=\'\', \'SELF_SERVICES\', ACV.USR_UID),
+                        ACV.DEL_INDEX,
+                        ACV.TAS_UID,
+                        ACV.PRO_UID,
+                        ACV.APP_NUMBER,
+                        ACV.APP_TITLE,
+                        ACV.APP_PRO_TITLE,
+                        ACV.APP_TAS_TITLE,
+                        ACV.APP_STATUS,
+                        DEL_PREVIOUS_USR_UID,
+                        IFNULL(PRE_USR.USR_USERNAME, CUR_USR.USR_USERNAME)   AS DEL_PREVIOUS_USR_USERNAME,
+                        IFNULL(PRE_USR.USR_FIRSTNAME, CUR_USR.USR_FIRSTNAME) AS DEL_PREVIOUS_USR_USERNAME,
+                        IFNULL(PRE_USR.USR_LASTNAME, CUR_USR.USR_LASTNAME)   AS DEL_PREVIOUS_USR_USERNAME,
+                        CUR_USR.USR_USERNAME                                 AS DEL_CURRENT_USR_USERNAME,
+                        CUR_USR.USR_FIRSTNAME                                AS DEL_CURRENT_USR_FIRSTNAME,
+                        CUR_USR.USR_LASTNAME                                 AS DEL_CURRENT_USR_LASTNAME,
+                        ACV.DEL_DELEGATE_DATE                                AS DEL_DELEGATE_DATE,
+                        ACV.DEL_INIT_DATE                                    AS DEL_INIT_DATE,
+                        ACV.DEL_TASK_DUE_DATE                                AS DEL_DUE_DATE,
+                        ACV.APP_TAS_TITLE                                    AS DEL_CURRENT_TAS_TITLE,
+                        ACV.DEL_PRIORITY,
+                        ACV.DEL_THREAD_STATUS
+                      FROM
+                        (
+                          SELECT
+                            CASE WHEN ACV1.PREVIOUS_USR_UID = \'\' AND ACV1.DEL_INDEX = 1
+                              THEN ACV1.USR_UID
+                            ELSE ACV1.PREVIOUS_USR_UID END AS DEL_PREVIOUS_USR_UID,
+                            ACV1.*
+                          FROM ' . $this->dbName . '.APP_CACHE_VIEW ACV1
+                            JOIN
+                            (SELECT
+                               ACV_INT.APP_UID,
+                               MAX(ACV_INT.DEL_INDEX) MAX_DEL_INDEX
+                             FROM
+                               ' . $this->dbName . '.APP_CACHE_VIEW ACV_INT
+                             GROUP BY
+                               ACV_INT.USR_UID,
+                               ACV_INT.APP_UID
+                            ) ACV2
+                              ON ACV2.APP_UID = ACV1.APP_UID AND ACV2.MAX_DEL_INDEX = ACV1.DEL_INDEX
+                        ) ACV
+                        LEFT JOIN ' . $this->dbName . '.USERS PRE_USR ON ACV.PREVIOUS_USR_UID = PRE_USR.USR_UID
+                        LEFT JOIN ' . $this->dbName . '.USERS CUR_USR ON ACV.USR_UID = CUR_USR.USR_UID';
+
+        return $query;
+    }
+
+    /**
+     * Return query to populate unassigned list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function regenerateListUnassigned()
+    {
+        $query = 'INSERT INTO ' . $this->dbName . '.LIST_UNASSIGNED
+                    (APP_UID,
+                    DEL_INDEX,
+                    TAS_UID,
+                    PRO_UID,
+                    APP_NUMBER,
+                    APP_TITLE,
+                    APP_PRO_TITLE,
+                    APP_TAS_TITLE,
+                    DEL_PREVIOUS_USR_USERNAME,
+                    DEL_PREVIOUS_USR_FIRSTNAME,
+                    DEL_PREVIOUS_USR_LASTNAME,
+                    APP_UPDATE_DATE,
+                    DEL_PREVIOUS_USR_UID,
+                    DEL_DELEGATE_DATE,
+                    DEL_DUE_DATE,
+                    DEL_PRIORITY)
+
+                    SELECT
+                        ACV.APP_UID,
+                        ACV.DEL_INDEX,
+                        ACV.TAS_UID,
+                        ACV.PRO_UID,
+                        ACV.APP_NUMBER,
+                        ACV.APP_TITLE,
+                        ACV.APP_PRO_TITLE,
+                        ACV.APP_TAS_TITLE,
+                        USR.USR_USERNAME AS DEL_PREVIOUS_USR_USERNAME,
+                        USR.USR_FIRSTNAME AS DEL_PREVIOUS_USR_FIRSTNAME,
+                        USR.USR_LASTNAME AS DEL_PREVIOUS_USR_LASTNAME,
+                        ACV.APP_UPDATE_DATE,
+                        ACV.PREVIOUS_USR_UID AS DEL_PREVIOUS_USR_UID,
+                        ACV.DEL_DELEGATE_DATE AS DEL_DELEGATE_DATE,
+                        ACV.DEL_TASK_DUE_DATE AS DEL_DUE_DATE,
+                        ACV.DEL_PRIORITY
+                    FROM
+                        ' . $this->dbName . '.APP_CACHE_VIEW ACV
+                            LEFT JOIN
+                        ' . $this->dbName . '.USERS USR ON ACV.PREVIOUS_USR_UID = USR.USR_UID
+                    WHERE
+                        ACV.DEL_THREAD_STATUS = \'OPEN\'
+                        AND ACV.USR_UID = \'\' ';
+
+        return $query;
+    }
+
+    /**
+     * Re-populate only the unassigned list
+     */
+    public function runRegenerateListUnassigned()
+    {
+        // Init Propel
+        $this->initPropel(true);
+
+        // Initialize Propel objects
+        $con = Propel::getConnection("workflow");
+        $stmt = $con->createStatement();
+
+        // Clean table
+        $stmt->executeQuery('TRUNCATE ' . $this->dbName . '.LIST_UNASSIGNED;');
+
+        // Populate table
+        $stmt->executeQuery($this->regenerateListUnassigned());
+
+        // Update some fields
+        $stmt->executeQuery($this->updateListProId('LIST_UNASSIGNED'));
+        $stmt->executeQuery($this->updateListTasId('LIST_UNASSIGNED'));
+    }
+
+    /**
+     * Run the update queries for the specified tables
+     *
+     * @param array $listTables
+     * @param string $methodName
+     *
+     * @throws Exception
+     */
+    public function runUpdateListField(array $listTables, $methodName) {
+        // Clean the queries array
+        $listQueries = [];
+
+        // Get the queries
+        foreach ($listTables as $listTable) {
+            $listQueries[] = new RunProcessUpgradeQuery($this->name, $this->$methodName($listTable));
+        }
+
+        // Run queries in multiple threads for update the list tables
+        $processesManager = new ProcessesManager($listQueries);
+        $processesManager->run();
+
+        // If exists an error throw an exception
+        if (!empty($processesManager->getErrors())) {
+            $errorMessage = '';
+            foreach ($processesManager->getErrors() as $error) {
+                $errorMessage .= $error['rawAnswer'] . PHP_EOL;
+            }
+            throw new Exception($errorMessage);
+        }
+    }
+
+    /**
+     * Return query to update PRO_ID in list table
+     *
+     * @param string $list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function updateListProId($list) {
+        $query = 'UPDATE ' . $list . ' AS LT
+                  INNER JOIN (
+                      SELECT PROCESS.PRO_UID, PROCESS.PRO_ID
+                      FROM PROCESS
+                  ) AS PRO
+                  ON (LT.PRO_UID = PRO.PRO_UID)
+                  SET LT.PRO_ID = PRO.PRO_ID
+                  WHERE LT.PRO_ID = 0';
+        return $query;
+    }
+
+    /**
+     * Return query to update USR_ID in list table
+     *
+     * @param string $list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function updateListUsrId($list) {
+        $query = 'UPDATE ' . $list . ' AS LT
+                  INNER JOIN (
+                      SELECT USERS.USR_UID, USERS.USR_ID
+                      FROM USERS
+                  ) AS USR
+                  ON (LT.USR_UID = USR.USR_UID)
+                  SET LT.USR_ID = USR.USR_ID
+                  WHERE LT.USR_ID = 0';
+        return $query;
+    }
+
+    /**
+     * Return query to update TAS_ID in list table
+     *
+     * @param string $list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function updateListTasId($list) {
+        $query = 'UPDATE ' . $list . ' AS LT
+                  INNER JOIN (
+                      SELECT TASK.TAS_UID, TASK.TAS_ID
+                      FROM TASK
+                  ) AS TAS
+                  ON (LT.TAS_UID = TAS.TAS_UID)
+                  SET LT.TAS_ID = TAS.TAS_ID
+                  WHERE LT.TAS_ID = 0';
+        return $query;
+    }
+
+    /**
+     * Return query to update APP_STATUS_ID in list table
+     *
+     * @para string $list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function updateListAppStatusId($list) {
+        $query = "UPDATE " . $list . "
+                  SET APP_STATUS_ID = (case
+                      when APP_STATUS = 'DRAFT' then 1
+                      when APP_STATUS = 'TO_DO' then 2
+                      when APP_STATUS = 'COMPLETED' then 3
+                      when APP_STATUS = 'CANCELLED' then 4
+                  end)
+                  WHERE APP_STATUS in ('DRAFT', 'TO_DO', 'COMPLETED', 'CANCELLED') AND APP_STATUS_ID = 0";
+        return $query;
+    }
+
+    /**
+     * Return query to update participated last list
+     *
+     * @return string
+     *
+     * @see \WorkspaceTools->migrateList()
+     */
+    public function updateListParticipatedLastCurrentUser()
+    {
+        $query = 'UPDATE ' . $this->dbName . '.LIST_PARTICIPATED_LAST LPL, (
+                       SELECT
+                         TASK.TAS_TITLE,
+                         CUR_USER.APP_UID,
+                         USERS.USR_UID,
+                         USERS.USR_USERNAME,
+                         USERS.USR_FIRSTNAME,
+                         USERS.USR_LASTNAME
+                       FROM (
+                              SELECT
+                                APP_UID,
+                                TAS_UID,
+                                DEL_INDEX,
+                                USR_UID
+                              FROM ' . $this->dbName . '.APP_DELEGATION
+                              WHERE DEL_LAST_INDEX = 1
+                            ) CUR_USER
+                         LEFT JOIN ' . $this->dbName . '.USERS ON CUR_USER.USR_UID = USERS.USR_UID
+                         LEFT JOIN ' . $this->dbName . '.TASK ON CUR_USER.TAS_UID = TASK.TAS_UID) USERS_VALUES
+                    SET
+                      LPL.DEL_CURRENT_USR_USERNAME  = IFNULL(USERS_VALUES.USR_USERNAME, \'\'),
+                      LPL.DEL_CURRENT_USR_FIRSTNAME = IFNULL(USERS_VALUES.USR_FIRSTNAME, \'\'),
+                      LPL.DEL_CURRENT_USR_LASTNAME  = IFNULL(USERS_VALUES.USR_LASTNAME, \'\'),
+                      LPL.DEL_CURRENT_TAS_TITLE     = IFNULL(USERS_VALUES.TAS_TITLE, \'\')
+                    WHERE LPL.APP_UID = USERS_VALUES.APP_UID';
+
+        return $query;
+    }
 
     /**
      * This function checks if List tables are going to migrated
@@ -2940,19 +3184,21 @@ class WorkspaceTools
     }
 
     /**
-     * Process-Files upgrade
+     * Process files upgrade, store the information in the DB
+     *
+     * @param string $workspace
      *
      * return void
      */
-    public function processFilesUpgrade()
+    public function processFilesUpgrade($workspace)
     {
         try {
             if (!defined("PATH_DATA_MAILTEMPLATES")) {
-                define("PATH_DATA_MAILTEMPLATES", PATH_DATA_SITE . "mailTemplates" . PATH_SEP);
+                define("PATH_DATA_MAILTEMPLATES", PATH_DATA . 'sites' . PATH_SEP . $workspace . PATH_SEP . "mailTemplates" . PATH_SEP);
             }
 
             if (!defined("PATH_DATA_PUBLIC")) {
-                define("PATH_DATA_PUBLIC", PATH_DATA_SITE . "public" . PATH_SEP);
+                define("PATH_DATA_PUBLIC", PATH_DATA . 'sites' . PATH_SEP . $workspace . PATH_SEP . "public" . PATH_SEP);
             }
 
             $this->initPropel(true);
@@ -3465,8 +3711,12 @@ class WorkspaceTools
         return $response;
     }
 
-
-    public function migrateContent($workspace, $lang = SYS_LANG)
+    /**
+     * Migrate texts/values from "CONTENT" table to the corresponding object tables
+     *
+     * @param string $lang
+     */
+    public function migrateContent($lang = SYS_LANG)
     {
         if ((!class_exists('Memcache') || !class_exists('Memcached')) && !defined('MEMCACHED_ENABLED')) {
             define('MEMCACHED_ENABLED', false);
@@ -3479,7 +3729,7 @@ class WorkspaceTools
             $blackList = $oConfig['CFG_VALUE'] == 'true' ? array('Groupwf', 'Process', 'Department', 'Task', 'InputDocument', 'Application') : unserialize($oConfig['CFG_VALUE']);
         }
 
-        $blackList = $this->migrateContentRun($workspace, $lang, $blackList);
+        $blackList = $this->migrateContentRun($lang, $blackList);
         $data["CFG_UID"] = 'MIGRATED_CONTENT';
         $data["OBJ_UID"] = 'content';
         $data["CFG_VALUE"] = serialize($blackList);
@@ -3490,85 +3740,95 @@ class WorkspaceTools
     }
 
     /**
-     * Migrate this workspace table Content.
+     * Generate update rows from Content sentence
      *
-     * @param $className
-     * @param $fields
-     * @param mixed|string $lang
-     * @throws Exception
+     * @param string $tableName
+     * @param array $fields
+     * @param string $lang
+     *
+     * @return string
      */
-    public function migrateContentWorkspace($className, $fields, $lang = SYS_LANG)
+    public function generateUpdateFromContent($tableName, array $fields, $lang = SYS_LANG)
     {
-        try {
-            $this->initPropel(true);
-            $fieldUidName = $fields['uid'];
-            $oCriteria = new Criteria();
-            $oCriteria->clearSelectColumns();
-            $oCriteria->addAsColumn($fieldUidName, ContentPeer::CON_ID);
-            $oCriteria->addSelectColumn(ContentPeer::CON_PARENT);
-            $oCriteria->addSelectColumn(ContentPeer::CON_CATEGORY);
-            $oCriteria->addSelectColumn(ContentPeer::CON_VALUE);
-            $oCriteria->add(ContentPeer::CON_CATEGORY, $fields['fields'], Criteria::IN);
-            $oCriteria->add(ContentPeer::CON_LANG, $lang);
-            $oDataset = ContentPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $methods = $fields['methods'];
-            while ($oDataset->next()) {
-                $row = $oDataset->getRow();
-                $fieldName = $row['CON_CATEGORY'];
-                $fieldName = isset($fields['alias']) && isset($fields['alias'][$fieldName]) ? $fields['alias'][$fieldName] : $fieldName;
-                unset($row['CON_CATEGORY']);
-                $row[$fieldName] = $row['CON_VALUE'];
-                unset($row['CON_VALUE']);
-                $oTable = new $className();
-                $that = array($oTable, $methods['exists']);
-                $params = array($row[$fieldUidName]);
-                if (isset($row['CON_PARENT']) && $row['CON_PARENT'] != '') {
-                    array_push($params, $row['CON_PARENT']);
-                    $fieldName = isset($fields['alias']) && isset($fields['alias']['CON_PARENT']) ? $fields['alias']['CON_PARENT'] : 'CON_PARENT';
-                    $row[$fieldName] = $row['CON_PARENT'];
-                }
-                unset($row['CON_PARENT']);
-                if (call_user_func_array($that, $params)) {
-                    if (isset($methods['update'])) {
-                        $fn = $methods['update'];
-                        $fn($row);
-                    } else {
-                        $oTable->update($row);
-                    }
-                }
-            }
-            $classNamePeer = class_exists($className . 'Peer') ? $className . 'Peer' : $fields['peer'];
-            CLI::logging("|--> Add content data in table " . $classNamePeer::TABLE_NAME . "\n");
-        } catch (Exception $e) {
-            throw ($e);
+        $sql = "UPDATE " . $tableName . " AS T";
+        $i = 0;
+        foreach ($fields['fields'] as $field) {
+            $i++;
+            $tableAlias = "C" . $i;
+            $sql .= " LEFT JOIN CONTENT " . $tableAlias . " ON (";
+            $sql .= $tableAlias . ".CON_CATEGORY = '" . $field . "' AND ";
+            $sql .= $tableAlias . ".CON_ID = T." . $fields['uid'] . " AND ";
+            $sql .= $tableAlias . ".CON_LANG = '" . $lang . "')";
         }
+        $sql .= ' SET ';
+        $i = 0;
+        foreach ($fields['fields'] as $field) {
+            $i++;
+            $tableAlias = "C" . $i;
+            $fieldName = !empty($fields['alias'][$field]) ? $fields['alias'][$field] : $field;
+            $sql .= $fieldName . " = " . $tableAlias . ".CON_VALUE, ";
+        }
+        $sql = rtrim($sql, ', ');
+        return $sql;
     }
 
     /**
-     * Migration
+     * Migrate from "CONTENT" table to the corresponding object tables
      *
-     * @param $workspace
-     * @param mixed|string $lang
+     * @param string $lang
+     * @param array $blackList
+     *
      * @return array
+     *
+     * @throws Exception
      */
-    public function migrateContentRun($workspace, $lang = SYS_LANG, $blackList = array())
+    public function migrateContentRun($lang = SYS_LANG, $blackList = [])
     {
         if ((!class_exists('Memcache') || !class_exists('Memcached')) && !defined('MEMCACHED_ENABLED')) {
             define('MEMCACHED_ENABLED', false);
         }
         $content = $this->getListContentMigrateTable();
+        $contentQueries = [];
 
         foreach ($content as $className => $fields) {
             if (!in_array($className, $blackList)) {
-                $this->migrateContentWorkspace($className, $fields, $lang);
+                // Build class peer name
+                if (class_exists($className . 'Peer')) {
+                    $classNamePeer = $className . 'Peer';
+                } else {
+                    $classNamePeer = $fields['peer'];
+                }
+
+                // Build the query
+                $query = $this->generateUpdateFromContent($classNamePeer::TABLE_NAME, $fields, $lang);
+
+                // Instantiate the class to execute the query in background
+                $contentQueries[] = new RunProcessUpgradeQuery($this->name, $query);
+
+                // Add class to the control array
                 $blackList[] = $className;
             }
         }
+        // Run queries in multiple threads
+        $processesManager = new ProcessesManager($contentQueries);
+        $processesManager->run();
+
+        // If exists an error throw an exception
+        if (!empty($processesManager->getErrors())) {
+            $errorMessage = '';
+            foreach ($processesManager->getErrors() as $error) {
+                $errorMessage .= $error['rawAnswer'] . PHP_EOL;
+            }
+            throw new Exception($errorMessage);
+        }
+
         return $blackList;
     }
 
-    public function cleanTokens($workspace, $lang = SYS_LANG)
+    /**
+     * Clean the expired access and refresh tokens
+     */
+    public function cleanTokens()
     {
         $this->initPropel(true);
         $oCriteria = new Criteria();
@@ -3644,13 +3904,6 @@ class WorkspaceTools
         CLI::logging($message);
     }
 
-    public function upgradeConfiguration()
-    {
-        $conf = new Configurations();
-        $conf->aConfig = 'neoclassic';
-        $conf->saveConfig('SKIN_CRON', '');
-    }
-
     public function upgradeAuditLog($workspace)
     {
         $conf = new Configurations();
@@ -3663,7 +3916,10 @@ class WorkspaceTools
         }
     }
 
-    public function migrateSelfServiceRecordsRun($workspace)
+    /**
+     * Migrate the concatenated strings with UIDs from groups to the table "APP_ASSIGN_SELF_SERVICE_VALUE_GROUP"
+     */
+    public function migrateSelfServiceRecordsRun()
     {
         // Initializing
         $this->initPropel(true);
@@ -3710,7 +3966,10 @@ class WorkspaceTools
         CLI::logging("   Migrating Self-Service by Value Cases Done \n");
     }
 
-    public function migratePopulateIndexingACV($workspace)
+    /**
+     * Populate new fields used for avoiding the use of the "APP_CACHE_VIEW" table
+     */
+    public function migratePopulateIndexingACV()
     {
         // Migrating and populating new indexes
         CLI::logging("-> Migrating an populating indexing for avoiding the use of table APP_CACHE_VIEW Start \n");
@@ -3908,7 +4167,6 @@ class WorkspaceTools
         $con->commit();
 
         // Populating TAS.TAS_TITLE with BPMN_EVENT.EVN_NAME
-        /*----------------------------------********---------------------------------*/
 
         // Populating PRO_ID, USR_ID IN LIST TABLES
         CLI::logging("->   Populating PRO_ID, USR_ID at LIST_* \n");
@@ -3956,9 +4214,10 @@ class WorkspaceTools
      * It populates the WEB_ENTRY table for the classic processes, this procedure
      * is done to verify the execution of php files generated when the WebEntry
      * is configured.
-     * @param type $workSpace
+     *
+     * @param bool $force
      */
-    public function updatingWebEntryClassicModel($workSpace, $force = false)
+    public function updatingWebEntryClassicModel($force = false)
     {
         //We obtain from the configuration the list of proUids obtained so that
         //we do not go through again.
@@ -4054,8 +4313,9 @@ class WorkspaceTools
 
     /**
      * Updating triggers
-     * @param $flagRecreate
-     * @param $lang
+     *
+     * @param bool $flagRecreate
+     * @param string $lang
      */
     public function updateTriggers($flagRecreate, $lang)
     {
@@ -4064,6 +4324,8 @@ class WorkspaceTools
     }
 
     /**
+     * Migrate the data of the "plugin.singleton" file to the "PLUGIN_REGISTRY" table
+     *
      * @param $workspace
      */
     public function migrateSingleton($workspace)
@@ -4109,14 +4371,11 @@ class WorkspaceTools
     }
 
     /**
-     * Updating framework directory structure
+     * Check/Create framework's directories
      *
      */
-    private function updateFrameworkPaths($workSpace = null)
+    public function checkFrameworkPaths()
     {
-        if ($workSpace === null) {
-            $workSpace = config("system.workspace");
-        }
         $paths = [
             PATH_DATA . 'framework' => 0770,
             PATH_DATA . 'framework' . DIRECTORY_SEPARATOR . 'cache' => 0770,
@@ -4213,7 +4472,6 @@ class WorkspaceTools
 
     }
 
-    /*----------------------------------********---------------------------------*/
 
     /**
      * Upgrade APP_ASSIGN_SELF_SERVICE_VALUE_GROUP and GROUP_USER tables.
@@ -4323,5 +4581,64 @@ class WorkspaceTools
                 $pmDynaform->synchronizeInputDocument($process['PRO_UID'], $inputDocument);
             }
         }
+    }
+
+    /**
+     * Delete the triggers MySQL that causes performance issues in the upgrade process
+     */
+    public function deleteTriggersMySql($triggersToDelete)
+    {
+        // Initialize Propel
+        $this->initPropel(true);
+        $con = Propel::getConnection('workflow');
+
+        // Get statement instance
+        $stmt = $con->createStatement();
+
+        // Get MySQL DB instance class
+        $dbInstance = $this->getDatabase();
+
+        // Remove triggers MySQL
+        foreach ($triggersToDelete as $triggerName) {
+            $stmt->executeQuery($dbInstance->getDropTrigger($triggerName));
+        }
+    }
+
+    /**
+     * Delete indexes of specific tables
+     *
+     * @param array $tables
+     */
+    public function deleteIndexes($tables)
+    {
+        // Get MySQL DB instance class
+        $database = $this->getDatabase();
+
+        foreach ($tables as $table) {
+            // Get all indexes of the table
+            $indexes = $database->executeQuery($database->generateTableIndexSQL($table));
+            $indexesDeleted = [];
+            foreach ($indexes as $index) {
+                if ($index['Key_name'] != 'PRIMARY') {
+                    if (!in_array($index['Key_name'], $indexesDeleted)) {
+                        // Remove index
+                        $database->executeQuery($database->generateDropKeySQL($table, $index['Key_name']));
+                        $indexesDeleted[] = $index['Key_name'];
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Execute a query, used internally for the upgrade process
+     *
+     * @param string $query
+     * @param bool $rbac
+     */
+    public function upgradeQuery($query, $rbac)
+    {
+        $database = $this->getDatabase($rbac);
+        $database->executeQuery($query, true);
     }
 }

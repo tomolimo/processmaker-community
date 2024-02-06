@@ -76,11 +76,11 @@ class DynaformHandler
     }
 
     /**
-     * Function __cloneEmpty
+     * Function cloneEmpty
      * @access public
      * @return void
      */
-    public function __cloneEmpty()
+    public function cloneEmpty()
     {
         $xPath = new DOMXPath($this->dom);
         $nodeList = $xPath->query('/dynaForm/*');

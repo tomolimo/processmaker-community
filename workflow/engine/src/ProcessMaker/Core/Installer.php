@@ -297,7 +297,6 @@ class Installer
             $this->log("Write: " . $db_file . "  => " . ((!$ff) ? $ff : "OK") . "\n", $ff === false);
             fclose($fp);
 
-            /*----------------------------------********---------------------------------*/
 
             //Set data
             $this->setPartner();

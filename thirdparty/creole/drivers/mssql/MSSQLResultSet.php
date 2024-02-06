@@ -171,10 +171,12 @@ class MSSQLResultSet extends ResultSetCommon implements ResultSet
     /**
      * @see ResultSet::close()
      */
-    function close()
+    public function close()
     {
         if (extension_loaded('sqlsrv')) {
-            $ret = @sqlsrv_free_stmt($this->result);
+            if (is_resource($this->result)) {
+                $ret = @sqlsrv_free_stmt($this->result);
+            }
         } else {
             $ret = @mssql_free_result($this->result);
         }

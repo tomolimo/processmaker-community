@@ -737,10 +737,12 @@ function sortContent()
 
 function openPMFolder()
 {
+    $oPMFolder = new AppFolder();
+    $rootFolder = "/";
     $WIDTH_PANEL = 350;
     $folderContent = $oPMFolder->getFolderList($_POST ['folderID'] != '0' ?
         $_POST ['folderID'] == 'NA' ? "" : $_POST ['folderID'] : $rootFolder);
-    //krumo($folderContent);
+
     if (! is_array($folderContent)) {
         echo $folderContent;
         exit();
@@ -750,51 +752,49 @@ function openPMFolder()
     $tree->name = 'DMS';
     $tree->nodeType = "blank";
 
-    //$tree->width="350px";
     $tree->value = '';
     $tree->showSign = false;
 
     $i = 0;
-    foreach ($folderContent as $key => $obj) {
+    foreach ($folderContent['folders'] as $key => $obj) {
         $i ++;
-        //if ($obj->item_type=="F") {
 
         $RowClass = ($i % 2 == 0) ? 'Row1' : 'Row2';
         $id_delete = G::LoadTranslation('ID_DELETE');
         $id_edit = G::LoadTranslation('ID_EDIT');
 
-        $htmlGroup = <<<GHTML
-        <table cellspacing='0' cellpadding='0' border='1' style='border:0px;' width="100%" class="pagedTable">
-        <tr id="{$i}"  onmouseout="setRowClass(this, '{$RowClass}')" onmouseover="setRowClass(this, 'RowPointer')"
-        class="{$RowClass}" style="cursor:hand">
-        <td width='' class='treeNode' style='border:0px;background-color:transparent;'><a href="#"
-        onclick="focusRow(this, 'Selected');openPMFolder('{$obj['FOLDER_UID']}','{$_POST['rootfolder']}');">
-        <img src="/images/folderV2.gif" border = "0" valign="middle" />&nbsp;{$obj['FOLDER_NAME']}</a>
-        <a href="#" onclick="deletePMFolder('{$obj['FOLDER_UID']}','{$_POST['rootfolder']}');">&nbsp; {$id_delete}</a>
+        $htmlGroup = "
+        <table cellspacing='0' cellpadding='0' border='1' style='border:0px;' width=\"100%\" class=\"pagedTable\">
+        <tr id=\"{$i}\"  onmouseout=\"setRowClass(this, '{$RowClass}')\" onmouseover=\"setRowClass(this, 'RowPointer')\"
+        class=\"{$RowClass}\" style=\"cursor:hand\">
+        <td width='' class='treeNode' style='border:0px;background-color:transparent;'><a href=\"#\"
+        onclick=\"focusRow(this, 'Selected');openPMFolder('{$obj['FOLDER_UID']}','{$_POST['rootfolder']}');\">
+        <img src=\"/images/folderV2.gif\" border = \"0\" valign=\"middle\" />&nbsp;{$obj['FOLDER_NAME']}</a>
+        <a href=\"#\" onclick=\"deletePMFolder('{$obj['FOLDER_UID']}','{$_POST['rootfolder']}');\">&nbsp; {$id_delete}</a>
         </td>
         </tr>
         </table>
-        <div id="child_{$obj['FOLDER_UID']}"></div>
-        GHTML;
+        <div id=\"child_{$obj['FOLDER_UID']}\"></div>
+        ";
 
         $ch = $tree->addChild ($key, $htmlGroup, array ('nodeType' => 'child'));
         $ch->point = ' ';
-        }
-        $RowClass = ($i % 2 == 0) ? 'Row1' : 'Row2';
-        $key = 0;
-        if ($_POST ['folderID'] == '0') {
-            $notInFolderLabel = G::LoadTranslation ('ID_NOT_IN_FOLDER');
-            $htmlGroup = <<<GHTML
-        <table cellspacing='0' cellpadding='0' border='1' style='border:0px;' width="100%" class="pagedTable">
-        <tr id="{$i}" onclick="focusRow(this, 'Selected');openPMFolder('NA');"
-        onmouseout="setRowClass(this, '{$RowClass}')" onmouseover="setRowClass(this, 'RowPointer')" class="{$RowClass}">
-        <td width='' class='treeNode' style='border:0px;background-color:transparent;'><a href="#" onclick="">
-        <img src="/images/folderV2.gif" border = "0" valign="middle" />&nbsp;- {$notInFolderLabel} -</a>&nbsp;</td>
+    }
+    $RowClass = ($i % 2 == 0) ? 'Row1' : 'Row2';
+    $key = 0;
+    if ($_POST ['folderID'] == '0') {
+        $notInFolderLabel = G::LoadTranslation ('ID_NOT_IN_FOLDER');
+        $htmlGroup = "
+        <table cellspacing='0' cellpadding='0' border='1' style='border:0px;' width=\"100%\" class=\"pagedTable\">
+        <tr id=\"{$i}\" onclick=\"focusRow(this, 'Selected');openPMFolder('NA');\"
+        onmouseout=\"setRowClass(this, '{$RowClass}')\" onmouseover=\"setRowClass(this, 'RowPointer')\" class=\"{$RowClass}\">
+        <td width='' class='treeNode' style='border:0px;background-color:transparent;'><a href=\"#\" onclick=\"\">
+        <img src=\"/images/folderV2.gif\" border = \"0\" valign=\"middle\" />&nbsp;- {$notInFolderLabel} -</a>&nbsp;</td>
 
         </tr>
         </table>
-        <div id="child_NA"></div>
-GHTML;
+        <div id=\"child_NA\"></div>
+        ";
 
         $ch = $tree->addChild($key, $htmlGroup, array('nodeType' => 'child'));
         $ch->point = ' ';

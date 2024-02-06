@@ -15,14 +15,11 @@ require_once __DIR__ . '/../../bootstrap/app.php';
 AppEvent::getAppEvent();
 
 register_shutdown_function(
-    create_function(
-        "",
-        "
-        if (class_exists(\"Propel\")) {
+    function () {
+        if (class_exists('Propel')) {
             Propel::close();
         }
-        "
-    )
+    }
 );
 
 ini_set("session.cookie_httponly", 1);

@@ -98,7 +98,12 @@ class MySQLiResultSet extends ResultSetCommon implements ResultSet {
      */
     public function close()
     {
-        if (is_resource($this->result)) {
+        /**
+         * This is not a definitive solution because there are several behaviors 
+         * reported to use the "mysqli_free_result()" function, see 
+         * https://bugs.php.net/bug.php?id=63486
+         */
+        if ($this->result instanceof mysqli_result && isset($this->result->lengths)) {
             @mysqli_free_result($this->result);
         }
         $this->fields = array();

@@ -5,14 +5,17 @@
         this.parent = options.parentObject;
         this.onSelect = new Function();
         this.onSetProperty = new Function();
-        if (options.onSelect)
+        if (options.onSelect) {
             this.onSelect = options.onSelect;
+        }
         this.onRemove = new Function();
         this.disabled = false;
         FormItem.prototype.init.call(this);
     };
     FormItem.prototype.init = function () {
-        var that = this, html, label = "";
+        var that = this,
+            html,
+            label = "";
         switch (this.render) {
             case FormDesigner.main.TypesControl.text:
                 label = "<span class='fd-gridForm-field-label'></span>";
@@ -129,9 +132,9 @@
         });
         this.properties = new FormDesigner.main.Properties(this.render, this.html, that);
         this.properties.onClick = function (property) {
-            var a, 
-                b, 
-                fields, 
+            var a,
+                b,
+                fields,
                 dialogCreateVariable,
                 dialog;
             if (property === "formula") {
@@ -368,6 +371,7 @@
                 });
             }
         };
+        this.createDeprecatedIcon();
     };
     FormItem.prototype.getData = function () {
         var data = {}, property, prop = this.properties.get();
@@ -477,6 +481,38 @@
                     }
                     break;
             }
+        }
+    };
+    /**
+     * Create deprecation icon.
+     */
+    FormItem.prototype.createDeprecatedIcon = function () {
+        this.deprecatedIcon = $("<div class='mafe-deprecated-control'></div>");
+        this.deprecatedIcon.attr('title', "");
+        this.deprecatedIcon.hide();
+        this.deprecatedIcon.tooltip({
+            content: FormDesigner.DEPRECATION_TEXT,
+            close: function (event, ui) {
+                ui.tooltip.hover(function () {
+                    $(this).stop(true).fadeTo(400, 1);
+                }, function () {
+                    $(this).fadeOut("400", function () {
+                        $(this).remove();
+                    });
+                });
+            }
+        });
+        this.html.prepend(this.deprecatedIcon);
+    };
+    /**
+     * Enable or disable deprecated icon.
+     * @param {boolean} status
+     */
+    FormItem.prototype.deprecated = function (status) {
+        if (status === true) {
+            this.deprecatedIcon.show();
+        } else {
+            this.deprecatedIcon.hide();
         }
     };
     FormDesigner.extendNamespace('FormDesigner.main.FormItem', FormItem);

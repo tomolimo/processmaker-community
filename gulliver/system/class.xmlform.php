@@ -4509,7 +4509,7 @@ class XmlFormFieldDate extends XmlFormFieldSimpleText
         //$this->defaultValue = G::replaceDataField( $this->defaultValue, $owner->values);
         $id = "form[$this->name]";
 
-        return $this->__draw_widget($id, $value, $owner);
+        return $this->draw_widget($id, $value, $owner);
     }
 
     /**
@@ -4546,7 +4546,7 @@ class XmlFormFieldDate extends XmlFormFieldSimpleText
                     $html = '<input ' . $this->NSRequiredValue() . ' class="module_app_input___gray" ' . $this->NSGridType() . ' id="form[' . $owner->name . '][' . $r . '][' . $this->name . ']" name="form[' . $owner->name . '][' . $r . '][' . $this->name . ']" type ="text" size="' . $this->size . '" maxlength="' . $this->maxLength . '" value="' . $this->htmlentities($v, ENT_COMPAT, 'utf-8') . '" pm:required="' . $isRequired . '" style="display:none;' . htmlentities($this->style, ENT_COMPAT, 'utf-8') . '" />' . htmlentities($v, ENT_COMPAT, 'utf-8');
                 } else {
                     $id = 'form[' . $owner->name . '][' . $r . '][' . $this->name . ']';
-                    $html = $this->__draw_widget($id, $v, $owner, true);
+                    $html = $this->draw_widget($id, $v, $owner, true);
                 }
             } else {
                 $html = $v;
@@ -4565,7 +4565,7 @@ class XmlFormFieldDate extends XmlFormFieldSimpleText
      * @param $owner
      * @return <String>
      */
-    public function __draw_widget($pID, $value, $owner = '', $inGrid = false)
+    public function draw_widget($pID, $value, $owner = '', $inGrid = false)
     {
         $startDate = G::replaceDataField($this->startDate, $owner->values);
         $endDate = G::replaceDataField($this->endDate, $owner->values);
@@ -4957,7 +4957,7 @@ class XmlFormFieldDate5 extends XmlFormFieldSimpleText
         }
         //$this->defaultValue = G::replaceDataField( $this->defaultValue, $owner->values);
         $id = "form[$this->name]";
-        return $this->__draw_widget($id, $value, $owner);
+        return $this->draw_widget($id, $value, $owner);
     }
 
     /**
@@ -4976,7 +4976,7 @@ class XmlFormFieldDate5 extends XmlFormFieldSimpleText
             $v = ($v != '') ? G::replaceDataField($v, $owner->values) : $this->defaultValue;
             if (!$onlyValue) {
                 $id = 'form[' . $owner->name . '][' . $r . '][' . $this->name . ']';
-                $html = $this->__draw_widget($id, $v, $owner);
+                $html = $this->draw_widget($id, $v, $owner);
             } else {
                 $html = $v;
             }
@@ -4994,7 +4994,7 @@ class XmlFormFieldDate5 extends XmlFormFieldSimpleText
      * @param $owner
      * @return <String>
      */
-    public function __draw_widget($pID, $value, $owner = '')
+    public function draw_widget($pID, $value, $owner = '')
     {
 
         /*for deprecated mask definitions...*/

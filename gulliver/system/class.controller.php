@@ -77,12 +77,13 @@ class Controller
      */
     public function __get($name)
     {
+        $message = 'Undefined property via __get(): ' . $name . ' in ';
         if (array_key_exists($name, $this->__data__)) {
             return $this->__data__[$name];
         }
 
         $trace = debug_backtrace();
-        trigger_error('Undefined property via __get(): ' . $name . ' in ' . $trace[0]['file'] . ' on line ' . $trace[0]['line'], E_USER_NOTICE);
+        trigger_error($message . $trace[0]['file'] . ' on line ' . $trace[0]['line'], E_USER_NOTICE);
         return null;
     }
 
@@ -177,8 +178,8 @@ class Controller
             $this->__request__ = new stdclass();
         }
         if (is_array($data)) {
-            while ($var = each($data)) {
-                $this->__request__->{$var['key']} = $var['value'];
+            foreach ($data as $key => $value) {
+                $this->__request__->{$key} = $value;
             }
         } else {
             $this->__request__ = $data;

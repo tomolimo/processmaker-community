@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\Kernel;
 use Luracast\Restler\Format\UploadFormat;
 use Luracast\Restler\RestException;
 use Maveriks\Util;
+use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Services;
@@ -428,16 +429,19 @@ class WebApplication
     }
 
     /**
-     * Define constants, setup configuration and initialize Laravel
+     * Define constants, setup configuration and initialize Laravel.
+     * The value of $executeSetupPlugin must always be true for a web environment.
      *
      * @param string $workspace
+     * @param boolean $executeSetupPlugin
      * @return bool
      * @throws Exception
      *
      * @see run()
      * @see workflow/engine/bin/cli.php
+     * @see \App\Console\Commands\AddParametersTrait
      */
-    public function loadEnvironment($workspace = "")
+    public function loadEnvironment($workspace = "", $executeSetupPlugin = true)
     {
         define("PATH_SEP", DIRECTORY_SEPARATOR);
 
@@ -540,6 +544,7 @@ class WebApplication
 
         config(['app.timezone' => TIME_ZONE]);
 
+        // Define the language
         Bootstrap::setLanguage();
 
         Bootstrap::LoadTranslationObject((defined("SYS_LANG")) ? SYS_LANG : "en");
@@ -612,13 +617,20 @@ class WebApplication
 
         \Propel::init(PATH_CONFIG . "databases.php");
 
+        /**
+         * JobsManager
+         */
+        JobsManager::getSingleton()->init();
+
         $oPluginRegistry = PluginRegistry::loadSingleton();
         $attributes = $oPluginRegistry->getAttributes();
         Bootstrap::LoadTranslationPlugins(defined('SYS_LANG') ? SYS_LANG : "en", $attributes);
         // Initialization functions plugins
         $oPluginRegistry->init();
         //get and setup enabled plugins
-        $oPluginRegistry->setupPlugins();
+        if ($executeSetupPlugin === true) {
+            $oPluginRegistry->setupPlugins();
+        }
 
         return true;
     }

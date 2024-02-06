@@ -75,6 +75,8 @@ class UsersPropertiesMapBuilder
 
         $tMap->addColumn('USR_SETTING_DESIGNER', 'UsrSettingDesigner', 'string', CreoleTypes::LONGVARCHAR, false, null);
 
+        $tMap->addColumn('PMDYNAFORM_FIRST_TIME', 'PmdynaformFirstTime', 'string', CreoleTypes::CHAR, false, 1);
+
     } // doBuild()
 
 } // UsersPropertiesMapBuilder

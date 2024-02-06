@@ -94,11 +94,21 @@ class MultipleFilesBackup
         }
     }
 
-    /* Restore from file(s) commpressed by letsBackup function, into a temporary directory
-     *  @ filename     got the name and path of the compressed file(s), if there are many files with file extention as a numerical series, the extention should be discriminated.
-     *  @ srcWorkspace contains the workspace to be restored.
-     *  @ dstWorkspace contains the workspace to be overwriting.
-     *  @ overwrite    got the option true if the workspace will be overwrite.
+    /**
+     * Restore from file(s) compressed by letsBackup function, into a temporary directory
+     *
+     * @param string $filename Got the name and path of the compressed file(s), if there are many files with file extention as a numerical series, the extention should be discriminated.
+     * @param string $srcWorkspace Contains the workspace to be restored.
+     * @param bool $dstWorkspace Contains the workspace to be overwriting.
+     * @param bool $overwrite Got the option true if the workspace will be overwrite.
+     *
+     * @throws Exception
+     *
+     * @see workflow/engine/bin/tasks/cliWorkspaces.php::run_workspace_restore()
+     *
+     * @link https://wiki.processmaker.com/3.0/Backing_up_and_Restoring_ProcessMaker#RestoringWorkspaces
+     *
+     * @deprecated Method outdated, only run the upgrade of APP_CACHE_VIEW table
      */
     public static function letsRestore($filename, $srcWorkspace, $dstWorkspace = null, $overwrite = true)
     {

@@ -33,7 +33,7 @@ class GlobResourceTest extends TestCase
         $paths = iterator_to_array($resource);
 
         $file = $dir.'/Resource'.\DIRECTORY_SEPARATOR.'ConditionalClass.php';
-        $this->assertEquals(array($file => new \SplFileInfo($file)), $paths);
+        $this->assertEquals([$file => new \SplFileInfo($file)], $paths);
         $this->assertInstanceOf('SplFileInfo', current($paths));
         $this->assertSame($dir, $resource->getPrefix());
 
@@ -42,9 +42,63 @@ class GlobResourceTest extends TestCase
         $paths = iterator_to_array($resource);
 
         $file = $dir.\DIRECTORY_SEPARATOR.'Resource'.\DIRECTORY_SEPARATOR.'ConditionalClass.php';
-        $this->assertEquals(array($file => $file), $paths);
+        $this->assertEquals([$file => $file], $paths);
         $this->assertInstanceOf('SplFileInfo', current($paths));
         $this->assertSame($dir, $resource->getPrefix());
+    }
+
+    public function testIteratorForExclusionDoesntIterateThroughSubfolders()
+    {
+        $dir = \dirname(__DIR__).\DIRECTORY_SEPARATOR.'Fixtures';
+        $resource = new GlobResource($dir, \DIRECTORY_SEPARATOR.'Exclude', true, true);
+
+        $paths = iterator_to_array($resource);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude';
+        $this->assertArrayHasKey($file, $paths);
+        $this->assertCount(1, $paths);
+    }
+
+    public function testIteratorSkipsFoldersForGivenExcludedPrefixes()
+    {
+        $dir = \dirname(__DIR__).\DIRECTORY_SEPARATOR.'Fixtures';
+        $resource = new GlobResource($dir, '/*Exclude*', true, false, [$dir.\DIRECTORY_SEPARATOR.'Exclude' => true]);
+
+        $paths = iterator_to_array($resource);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude'.\DIRECTORY_SEPARATOR.'AnExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude'.\DIRECTORY_SEPARATOR.'ExcludeToo'.\DIRECTORY_SEPARATOR.'AnotheExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
+    }
+
+    public function testIteratorSkipsSubfoldersForGivenExcludedPrefixes()
+    {
+        $dir = \dirname(__DIR__).\DIRECTORY_SEPARATOR.'Fixtures';
+        $resource = new GlobResource($dir, '/*Exclude/*', true, false, [$dir.\DIRECTORY_SEPARATOR.'Exclude' => true]);
+
+        $paths = iterator_to_array($resource);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude'.\DIRECTORY_SEPARATOR.'AnExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude'.\DIRECTORY_SEPARATOR.'ExcludeToo'.\DIRECTORY_SEPARATOR.'AnotheExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
+    }
+
+    public function testIteratorSkipsFoldersWithForwardSlashForGivenExcludedPrefixes()
+    {
+        $dir = \dirname(__DIR__).\DIRECTORY_SEPARATOR.'Fixtures';
+        $resource = new GlobResource($dir, '/*Exclude*', true, false, [$dir.'/Exclude' => true]);
+
+        $paths = iterator_to_array($resource);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude/AnExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
+
+        $file = $dir.\DIRECTORY_SEPARATOR.'Exclude'.\DIRECTORY_SEPARATOR.'ExcludeToo'.\DIRECTORY_SEPARATOR.'AnotheExcludedFile.txt';
+        $this->assertArrayNotHasKey($file, $paths);
     }
 
     public function testIsFreshNonRecursiveDetectsNewFile()

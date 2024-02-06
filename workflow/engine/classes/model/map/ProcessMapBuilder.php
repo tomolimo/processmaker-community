@@ -81,6 +81,8 @@ class ProcessMapBuilder
 
         $tMap->addColumn('PRO_STATUS', 'ProStatus', 'string', CreoleTypes::VARCHAR, true, 20);
 
+        $tMap->addColumn('PRO_STATUS_ID', 'ProStatusId', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addColumn('PRO_TYPE_DAY', 'ProTypeDay', 'string', CreoleTypes::CHAR, true, 1);
 
         $tMap->addColumn('PRO_TYPE', 'ProType', 'string', CreoleTypes::VARCHAR, true, 256);
@@ -146,6 +148,8 @@ class ProcessMapBuilder
         $tMap->addColumn('PRO_ITEE', 'ProItee', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addColumn('PRO_ACTION_DONE', 'ProActionDone', 'string', CreoleTypes::LONGVARCHAR, false, null);
+
+        $tMap->addColumn('CATEGORY_ID', 'CategoryId', 'int', CreoleTypes::INTEGER, false, null);
 
         $tMap->addValidator('PRO_TIMEUNIT', 'validValues', 'propel.validator.ValidValuesValidator', 'WEEKS|MONTHS|DAYS|HOURS|MINUTES', 'Please select a valid Time Unit.');
 

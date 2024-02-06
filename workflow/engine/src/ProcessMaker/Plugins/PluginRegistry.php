@@ -1502,6 +1502,7 @@ class PluginRegistry
                 return $oMenuFromPlugin[$strMenuName];
             }
         }
+        return [];
     }
 
     /**

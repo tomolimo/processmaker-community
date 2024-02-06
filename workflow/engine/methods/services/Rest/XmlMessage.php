@@ -22,7 +22,7 @@ class XmlMessage extends FormatedMessage
     /**
      * Call the parent Curl initialization and set the type of the message
      */
-    public function XmlMessage ()
+    public function __construct()
     {
         parent::__construct();
         $this->type = "xml";

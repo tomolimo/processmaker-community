@@ -17,13 +17,13 @@ class xmlformTemplate extends Smarty
     /**
      * Function xmlformTemplate
      *
-     * @author David S. Callizaya S. <davidsantos@colosa.com>
-     * @access public
      * @param string form
      * @param string templateFile
+     *
      * @return string
+     * @access public
      */
-    public function xmlformTemplate (&$form, $templateFile)
+    public function __construct(&$form, $templateFile)
     {
         $this->template_dir = PATH_XMLFORM;
         $this->compile_dir = PATH_SMARTY_C;

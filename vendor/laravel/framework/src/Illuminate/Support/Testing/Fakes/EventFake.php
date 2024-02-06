@@ -2,30 +2,79 @@
 
 namespace Illuminate\Support\Testing\Fakes;
 
+use Closure;
+use Illuminate\Support\Arr;
 use PHPUnit\Framework\Assert as PHPUnit;
 use Illuminate\Contracts\Events\Dispatcher;
 
 class EventFake implements Dispatcher
 {
     /**
-     * All of the events that have been dispatched keyed by type.
+     * The original event dispatcher.
+     *
+     * @var \Illuminate\Contracts\Events\Dispatcher
+     */
+    protected $dispatcher;
+
+    /**
+     * The event types that should be intercepted instead of dispatched.
+     *
+     * @var array
+     */
+    protected $eventsToFake;
+
+    /**
+     * All of the events that have been intercepted keyed by type.
      *
      * @var array
      */
     protected $events = [];
 
     /**
+     * Create a new event fake instance.
+     *
+     * @param  \Illuminate\Contracts\Events\Dispatcher  $dispatcher
+     * @param  array|string  $eventsToFake
+     * @return void
+     */
+    public function __construct(Dispatcher $dispatcher, $eventsToFake = [])
+    {
+        $this->dispatcher = $dispatcher;
+
+        $this->eventsToFake = Arr::wrap($eventsToFake);
+    }
+
+    /**
      * Assert if an event was dispatched based on a truth-test callback.
      *
      * @param  string  $event
-     * @param  callable|null  $callback
+     * @param  callable|int|null  $callback
      * @return void
      */
     public function assertDispatched($event, $callback = null)
     {
+        if (is_int($callback)) {
+            return $this->assertDispatchedTimes($event, $callback);
+        }
+
         PHPUnit::assertTrue(
             $this->dispatched($event, $callback)->count() > 0,
             "The expected [{$event}] event was not dispatched."
+        );
+    }
+
+    /**
+     * Assert if a event was dispatched a number of times.
+     *
+     * @param  string  $event
+     * @param  int  $times
+     * @return void
+     */
+    public function assertDispatchedTimes($event, $times = 1)
+    {
+        PHPUnit::assertTrue(
+            ($count = $this->dispatched($event)->count()) === $times,
+            "The expected [{$event}] event was dispatched {$count} times instead of {$times} times."
         );
     }
 
@@ -86,7 +135,7 @@ class EventFake implements Dispatcher
      */
     public function listen($events, $listener)
     {
-        //
+        $this->dispatcher->listen($events, $listener);
     }
 
     /**
@@ -97,7 +146,7 @@ class EventFake implements Dispatcher
      */
     public function hasListeners($eventName)
     {
-        //
+        return $this->dispatcher->hasListeners($eventName);
     }
 
     /**
@@ -120,7 +169,7 @@ class EventFake implements Dispatcher
      */
     public function subscribe($subscriber)
     {
-        //
+        $this->dispatcher->subscribe($subscriber);
     }
 
     /**
@@ -159,7 +208,33 @@ class EventFake implements Dispatcher
     {
         $name = is_object($event) ? get_class($event) : (string) $event;
 
-        $this->events[$name][] = func_get_args();
+        if ($this->shouldFakeEvent($name, $payload)) {
+            $this->events[$name][] = func_get_args();
+        } else {
+            return $this->dispatcher->dispatch($event, $payload, $halt);
+        }
+    }
+
+    /**
+     * Determine if an event should be faked or actually dispatched.
+     *
+     * @param  string  $eventName
+     * @param  mixed  $payload
+     * @return bool
+     */
+    protected function shouldFakeEvent($eventName, $payload)
+    {
+        if (empty($this->eventsToFake)) {
+            return true;
+        }
+
+        return collect($this->eventsToFake)
+            ->filter(function ($event) use ($eventName, $payload) {
+                return $event instanceof Closure
+                            ? $event($eventName, $payload)
+                            : $event === $eventName;
+            })
+            ->isNotEmpty();
     }
 
     /**

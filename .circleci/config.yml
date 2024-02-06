@@ -1,0 +1,22 @@
+version: 2
+jobs:
+ build:
+   working_directory: ~/processmaker
+   docker:
+     - image: devopsstacks/pm:n225-phpunit
+   steps:         
+     - checkout
+     - run: service mysqld restart
+     - run: yum -y install php71-imap
+     - run: mysql -u root -ppassword -e "create database test;"    
+     - run: mysql -u root -ppassword -e "create database testexternal;"    
+     - run: composer install
+     - run:
+        name: Run Test Units
+        command: |
+          mkdir coverage
+          vendor/phpunit/phpunit/phpunit --testdox-html coverage/result.html --coverage-html coverage  tests/unit/     
+     - store_artifacts:
+          path: coverage
+          destination: coverage
+        

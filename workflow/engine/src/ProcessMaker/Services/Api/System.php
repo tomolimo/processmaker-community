@@ -85,7 +85,6 @@ class System extends Api
     {
         try {
             $enabledFeatures = array();
-            /*----------------------------------********---------------------------------*/
             return $enabledFeatures;
         } catch (\Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));

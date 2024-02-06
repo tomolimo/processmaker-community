@@ -4,8 +4,25 @@ namespace Illuminate\Routing;
 
 use Closure;
 use BadMethodCallException;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 
+/**
+ * @method \Illuminate\Routing\Route get(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route post(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route put(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route delete(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route patch(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route options(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\Route any(string $uri, \Closure|array|string|null $action = null)
+ * @method \Illuminate\Routing\RouteRegistrar as(string $value)
+ * @method \Illuminate\Routing\RouteRegistrar domain(string $value)
+ * @method \Illuminate\Routing\RouteRegistrar middleware(array|string|null $middleware)
+ * @method \Illuminate\Routing\RouteRegistrar name(string $value)
+ * @method \Illuminate\Routing\RouteRegistrar namespace(string $value)
+ * @method \Illuminate\Routing\RouteRegistrar prefix(string  $prefix)
+ * @method \Illuminate\Routing\RouteRegistrar where(array  $where)
+ */
 class RouteRegistrar
 {
     /**
@@ -37,7 +54,7 @@ class RouteRegistrar
      * @var array
      */
     protected $allowedAttributes = [
-        'as', 'domain', 'middleware', 'name', 'namespace', 'prefix',
+        'as', 'domain', 'middleware', 'name', 'namespace', 'prefix', 'where',
     ];
 
     /**
@@ -75,7 +92,7 @@ class RouteRegistrar
             throw new InvalidArgumentException("Attribute [{$key}] does not exist.");
         }
 
-        $this->attributes[array_get($this->aliases, $key, $key)] = $value;
+        $this->attributes[Arr::get($this->aliases, $key, $key)] = $value;
 
         return $this;
     }
@@ -86,11 +103,11 @@ class RouteRegistrar
      * @param  string  $name
      * @param  string  $controller
      * @param  array  $options
-     * @return void
+     * @return \Illuminate\Routing\PendingResourceRegistration
      */
     public function resource($name, $controller, array $options = [])
     {
-        $this->router->resource($name, $controller, $this->attributes + $options);
+        return $this->router->resource($name, $controller, $this->attributes + $options);
     }
 
     /**
@@ -159,6 +176,8 @@ class RouteRegistrar
      * @param  string  $method
      * @param  array  $parameters
      * @return \Illuminate\Routing\Route|$this
+     *
+     * @throws \BadMethodCallException
      */
     public function __call($method, $parameters)
     {
@@ -167,9 +186,15 @@ class RouteRegistrar
         }
 
         if (in_array($method, $this->allowedAttributes)) {
+            if ($method === 'middleware') {
+                return $this->attribute($method, is_array($parameters[0]) ? $parameters[0] : $parameters);
+            }
+
             return $this->attribute($method, $parameters[0]);
         }
 
-        throw new BadMethodCallException("Method [{$method}] does not exist.");
+        throw new BadMethodCallException(sprintf(
+            'Method %s::%s does not exist.', static::class, $method
+        ));
     }
 }

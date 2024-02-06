@@ -27,6 +27,9 @@ $mul = substr($UPLOAD_MAX_SIZE, - 1);
 $mul = ($mul == 'M' ? 1048576 : ($mul == 'K' ? 1024 : ($mul == 'G' ? 1073741824 : 1)));
 $uploadMaxSize = (int) $UPLOAD_MAX_SIZE * $mul;
 
+//We need to use the following abbreviations: Bytes, KB, MB, GB
+$maxFileSize = changeAbbreviationOfDirectives(ini_get('upload_max_filesize'));
+
 if ($postMaxSize < $uploadMaxSize) {
     $uploadMaxSize = $postMaxSize;
 }
@@ -41,7 +44,6 @@ if (file_exists($envFile)) {
 }
 
 $languageManagement = 0;
-/*----------------------------------********---------------------------------*/
 
 $arraySystemConfiguration = System::getSystemConfiguration('', '', config("system.workspace"));
 
@@ -53,7 +55,7 @@ $oHeadPublisher->assign('infoMode', true);
 $oHeadPublisher->assign('EDITPROFILE', 1);
 $oHeadPublisher->assign('canEdit', $canEdit);
 $oHeadPublisher->assign('canEditCalendar', $canEditCalendar);
-$oHeadPublisher->assign('MAX_FILES_SIZE', ' (' . $UPLOAD_MAX_SIZE . ') ');
+$oHeadPublisher->assign('MAX_FILES_SIZE', ' (' . $maxFileSize . ') ');
 $oHeadPublisher->assign('MODE', '');
 $oHeadPublisher->assign('SYSTEM_TIME_ZONE', $arraySystemConfiguration['time_zone']);
 $oHeadPublisher->assign('TIME_ZONE_DATA', array_map(function ($value) {

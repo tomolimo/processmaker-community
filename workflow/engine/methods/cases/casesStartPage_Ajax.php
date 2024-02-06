@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * casesStartPage_Ajax.php
+ *
+ * This page define some functions used in the start new case
+ *
+ * @link https://wiki.processmaker.com/3.1/Cases#New_Case
+*/
 use ProcessMaker\Plugins\PluginRegistry;
 
 $filter = new InputFilter();
@@ -228,82 +235,6 @@ function startCase ()
         $aData['message'] = $e->getMessage();
         print_r( G::json_encode( $aData ) );
     }
-}
-
-function getSimpleDashboardData ()
-{
-    $sUIDUserLogged = $_SESSION['USER_LOGGED'];
-
-    $Criteria = new Criteria( 'workflow' );
-
-    $Criteria->clearSelectColumns();
-
-    $Criteria->addSelectColumn( AppCacheViewPeer::PRO_UID );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_UID );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_NUMBER );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_STATUS );
-    $Criteria->addSelectColumn( AppCacheViewPeer::DEL_INDEX );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_TITLE );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_PRO_TITLE );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_TAS_TITLE );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_DEL_PREVIOUS_USER );
-    $Criteria->addSelectColumn( AppCacheViewPeer::DEL_TASK_DUE_DATE );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_UPDATE_DATE );
-    $Criteria->addSelectColumn( AppCacheViewPeer::DEL_PRIORITY );
-    $Criteria->addSelectColumn( AppCacheViewPeer::DEL_DELAYED );
-    $Criteria->addSelectColumn( AppCacheViewPeer::USR_UID );
-    $Criteria->addSelectColumn( AppCacheViewPeer::APP_THREAD_STATUS );
-
-    $Criteria->add( AppCacheViewPeer::APP_STATUS, array ("TO_DO","DRAFT"), CRITERIA::IN );
-    $Criteria->add( AppCacheViewPeer::USR_UID, array ($sUIDUserLogged,""), CRITERIA::IN );
-    $Criteria->add( AppCacheViewPeer::DEL_FINISH_DATE, null, Criteria::ISNULL );
-    //$Criteria->add ( AppCacheViewPeer::APP_THREAD_STATUS, 'OPEN' );
-    $Criteria->add( AppCacheViewPeer::DEL_THREAD_STATUS, 'OPEN' );
-
-    //execute the query
-    $oDataset = AppCacheViewPeer::doSelectRS( $Criteria );
-    $oDataset->setFetchmode( ResultSet::FETCHMODE_ASSOC );
-    $oDataset->next();
-
-    $oProcess = new Process();
-
-    $rows = array ();
-    $processNames = array ();
-    while ($aRow = $oDataset->getRow()) {
-        // G::pr($aRow);
-        if (! isset( $processNames[$aRow['PRO_UID']] )) {
-            $aProcess = $oProcess->load( $aRow['PRO_UID'] );
-            $processNames[$aRow['PRO_UID']] = $aProcess['PRO_TITLE'];
-        }
-
-        if ($aRow['USR_UID'] == "") {
-            $aRow['APP_STATUS'] = "UNASSIGNED";
-        }
-        if (((in_array( $aRow['APP_STATUS'], array ("TO_DO","UNASSIGNED"
-        ) )) && ($aRow['APP_THREAD_STATUS'] == "OPEN")) || ($aRow['APP_STATUS'] == "DRAFT")) {
-            $rows[$processNames[$aRow['PRO_UID']]][$aRow['APP_STATUS']][$aRow['DEL_DELAYED']][] = $aRow['APP_UID'];
-            if (! isset( $rows[$processNames[$aRow['PRO_UID']]][$aRow['APP_STATUS']]['count'] )) {
-                $rows[$processNames[$aRow['PRO_UID']]][$aRow['APP_STATUS']]['count'] = 0;
-            }
-            $rows[$processNames[$aRow['PRO_UID']]][$aRow['APP_STATUS']]['count'] ++;
-        }
-
-        $oDataset->next();
-    }
-    //Generate different groups of data for graphs
-    $rowsResponse = array ();
-    $i = 0;
-    foreach ($rows as $processID => $processInfo) {
-        $i ++;
-        if ($i <= 10) {
-            $rowsResponse['caseStatusByProcess'][] = array ('process' => $processID,'inbox' => isset( $processInfo['TO_DO']['count'] ) ? $processInfo['TO_DO']['count'] : 0,'draft' => isset( $processInfo['DRAFT']['count'] ) ? $processInfo['DRAFT']['count'] : 0,'unassigned' => isset( $processInfo['UNASSIGNED']['count'] ) ? $processInfo['UNASSIGNED']['count'] : 0);
-        }
-    }
-    $rowsResponse['caseDelayed'][] = array ('delayed' => 'On Time','total' => 100);
-    $rowsResponse['caseDelayed'][] = array ('delayed' => 'Delayed','total' => 50
-    );
-
-    print_r( G::json_encode( $rowsResponse ) );
 }
 
 function getRegisteredDashboards ()

@@ -40,7 +40,7 @@
  */
 class IsoLocation extends BaseIsoLocation
 {
-    public function findById($IC_UID, $IS_UID, $IL_UID)
+    public static function findById($IC_UID, $IS_UID, $IL_UID)
     {
         $oCriteria = new Criteria('workflow');
         $oCriteria->addSelectColumn(IsoLocationPeer::IC_UID);

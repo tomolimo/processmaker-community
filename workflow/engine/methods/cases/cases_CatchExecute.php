@@ -60,7 +60,6 @@ $aDelegation = $oAppDelegation->load($sAppUid, $iDelIndex);
 //if there are no user in the delegation row, this case is still in selfservice
 if ($aDelegation['USR_UID'] == "") {
     $oCase->setCatchUser($_SESSION['APPLICATION'], $_SESSION['INDEX'], $_SESSION['USER_LOGGED']);
-    /*----------------------------------********---------------------------------*/
     //changing email labels if the claim comes from gmail
     if (array_key_exists('gmail', $_SESSION) && $_SESSION['gmail'] == 1) {
         die('<script type="text/javascript">

@@ -79,4 +79,3 @@ if (! $sw_file_exists) {
         G::streamFile( $realPath, $bDownload, $oAppDocument->Fields['APP_DOC_FILENAME'] );
     }
 }
-

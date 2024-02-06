@@ -101,7 +101,7 @@ class AppDelay extends BaseAppDelay
      *
      * @return boolean
     */
-    public function isPaused($appUid, $delIndex)
+    public static function isPaused($appUid, $delIndex)
     {
         $criteria = new Criteria('workflow');
         $criteria->add(AppDelayPeer::APP_UID, $appUid);
@@ -199,6 +199,8 @@ class AppDelay extends BaseAppDelay
         if (empty($usrUid)) {
             global $RBAC;
             $usrUid = $RBAC->aUserInfo['USER_INFO']['USR_UID'];
+        }
+        if (empty($usrId)) {
             $u = new Users();
             $usrId = $u->load($usrUid)['USR_ID'];
         }

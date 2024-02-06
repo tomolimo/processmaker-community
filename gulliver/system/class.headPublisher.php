@@ -758,7 +758,7 @@ class headPublisher
         $sjson = $oServerConf->getProperty($keyState);
         if ($sjson !== "") {
             $json = G::json_decode($sjson);
-            if ((is_array($json) || is_object($json)) && sizeof($json)){
+            if (is_iterable($json)) {
                 foreach ($json as $key => $value) {
                     $views[$key] = $value;
                 }

@@ -318,7 +318,7 @@ class Path extends DataType {
             try {
                 $element .= self::resolveFile($project, $pathElement);
             } catch (BuildException $e) {
-                $this->project->log("Dropping path element " . $pathElement 
+                self::$project->log("Dropping path element " . $pathElement 
                     . " as it is not valid relative to the project", 
                     PROJECT_MSG_VERBOSE);
             }

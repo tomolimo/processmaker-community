@@ -8,6 +8,7 @@ use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Foundation\Http\Kernel as Kernel3;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
+use ProcessMaker\Core\System;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,16 +51,7 @@ $app->singleton(
     Handler::class
 );
 
-$app->configureMonologUsing(function ($monolog) use ($app) {
-    $monolog->pushHandler(
-        (new RotatingFileHandler(
-        // Set the log path
-            $app->storagePath() . '/logs/processmaker.log',
-            // Set the number of daily files you want to keep
-            $app->make('config')->get('app.log_max_files', 5)
-        ))->setFormatter(new LineFormatter(null, null, true, true))
-    );
-});
+$app->useStoragePath(System::getPathsInstalled()->pathData);
 
 /*
 |--------------------------------------------------------------------------

@@ -12,7 +12,7 @@ class BzipFile extends TarFile
      * @param string $name
      * @return void
      */
-    public function BzipFile($name)
+    public function __construct($name)
     {
         $this->tar_file($name);
         $this->options['type'] = "bzip";

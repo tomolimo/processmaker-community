@@ -347,6 +347,22 @@ PMDynaform.getEnvironment = function () {
     return resp;
 };
 
+/**
+ * Helper to get user information.
+ * @return {*|{}|string}
+ */
+PMDynaform.getUserInfo = function () {
+    var navigator = window.navigator.userAgent,
+        response;
+    if (navigator === 'formslider-ios' || navigator === 'formslider-android') {
+        response = this.activeProject.userInfo;
+    } else {
+        response = this.activeProject.webServiceManager.getUserInfo();
+        response['language'] = PMDynaform.lang.I18N.currentLanguage;
+    }
+    return response;
+};
+
 String.prototype.capitalize = function () {
     return this.toLowerCase().replace(/(^|\s)([a-z])/g, function (m, p1, p2) {
         return p1 + p2.toUpperCase();
@@ -549,8 +565,8 @@ jQuery.fn.extend({
     },
     addRow: function (data) {
         var field = getFieldById(this.attr("id")) || null, html = [];
-        if (field && field.model.get("type") == "grid") {
-            field.addRow(data);
+        if (field && field.model.get("type") === "grid") {
+            field.addRow(data, data ? data.length > 0 : false);
         }
         return this;
     },
@@ -1323,7 +1339,11 @@ Translation.prototype = {
             lang = 'en';
 
         if (window.parent) {
-            url = window.parent.location.pathname.split('/');
+            try {
+                url = window.parent.location.pathname.split('/');
+            } catch (e) {
+                url = window.location.pathname.split('/');
+            }
             lang = url[2] || lang;
         }
         return lang;
@@ -3324,7 +3344,8 @@ xCase.extendNamespace = function (path, newClass) {
             uploadMultipartVersion: "case/{caseUID}/upload/{var_name}/{docUID}/{appDocUid}",
             fileStreaming: "en/neoclassic/cases/casesStreamingFile?actionAjax=streaming&a={caseUID}&d={fileId}",
             fileVersionsList: "cases/{caseUID}/input-document/{docUID}/versions",
-            downloadFile: "cases/{caseUID}/input-document/{docUID}/file?v={version}"
+            downloadFile: "cases/{caseUID}/input-document/{docUID}/file?v={version}",
+            userInfo: "light/user/data"
         };
         this.options.links = {
             showDocument: "{server}/sys{workspace}/en/{skin}/cases/cases_ShowDocument?a={docUID}&v={version}"
@@ -3556,21 +3577,20 @@ xCase.extendNamespace = function (path, newClass) {
         });
         return resp;
     };
-
-    WebServiceManager.prototype.executeQuery = function (data, varName) {
+    /**
+     * This function executes synchronously the endpoint "execute-query" of ProcessMaker
+     * @param data
+     * @param varName
+     */
+    WebServiceManager.prototype.executeSyncQuery = function (data, varName) {
         var that = this,
             method = "POST", url, resp = [];
-
         this.setKey('var_name', varName);
-
         url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.query);
-
         this.deleteKey('var_name');
-
         data = data || {};
         data.app_uid = (this.options && this.options.keys && this.options.keys.caseUID) || null;
         data.del_index = (this.options && this.options.keys && this.options.keys.delIndex) || null;
-
         $.ajax({
             url: url,
             type: method,
@@ -3588,6 +3608,46 @@ xCase.extendNamespace = function (path, newClass) {
             }
         });
         return resp;
+    };
+    /**
+     * This function executes the endpoint "execute-query" of ProcessMaker
+     * @param data
+     * @param varName
+     * @param target
+     */
+    WebServiceManager.prototype.executeQuery = function (data, varName, target) {
+        var that = this,
+            method = "POST", url, resp = [];
+
+        this.setKey('var_name', varName);
+
+        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.query);
+
+        this.deleteKey('var_name');
+
+        data = data || {};
+        data.app_uid = (this.options && this.options.keys && this.options.keys.caseUID) || null;
+        data.del_index = (this.options && this.options.keys && this.options.keys.delIndex) || null;
+
+        return $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            async: true,
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                if (that.options.language != null) {
+                    xhr.setRequestHeader("Accept-Language", that.options.keys.lang);
+                }
+            },
+            success: function (data, textStatus) {
+                target.afterExecuteQuery(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                target.afterExecuteQueryFail(textStatus);
+            }
+        });
     };
 
     WebServiceManager.prototype.conditionalStep = function (config, callback) {
@@ -3817,7 +3877,7 @@ xCase.extendNamespace = function (path, newClass) {
 
         this.deleteKey('var_name');
 
-        data = data ? data : {}
+        data = data ? data : {};
         data.app_uid = appUID;
         data.del_index = delIndex;
 
@@ -3838,7 +3898,64 @@ xCase.extendNamespace = function (path, newClass) {
             }
         });
     };
+    /**
+     * Consume and initialize Suggest rest service
+     * @param data
+     * @param varName
+     * @param uidModal
+     * @param suggest
+     * @returns {Object}
+     */
+    WebServiceManager.prototype.executeSuggestSelect2 = function (data, varName, uidModal, suggest) {
+        var that = this,
+            method = "POST", url,
+            appUID = this.options && this.options.keys ? this.getKey("caseUID") : null,
+            delIndex = this.options && this.options.keys ? this.getKey("delIndex") : null;
 
+        this.setKey('var_name', varName);
+        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.querySuggest);
+        this.deleteKey('var_name');
+        data = data ? data : {};
+        data.app_uid = appUID;
+        data.del_index = delIndex;
+        return {
+            ajax: {
+                url: url,
+                type: method,
+                dataType: 'json',
+                delay: suggest.model.get('delay'),
+                async: true,
+                contentType: 'application/json',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                    if (that.options.language != null) {
+                        xhr.setRequestHeader("Accept-Language", that.options.keys.lang);
+                    }
+                },
+                data: function (params) {
+                    return JSON.stringify(suggest.loadDataForExecution(params, suggest.getDataParams()));
+                },
+                processResults: function (data, params) {
+                    return {
+                        results: $.map(suggest.mergeLocalAndRemoteOptions(data, params), function (item) {
+                            return {
+                                id: item.value,
+                                text: item.text || item.label
+                            }
+                        })
+                    };
+                },
+                cache: true
+            },
+            width: '100%',
+            placeholder: suggest.model.get('placeholder') || '',
+            dir: suggest.model.get('project').isRTL ? 'rtl' : 'ltl',
+            dropdownParent: uidModal,
+            tags: !suggest.model.get('forceSelection'),
+            allowClear: true,
+            theme: 'bootstrap'
+        };
+    };
     WebServiceManager.prototype.nextStep = function (config, callback) {
         var that = this,
             data,
@@ -3987,8 +4104,8 @@ xCase.extendNamespace = function (path, newClass) {
     };
 
     /**
-     * Make teh URL to download the file
-     * @param uid
+     * Make the URL to download the file
+     * @param data
      * @returns {string}
      */
     WebServiceManager.prototype.showDocument = function (data) {
@@ -4044,6 +4161,35 @@ xCase.extendNamespace = function (path, newClass) {
                 callback(null);
             }
         });
+    };
+
+    /**
+     * Gets information of user logged.
+     */
+    WebServiceManager.prototype.getUserInfo = function () {
+        var that = this,
+            method = "GET",
+            url,
+            response = {};
+        url = this.getFullEndPoint(this.options.keys, this.options.urlBase, this.options.endPoints.userInfo);
+        $.ajax({
+            url: url,
+            type: method,
+            headers: {authorization: "Bearer " + that.options.token.accessToken},
+            async: false,
+            success: function (data) {
+                response = {
+                    "uid": data.userId,
+                    "username": data.userName,
+                    "firstName": data.firstName,
+                    "lastName": data.lastName
+                };
+            },
+            error: function () {
+                return "error";
+            }
+        });
+        return response;
     };
 
     xCase.extendNamespace("xCase.service.WebServiceManager", WebServiceManager);
@@ -5378,7 +5524,7 @@ xCase.extendNamespace = function (path, newClass) {
      * @chainable
      */
     DependentsFieldManager.prototype.addEvent = function(key, callback, target) {
-        this.eventsManager.on("dependency:" + key, callback, target);
+        this.eventsManager.on(key, callback, target);
         return this;
     };
     /**
@@ -5386,7 +5532,7 @@ xCase.extendNamespace = function (path, newClass) {
      * @chainable
      */
     DependentsFieldManager.prototype.removeEvent = function(observer) {
-        this.eventsManager.off("dependency:" + observer);
+        this.eventsManager.off(observer);
         return this;
     };
     /**
@@ -5395,23 +5541,8 @@ xCase.extendNamespace = function (path, newClass) {
      * @chainable
      */
     DependentsFieldManager.prototype.notify = function(info) {
-        this.eventsManager.trigger("dependency:" + info.registrationName, info);
+        this.eventsManager.trigger(info.registrationName, info);
         return this;
-    };
-    /**
-     * executeFieldQuery, Run the query through the service
-     * @param data {object}, necessary data for execute the query
-     * @param variableName {string}, Name of the source field variable
-     * @param target {object}, Instance PMDynform.model.Field, source field that executes the call
-     * @returns {array}, set of options 
-     */
-    DependentsFieldManager.prototype.executeFieldQuery = function(data, variableName, target) {
-        var project = this.getProject(),
-            response = [];
-        if (project) {
-            response = project.webServiceManager.executeQuery(data, variableName, target);
-        }
-        return response;
     };
     /**
      * getForm, obtain the related form
@@ -5833,6 +5964,45 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return data;
         },
+         /**
+         * Function to get deleted data for multiple file upload field
+         * @returns {Object}
+         */
+        getDeletedData: function () {
+            var i,
+                k,
+                fields,
+                panels,
+                removedDataRecursive,
+                grid,
+                data = {"__VARIABLE_DOCUMENT_DELETE__": {}},
+                documentDelete;
+            panels = this.model.get("items");
+            for (i = 0; i < panels.length; i += 1) {
+                fields = this.views[i].items.asArray();
+                for (k = 0; k < fields.length; k += 1) {
+                    if (this.isValidFieldToSendData(fields[k])) {
+                        if (typeof fields[k].getItems === "function") {
+                            removedDataRecursive = this.getRemovedDataRecursive(fields[k]);
+                            $.extend(true, data["__VARIABLE_DOCUMENT_DELETE__"], removedDataRecursive);
+                        } else if (typeof fields[k].model.getData === "function") {
+                            if (fields[k].model.get("type") === "grid") {
+                                grid = fields[k].model;
+                                if (typeof fields[k].getDeletedData === "function") {
+                                    data["__VARIABLE_DOCUMENT_DELETE__"][grid.get("name")] = fields[k].getDeletedData();
+                                }
+                            } else {
+                                if (typeof fields[k].model.makeVariableDocumentDelete === "function") {
+                                    documentDelete = fields[k].model.makeVariableDocumentDelete();
+                                    $.extend(true, data["__VARIABLE_DOCUMENT_DELETE__"], documentDelete);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return data;
+        },
         /**
          * This function verify that field is valid to send data
          * @param field
@@ -5879,6 +6049,44 @@ xCase.extendNamespace = function (path, newClass) {
                             } else {
                                 fieldDt = viewField.model.getAppData();
                                 $.extend(true, data, fieldDt);
+                            }
+                        }
+                    }
+                }
+            }
+            return data;
+        },
+        /**
+         * Get all subform multiple file removed data
+         * @param {*} view
+         * @returns {Object}
+         */
+        getRemovedDataRecursive: function (view) {
+            var items = view.getItems(),
+                viewField,
+                fieldDt,
+                dataRecursive = {},
+                grid,
+                data = {},
+                index;
+            for (index = 0; index < items.length; index += 1) {
+                if (this.isValidFieldToSendData(items[index])) {
+                    viewField = items[index];
+                    if (this.isValidFieldToSendData(viewField)) {
+                        if (typeof viewField.getItems === "function") {
+                            dataRecursive = this.getRemovedDataRecursive(viewField);
+                            $.extend(true, data, dataRecursive);
+                        } else if (typeof viewField.model.getData === "function") {
+                            if (viewField.model.get("type") === "grid") {
+                                grid = viewField.model;
+                                if (typeof viewField.getDeletedData === "function") {
+                                    data[grid.get("name")] = viewField.getDeletedData();
+                                }
+                            } else {
+                                if (typeof viewField.model.makeVariableDocumentDelete === "function") {
+                                    fieldDt = viewField.model.makeVariableDocumentDelete();
+                                    $.extend(true, data, fieldDt);
+                                }
                             }
                         }
                     }
@@ -6447,7 +6655,6 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             this.runningFormulator();
-            this.model.loadSqlOptionsInFields();
             return this;
         },
         /**
@@ -6701,15 +6908,39 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return executeSubmit;
         },
+        /**
+         * Ckeck if there is a dependent field loading.
+         * @returns {Boolean}
+         */
+        isRunningDependents: function () {
+            var i,
+                formValid = true,
+                itemsField = this.items.asArray(),
+                field,
+                hasLoadingFields = false;
+            if (itemsField.length > 0) {
+                for (i = 0; i < itemsField.length; i += 1) {
+                    field = itemsField[i];
+                    if (field.isLoading && field.isLoading()) {
+                        hasLoadingFields = true;
+                        break;
+                    }
+                }
+            }
+            if (hasLoadingFields) {
+                this.waitToLoadFieldsMessage();
+                formValid = false;
+            }
+            return formValid;
+        },
         isValid: function (event) {
             var i,
                 formValid = true,
                 itemField,
                 itemsField = this.items.asArray(),
                 filesNoUploaded = [],
-                filesMultipleFile = [],
                 field,
-                filesGrid = [];
+                hasLoadingFields = false;
 
             if (itemsField.length > 0) {
                 for (i = 0; i < itemsField.length; i += 1) {
@@ -6725,12 +6956,19 @@ xCase.extendNamespace = function (path, newClass) {
                             }
                             formValid = field.model.get("valid");
                         }
+                    } 
+                    if (field.isLoading && field.isLoading()) {
+                        hasLoadingFields = true;
                     }
-                    // Verify if there is getFilesNotUploaded method 
+                    // Verify if there is getFilesNotUploaded method
                     if (field.getFilesNotUploaded && typeof field.getFilesNotUploaded === "function") {
                       filesNoUploaded = filesNoUploaded.concat(field.getFilesNotUploaded());
                     }
                 }
+            }
+           if (hasLoadingFields) {
+                this.waitToLoadFieldsMessage();
+                 formValid = false;
             }
             if (filesNoUploaded.length > 0) {
                 formValid = false;
@@ -6762,6 +7000,7 @@ xCase.extendNamespace = function (path, newClass) {
             for (i = 0; i < this.viewsBuilt.length; i += 1) {
                 $rowView = $(this.templateRow());
                 for (j = 0; j < this.viewsBuilt[i].length; j += 1) {
+                    this.viewsBuilt[i][j].model.set('nameModalSuggest', this.__uidModal || null);
                     $rowView.append(this.viewsBuilt[i][j].render().el);
                 }
                 this.$el.append($rowView);
@@ -6853,15 +7092,22 @@ xCase.extendNamespace = function (path, newClass) {
                 formData,
                 resp = true;
 
-            if (project && panel) {
+            if (project && panel && this.isRunningDependents()) {
                 webServiceManager = project.webServiceManager;
                 formData = panel.getData2();
                 if (project.isMobile()) {
+                    $.extend(true, 
+                        formData, 
+                        {
+                            "__VARIABLE_DOCUMENT_DELETE__": project.getDataExtra("__VARIABLE_DOCUMENT_DELETE__")
+                        });
                     requestManager = project.getRequestManager();
                     if (requestManager && requestManager.isOffLine()) {
                         app.saveFormDataOffLine();
                         return resp;
                     }
+                } else {
+                    $.extend(true, formData, panel.getDeletedData());
                 }
                 webServiceManager.saveData({
                     formUID: formId,
@@ -6913,6 +7159,34 @@ xCase.extendNamespace = function (path, newClass) {
                 };
                 this.project.flashMessage(flashModel);
             }
+        },
+        /**
+         * Show flash message with the labels of the not loaded fields.
+         * @param files
+         */
+        waitToLoadFieldsMessage: function () {
+            var warningLabel = "Warning".translate();
+                message = "The form cannot be saved, please wait until all the fields are loaded".translate();
+
+            $.notify({
+                // options
+                message: '<strong>'+ warningLabel +': </strong>' + message
+            },{ 
+                // settings
+                type: 'warning',
+                spacing: 10,
+                allow_dismiss: true,
+                delay: 6000,
+                timer: 1000,
+                placement: {
+                    from: "top",
+                    align: "center"
+                },
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutUp'
+                }
+            });
         }
     });
     PMDynaform.extendNamespace("PMDynaform.view.FormPanel", FormPanel);
@@ -6931,6 +7205,7 @@ xCase.extendNamespace = function (path, newClass) {
             "click .form-control": "onclickField"
         },
         language: null,
+        spinner: null,
         initialize: function (options) {
             var defaults = {
                 hidden: true
@@ -7002,7 +7277,7 @@ xCase.extendNamespace = function (path, newClass) {
                         model: this.model.get("validator")
                     });
 
-                    htmlElement.parent().append(this.validator.el);
+                    htmlElement.parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             }
@@ -7498,6 +7773,110 @@ xCase.extendNamespace = function (path, newClass) {
             this.language = moment.localeData(pmLang) ? pmLang : "en";
             moment.locale(this.language);
             return this;
+        },
+        /**
+         * Adds the spinner html component
+         * @chainable
+         */
+        addSpinnerHTML: function() {
+            this.spinner = new PMDynaform.ui.Spinner();
+            this.spinner.render();
+            this.spinner.hide();
+            if (this.model.get("parent") 
+                && this.model.get("parent").get("type") === "grid") {
+                this.$el.find(".control-group").parent().append(this.spinner.$el);
+            } else {
+                this.$el.find(".pmdynaform-field-control").append(this.spinner.$el);
+            }
+            return this;
+        },
+        /**
+         * Gets the is loading property of a field
+         * @returns {boolean}
+         */
+        isLoading: function() {
+            return this.model.get("loading");
+        },
+         /**
+         * Shows spinner and hides the control
+         * @returns {DropdownModel}
+         */
+        switchControlBySpinner: function () {
+            var control = this.getHTMLControl();
+            if (this.spinner) {
+                control.hide();
+                this.spinner.show();
+                this.model.set({loading: true});
+            }
+            return this;
+        },
+        /**
+         * Show the spinner and hides the control
+         * @chainable
+         */
+        switchSpinnerByControl: function () {
+            var control = this.getHTMLControl();
+            if (this.spinner) {
+                this.spinner.hide();
+                this.model.set({loading: false});
+            }
+            if (control) {
+                control.show();
+            }
+            return this;
+        },
+        /**
+         * Shows the server fail message.
+         * @chainable
+         */
+        showQueryFailMessage: function () {
+            var message = "There was an error when populating the values of field".translate();
+            message = message + " " + this.model.get("label");
+            message = '<strong>Error: </strong>' + message;
+            $.notify({
+                // options
+                message:  message
+            }, {
+                // settings
+                type: 'danger',
+                spacing: 10,
+                allow_dismiss: true,
+                delay: 6000,
+                timer: 1000,
+                placement: {
+                    from: "top",
+                    align: "center"
+                },
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutUp'
+                }
+            });
+            return this;
+        },
+        /**
+         * Run all dependencies of a field.
+         */
+        runDependency: function () {
+            var parent = this.parent,
+                data = {},
+                i,
+                item,
+                dependency = [];
+            if (_.isArray(this.model.get("dependency")) && this.model.get("dependency").length) {
+                dependency = this.model.get("dependency");
+                if (parent) {
+                    for (i = 0; i < dependency.length; i += 1) {
+                        if (parent.model.get("type") === "grid") {
+                            this.switchControlBySpinner();
+                            item = parent.model.findCellInRow(this.model.get("row"), dependency[i]);
+                            data[dependency[i]] = item.get("value") ? item.get("value") : "";
+                        }
+                        this.model.recoveryRemoteOptions(data, true);
+                    }
+
+                }
+            }
         }
     });
     PMDynaform.extendNamespace("PMDynaform.view.Field", FieldView);
@@ -7662,11 +8041,10 @@ xCase.extendNamespace = function (path, newClass) {
 
         },
         onClickNew: function (e) {
-            var newItem;
-            newItem = this.addRow(e);
+            this.addRow(e);
             return this;
         },
-        addRow: function (data) {
+        addRow: function (data, isHelper) {
             var j,
                 row,
                 rowData,
@@ -7693,7 +8071,7 @@ xCase.extendNamespace = function (path, newClass) {
             if (data && jQuery.isArray(data) && data.length) {
                 this.rowDataAdd = data;
             }
-            row = this.createHTMLRow(currentRows, this.rowDataAdd, flagRow);
+            row = this.createHTMLRow(currentRows, this.rowDataAdd, [], flagRow, isHelper);
             this.model.attributes.rows = parseInt(currentRows + 1, 10);
 
             //new carousel container fix a in active mode
@@ -8177,8 +8555,8 @@ xCase.extendNamespace = function (path, newClass) {
                                 hiddenControls = element.find("input[type='hidden']");
                                 if (this.model.get("variable")) {
                                     nameControl = "form" + this.changeIdField(this.model.get("name"), i + 1, cell.model.get("columnName"));
-                                    nameControl = nameControl.substring(0, nameControl.length - 1).concat("_label]");
                                     nameHiddeControl = "form" + this.changeIdField(this.model.get("name"), i + 1, cell.model.get("columnName"));
+                                    nameHiddeControl = nameHiddeControl.substring(0, nameHiddeControl.length - 1).concat("_label]");
                                 } else {
                                     nameControl = "";
                                     nameHiddeControl = ""
@@ -8190,7 +8568,7 @@ xCase.extendNamespace = function (path, newClass) {
                                 });
                                 hiddenControls.attr({
                                     name: nameHiddeControl,
-                                    id: idcontrol
+                                    id: nameHiddeControl
                                 });
                                 this.updateModelCell(cell, i, j);
                                 break;
@@ -8769,29 +9147,27 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         createHTMLPager: function (behavior) {
-            var i,
-                that = this,
-                htmlPager,
+            var htmlPager,
                 pagerContainer,
                 activeIndex,
                 pager,
                 pagerItems,
-                lastPager,
                 elementList,
-                ellipsis,
-                newItem;
+                ellipsis;
             pagerContainer = this.$el.find(".pmdynaform-grid-pagination");
             activeIndex = this.$el.find(".pagination").find("li.active");
             if (activeIndex.length) {
                 htmlPager = pagerContainer.children();
                 pagerItems = htmlPager.children().not(":first").not(':last').not('.toPrevItem').not('.toNextItem').not('.toPrev').not('.toNext');
-                if (behavior == "add") {
+                if (behavior === "add") {
                     if (Math.ceil(this.gridtable.length / this.pageSize) > pagerItems.length) {
+                        $(".sec_1").removeClass("showItem");
+                        $(".sec_1").addClass("showItem");
                         elementList = jQuery("<li class = 'sec_" +
                             Math.ceil(this.gridtable.length / 5) + "'><a data-target='#" + this.model.get("id") + "-body' data-slide-to='" +
                             (Math.ceil(this.gridtable.length / this.pageSize) - 1) + "' href=''>" + Math.ceil(this.gridtable.length / this.pageSize) + "</a></li>");
                         elementList.css({display: "none"});
-                        if (htmlPager.find(".toNext").length == 0 && (Number(elementList.text().trim()) > 5)) {
+                        if (htmlPager.find(".toNext").length === 0 && (Number(elementList.text().trim()) > 5)) {
                             ellipsis = jQuery('<li class="toNext"><a data-target="#' + this.model.get("id") + '" data-rotate="' + this.model.get("paginationRotate") + '" href="javascript:void(0)">...</a></li>');
                             htmlPager.find(".showItem").last().after(ellipsis);
                             ellipsis.after(elementList);
@@ -8807,7 +9183,7 @@ xCase.extendNamespace = function (path, newClass) {
                         }
                     }
                 }
-                if (behavior == "remove") {
+                if (behavior === "remove") {
                     var itemRemoved;
                     if (Math.ceil(this.gridtable.length / this.pageSize) > 0 && Math.ceil(this.gridtable.length / this.pageSize) < pagerItems.length) {
                         if (pagerItems.eq(pagerItems.length - 1).hasClass("active")) {
@@ -8981,10 +9357,10 @@ xCase.extendNamespace = function (path, newClass) {
          * Creates the html row
          * @param numberRow
          * @param dataRow
-         * @param sectionAfected
+         * @param sectionAffected
          * @returns {{model: Array, view: Array, data: (*|Array)}}
          */
-        createHTMLRow: function (numberRow, dataRow, sectionAfected) {
+        createHTMLRow: function (numberRow, dataRow, rowsDataSchema, sectionAffected, isHelper) {
             var tr = this._createHtmlRow(),
                 td,
                 k,
@@ -9008,13 +9384,16 @@ xCase.extendNamespace = function (path, newClass) {
                 nameToPostLabelControl,
                 keyEvent = PMDynaform.core.Utils.generateID();
 
-            if (sectionAfected) {
-                this.flagRow = sectionAfected;
+            if (sectionAffected) {
+                this.flagRow = sectionAffected;
             }
             tdNumber = this.createRowNumber(numberRow + 1);
             tr.appendChild(tdNumber);
             for (k = 0; k < this.columnsModel.length; k += 1) {
                 cloneModel = jQuery.extend(true, {}, this.columnsModel[k]);
+                if (_.isArray(dataRow) &&  dataRow.length > 0) {
+                    cloneModel.optionsSql = [];
+                }
                 cellModel = null;
                 product = cloneModel.product;
                 nameToPostControl = this.createPostVariables(numberRow + 1, cloneModel.name);
@@ -9135,6 +9514,7 @@ xCase.extendNamespace = function (path, newClass) {
             }
             this.gridtable.push(row);
             this.dom.push(tr);
+            this._executeDependenciesByRow(row, rowsDataSchema, isHelper);
             return {
                 model: rowModel,
                 view: rowView,
@@ -9183,23 +9563,79 @@ xCase.extendNamespace = function (path, newClass) {
          * @param {[type]} rowData : is a set of data
          */
         setRowData: function (row, rowData) {
-            var i,
-                cell,
-                type,
-                viewMode;
             if (typeof row === "number") {
                 row = this.gridtable[row];
             }
+            this._populateRow(row, rowData);
+            return this;
+        },
+        /**
+         * Populate the grid row data.
+         * @param {Array} row
+         * @param {Array} rowData
+         */
+        _populateRow: function (row, rowData) {
+            var i;
             if (_.isArray(row) && _.isArray(rowData)) {
                 for (i = 0; i < row.length; i += 1) {
-                    cell = row[i];
-                    type = cell.model.get("originalType");
-                    viewMode = cell.model.get("mode");
-                    if (rowData[i] && type !== "multipleFile") {
-                        (viewMode === "edit" || viewMode === "disabled")  ?
-                            this._setDataToEditMode(cell, rowData[i]) : this._setDataToViewMode(cell, rowData[i]);
+                    if (rowData[i]) {
+                        this._completeRowData(row[i], rowData[i]);
                     }
                 }
+            }
+        },
+        /**
+         * After the data was populated we need execute dependencies
+         * @param {Array} row
+         * @param {Array|undefined} rowsDataSchema
+         * @param {boolean|undefined} isHelper
+         */
+        _executeDependenciesByRow: function (row, rowsDataSchema, isHelper) {
+            var i;
+            if (_.isArray(row)) {
+                if (_.isArray(rowsDataSchema) && !isHelper) {
+                    for (i = 0; i < row.length; i += 1) {
+                        if ((row[i].getValue() === "" || row[i].getValue() === null) && rowsDataSchema[i] && !rowsDataSchema[i].defined) {
+                            this._runDependencyRow(row[i]);
+                        }
+                    }
+                } else {
+                    for (i = 0; i < row.length; i += 1) {
+                        if (row[i].getValue() === "" || row[i].getValue() === null || isHelper === true) {
+                            this._runDependencyRow(row[i]);
+                        }
+                    }
+                }
+            }
+        },
+        /**
+         * Run dependency of each row.
+         * @param row
+         * @private
+         */
+        _runDependencyRow: function (row) {
+            switch (row.model.get("type")) {
+                case "text":
+                case "textarea":
+                case "dropdown":
+                case "label":
+                    if (row.model.runDependency) {
+                        row.model.runDependency();
+                    }
+                    break;
+            }
+        },
+        /**
+         * Set the data to a grid cell.
+         * @param {*} cell
+         * @param {*} data
+         */
+        _completeRowData: function(cell, data) {
+            var type = cell.model.get("originalType"),
+                viewMode = cell.model.get("mode");
+            if (type !== "multipleFile") {
+                (viewMode === "edit" || viewMode === "disabled")  ?
+                    this._setDataToEditMode(cell, data) : this._setDataToViewMode(cell, data);
             }
             return this;
         },
@@ -9214,7 +9650,7 @@ xCase.extendNamespace = function (path, newClass) {
         _setDataToEditMode: function (cell, data) {
             var fixedData;
             if (cell && data !== undefined && data !== null) {
-                // Zanitizing the data because from helper arrives only the value and row works wit value and label
+                // Sanitizing the data because from helper arrives only the value and row works wit value and label
                 fixedData = {
                     value: data.value || '',
                     label: data.label || data.value || ''
@@ -9229,6 +9665,14 @@ xCase.extendNamespace = function (path, newClass) {
                         fixedData.value = fixedData.value === 'string'? [] : fixedData.value;
                         cell.setData(fixedData);
                         break;
+                    case 'text':
+                        cell.model.set({"data": fixedData}, {silent: true});
+                        cell.model.set({"value": fixedData.value}, {silent: true});
+                        cell.model.set("toDraw", true);
+                        break;
+                    case 'suggest':
+                        cell.setData(fixedData);
+                        break;
                     default:
                         // Only from addRow arrive a empty label,
                         // here the dependent event need to be fired
@@ -9241,7 +9685,6 @@ xCase.extendNamespace = function (path, newClass) {
                         }
                         break;
                 }
-                cell.model.set('addRowValue', null);
             }
             return this;
         },
@@ -9376,10 +9819,18 @@ xCase.extendNamespace = function (path, newClass) {
             return gridFieldData;
         },
         renderGridTable: function (newItem) {
-            var i, j, k, rows, rowsData, rowData, row;
+            var i,
+                j,
+                rows,
+                rowsData,
+                rowData,
+                row,
+                rowsDataSchema,
+                rowDataSchema;
             this.tableBody = this.$el.find(".pmdynaform-grid-tbody");
             rows = this.model.get("rows");
             rowsData = this.model.get("data");
+            rowsDataSchema = this.model.get("dataSchema");
             if (this.model.get("layout") === "static") {
                 this.tableBody.addClass("pmdynaform-static");
             }
@@ -9388,14 +9839,15 @@ xCase.extendNamespace = function (path, newClass) {
                 this.dom = [];
                 for (j = 0; j < rows; j += 1) {
                     rowData = rowsData[j + 1];
-                    row = this.createHTMLRow(j, rowData);
+                    rowDataSchema = rowsDataSchema[j + 1];
+                    row = this.createHTMLRow(j, rowData, rowDataSchema);
                     if (row && row.data) {
                         this.model.attributes.gridFunctions.push(row.data);
                         for (i = 0; i < row.model.length; i += 1) {
                             if (row.model[i].get("operation") && row.model[i].get("operation").trim().length) {
                                 row.view[i].onChangeCallbackOperation();
                             }
-                            if (row.model[i].get("type") == "label" && row.model[i].get("operation")) {
+                            if (row.model[i].get("type") === "label" && row.model[i].get("operation")) {
                                 this.createHTMLTotal();
                             }
                         }
@@ -9506,6 +9958,40 @@ xCase.extendNamespace = function (path, newClass) {
                 data[i + 1] = rowData;
             }
             return data;
+        },
+        /**
+         * Get deleted files into a grid
+         * @returns {Object}
+         */
+        getDeletedData: function () {
+            var validControls,
+                gridpanel,
+                cellName,
+                rowDeletedData,
+                cell,
+                deletedData = {},
+                k,
+                i;
+            validControls = ["text", "textarea", "dropdown", "hidden", "checkbox", "datetime", "suggest", "multipleFile"];
+            gridpanel = this.gridtable;
+            for (i = 0; i < gridpanel.length; i += 1) {
+                rowDeletedData = {};
+                for (k = 0; k < gridpanel[i].length; k += 1) {
+                    cell = gridpanel[i][k].model;
+                    if (validControls.indexOf(cell.get("originalType")) > -1) {
+                        cellName = cell.get("columnName");
+                        documentDelete = cell.makeVariableDocumentDelete ? cell.makeVariableDocumentDelete() : {};
+                        if (!_.isEmpty(documentDelete) && !_.isEmpty(documentDelete[cell.get("name")])) {
+                            rowDeletedData[cellName] = documentDelete[cell.get("name")];
+                        }
+                    }
+                }
+                if (!_.isEmpty(rowDeletedData)) { 
+                    deletedData[i + 1] = rowDeletedData;
+                }
+               
+            }
+            return deletedData;
         },
         setData2: function (data) {
             var rowIndex, grid, dataRow,
@@ -10066,7 +10552,29 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return filesError;
+        },
+        /**
+         * Gets the loading value into the grid fields
+         * @returns {boolean}
+         */
+        isLoading: function () {
+            var i,
+                j,
+                row,
+                rows = this.model.get("gridtable");
+            for (i = 0; i < rows.length; i += 1) {
+                row = rows[i];
+                for (j = 0; j < row.length; j += 1) {
+                    if (row[j].model.get("type") !== "multipleFile") {
+                        if (row[j].model.get("loading")) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
+
     });
     PMDynaform.extendNamespace("PMDynaform.view.GridPanel", GridView);
 }());
@@ -10151,30 +10659,27 @@ xCase.extendNamespace = function (path, newClass) {
                 dependency,
                 i,
                 postRender = true;
-            if (_.isArray(this.model.get("dependency")) && this.model.get("dependency").length) {
-                if (this.firstLoad) {
-                    if (!this.dirty && parent) {
-                        this.tagControl.empty();
-                        value = this.model.get("value") || "";
-                        dependency = this.model.get("dependency");
-                        for (i = 0; i < dependency.length; i += 1) {
-                            if (parent.model.get("type") === "grid") {
-                                item = parent.model.findCellInRow(this.model.get("row"), dependency[i]);
-                            } else {
-                                item = parent.model.get("fields")[dependency[i]];
-                            }
-                            if (item) {
-                                data[dependency[i]] = item.get("value");
-                            }
+            if (this.firstLoad) {
+                if (!this.dirty && parent) {
+                    this.tagControl.empty();
+                    value = this.model.get("value") || "";
+                    dependency = this.model.get("dependency");
+                    for (i = 0; i < dependency.length; i += 1) {
+                        if (parent.model.get("type") === "grid") {
+                            item = parent.model.findCellInRow(this.model.get("row"), dependency[i]);
+                        } else {
+                            item = parent.model.get("fields")[dependency[i]];
                         }
-                        this.model.recoreryRemoteOptions(data, postRender);
-                        this.model.trigger("change:options");
-                        this.tagControl.val(value);
-                        this.dirty = true;
+                        if (item) {
+                            data[dependency[i]] = item.get("value");
+                        }
                     }
-                    this.firstLoad = false;
+                    this.model.set("showDependentSpinners", false);
+                    this.model.recoverySyncRemoteOptions(data, postRender);
+                    this.model.trigger("change:options");
+                    this.tagControl.val(value);
+                    this.dirty = true;
                 }
-            } else {
                 this.firstLoad = false;
             }
             return this;
@@ -10355,6 +10860,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
         getHTMLControl: function () {
             return this.$el.find("select");
         },
@@ -10363,9 +10872,9 @@ xCase.extendNamespace = function (path, newClass) {
                 name;
             this.existHTML = true;
             this.$el.html(this.template(this.model.toJSON()));
-            this._setDataOption();
             this.$el.find("input[type='hidden']").val(this.model.get("data")["label"]);
             if (this.model.get("group") === "grid") {
+                this._setDataOption();
                 hidden = this.$el.find("input[type = 'hidden']")[0];
                 name = this.model.get("name");
                 name = name.substring(0, name.length - 1).concat("_label]");
@@ -10385,6 +10894,8 @@ xCase.extendNamespace = function (path, newClass) {
             this.tagControl.val(this.model.get("value").toString() || "");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
@@ -10440,10 +10951,8 @@ xCase.extendNamespace = function (path, newClass) {
         },
         _setDataOption: function () {
             var data = this.model.get("data");
-            if (this.model.get("dependency").length) {
-                if (data && data["value"]) {
-                    this._setOptions([data]);
-                }
+            if (data && data["value"]) {
+                this._setOptions([data]);
             }
             return this;
         },
@@ -10459,6 +10968,10 @@ xCase.extendNamespace = function (path, newClass) {
                 if (value === currentValue && this.firstLoad) {
                     this.model.trigger("change:value", this.model, value);
                 } else {
+                    // force to execute the dependent field if there is
+                    if (this.model.get("group") === "grid" && this.firstLoad) {
+                        this.runDependetOptions();
+                    }
                     this.model.set("value", value);
                 }
                 this.firstLoad = false;
@@ -10597,6 +11110,8 @@ xCase.extendNamespace = function (path, newClass) {
             this.tagControl = this.$el.find(".pmdynaform-radio-items");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
@@ -10676,6 +11191,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
         getHTMLControl: function () {
             return this.$el.find(".pmdynaform-control-radio-list");
         },
@@ -10886,6 +11405,7 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {TextareaView}
          */
         onChange: function (event) {
+            var label = "";
             if (event.type !== "change") {
                 this.updateValueInput();
             }
@@ -10893,7 +11413,10 @@ xCase.extendNamespace = function (path, newClass) {
                 this.updateDataModel();
                 this.updateValueInput();
             }
-            this.$el.find(".content-print").text(this.model.get("data")["label"]);
+            if (this.model.get("data") !== undefined) {
+                label = this.model.get("data")["label"] ? this.model.get("data")["label"] : "";
+                this.$el.find(".content-print").text(label);
+            }
             this.validate(event);
             this.clicked = false;
             return this;
@@ -10933,6 +11456,8 @@ xCase.extendNamespace = function (path, newClass) {
             this.tagControl = this.$el.find("textarea");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
@@ -11046,6 +11571,7 @@ xCase.extendNamespace = function (path, newClass) {
         firstLoad: false,
         formulaFieldsAssociated: [],
         jsonData: {},
+        spinner: null,
         events: {
             "change input": "eventListener",
             "keydown input": "refreshBinding"
@@ -11150,13 +11676,17 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {TextView}
          */
         onChange: function (event) {
+            var label = "";
             if (event.type === "change") {
                 this.updateDataModel(event);
             } else {
                 this.updateValueInput();
             }
             this.onTextTransform(this.tagControl.val());
-            this.$el.find(".content-print").text(this.model.get("data")["label"]);
+            if (this.model.get("data") !== undefined) {
+                label = this.model.get("data")["label"] ? this.model.get("data")["label"] : "";
+                this.$el.find(".content-print").text(label);
+            }
             this.validate(event);
             this.clicked = false;
             return this;
@@ -11385,6 +11915,8 @@ xCase.extendNamespace = function (path, newClass) {
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
             this.onTextTransform(this.tagControl.val());
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
@@ -11956,6 +12488,8 @@ xCase.extendNamespace = function (path, newClass) {
             this.tagControl = this.$el.find(".pmdynaform-checkbox-items");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
@@ -12055,6 +12589,10 @@ xCase.extendNamespace = function (path, newClass) {
             this.populateItemsPrintMode(this.getKeyLabels());
             return this;
         },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
         getHTMLControl: function () {
             return this.$el.find(".pmdynaform-control-checkbox-list");
         },
@@ -12302,6 +12840,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
         getHTMLControl: function () {
             return this.$el.find(".pmdynaform-control-checkbox-list");
         },
@@ -12389,15 +12931,11 @@ xCase.extendNamespace = function (path, newClass) {
 }());
 
 (function () {
-
     var SuggestView = PMDynaform.view.Field.extend({
-        template: _.template($("#tpl-text").html()),
-        templateList: _.template($("#tpl-suggest-list").html()),
-        templateOptions: _.template($("#tpl-suggest-options").html()),
+        template: _.template($("#tpl-suggest2").html()),
         validator: null,
         elements: [],
         input: null,
-        containerList: null,
         makeFlag: false,
         keyPressed: false,
         pointerItem: 0,
@@ -12415,16 +12953,15 @@ xCase.extendNamespace = function (path, newClass) {
         numberOfOptions: 10,
         containerOpened: false,
         events: {
-            "keyup input": "generateOptionsHandler",
-            "keydown input": "refreshBinding",
-            "focusin input": "preventFocusIn",
-            "change input": "eventListener"
+            'change': function (event) {
+                this.eventListener(event, this.getDataSelect2('change'));
+            }
         },
         stamp: null,
         /**
          * @param {Number} timeToWait - is the timer required to trigger an action data request
          * if the value is 0, does not perform cancellation requests, if the value is not 0,
-         * this will be the timempo waiting before making a request
+         * this will be the time to waiting before making a request
          */
         timeToWait: 0,
         timeoutHandler: null,
@@ -12478,11 +13015,20 @@ xCase.extendNamespace = function (path, newClass) {
          * @param options
          */
         initialize: function (options) {
+            var defaultLimit = 10;
             this.form = options.form ? options.form : null;
             this.formulaFieldsAssociated = [];
+            this.numberOfOptions = parseInt(this.model.get('resultsLimit')) || defaultLimit;
             this.model.on("change:value", this.eventListener, this);
             this.setTimeToWait(parseInt(this.model.get("delay")));
             this.model.on("change:toDraw", this.render, this);
+        },
+        /**
+         * Get ID Select2 Control
+         * @returns {string}
+         */
+        getIdSelect: function () {
+            return '#' + this.$el.find('select').attr('id').replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1");
         },
         /**
          * set the time to wait
@@ -12501,31 +13047,6 @@ xCase.extendNamespace = function (path, newClass) {
             return false;
         },
         /**
-         * run dependent fields when is  out focus, or selected option of the list
-         */
-        triggerDependency: function (event, data) {
-            if (this.containerOpened) {
-                this.eventListener(event, data);
-                this.onFieldAssociatedHandler();
-                this.destroySuggest();
-            }
-            return this;
-        },
-        clickedIsInSuggestList: function (event) {
-            var target = null, item, clickInList = false;
-            if (event && event.target) {
-                target = event.target;
-                if (this.containerOpened) {
-                    item = this.containerList.find(target);
-                }
-                if (item && item.length) {
-                    clickInList = true;
-                    this.containerOpened = false;
-                }
-            }
-            return clickInList;
-        },
-        /**
          * Listens to change event
          * @param event
          * @param value
@@ -12535,83 +13056,10 @@ xCase.extendNamespace = function (path, newClass) {
                 this.onChange(event, value);
                 this.onFieldAssociatedHandler();
             } else {
-                if (event.type === "change") {
-                    if (!this.keyNavigatorPress) {
-                        this.updateValues(event, this.model.get("data").value);
-                        this.model.trigger("change:data");
-                        // if isn't listed it's not needed shot setOnChange event
-                        if (!this.containerOpened) {
-                            this.onChange(event, this.model.get("data").value);
-                        }
-                    }
-                } else {
-                    if (this.clickedIsInSuggestList(event) || this.$el.find(event.target).length) {
-                        this.onChange(event, value);
-                    } else {
-                        this.onChange(event, this.model.get("data"));
-                    }
-
-                    this.onFieldAssociatedHandler();
-                }
+                this.onChange(event, value);
+                this.onFieldAssociatedHandler();
                 this.keyNavigatorPress = false;
             }
-        },
-        generateOptionsHandler: function (event) {
-            var that = this,
-                newValue = this.controlSuggest ? this.controlSuggest.val() : "";
-
-            if (newValue === null || newValue === undefined || newValue === "") {
-                this.model.set({'data': {value: "", label: ""}}, {silent: true});
-                this.destroySuggest();
-            } else {
-                if (this.navigationKeys.indexOf(event.which) === -1 &&
-                    this.invalidEnterKeys.indexOf(event.which) === -1 && !event.ctrlKey) {
-                    if (this.timeToWait) {
-                        this._abortRequest();
-                    }
-                    if (newValue === "") {
-                        this.hideSuggest();
-                    } else {
-                        this.prevValue = newValue;
-                        if (event && event.type !== "submit") {
-                            this.timeoutHandler = setTimeout(function () {
-                                that.suggestPanelFactory(event);
-                            }, this.timeToWait);
-                        }
-                    }
-                }
-            }
-            return this;
-        },
-        suggestPanelFactory: function (event) {
-            var value;
-            value = this.controlSuggest.val();
-            this.keyPressed = false;
-            this.prevValue = value;
-            this.model.attributes.value = value;
-            this.model.set({'data': {value: value, label: value}}, {silent: true});
-            this.generateOptions(this.numberOfOptions, value, event);
-            return this;
-        },
-        refreshBinding: function (event) {
-            var code;
-            if (event) {
-                code = event.which;
-                if (code === 13) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else if (code === 9) {
-                    this.pressedKeyTab(event);
-                    this.keyNavigatorPress = false;
-                    this.destroySuggest(event);
-                }
-                if (this.isListNavigationEvents(code)) {
-                    this.keyNavigatorPress = true;
-                    this.eventsOfNavigationList(code, event);
-                }
-                this.keyPressed = true;
-            }
-            return this;
         },
         isListNavigationEvents: function (code) {
             var resp = false;
@@ -12619,98 +13067,6 @@ xCase.extendNamespace = function (path, newClass) {
                 resp = true;
             }
             return resp;
-        },
-        eventsOfNavigationList: function (code, event) {
-            if (typeof code === "number" && event) {
-                switch (code) {
-                    case 38:
-                        this.pressedKeydownUp(event);
-                        break;
-                    case 40:
-                        this.pressedKeydownDown(event);
-                        break;
-                    case 13:
-                        this.pressedKeyIntro(event);
-                        break;
-                    case 9:
-                        this.pressedKeyTab(event);
-                        break;
-                }
-            }
-            return this;
-        },
-        pressedKeydownUp: function (event) {
-            var itemSelected;
-            event.preventDefault();
-            event.stopPropagation();
-            if (this.containerOpened && ((this.stackRow - 1) >= 0)) {
-                itemSelected = this.containerList.find('li').eq(this.stackRow - 1);
-                if (itemSelected.length) {
-                    itemSelected.find('a').focus();
-                    this.stackRow = this.stackRow - 1;
-                    this.toggleItemSelected(itemSelected);
-                }
-            }
-            return this;
-        },
-        pressedKeydownDown: function (event) {
-            var itemSelected;
-            event.preventDefault();
-            event.stopPropagation();
-            if (this.containerOpened) {
-                if ((this.stackRow + 1) <= this.containerList.find('li').length) {
-                    itemSelected = this.containerList.find('li').eq(this.stackRow + 1);
-                    if (itemSelected.length) {
-                        itemSelected.find('a').focus();
-                        this.stackRow = this.stackRow + 1;
-                        this.toggleItemSelected(itemSelected);
-                    }
-                }
-            }
-            return this;
-        },
-        pressedKeyIntro: function (event) {
-            var label,
-                value,
-                data;
-            if (this.containerOpened) {
-                label = this.selectedListItem.find("a").data().label;
-                value = this.selectedListItem.find("a").data().value;
-                data = {
-                    value: value,
-                    label: label
-                };
-                this.triggerDependency(event, data);
-                this.hideSuggest();
-                this.controlSuggest.focus();
-            }
-            return this;
-        },
-        pressedKeyTab: function (event) {
-            this.model.trigger("change:data");
-            return this;
-        },
-        /**
-         * if the final event is a "click" returns the data of an item
-         * element list html or input type text
-         */
-        clickedItemList: function (event, data) {
-            var target = event.target,
-                element,
-                data;
-
-            if (this.containerList.find(target).length) {
-                element = $(event.currentTarget).find("a");
-                data = this.getListData(element);
-            } else {
-                data = {
-                    value: this.controlSuggest.val(),
-                    label: this.controlSuggest.val()
-                }
-            }
-            this.triggerDependency(event, data);
-            this.controlSuggest.focus();
-            return this;
         },
         /**
          * Executes onChangeCallBack function
@@ -12750,55 +13106,8 @@ xCase.extendNamespace = function (path, newClass) {
         setValueDefault: function () {
             this.model.set("value", $(this.el).find(":input").val());
         },
-        hideSuggest: function () {
-            if (this.containerList instanceof jQuery && this.containerList.length) {
-                this.containerList.hide();
-                this.removeLoadingIcon();
-            }
-            this.containerOpened = false;
-            this.stackRow = 0;
-        },
-        showSuggest: function () {
-            this.containerOpened = true;
-            this.containerList.show();
-        },
-        _calculatePosition: function () {
-            var element,
-                position,
-                leftListElement,
-                topListElement,
-                listHeight;
-            element = this.$el.find("input[type='suggest']");
-            if (element[0].getBoundingClientRect) {
-                position = element[0].getBoundingClientRect();
-                if (position["top"] !== undefined) {
-                    document.body.appendChild(this.containerList[0]);
-                    leftListElement = position.left;
-                }
-
-                listHeight = this.containerList.outerHeight();
-
-                if (listHeight <= position.top) {
-                    topListElement = position.top + this._getScrollOffsets() - this.containerList.outerHeight();
-                } else {
-                    topListElement = position.bottom + this._getScrollOffsets();
-                }
-                this.containerList.css({
-                    position: "absolute",
-                    width: element.outerWidth(),
-                    "min-width": 100,
-                    left: leftListElement,
-                    top: topListElement
-                });
-            }
-        },
         _getScrollOffsets: function () {
             return document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || getScrollTop();
-        },
-        _attachSuggestGlobalEvents: function () {
-            if (this.containerList) {
-                $(document).on("click." + this.cid, $.proxy(this.triggerDependency, this));
-            }
         },
         /**
          * Updates data and value
@@ -12807,7 +13116,6 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {SuggestView}
          */
         onChange: function (event, value) {
-            this.removeLoadingIcon();
             this.updateValues(event, value);
             this.checkBinding();
             this.validate(event);
@@ -12821,31 +13129,54 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {SuggestView}
          */
         updateValues: function (event, value) {
-            var hiddenInput, label, newValue, suggestControl;
-            hiddenInput = this.$el.find("input[type='hidden']");
-            suggestControl = this.$el.find("input[type='suggest']");
-            if (event.type === "change") {
-                hiddenInput.val(value);
-            }
-
-            if (event.type === "keydown") {
-                hiddenInput.val(this.model.get("value"));
-            }
-
-            if (event.type === "click" || event.keyCode === 13) {
-                hiddenInput.val(value.value);
-                suggestControl.val(value.label);
-            }
-            if (!event.type && !event.keyCode) {
-                hiddenInput.val(value);
-                suggestControl.val(value);
-            }
-            label = suggestControl.val();
-            newValue = hiddenInput.val();
-            this.model.set("keyLabel", label);
-            this.model.attributes.value = newValue;
-            this.updateDataModel(newValue, label);
+            var data = this.getSelectedData(value);
+            this.updateHiddenInput(data);
+            this.updateHtmlSelect2(data);
+            this.model.set("keyLabel", data.label);
+            this.model.attributes.value = data.value;
+            this.updateDataModel(data.value, data.label);
             return this;
+        },
+        /**
+         * Update the Hidden Input
+         * @param data
+         * @returns {SuggestView}
+         */
+        updateHiddenInput: function (data) {
+            var hiddenInput = this.$el.find("input[type='hidden']");
+            hiddenInput.val(data.label);
+            return this;
+        },
+        /**
+         * Update the Select2 Html
+         * @param data
+         * @returns {SuggestView}
+         */
+        updateHtmlSelect2: function (data) {
+            var id = this.getIdSelect();
+            if (!data.value) {
+                $(id).val(null);
+            }
+            return this;
+        },
+        /**
+         * Get Object Data
+         * @param value
+         * @returns {{value: string, label: string}}
+         */
+        getSelectedData: function (value) {
+            var data = {
+                value: '',
+                label: ''
+            };
+            if (value.value === '' || value.label === '') {
+                return data;
+            }
+            data = {
+                value: value.value || value || '',
+                label: value.label || value || ''
+            };
+            return data;
         },
         updateDataModel: function (value, label) {
             var data,
@@ -12858,40 +13189,11 @@ xCase.extendNamespace = function (path, newClass) {
             this.$el.find(".content-print").text(data.label);
             return this;
         },
-        /**
-         * builds suggest panel
-         * @param maxItems
-         * @param event
-         */
-        generateOptions: function (maxItems, val, event) {
-            var localData = [],
-                that = this;
-            this.elements = [];
-            this.elements = this.model.get("options");
-            this.stackItems = [];
-            if (this.containerList !== null) {
-                this.containerList.empty();
-            }
-            if (val !== null && val !== undefined) {
-                this.addLoadingIcon();
-                localData = this.filterLocalOptions(val, this.numberOfOptions, event);
-                this.makeNewListItems(localData, val, event);
-            }
-            return this;
-        },
         addLoadingIcon: function () {
             var spinner;
             if (this.iconLoadingActive) {
                 spinner = this.$el.find(".spinner-icon");
                 spinner.addClass("active-spinner");
-            }
-            return this;
-        },
-        removeLoadingIcon: function () {
-            var spinner;
-            if (this.iconLoadingActive) {
-                spinner = this.$el.find(".spinner-icon");
-                spinner.removeClass("active-spinner");
             }
             return this;
         },
@@ -12924,114 +13226,6 @@ xCase.extendNamespace = function (path, newClass) {
         canExecuteQuery: function () {
             return this.model.canExecuteQuery();
         },
-        /**
-         * filter local options pased in html
-         */
-        filterLocalOptions: function (value, maxItems, event) {
-            var itemLabel,
-                that = this,
-                count = 0,
-                data = [];
-            //filter data
-            $.grep(that.elements, function (options, index) {
-                itemLabel = options.label.toString();
-                if ((itemLabel.toLowerCase().indexOf(value.toLowerCase()) !== -1) && count < maxItems) {
-                    data.push(options);
-                    count += 1;
-                }
-            });
-            return data;
-        },
-        _attachListSuggestEvents: function () {
-            if (this.containerList instanceof jQuery) {
-                this._attachMouseOverEvents(this.containerList);
-                this._attachKeyDownEvents(this.containerList);
-            }
-            return this;
-        },
-        _attachMouseOverEvents: function (list) {
-            var that = this;
-            if (list && list.length) {
-                $(this.containerList).on('mouseover', 'li', function (e) {
-                    var selectedItem;
-                    selectedItem = that.containerList.find(this);
-                    if (selectedItem.length) {
-                        that.stackRow = selectedItem.index();
-                        that.toggleItemSelected(selectedItem);
-                    } else {
-                        that.stackRow = -1;
-                    }
-                });
-            }
-            return this;
-        },
-        _attachKeyDownEvents: function (list) {
-            var that = this;
-            if (list && list.length) {
-                list.on('keydown', function (e) {
-                    var code = e.which;
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if (that.isListNavigationEvents(code)) {
-                        that.eventsOfNavigationList(code, e);
-                    }
-                });
-            }
-            return this;
-        },
-        _attachClickEventInList: function (listElements) {
-            var that = this;
-            if (listElements instanceof jQuery) {
-                listElements.click(function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    that.clickedItemList(e);
-                });
-            }
-            return this;
-        },
-        /**
-         * refresh suggest panel
-         * @param data
-         */
-        refreshSuggestList: function (data, value, maxItems, event) {
-            var htmlOptions;
-            this.stackItems = [];
-            if (!this.containerList) {
-                this.containerList = $(this.templateList());
-                this._attachMouseOverEvents(this.containerList);
-                this._attachKeyDownEvents(this.containerList);
-            }
-            this.stackRow = -1;
-            this.containerList.empty();
-            htmlOptions = this.templateOptions({
-                options: data
-            });
-            this.containerList.append(htmlOptions);
-            this.stackItems = this.containerList.find("li");
-            this._attachClickEventInList(this.stackItems);
-            this.showSuggest();
-            this.updatingItemsList();
-            return this;
-        },
-        updatingItemsList: function (html) {
-            var index = 0,
-                item;
-            if (this.containerList) {
-                item = this.containerList.find("li").eq(index).outerHeight();
-                if (item instanceof jQuery && item.length) {
-                    this.heightItem = item.outerHeight();
-                }
-                this.controlSuggest.after(this.containerList);
-                if (this.stackItems.length > 4) {
-                    this.containerList.css("height", this.heightItem * this.showVisibleElements);
-                } else {
-                    this.containerList.css("height", "auto");
-                }
-                this._attachSuggestGlobalEvents();
-            }
-            return this;
-        },
         validate: function (event) {
             if (event && (event.which === 9) && (event.which !== 0)) { //tab key
                 this.keyPressed = true;
@@ -13047,7 +13241,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.validator = new PMDynaform.view.Validator({
                         model: this.model.get("validator")
                     });
-                    this.$el.find("input[type='suggest']").parent().parent().append(this.validator.el);
+                    this.$el.find("select").parent().parent().append(this.validator.el);
                     this.applyStyleError();
                 }
             } else {
@@ -13055,60 +13249,162 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Show the Suggest control
+         * @returns {SuggestView}
+         */
         render: function () {
-            var data,
-                hidden,
-                name,
-                value = this.model.get("value");
+            var self = this;
             this.$el.html(this.template(this.model.toJSON()));
-            if (this.model.get("hint") !== "") {
+            if (this.model.get('hint') !== '') {
                 this.enableTooltip();
             }
-            data = this.model.get("data");
-            if (this.firstLoad) {
-                if (value !== undefined && value !== null && value !== "" && data) {
-                    this.$el.find("input[type='suggest']").val(data["label"] === undefined || data["label"] === null ? "" : data["label"]);
-                } else {
-                    this.model.emptyValue();
-                }
-            } else {
-                this.$el.find("input[type='suggest']").val(data["label"] === undefined || data["label"] === null ? "" : data["label"]);
-            }
             this.setNameHiddenControl();
-            this.$el.find("input[type='suggest']").focus();
-            this.setValueToDomain();
-
-            if (this.model.get("name").trim().length === 0) {
-                this.$el.find("input[type='suggest']").attr("name", "");
-                this.$el.find("input[type='hidden']").attr("name", "");
-            }
-            this.$el.find(".content-print").text(this.model.get("data")["label"]);
-            this.tagControl = this.$el.find("input[type='hidden']");
-            this.tagHiddenToLabel = this.$el.find("input[type='suggest']");
-            this.keyLabelControl = this.$el.find("input[type='hidden']");
-            this.prevValue = this.$el.find("input[type='suggest']").val();
-            this.previousValue = this.model.get("value");
-            this.previousLabel = this.model.get("data").label;
-            this.controlSuggest = this.$el.find("input[type='suggest']");
-            PMDynaform.view.Field.prototype.render.apply(this, arguments);
+            setTimeout(function () {
+                if (self.model.get('project')) {
+                    $(self.getIdSelect()).select2(self.initializeSelect2Query());
+                    self.afterRenderSelect2();
+                }
+            }, 0);
             return this;
         },
         /**
-         * Executes Suggest query to recovery all data
-         * considering dependent fields
+         * Initialize select2 Query
+         * @returns {Object}
+         */
+        initializeSelect2Query: function () {
+            var prj,
+                variable,
+                uidModal = (this.model.get('nameModalSuggest')) ? $('#' + this.model.get('nameModalSuggest')) : null,
+                data = this.getDataParams();
+            prj = this.model.get("project");
+            if (this.model.get("group") === "grid") {
+                variable = this.model.get("columnName");
+            } else {
+                if (this.model.get("variable") !== "") {
+                    variable = this.model.get("variable");
+                } else {
+                    variable = this.model.get("id");
+                }
+            }
+            return prj.webServiceManager.executeSuggestSelect2(data, variable, uidModal, this);
+        },
+        /**
+         * Get Data Params for execute Suggest
+         * @returns {Object}
+         */
+        getDataParams: function () {
+            var data = {
+                "filter": this.model.get('value'),
+                "order_by": "ASC",
+                "limit": this.numberOfOptions,
+                "app_uid": (PMDynaform.getProjectKeys() && PMDynaform.getProjectKeys().caseUID) ?
+                    PMDynaform.getProjectKeys().caseUID : null
+            };
+            _.extend(data, this.model.buildDataForQuery({}));
+            return data;
+        },
+        /**
+         * Load Data For Execution
+         * @param params
+         * @param data
+         * @returns {Object}
+         */
+        loadDataForExecution: function (params, data) {
+            this.elements = [];
+            data.filter = params.term || this.model.get('filter');
+            this.elements = this.generateOptions(data.filter);
+            data.limit = (this.elements.length) ? data.limit - this.elements.length : data.limit;
+            return data;
+        },
+        /**
+         * Generate local options
+         * @param val
+         * @returns {Array}
+         */
+        generateOptions: function (val) {
+            var localData,
+                elements = this.model.get('options') || [];
+            localData = this.filterLocalOptions(val, this.numberOfOptions, elements);
+            return localData;
+        },
+        /**
+         * Filter local options
+         * @param value
+         * @param maxItems
+         * @param elements
+         * @returns {Array}
+         */
+        filterLocalOptions: function (value, maxItems, elements) {
+            var itemLabel,
+                count = 0,
+                data = [];
+            if (value) {
+                $.grep(elements, function (options) {
+                    itemLabel = options.label.toString();
+                    if ((itemLabel.toLowerCase().indexOf(value.toLowerCase()) !== -1) && count < maxItems) {
+                        data.push(options);
+                        count += 1;
+                    }
+                });
+            } else {
+                data = $.grep(elements, function (n, i) {
+                    return (i < maxItems);
+                });
+            }
+            return data;
+        },
+        /**
+         * Merge Local Options And Remote Options
+         * @param data
+         * @param params
          * @returns {*}
          */
-        executeSuggestQuery: function (callback) {
-            var i,
-                prj,
-                postData,
-                parentDependents,
+        mergeLocalAndRemoteOptions: function (data, params) {
+            data = this.elements.concat(data);
+            data = (!data.length && !params.term) ? data.concat(this.getDataSelect2()) : data;
+            return data;
+        },
+        /**
+         * Set in the control suggest the Data of the Case Data
+         * @returns {SuggestView}
+         */
+        afterRenderSelect2: function () {
+            var data = this.model.get('data'),
+                id = this.getIdSelect(),
+                newOption;
+            this.previousValue = data.value || '';
+            this.previousLabel = data.label || '';
+            if (data.value !== '' && data.label !== '') {
+                if ($(id).find("option[value='" + data.value + "']").length) {
+                    $(id).val(data.value).trigger('change');
+                } else {
+                    newOption = new Option(data.label, data.value, false, false);
+                    $(id).append(newOption).trigger('change');
+                }
+            }
+            this.firstLoad = false;
+            this.$el.find(".content-print").text(this.previousLabel);
+            PMDynaform.view.Field.prototype.render.apply(this, arguments);
+            return this;
+    },
+        /**
+         * Execute the executeSuggest query from Helpers
+         * @param type
+         * @param callback
+         * @returns {SuggestView}
+         */
+        executeSelect2Query: function (type, callback) {
+            var prj,
                 variable,
                 data = {
-                    "filter": this.model.get('value'),
+                    "query": {
+                        match: type
+                    },
                     "order_by": "ASC",
                     "limit": this.numberOfOptions,
-                    "app_uid": PMDynaform.getProjectKeys().caseUID ? PMDynaform.getProjectKeys().caseUID : null
+                    "app_uid": (PMDynaform.getProjectKeys() && PMDynaform.getProjectKeys().caseUID) ?
+                        PMDynaform.getProjectKeys().caseUID : null
                 };
             _.extend(data, this.model.buildDataForQuery({}));
             prj = this.model.get("project");
@@ -13186,11 +13482,21 @@ xCase.extendNamespace = function (path, newClass) {
                     hidden = this.$el.find("input[type = 'hidden']")[0];
                     name = this.model.get("name");
                     name = name.substring(0, name.length - 1).concat("_label]");
-                    this.$el.find("input[type='suggest']")[0].name = "form" + name;
-                    this.$el.find("input[type='suggest']")[0].id = "form" + name;
-                } else {
-                    this.$el.find("input[type='suggest']")[0].name = "form[" + this.model.get("name") + "_label]";
+                    hidden.name = "form" + name;
+                    hidden.id = "form" + name;
                 }
+            }
+            return this;
+        },
+        /**
+         * Set text
+         * @param value
+         * @returns {SuggestView}
+         */
+        setText: function (value) {
+            if (value !== undefined) {
+                this.model.setValue(value);
+                this.setValueSelect2(value, 'text');
             }
             return this;
         },
@@ -13203,8 +13509,85 @@ xCase.extendNamespace = function (path, newClass) {
             if (value !== undefined) {
                 this.previousValue = this.getValue();
                 this.model.setValue(value);
+                this.setValueSelect2(value, 'val');
             }
             return this;
+        },
+        /**
+         * Set value Select2
+         * @param value
+         * @param typeSearch
+         * @returns {SuggestView}
+         */
+        setValueSelect2: function (value, typeSearch) {
+            var self = this,
+                data,
+                newOpt,
+                match = (typeSearch === 'text') ? {text: value} : {value: value};
+            this.executeSelect2Query(
+                match,
+                function (response, xhr) {
+                    var option = self._findOption(response, typeSearch, value),
+                        id = self.getIdSelect();
+                    data = self._forceSelectionIsConfigurated(option, value);
+                    newOpt = new Option(data.text, data.id, true, true);
+                    self.model.set("data", {
+                        value: data.id,
+                        label: data.text
+                    });
+                    $(id).append(newOpt);
+                    self.model.set("toDraw", true);
+                }
+            );
+            return this;
+        },
+        /**
+         * Look up the value and the text
+         * @param response
+         * @param typeSearch
+         * @param value
+         * @returns {*}
+         * @private
+         */
+        _findOption: function (response, typeSearch, value) {
+            var newOpt,
+                dataMerge = response.concat(this.model.get('options'));
+            if (typeSearch === 'text') {
+                //if the setText helper is executed
+                newOpt = _.find(dataMerge, function (item) {
+                    var text = item.label || item.text;
+                    return text.toUpperCase() === value.toUpperCase();
+                });
+            } else {
+                //if the setValue helper is executed
+                newOpt = _.find(dataMerge, function (item) {
+                    return item.value.toUpperCase() === value.toUpperCase();
+                });
+            }
+            return newOpt;
+        },
+        /**
+         * If forceSelection is configured
+         * @param option
+         * @param value
+         * @returns {{id: string, text: string}}
+         * @private
+         */
+        _forceSelectionIsConfigurated: function (option, value) {
+            var dataOption = {
+                id: '',
+                text: ''
+            };
+            if (this.model.get('forceSelection')) {
+                if (option) {
+                    dataOption.id = option.value;
+                    dataOption.text = option.text || option.label;
+                }
+            } else {
+                dataOption.id = (option) ? option.value : value;
+                dataOption.text = (option) ? option.text || option.label : value;
+            }
+            return dataOption;
         },
         setData: function (data) {
             var dataObject;
@@ -13213,8 +13596,7 @@ xCase.extendNamespace = function (path, newClass) {
                     value: data['value'] !== undefined ? data['value'] : "",
                     label: data['label'] !== undefined ? data['label'] : ""
                 };
-                this.model.set("data", dataObject);
-                this.model.attributes.value = dataObject["value"];
+                this.setValue(data['value']);
                 this.render();
             }
             return this;
@@ -13227,57 +13609,14 @@ xCase.extendNamespace = function (path, newClass) {
             return this.model.getValue();
         },
         getControl: function () {
-            var htmlControl = this.$el.find("input[type='suggest']");
-            return htmlControl;
-        },
-        /**
-         * if the final event is a "keyUp" returns the data of an element html
-         */
-        _keyUpListenerData: function (data) {
-            var data, element;
-            element = this.containerList.find(".pmdynaform-suggest-list-keyboard").find("a");
-            data = this.getListData(element);
-            return data;
-        },
-        /**
-         * if the final event is a "keydown" returns the data of an element html
-         */
-        _keyDownListenerData: function (event, data) {
-            var element, data;
-            if (event.which === 13) {
-                element = this.containerList.find(".pmdynaform-suggest-list-keyboard").find("a");
-                data = this.getListData(element);
-            }
-            if (event.which === 9) {
-                data = {
-                    value: this.controlSuggest.val(),
-                    label: this.controlSuggest.val()
-                }
-            }
-            return data;
-        },
-        /**
-         * destroys the container list elements
-         */
-        destroySuggest: function (event) {
-            this.removeLoadingIcon();
-            if (this.containerList) {
-                this.containerList.remove();
-                this.containerList = null;
-                this.containerOpened = false;
-                this.stackRow = 0;
-                this.clicked = false;
-            }
-            return this;
+            return this.$el.find(".select2-selection__rendered");
         },
         /**
          * get the data if there from an html element
          * return [object]
          */
         getListData: function (element) {
-            var label,
-                value,
-                data = {
+            var data = {
                     value: "",
                     label: ""
                 };
@@ -13290,7 +13629,7 @@ xCase.extendNamespace = function (path, newClass) {
             return data;
         },
         /**
-         * preparePostData, Prepares the additional data to execute the service to execute the query
+         * PreparePostData, Prepares the additional data to execute the service to execute the query
          * @returns data {object}
          */
         preparePostData: function () {
@@ -13309,6 +13648,46 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return data;
+        },
+        /**
+         * Get data control suggest
+         * @param type
+         * @returns {{label: string, value: string}}
+         */
+        getDataSelect2: function (type) {
+            var dataSelected,
+                data,
+                index = 0,
+                id = this.getIdSelect();
+
+            dataSelected = ($(id).data('select2')) ? $(id).select2('data')[index] : null;
+            data = {
+                label: dataSelected ? dataSelected.text : '',
+                value: dataSelected ? dataSelected.id : ''
+            };
+            this._clearOptionsSelect2(dataSelected, id, type);
+            return data;
+        },
+        /**
+         * Clear Options Select2
+         * @param dataSelected
+         * @param id
+         * @param type
+         * @returns {SuggestView}
+         * @private
+         */
+        _clearOptionsSelect2: function (dataSelected, id, type) {
+            var params = {_type: 'query'},
+                clearResults = {};
+
+            if (dataSelected && type) {
+                clearResults.results = [{id: dataSelected.id, text: dataSelected.text}];
+                $(id).data('select2').trigger('results:all', {
+                    data: clearResults,
+                    query: params
+                });
+            }
+            return this;
         }
     });
 
@@ -13418,11 +13797,40 @@ xCase.extendNamespace = function (path, newClass) {
             this.onFieldAssociatedHandler();
             return this;
         },
+        /**
+         * On change handler 
+         * @param {Object} event
+         * @chainable
+         */
         onChange: function (event) {
-            var data;
-            data = this.model.get("data");
-            if (data["label"] !== undefined && data["label"] !== null) {
-                this.model.setFullOptions(data["label"]);
+            var newData,
+                originalType = this.model.get("originalType"),
+                data = this.model.get("data");
+            switch (originalType) {
+                case "checkbox":
+                    newData = this.model.getCheckBoxData(data.value);
+                    break;
+                case "checkgroup":
+                    newData = this.model.getCheckGroupData(data.value);
+                    break;
+                case "dropdown":
+                    newData = this.model.getDropDownData(data.value);
+                    break;
+                case "datetime":
+                    newData = this.model.getDateTimeData(data.value);
+                    break;
+                case "radio":
+                    newData = this.model.getRadioData(data.value);
+                    break;
+                case "suggest":
+                    newData = this.model.getSuggestData(data.value);
+                    break;
+                default:
+                    newData = this.model.getTextBoxData(data.value);
+                    break;
+            }
+            if (newData["label"] !== undefined && newData["label"] !== null) {
+                this.model.setFullOptions(newData["label"]);
             }
             return this;
         },
@@ -13495,8 +13903,9 @@ xCase.extendNamespace = function (path, newClass) {
             if ($textAreaContent.length) {
                 $textAreaContent.html(this.model.get('value').replace(/(?:\r\n|\r|\n)/g, "<br />"));
             }
+            // Append  Spinner
+            this.addSpinnerHTML();
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
-
             return this;
         },
         /**
@@ -13850,7 +14259,14 @@ xCase.extendNamespace = function (path, newClass) {
         getText: function () {
             var data = this.model.get("data");
             return data && data["label"] ? data["label"] : null;
-        }
+        },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
+        getHTMLControl: function () {
+            return this.$el.find(".pmdynaform-label-options");
+        },
     });
 
     PMDynaform.extendNamespace("PMDynaform.view.Label", Label);
@@ -14249,7 +14665,22 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return filesNoUploaded;
         },
-        
+        /**
+         * Gets the loading value into the subfom fields
+         * @returns {boolean}
+         */
+        isLoading: function () {
+            var i,
+                field,
+                formItems = this.formView.getFields();
+            for (i = 0; i < formItems.length; i += 1) {
+                field = formItems[i];
+                if (field.isLoading && (typeof  field.isLoading === 'function') && field.isLoading()) {
+                    return true;
+                }
+            }
+            return false;
+        },
         setData: function (data) {
             //using the same method of PMDynaform.view.FormPanel
             this.formView.setData(data);
@@ -17187,7 +17618,8 @@ xCase.extendNamespace = function (path, newClass) {
             /**
              * @param {PMDynaform.util.ArrayList}, subForms: Set of subforms
              */
-            subForms: null
+            subForms: null,
+            visited: []
         },
         getData: function() {
             return {
@@ -17443,6 +17875,44 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return response;
+        },
+        /**
+         * Walks by the field dependency tree (recursive);
+         * @param {*} name 
+         * @param {*} callbackName 
+         * @chainable
+         */
+        walkByDependencyTree: function(name, callbackName) {
+            var relations = this.get("dependencyRelations"),
+                dependents = relations[name];
+            this.visited.push(name);
+            if(dependents && dependents.length) {
+                for (i = 0; i < dependents.length; i += 1) {
+                    dependent = dependents[i];
+                    if (dependent.get("view") && dependent.get("view")[callbackName]
+                        && typeof dependent.get("view")[callbackName] === 'function') {
+                            dependent.get("view")[callbackName]();
+                    }
+                }   
+            } 
+        },
+        /**
+         * Shows the dependent field spinners
+         * @param {*} name field's name
+         * @chainable
+         */
+        enableDependencySpinners: function(name) {
+            this.walkByDependencyTree(name, "switchControlBySpinner");
+            return this;
+        },
+        /**
+         * Hides the dependent field spinners
+         * @param {*} name field's name
+         * @chainable
+         */
+        disableDependencySpinners: function(name) {
+            this.walkByDependencyTree(name, "switchSpinnerByControl");
+            return this;
         }
     });
     PMDynaform.extendNamespace("PMDynaform.model.FormPanel", FormPanel);
@@ -17468,7 +17938,15 @@ xCase.extendNamespace = function (path, newClass) {
              * toDraw: When this property change, the view is redrawn
              * @member {boolean}
              */
-            toDraw: false
+            toDraw: false,
+            /**
+             * @param {object}: stores the request ajax instance
+             */
+            xhr: null,
+            /**
+             *  @param {boolean}: stores the field loading status.
+             */
+            loading: false
         },
         initialize: function (options) {
             this.set("label", this.get("label"));
@@ -17546,7 +18024,12 @@ xCase.extendNamespace = function (path, newClass) {
                 name = this.evaluateName(),
                 data = this.get("data");
             if (form) {
-                form.dispachEvents(this.getNameToRegisterEvent(name), name, data);
+                // creates visited to register all nodes that was walked
+                form.visited = [];
+                // here enables the dependency spinner for all dependent fields
+                this.enableDependencySpinners();
+                // register the dependency events
+                form.dispachEvents("dependency:" + this.getNameToRegisterEvent(name), name, data);
             }
             return this;
         },
@@ -17576,6 +18059,8 @@ xCase.extendNamespace = function (path, newClass) {
                             data[this.evaluateName()] = this.get("data")["value"] || "";
                             dependent.set("dataForDependent", data);
                             dependent.set("value", "");
+                            dependent.get("view").$el.find(".select2-selection__rendered").text("");
+                            $(dependent.get('view').getIdSelect()).empty();
                         }
                     }
                 }
@@ -17863,17 +18348,21 @@ xCase.extendNamespace = function (path, newClass) {
                 label: labels
             }
         },
-        /**
-         * executeQuery, Run the query through the service
-         * @param data {object}, necessary data for execute the query
-         * @returns {array}, set of options
+         /**
+         * Executes the dependency query
+         * using the data parameters
+         * @param {*} data  necessary data for execute the query
+         * @returns {FieldModel}
          */
         executeQuery: function (data) {
-            var resp,
-                prj;
-            prj = this.get("project");
-            resp = prj.webServiceManager.executeQuery(data, this.get("variable") || "", this);
-            return resp;
+            var project = this.get("project"),
+                xhr;
+            if (project) {
+                this._abortRequest();
+                xhr = project.webServiceManager.executeQuery(data, this.get("variable") || "", this);
+                this.set({xhr: xhr});
+            }
+            return this;
         },
         /**
          * preparePostData, Prepares the additional data to execute the service to execute the query
@@ -17941,44 +18430,52 @@ xCase.extendNamespace = function (path, newClass) {
             var value = "";
             return value;
         },
+
         /**
          * _dependentFieldEventRegister, if this component depends on another field, the dependence is recorded
          * @param sql {string}, Is the query, of which is made the search of the
          * variables on which this component depends
+         * @chainable
          */
         _dependentFieldEventRegister: function (sql) {
             var parse,
                 result,
-                variable,
-                dep = [],
-                managerDependents,
-                that = this,
+                variable = null,
                 form = this.get("form"),
-                parent = this.get("parent");
+                parent = this.get("parent"),
+                hasMultipleDependents = false,
+                relationName;
+            this.set("dependency", []);
             parse = /\@(?:([\@\%\#\=\!Qq])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*?)*)\))/g;
             while ((result = parse.exec(sql)) !== null) {
                 if (_.isArray(result) && result.length) {
                     variable = result[0];
                     variable = variable.substring(2, variable.length);
-                    if (parent.get("type") === "grid") {
-                        form.registerNewDependencyRelation(variable + ":" + this.attributes.keyEvent);
-                        form.registerNewDependent(variable + ":" + this.attributes.keyEvent, this);
-                    } else {
-                        form.registerNewDependencyRelation(variable);
-                        form.registerNewDependent(variable, this);
-                    }
-                    // verify if variable  is into dep array
-                    if (_.indexOf(dep, variable) === -1) {
-                        dep.push(variable);
-                        if (this.get("type") !== "suggest") {
-                            form.addEvent(this.getNameToRegisterEvent(variable), this.dependentHandler, this);
-                        }
-                    }
-
-
+                    relationName = parent.get("type") === "grid" ? variable + ":" + this.attributes.keyEvent: variable;
+                    // save the relations in the main form
+                    form.registerNewDependencyRelation(relationName);
+                    form.registerNewDependent(relationName, this);
+                    // add event
+                    this.addEvent(variable);
                 }
             }
-            this.set("dependency", dep);
+            return this;
+        },
+        /**
+         * Add event to the dependency manager
+         * updated de dependency model property
+         * @param {*} variable
+         * @chainable
+         */
+        addEvent: function(variable) {
+            var form = this.get("form"),
+                prefix = "dependency:";
+            if (_.indexOf(this.get("dependency"), variable) === -1) {
+                this.get("dependency").push(variable);
+                if (this.get("type") !== "suggest") {
+                    form.addEvent(prefix + this.getNameToRegisterEvent(variable), this.dependentHandler, this);
+                }
+            }
             return this;
         },
 
@@ -17988,13 +18485,8 @@ xCase.extendNamespace = function (path, newClass) {
          * param info {object}, Is the field information on which this component depends
          */
         dependentHandler: function (info) {
-            var data,
-                response,
-                dependentsManager;
-            data = this.buildDataForQuery(info);
-            dependentsManager = this.getDependentsManager();
-            response = dependentsManager.executeFieldQuery(data, this.get("variable") || "", this);
-            this.afterExecuteQuery(response);
+            var data = this.buildDataForQuery(info);
+            this.executeQuery(data);
             return this;
         },
         /**
@@ -18015,28 +18507,25 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns dataForDependent {object}
          */
         buildDataForQuery: function (info) {
-            var data = {},
-                dependency = this.get("dependency"),
+            var dependency = this.get("dependency"),
                 i,
-                target = info.target || "",
-                dataTarget = info.data || "",
                 dataForDependent = this.get("dataForDependent"),
-                exist,
                 dependencyItem,
                 form = this.get("form"),
                 parent = this.get("parent");
             if (!_.isEmpty(info)) {
-                dataForDependent[target] = info.data.value;
+                dataForDependent[info.target] = info.data.value;
             }
-            for (i = 0; i < dependency.length; i += 1) {
-                exist = dataForDependent.hasOwnProperty(dependency[i]);
-                if (parent.get("type") === "grid") {
-                    dependencyItem = parent.findCellInRow(this.get("row"), dependency[i]);
-                } else {
-                    dependencyItem = form.get("fields")[dependency[i]];
-                }
-                if (!exist && dependencyItem) {
-                    dataForDependent[dependency[i]] = dependencyItem.get("value");
+            if (_.isArray(dependency)) {
+                for (i = 0; i < dependency.length; i += 1) {
+                    if (parent && parent.get("type") === "grid") {
+                        dependencyItem = parent.findCellInRow(this.get("row"), dependency[i]);
+                    } else {
+                        dependencyItem = form.get("fields")[dependency[i]];
+                    }
+                    if (dependencyItem) {
+                        dataForDependent[dependency[i]] = dependencyItem.get("data").value;
+                    }
                 }
             }
             _.extend(dataForDependent, this.preparePostData());
@@ -18046,6 +18535,24 @@ xCase.extendNamespace = function (path, newClass) {
          * Abstract method
          */
         afterExecuteQuery: function (response) {
+        },
+        /*
+         * Abstract method fires whe the service fails
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName();
+            form.visited = [];
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+            }
+            form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            return this;
         },
         /*
          * Abstract method,
@@ -18077,13 +18584,10 @@ xCase.extendNamespace = function (path, newClass) {
          * Anonymous function
          */
         loadRemotesOptions: function () {
-            var data,
-                dependentsManager,
-                response;
+            var data;
             data = this.buildDataForQuery({});
             dependentsManager = this.getDependentsManager();
-            response = dependentsManager.executeFieldQuery(data, this.get("variable") || "", this);
-            this.mergeRemoteOptions(response);
+            this.executeQuery(data);
             return this;
         },
         /**
@@ -18091,15 +18595,12 @@ xCase.extendNamespace = function (path, newClass) {
          * the fields on which it depends
          * @param data {object}: Data of the fields on which it depends
          */
-        recoreryRemoteOptions: function (data) {
+        recoveryRemoteOptions: function (data) {
             var dependentsManager = this.getDependentsManager(),
                 response;
             if (typeof data === "object" && _.isArray(this.get("options"))) {
                 _.extend(data, this.preparePostData());
-                response = dependentsManager.executeFieldQuery(data, this.get("variable") || "", this);
-                if (_.isArray(response)) {
-                    this.mergeRemoteOptions(response);
-                }
+                this.executeQuery(data);
             }
             return this;
         },
@@ -18155,6 +18656,58 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return this;
+        },
+        /**
+         * Abort the current ajax request
+         * @returns {DropdownModel}
+         */
+        _abortRequest: function() {
+            if (this.get("xhr")) {
+                this.get("xhr").abort();
+            }
+            return this;
+        },
+        /*
+         * Run all dependencies of a field.
+         */
+        runDependency: function () {
+            var parent = this.get("parent"),
+                data = {},
+                i,
+                item,
+                dependency = [];
+            if (_.isArray(this.get("dependency")) && this.get("dependency").length) {
+                dependency = this.get("dependency");
+                if (parent) {
+                    for (i = 0; i < dependency.length; i += 1) {
+                        if (parent.get("type") === "grid") {
+                            item = parent.findCellInRow(this.get("row"), dependency[i]);
+                            // data will be filled only if it isn't null or has not value.
+                            if (item !== null && item.get("value")) {
+                                data[dependency[i]] = item.get("value");
+                            }
+                        }
+                    }
+                    // options will be recovered only if there is a item in the data array.
+                    if (Object.keys(data).length > 0) {
+                        if (this.get("view")) {
+                            this.get("view").switchControlBySpinner();
+                        }
+                        this.recoveryRemoteOptions(data, true);
+                    }
+                }
+            }
+        },
+        /**
+         * Enable the dependent field spinner
+         * @chainable
+         */
+        enableDependencySpinners: function() {
+            var name = this.evaluateName(),
+                form = this.get("form");
+            form.visited = [];
+            form.enableDependencySpinners(this.getNameToRegisterEvent(name));
+            return this;
         }
     });
     PMDynaform.extendNamespace("PMDynaform.model.Field", FieldModel);
@@ -18204,7 +18757,11 @@ xCase.extendNamespace = function (path, newClass) {
             emptyMessage: "No records".translate(),
             addRowText: "New".translate(),
             hint: "",
-            columnFileDelete: {}
+            columnFileDelete: {},
+            /**
+             * @param {Object}: dataSchema, used to validate the data because empty string is valid.
+             */
+            dataSchema: {}
         },
         /**
          * initialize the validator object in the grid
@@ -18612,7 +19169,8 @@ xCase.extendNamespace = function (path, newClass) {
              /**
              * @param {object}: dataForDependent, Stores data to eject dependent field service
              */
-            dataForDependent:{}
+            dataForDependent:{},
+            showDependentSpinners: true
         },
         initValidators: function () {
             this.set("validator", new PMDynaform.model.Validator({
@@ -18789,7 +19347,37 @@ xCase.extendNamespace = function (path, newClass) {
          * @param response {array}: response data set
          */
         afterExecuteQuery: function(response) {
-            this.mergeRemoteOptions(response);
+            var currentValue = this.get("value"),
+                newValue;
+            if (_.isArray(response)) {
+                this.mergeRemoteOptions(response);
+                this.setFirstOptionInData();
+            }
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 0 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+                this.set("showDependentSpinners", true);
+            }
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
+            return this;
+        },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName();
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+                this.get("view").switchSpinnerByControl();
+                form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            }
+            this.mergeRemoteOptions([]);
             this.setFirstOptionInData();
             return this;
         },
@@ -18805,11 +19393,11 @@ xCase.extendNamespace = function (path, newClass) {
             if (options.length) {
                 val = this.get('addRowValue') || (options[index] && options[index].value);
                 defaultData = _.find(options, function (item) {return item.value === val;});
-                this.set('value', val);
+                this.set({value: val});
                 this.set("data", defaultData || {value: '', label: ''});
-            }
-            if (this.get('view')) {
-                this.get('view').onChangeData();
+            } else {
+                this.set({value: ""},{silent: true});
+                this.set("data", {value: '', label: ''});
                 this.get('view').checkBinding();
             }
             return this;
@@ -18822,29 +19410,46 @@ xCase.extendNamespace = function (path, newClass) {
 
         },
         /**
-         * Retrieves the domain of the component based on 
+         * Retrieves the domain of the component based on
          * the fields on which it depends
          * @param data {object}: Data of the fields on which it depends
          * @param postRender {boolean}: Checks if the call is after the view exists
          */
-        recoreryRemoteOptions: function(data, postRender) {
+        recoveryRemoteOptions: function(data, postRender) {
+            if (postRender) {
+                if (typeof data === "object" && _.isArray(this.get("options"))) {
+                    _.extend(data, this.preparePostData());
+                    this.executeQuery(data);
+                }
+            }
+            return this;
+        },
+        /**
+         * Retrieves synchronously the domain of the component based on
+         * the fields on which it depends
+         * @param data {object}: Data of the fields on which it depends
+         * @param postRender {boolean}: Checks if the call is after the view exists
+         */
+        recoverySyncRemoteOptions: function(data, postRender) {
             var dependentsManager = this.getDependentsManager(),
-                response;
+                response,
+                project = this.get("project");
             if (postRender) {
                 if (typeof data === "object" && _.isArray(this.get("options"))) {
                     _.extend(data, this.preparePostData());
                     if (dependentsManager) {
-                        response = dependentsManager.executeFieldQuery(data, this.get("variable") || "", this);
+                        response = project.webServiceManager.executeSyncQuery(data, this.get("variable") || "");
                     }
                     if (_.isArray(response)) {
                         this.mergeRemoteOptions(response);
+                        this.get("view").switchSpinnerByControl();
                     }
                 }
             }
             return this;
         },
         /**
-         * setAppData: Sets the corresponding data that is obtained from the 
+         * setAppData: Sets the corresponding data that is obtained from the
          * service to the component
          * @param data {object} valid data for this component
          */
@@ -19060,6 +19665,26 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("data", {value: "", label: ""});
             this.set({value: ""}, {silent: true});
             this.mergeRemoteOptions(response);
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
+            return this;
+        },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName();
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").switchSpinnerByControl();
+                this.get("view").showQueryFailMessage();
+                form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            }
+            this.mergeRemoteOptions([]);
             return this;
         },
         /**
@@ -19071,7 +19696,7 @@ xCase.extendNamespace = function (path, newClass) {
         setAppData: function (value, dependencyData) {
             var data;
             if (dependencyData) {
-                this.recoreryRemoteOptions(dependencyData);
+                this.recoveryRemoteOptions(dependencyData);
             }
             data = this.findOption(value, "value") || {value: "", label: ""};
             this.set({"data": data}, {silent: true});
@@ -19172,7 +19797,7 @@ xCase.extendNamespace = function (path, newClass) {
                     message: this.get("validateMessage")
                 }
             }));
-             
+
             data = this.get("data");
             if (data && data["value"] !== "") {
                 data = {
@@ -19209,14 +19834,17 @@ xCase.extendNamespace = function (path, newClass) {
             return this.get("valid");
         },
         validate: function (attrs) {
-            var valueFixed = this.get("data")["value"];
-            if (this.get("enableValidate")) {
-                this.get("validator").set("value", valueFixed);
-                this.get("validator").verifyValue();
-            } else {
-                this.get("validator").set("valid",true);
+            var valueFixed;
+            if (this.get("data") !== undefined) {
+                valueFixed = this.get("data")["value"];
+                if (this.get("enableValidate")) {
+                    this.get("validator").set("value", valueFixed);
+                    this.get("validator").verifyValue();
+                } else {
+                    this.get("validator").set("valid", true);
+                }
+                this.set("valid", this.get("validator").get("valid"));
             }
-            this.set("valid", this.get("validator").get("valid"));
             return this;
         },
         onChange: function (attrs, item) {
@@ -19257,22 +19885,60 @@ xCase.extendNamespace = function (path, newClass) {
             var indexValue = 0,
                 val,
                 responseDefault = [{
-                value: "",
-                text: ""
-            }];
+                    value: "",
+                    text: ""
+                }],
+                currentValue = this.get("value"),
+                newValue;
             response = response ? response : [];
             _.defaults(response, responseDefault);
             if (_.isArray(response)) {
-                val = this.get('addRowValue') || response[indexValue].value;
-                this.set("value", val);
+                val = response[indexValue].value;
+                this.set({"value": val, silent: true});
             }
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName(),
+                data = {
+                    value: "",
+                    label: ""
+                };
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+                this.get("view").switchSpinnerByControl();
+                form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            }
+            this.set("data", data);
+            this.set("value", data.value);
             return this;
         },
         /**
          * Superclass override method
          */
-        recoreryRemoteOptions: function(){
-        }        
+        recoveryRemoteOptions: function (data, postRender) {
+            if (postRender) {
+                if (typeof data === "object") {
+                    _.extend(data, this.preparePostData());
+                    this.executeQuery(data);
+                }
+            }
+            return this;
+        }
     });
     PMDynaform.extendNamespace("PMDynaform.model.TextArea", TextAreaModel);
 }());
@@ -19419,14 +20085,17 @@ xCase.extendNamespace = function (path, newClass) {
             return this.get("valid");
         },
         validate: function (attrs) {
-            var valueFixed = this.get("data")['value'];
-            if (this.get("enableValidate")) {
-                this.get("validator").set("value", valueFixed);
-                this.get("validator").verifyValue();
-            } else {
-                this.get("validator").set("valid", true);
+            var valueFixed;
+            if (this.get("data") !== undefined) {
+                valueFixed = this.get("data")['value'];
+                if (this.get("enableValidate")) {
+                    this.get("validator").set("value", valueFixed);
+                    this.get("validator").verifyValue();
+                } else {
+                    this.get("validator").set("valid", true);
+                }
+                this.set("valid", this.get("validator").get("valid"));
             }
-            this.set("valid", this.get("validator").get("valid"));
             return this;
         },
         getData: function () {
@@ -19481,22 +20150,59 @@ xCase.extendNamespace = function (path, newClass) {
             var indexValue = 0,
                 val,
                 responseDefault = [{
-                value: "",
-                text: ""
-            }];
+                    value: "",
+                    text: ""
+                }],
+                currentValue = this.get("value"),
+                newValue;
             response = response ? response : [];
             _.defaults(response, responseDefault);
             if (_.isArray(response)) {
-                val = this.get('addRowValue') || response[indexValue].value;
+                val = response[indexValue].value;
                 this.set("value", val);
             }
+            if (this.get("view")) {
+               this.get("view").switchSpinnerByControl();
+            }
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName(),
+                data = {
+                    value: "",
+                    label: ""
+                };
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+                this.get("view").switchSpinnerByControl();
+                form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            }
+            this.set("data", data);
+            this.set("value", data.value);
             return this;
         },
         /**
          * Superclass override method
          */
-        recoreryRemoteOptions: function () {
-
+        recoveryRemoteOptions: function (data, postRender) {
+            if (postRender) {
+                if (typeof data === "object") {
+                    _.extend(data, this.preparePostData());
+                    this.executeQuery(data);
+                }
+            }
+            return this;
         },
         /**
          * This function execute on change data
@@ -19805,7 +20511,7 @@ xCase.extendNamespace = function (path, newClass) {
             }
             this.initControl();
             this.get("validator").set("value", this.get("value"));
-             
+
             if (this.get("variable") === "") {
                 this.attributes.name = "";
             }
@@ -20023,10 +20729,31 @@ xCase.extendNamespace = function (path, newClass) {
          */
         afterExecuteQuery: function(response) {
             this.mergeRemoteOptions(response);
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
             return this;
         },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName();
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+                this.get("view").switchSpinnerByControl();
+                form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            }
+            this.mergeRemoteOptions([]);
+            return this;
+        },
+
         /**
-         * setAppData: Sets the corresponding data that is obtained from the 
+         * setAppData: Sets the corresponding data that is obtained from the
          * service to the component
          * @param data {object} valid data for this component
          * @param dependencyData {object}, data to complete the component domain
@@ -20039,7 +20766,7 @@ xCase.extendNamespace = function (path, newClass) {
                 },
                 i,
                 options;
-            this.recoreryRemoteOptions(dependencyData);
+            this.recoveryRemoteOptions(dependencyData);
             options = this.findOptions(values, "value");
             if (_.isArray(options)) {
                 for (i = 0; i < options.length; i += 1) {
@@ -20671,11 +21398,13 @@ xCase.extendNamespace = function (path, newClass) {
             keyLabel: "",
             enableValidate: true,
             text: "",
+            filter: '',
             data: {
                 value: '',
                 label: ''
             },
-            hint : ''
+            hint : '',
+            nameModalSuggest: null
         },
         initialize: function (attrs) {
             var data;
@@ -20685,6 +21414,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("dataForDependent",{});
             this.set("defaultValue", this.get("defaultValue"));
             this.set("validator", new PMDynaform.model.Validator({
+                "required": this.get("required"),
                 requiredFieldErrorMessage: this.get("requiredFieldErrorMessage")
             }));
             this.initControl();
@@ -20801,14 +21531,13 @@ xCase.extendNamespace = function (path, newClass) {
             if (value !== undefined) {
                 this.set("value", value);
                 this.set("data", {
-                    value: value,
-                    label: value
+                    value: value
                 });
             }
             return this;
         },
         /**
-         * setAppData: Sets the corresponding data that is obtained from the 
+         * setAppData: Sets the corresponding data that is obtained from the
          * service to the component
          * @param data {object} valid data for this component
          */
@@ -21228,8 +21957,8 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {Label}
          */
         setNewData: function (dataObject) {
-            this.set("data", dataObject);
             this.set("value", dataObject.value);
+            this.set("data", dataObject);
             this.setFullOptions(dataObject.label);
             return this;
         },
@@ -21246,7 +21975,7 @@ xCase.extendNamespace = function (path, newClass) {
                 this.set("fullOptions", items);
             } else {
                 try {
-                    options = JSON.parse(items);
+                    options = JSON.parse(JSON.stringify(items));
                     if (_.isArray(options)) {
                         this.set("fullOptions", options);
                     } else {
@@ -21333,9 +22062,14 @@ xCase.extendNamespace = function (path, newClass) {
                 responseDefault = [{
                     value: "",
                     text: ""
-                }];
+                }],
+                currentValue = this.get("value"),
+                newValue;
             response = response ? response : [];
             _.defaults(response, responseDefault);
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
             if (_.isArray(response)) {
                 if (supportedOptions) {
                     this.mergeRemoteOptions(response);
@@ -21350,6 +22084,35 @@ xCase.extendNamespace = function (path, newClass) {
                 }
                 this.set("value", this.get("data").value);
             }
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /*
+         * Handler when the execute-query service fails.
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName(),
+                data = {
+                    value: "",
+                    label: ""
+                };
+            form.visited = [];
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+            }
+            this.set("data", data);
+            this.set("value", data.value);
+            if (this.get("view")){
+                this.get("view").switchSpinnerByControl();
+            }
+            
+            form.disableDependencySpinners(this.getNameToRegisterEvent(name));
             return this;
         },
         /**
@@ -21364,7 +22127,7 @@ xCase.extendNamespace = function (path, newClass) {
         setDomainValue: function (value, criteria) {
             var options = this.get("options"),
                 option,
-                invalidForAutocomplete = ["suggest", "radio", "checkgroup"],
+                invalidForAutocomplete = ["suggest"],
                 originalType = this.get("originalType"),
                 data = {
                     value: "",
@@ -21396,12 +22159,12 @@ xCase.extendNamespace = function (path, newClass) {
 
             switch (originalType) {
                 case "checkgroup":
-                    this.recoreryRemoteOptions(dependencyData);
+                    this.recoveryRemoteOptions(dependencyData);
                     values = this.findOptions(value, "value");
                     this.setAppDataToCheckGroup(values);
                     break;
                 case "radio":
-                    this.recoreryRemoteOptions(dependencyData);
+                    this.recoveryRemoteOptions(dependencyData);
                     data = this.findOption(value, "value");
                     break;
                 case "checkbox":
@@ -21485,15 +22248,12 @@ xCase.extendNamespace = function (path, newClass) {
          * the fields on which it depends
          * @param data {object}: Data of the fields on which it depends
          */
-        recoreryRemoteOptions: function (data) {
+        recoveryRemoteOptions: function (data) {
             var dependentsManager = this.getDependentsManager(),
                 response;
             if (typeof data === "object" && this.get("supportedOptions")) {
                 _.extend(data, this.preparePostData());
-                response = dependentsManager.executeFieldQuery(data, this.get("variable") || "", this);
-                if (_.isArray(response)) {
-                    this.mergeRemoteOptions(response);
-                }
+                this.executeQuery(data);
             }
             return this;
         }
@@ -23087,6 +23847,27 @@ xCase.extendNamespace = function (path, newClass) {
         deleteFiles: function () {
             this.get("fileCollection").deleteFiles();
             return this;
+        },
+        /**
+         * Make the array that contains all deleted files
+         * @returns {object} 
+         */
+        makeVariableDocumentDelete: function() {
+            var removeArray = this.get("toRemoveArray"),
+                i,
+                item,
+                data = [],
+                result = {};
+            for (i = 0; i < removeArray.length; i += 1) {
+                item = removeArray[i];
+                data.push({
+                    "appDocUid": item.get("appDocUid"),
+                    "name": item.get("file").name,
+                    "version": item.get("version")
+                });
+            }
+            result[this.get("name")] = data;
+            return result;
         }
     });
     PMDynaform.extendNamespace("PMDynaform.file.MultipleFileModel", MultipleFileModel);
@@ -25080,4 +25861,46 @@ xCase.extendNamespace = function (path, newClass) {
     });
     PMDynaform.extendNamespace("PMDynaform.file.UploadModalView", UploadModal);
 }());
+
+(function() {
+    var Spinner = Backbone.View.extend({
+        template: _.template($("#tpl-spinner").html()),
+        initialize: function(options) {
+            return this;
+        },
+        /**
+         * Render the view of progressBar
+         * @chainable
+         */
+        render: function() {
+            var obj = {
+                col: this.col
+            };
+            this.setElement(this.template(obj));
+            return this;
+        },
+        /**
+         * Hides the progress html item
+         * @chainable
+         */
+        hide: function() {
+            var progress = this.$el.find(".pm-field-loading");
+            progress.addClass('hidden');
+            return this;
+        },
+        /**
+         * Shows the progress bar html item
+         * @chainable
+         */
+        show: function() {
+            var progress = this.$el.find(".pm-field-loading");
+            if(progress.hasClass('hidden')) {
+                progress.removeClass('hidden');
+            }
+            return this;
+        }
+
+    });
+    PMDynaform.extendNamespace("PMDynaform.ui.Spinner", Spinner);
+})();
 

@@ -11,11 +11,11 @@ use Illuminate\Redis\Connections\PhpRedisClusterConnection;
 class PhpRedisConnector
 {
     /**
-     * Create a new clustered Predis connection.
+     * Create a new clustered PhpRedis connection.
      *
      * @param  array  $config
      * @param  array  $options
-     * @return \Illuminate\Redis\PhpRedisConnection
+     * @return \Illuminate\Redis\Connections\PhpRedisConnection
      */
     public function connect(array $config, array $options)
     {
@@ -25,7 +25,7 @@ class PhpRedisConnector
     }
 
     /**
-     * Create a new clustered Predis connection.
+     * Create a new clustered PhpRedis connection.
      *
      * @param  array  $config
      * @param  array  $clusterOptions
@@ -49,7 +49,7 @@ class PhpRedisConnector
      */
     protected function buildClusterConnectionString(array $server)
     {
-        return $server['host'].':'.$server['port'].'?'.http_build_query(Arr::only($server, [
+        return $server['host'].':'.$server['port'].'?'.Arr::query(Arr::only($server, [
             'database', 'password', 'prefix', 'read_timeout',
         ]));
     }
@@ -92,9 +92,21 @@ class PhpRedisConnector
      */
     protected function establishConnection($client, array $config)
     {
-        $client->{Arr::get($config, 'persistent', false) === true ? 'pconnect' : 'connect'}(
-            $config['host'], $config['port'], Arr::get($config, 'timeout', 0)
-        );
+        $persistent = $config['persistent'] ?? false;
+
+        $parameters = [
+            $config['host'],
+            $config['port'],
+            Arr::get($config, 'timeout', 0.0),
+            $persistent ? Arr::get($config, 'persistent_id', null) : null,
+            Arr::get($config, 'retry_interval', 0),
+        ];
+
+        if (version_compare(phpversion('redis'), '3.1.3', '>=')) {
+            $parameters[] = Arr::get($config, 'read_timeout', 0.0);
+        }
+
+        $client->{($persistent ? 'pconnect' : 'connect')}(...$parameters);
     }
 
     /**
@@ -109,8 +121,8 @@ class PhpRedisConnector
         return new RedisCluster(
             null,
             array_values($servers),
-            Arr::get($options, 'timeout', 0),
-            Arr::get($options, 'read_timeout', 0),
+            $options['timeout'] ?? 0,
+            $options['read_timeout'] ?? 0,
             isset($options['persistent']) && $options['persistent']
         );
     }

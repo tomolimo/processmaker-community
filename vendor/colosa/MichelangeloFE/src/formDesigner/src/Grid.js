@@ -6,11 +6,25 @@
         this.onSetProperty = new Function();
         this.onVariableDrawDroppedItem = new Function();
         this.onDrawControl = new Function();
+        this.onDrawDroppedItem = new Function();
         this.parent = parent;
         this.properties = null;
         this.variable = parent.variable;
         this.disabled = false;
+        this.typesControlSupported = [
+            FormDesigner.main.TypesControl.link,
+            FormDesigner.main.TypesControl.file,
+            FormDesigner.main.TypesControl.multipleFile,
+            FormDesigner.main.TypesControl.text,
+            FormDesigner.main.TypesControl.textarea,
+            FormDesigner.main.TypesControl.dropdown,
+            FormDesigner.main.TypesControl.checkbox,
+            FormDesigner.main.TypesControl.datetime,
+            FormDesigner.main.TypesControl.suggest,
+            FormDesigner.main.TypesControl.hidden
+        ];
         Grid.prototype.init.call(this);
+        this._items = new PMUI.util.ArrayList();
     };
     Grid.prototype.init = function () {
         var that = this;
@@ -94,7 +108,9 @@
         };
     };
     Grid.prototype.drawDroppedItem = function (render) {
-        var that = this, properties = null;
+        var that = this,
+            properties = null,
+            target = null;
         switch (render) {
             case FormDesigner.main.TypesControl.variable:
                 if (that.onVariableDrawDroppedItem(that.variable) === false)
@@ -114,6 +130,7 @@
                 dialogTypeControl.onClose = function () {
                     that.variable = null;
                 };
+                target = dialogTypeControl;
                 break;
             case that.inTypesControl(render):
                 var gridItem = new FormDesigner.main.GridItem(render, that.variable, that);
@@ -121,46 +138,21 @@
                     that.onSelect(properties);
                 };
                 gridItem.onRemove = function () {
-                    that.onRemoveItem();
+                    that.onRemoveItem(this);
                 };
                 gridItem.onSetProperty = function (prop, value, target) {
                     that.onSetProperty(prop, value, target);
                 };
                 that.targetNode.append(gridItem.html);
                 properties = gridItem.properties;
+                target = gridItem;
                 break;
         }
+        that.onDrawDroppedItem(render, target);
         return properties;
     };
     Grid.prototype.inTypesControl = function (val) {
-        //uncomment to add new elements
-        if (
-            //val === FormDesigner.main.TypesControl.title ||
-        //val === FormDesigner.main.TypesControl.subtitle ||
-        //val === FormDesigner.main.TypesControl.label ||
-        val === FormDesigner.main.TypesControl.link ||
-            //val === FormDesigner.main.TypesControl.image ||
-        val === FormDesigner.main.TypesControl.file ||
-        val === FormDesigner.main.TypesControl.multipleFile ||
-            //val === FormDesigner.main.TypesControl.submit ||
-            //val === FormDesigner.main.TypesControl.button ||
-        val === FormDesigner.main.TypesControl.text ||
-        val === FormDesigner.main.TypesControl.textarea ||
-        val === FormDesigner.main.TypesControl.dropdown ||
-        val === FormDesigner.main.TypesControl.checkbox ||
-            //render === FormDesigner.main.TypesControl.checkgroup ||
-            //val === FormDesigner.main.TypesControl.radio ||
-        val === FormDesigner.main.TypesControl.datetime ||
-        val === FormDesigner.main.TypesControl.suggest ||
-        val === FormDesigner.main.TypesControl.hidden
-        //val === FormDesigner.main.TypesControl.annotation ||
-        //val === FormDesigner.main.TypesControl.geomap ||
-        //val === FormDesigner.main.TypesControl.qrcode ||
-        //val === FormDesigner.main.TypesControl.signature ||
-        //val === FormDesigner.main.TypesControl.imagem ||
-        //val === FormDesigner.main.TypesControl.audiom ||
-        //val === FormDesigner.main.TypesControl.videom
-        ) {
+        if ($.inArray(val, this.typesControlSupported) > -1) {
             return val;
         }
         new FormDesigner.main.DialogUnsupported();//todo
@@ -250,6 +242,24 @@
         if (b.node)
             b.node.value = variable.var_name;
         that.properties.set("name", variable.var_name);
+    };
+    /**
+     * Verify if in the grid exist a deprecated control.
+     * @return {number}
+     */
+    Grid.prototype.checkForDeprecatedControls = function () {
+        return this._items.asArray().length;
+    };
+    /**
+     * Clear list of deprecated control in the grid.
+     */
+    Grid.prototype.clearItemsDeprecated = function () {
+        var itemsGrid = this._items.asArray(),
+            i;
+        for (i = 0; i < itemsGrid.length; i+= 1) {
+            this.parent._items.remove(itemsGrid[i])
+        }
+        this._items.clear();
     };
     FormDesigner.extendNamespace('FormDesigner.main.Grid', Grid);
 }());

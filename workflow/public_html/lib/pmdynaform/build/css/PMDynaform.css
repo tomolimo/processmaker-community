@@ -8,6 +8,16 @@
   background: url(../img/loading.gif) 50% 50% no-repeat #f9f9f9;
 }
 
+.pm-field-loading {
+  background-image: url("../img/loading.gif");
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-top: 5px;
+}
+
 .pmdynaform-file-btn-container {
   width: 100%;
 }
@@ -234,6 +244,10 @@
     overflow: hidden;
     white-space: nowrap;
   }
+
+  .select2-container {
+    width: 98% !important;
+  }
 }
 @media all and (max-width: 550px) and (min-width: 300px) {
   .form-control {
@@ -302,6 +316,10 @@
     overflow: hidden;
     white-space: nowrap;
   }
+
+  .select2-container {
+    width: 95% !important;
+  }
 }
 @media all and (max-width: 300px) {
   .form-control {
@@ -369,6 +387,10 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .select2-container {
+    width: 93% !important;
   }
 }
 @media print {
@@ -646,6 +668,7 @@
   .multiplefile-icon,
   .multiplefile-buttons,
   .datetime-container,
+  .select2-container,
   .pmdynaform-message-error {
     display: none !important;
   }
@@ -933,6 +956,10 @@ a.form-control {
 
 .control-group {
   display: flex;
+}
+
+.select2-container .select2-selection--single {
+  border: 1px solid #ccc;
 }
 
 textarea {

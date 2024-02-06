@@ -79,7 +79,6 @@ $G_PUBLISH = new Publisher();
 $G_PUBLISH->AddContent('template', '', '', '', $oTemplatePower);
 
 $consolidated = 0;
-/*----------------------------------********---------------------------------*/
 
 $oHeadPublisher = headPublisher::getSingleton();
 $oHeadPublisher->addScriptFile('/jscore/dbConnections/main.js');

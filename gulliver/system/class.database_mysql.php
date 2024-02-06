@@ -393,19 +393,20 @@ class database extends database_base
     }
 
     /**
-     * generate a sentence to add indexes or primary keys
+     * Generate a sentence to add indexes or primary keys
      *
      * @param string $table table name
      * @param string $indexName index name
      * @param array $keys array of keys
+     * @param string $indexType the index type
+     *
      * @return string sql sentence
      * @throws Exception
      */
 
-    public function generateAddKeysSQL($table, $indexName, $keys)
+    public function generateAddKeysSQL($table, $indexName, $keys, $indexType = 'INDEX')
     {
         try {
-            $indexType = 'INDEX';
             if ($indexName === 'primaryKey' || $indexName === 'PRIMARY') {
                 $indexType = 'PRIMARY';
                 $indexName = 'KEY';
@@ -519,13 +520,15 @@ class database extends database_base
     }
 
     /**
-     * execute a sql query
+     * Execute a sql query
      *
      * @param string $query
+     * @param bool $throwError
+     *
      * @return array
      * @throws Exception
      */
-    public function executeQuery($query)
+    public function executeQuery($query, $throwError = false)
     {
         $this->logQuery($query);
 
@@ -545,7 +548,11 @@ class database extends database_base
             return $result;
         } catch (Exception $exception) {
             $this->logQuery($exception->getMessage());
-            return [];
+            if ($throwError) {
+                throw $exception;
+            } else {
+                return [];
+            }
         }
     }
 
@@ -1003,7 +1010,7 @@ class database extends database_base
     public function tableExists($tableName, $database)
     {
         try {
-            $result = DB::connect($this->getNameConnection())
+            $result = DB::connection($this->getNameConnection())
                 ->select("show tables like '$tableName'");
             $flag = count($result) > 0;
 
@@ -1011,5 +1018,99 @@ class database extends database_base
             $flag = false;
         }
         return $flag;
+    }
+
+    /**
+     * Generate drop trigger SQL
+     *
+     * @param string $triggerName
+     *
+     * @return string
+     */
+    public function getDropTrigger($triggerName)
+    {
+        return "DROP TRIGGER IF EXISTS `{$triggerName}`;";
+    }
+
+    /**
+     * Generate alter table with or without adding the indexes
+     *
+     * @param string $tableName
+     * @param array $columns
+     * @param array $indexes
+     * @param array $fulltextIndexes
+     *
+     * @return string
+     */
+    public function generateAddColumnsSql($tableName, $columns, $indexes = [], $fulltextIndexes = [])
+    {
+        $indexesAlreadyAdded = [];
+        $sql = 'ALTER TABLE ' . $this->sQuoteCharacter . $tableName . $this->sQuoteCharacter . ' ';
+        foreach ($columns as $columnName => $parameters) {
+            if (isset($parameters['Type']) && isset($parameters['Null'])) {
+                $sql .= 'ADD COLUMN ' . $this->sQuoteCharacter . $columnName . $this->sQuoteCharacter . ' ' . $parameters['Type'];
+                if ($parameters['Null'] == 'YES') {
+                    $sql .= ' NULL';
+                } else {
+                    $sql .= ' NOT NULL';
+                }
+            }
+            if (isset($parameters['AutoIncrement']) && $parameters['AutoIncrement']) {
+                $sql .= ' AUTO_INCREMENT';
+            }
+            if (isset($parameters['PrimaryKey']) && $parameters['PrimaryKey']) {
+                $sql .= ' PRIMARY KEY';
+                $indexesAlreadyAdded[] = $columnName;
+            }
+            if (isset($parameters['Unique']) && $parameters['Unique']) {
+                $sql .= ' UNIQUE';
+            }
+
+            // We need to check the property AI
+            if (isset($parameters['AI'])) {
+                if ($parameters['AI'] == 1) {
+                    $sql .= ' AUTO_INCREMENT';
+                } else {
+                    if ($parameters['Default'] != '') {
+                        $sql .= " DEFAULT '" . $parameters['Default'] . "'";
+                    }
+                }
+            } else {
+                if (isset($parameters['Default'])) {
+                    $sql .= " DEFAULT '" . $parameters['Default'] . "'";
+                }
+            }
+            $sql .= ', ';
+        }
+        // Add the normal indexes if are not "primaryKeys" already added
+        foreach ($indexes as $indexName => $indexColumns) {
+            $indexType = 'INDEX';
+            if ($indexName === 'primaryKey' || $indexName === 'PRIMARY') {
+                $indexType = 'PRIMARY';
+                $indexName = 'KEY';
+                // If is primary key is not needed add a new index, the column already was added like primary key
+                if (count($indexColumns) == 1 && $indexesAlreadyAdded == $indexColumns) {
+                    continue;
+                }
+            }
+            $sql .= 'ADD ' . $indexType . ' ' . $indexName . ' (';
+            foreach ($indexColumns as $column) {
+                $sql .= $this->sQuoteCharacter . $column . $this->sQuoteCharacter . ', ';
+            }
+            $sql = substr($sql, 0, -2);
+            $sql .= '), ';
+        }
+        // Add the "fulltext" indexes always
+        foreach ($fulltextIndexes as $indexName => $indexColumns) {
+            $sql .= 'ADD FULLTEXT ' . $indexName . ' (';
+            foreach ($indexColumns as $column) {
+                $sql .= $this->sQuoteCharacter . $column . $this->sQuoteCharacter . ', ';
+            }
+            $sql = substr($sql, 0, -2);
+            $sql .= '), ';
+        }
+        $sql = rtrim($sql, ', ');
+
+        return $sql;
     }
 }

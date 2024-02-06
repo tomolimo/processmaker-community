@@ -103,7 +103,7 @@ services:
         public: true
     deprecated_service:
         class: stdClass
-        deprecated: The "%service_id%" service is deprecated. You should stop using it, as it will soon be removed.
+        deprecated: The "%service_id%" service is deprecated. You should stop using it, as it will be removed in the future.
         public: true
     new_factory:
         class: FactoryClass
@@ -124,7 +124,7 @@ services:
         public: true
     factory_simple:
         class: SimpleFactoryClass
-        deprecated: The "%service_id%" service is deprecated. You should stop using it, as it will soon be removed.
+        deprecated: The "%service_id%" service is deprecated. You should stop using it, as it will be removed in the future.
         public: false
         arguments: ['foo']
     factory_service_simple:
@@ -138,6 +138,16 @@ services:
     lazy_context_ignore_invalid_ref:
         class: LazyContext
         arguments: [!iterator ['@foo.baz', '@?invalid'], !iterator []]
+        public: true
+    BAR:
+        class: stdClass
+        properties: { bar: '@bar' }
+        public: true
+    bar2:
+        class: stdClass
+        public: true
+    BAR2:
+        class: stdClass
         public: true
     tagged_iterator_foo:
         class: Bar
@@ -161,3 +171,9 @@ services:
     alias_for_alias:
         alias: 'foo'
         public: true
+    runtime_error:
+        class: stdClass
+        arguments: ['@errored_definition']
+        public: true
+    errored_definition:
+        class: stdClass

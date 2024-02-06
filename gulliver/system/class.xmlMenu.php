@@ -61,11 +61,11 @@ class XmlFormFieldXmlMenu extends XmlFormField
      * @param string $home default value ''
      * @param string $owner
      *
-     * @return none
+     * @return void
      */
-    public function XmlFormFieldXmlMenu ($xmlNode, $lang = 'en', $home = '', $owner = null)
+    public function __construct($xmlNode, $lang = 'en', $home = '', $owner = null)
     {
-        parent::__construct( $xmlNode, $lang, $home, $owner );
+        parent::__construct($xmlNode, $lang, $home, $owner);
         $this->home = $home;
     }
 

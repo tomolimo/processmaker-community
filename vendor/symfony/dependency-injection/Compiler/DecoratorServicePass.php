@@ -32,9 +32,9 @@ class DecoratorServicePass implements CompilerPassInterface
             if (!$decorated = $definition->getDecoratedService()) {
                 continue;
             }
-            $definitions->insert(array($id, $definition), array($decorated[2], --$order));
+            $definitions->insert([$id, $definition], [$decorated[2], --$order]);
         }
-        $decoratingDefinitions = array();
+        $decoratingDefinitions = [];
 
         foreach ($definitions as list($id, $definition)) {
             list($inner, $renamedId) = $definition->getDecoratedService();
@@ -44,6 +44,7 @@ class DecoratorServicePass implements CompilerPassInterface
             if (!$renamedId) {
                 $renamedId = $id.'.inner';
             }
+            $definition->innerServiceId = $renamedId;
 
             // we create a new alias/service for the service we are replacing
             // to be able to reference it in the new one
@@ -51,7 +52,7 @@ class DecoratorServicePass implements CompilerPassInterface
                 $alias = $container->getAlias($inner);
                 $public = $alias->isPublic();
                 $private = $alias->isPrivate();
-                $container->setAlias($renamedId, new Alias($container->normalizeId($alias), false));
+                $container->setAlias($renamedId, new Alias((string) $alias, false));
             } else {
                 $decoratedDefinition = $container->getDefinition($inner);
                 $public = $decoratedDefinition->isPublic();
@@ -64,14 +65,7 @@ class DecoratorServicePass implements CompilerPassInterface
             if (isset($decoratingDefinitions[$inner])) {
                 $decoratingDefinition = $decoratingDefinitions[$inner];
                 $definition->setTags(array_merge($decoratingDefinition->getTags(), $definition->getTags()));
-                $autowiringTypes = $decoratingDefinition->getAutowiringTypes(false);
-                if ($types = array_merge($autowiringTypes, $definition->getAutowiringTypes(false))) {
-                    $definition->setAutowiringTypes($types);
-                }
-                $decoratingDefinition->setTags(array());
-                if ($autowiringTypes) {
-                    $decoratingDefinition->setAutowiringTypes(array());
-                }
+                $decoratingDefinition->setTags([]);
                 $decoratingDefinitions[$inner] = $definition;
             }
 

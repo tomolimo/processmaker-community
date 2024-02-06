@@ -37,7 +37,7 @@ class RouteBinding
             // If the binding has an @ sign, we will assume it's being used to delimit
             // the class name from the bind method name. This allows for bindings
             // to run multiple bind methods in a single class for convenience.
-            list($class, $method) = Str::parseCallback($binding, 'bind');
+            [$class, $method] = Str::parseCallback($binding, 'bind');
 
             $callable = [$container->make($class), $method];
 
@@ -65,7 +65,7 @@ class RouteBinding
             // throw a not found exception otherwise we will return the instance.
             $instance = $container->make($class);
 
-            if ($model = $instance->where($instance->getRouteKeyName(), $value)->first()) {
+            if ($model = $instance->resolveRouteBinding($value)) {
                 return $model;
             }
 

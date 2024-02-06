@@ -19,6 +19,7 @@
         <script type="text/javascript" src="../libs/restclient/restclient.js"></script>
         <script type="text/javascript" src="../libs/restclient/restclient.js"></script>
         <script type="text/javascript" src="../libs/datepicker/bootstrap-datetimepicker.js"></script>
+        <script type="text/javascript" src="../libs/select2/select2.min.js"></script>
 
         <!--other-->
         <link rel="stylesheet" href="codemirror.css"/>
@@ -950,6 +951,66 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 	<%}%>
 </script>
 
+<script type='text/template' id='tpl-suggest2'>
+	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
+		<% if(group === "form") {%>
+			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+				<label for="form[<%-id%>]" class="control-label pmdynaform-label">
+					<span data-toggle="tooltip" data-placement="bottom" title="<%-tooltipLabel%>" class="textlabel"><%=label%></span>
+					<%if(required && enableValidate){%>
+						<span class="pmdynaform-field-required">*</span>
+					<%}%>
+				</label>
+			</div>
+		<%}%>
+		<div
+			<%if (group === 'form'){ %>
+				class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%>
+				pmdynaform-field-control"
+			<%} else if (layout === "responsive") {%>
+				class="pmdynaform-field-control col-xs-12 col-sm-12 col-md-12 col-lg-12"
+			<%}%>
+		>
+			<div class="control-group">
+				<select
+					<% if ( group === "grid") { %>
+						id="form<%-id%>"
+						name= "form<%-name%>"
+					<%} else{%>
+						id="form[<%-id%>]"
+						name="form[<%-name%>]"
+					<%}%>
+					type = <%-type%> class="<%-namespace%>-control-<%-type%> form-control"
+					placeholder= "<%-placeholder%>" value = "<%-data['label']%>"
+					<% if(disabled === true){%>disabled<%}%>
+					<% if (autoComplete === "on" || autoComplete === "off") { %>
+						autocomplete = "<%-autoComplete%>"
+					<%} else{%>
+						autoComplete = "off"
+					<%}%>
+				>
+				</select>
+				<% if (group === "form") { %>
+					<%if (hint !== "" && hint !== null){%>
+						<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-placement="bottom"
+						title="<%-hint%>"></span>
+					<%}%>
+				<% } %>
+				<span class="content-print"></span>
+			</div>
+			<input type="hidden"
+				<% if ( group === "grid") { %>
+					id = "form<%-id%>"
+					name ="form<%-name%>"
+				<%} else{%>
+					id = "form[<%-id%>_label]"
+					name ="form[<%-name%>_label]"
+				<%}%>
+				value="<%-data['value']%>"
+			>
+		</div>
+	</div>
+</script>
 <script type="text/template" id="tpl-grid">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%-namespace%>-<%-mode%>-<%-type%> <%-layout%>">
 		<div class="<%-namespace%>-<%-type%>-new">
@@ -1569,7 +1630,6 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         </div>
     </div>
 </script>
-
 <script type="text/template" id="tpl-progressbar">
         <div class="pm-progressbar col-xs-<%-col%>">
             <div class="progressbar-title">
@@ -1729,6 +1789,11 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         </div>
     </div>
 </script>
+<script type="text/template" id="tpl-spinner">
+    <div class="col-xs-12">
+           <div class="pm-field-loading"></div>
+    </div>
+</script>
 
         <script type="text/javascript" src="../libs/underscore/underscore-1.6.js"></script>
         <script type="text/javascript" src="../libs/html5/html5.js"></script>
@@ -1747,8 +1812,8 @@ is called to PMDynaform.view.Radio method "_setOptions()"
             <input id="test" type="button" value="run"/>
             <input id="desktop" type="button" value="desktop"/>
             <input id="tablet" type="button" value="tablet"/>
-            <input id="smartphone" type="button" value="smartphone"/><br>    
-            <div id="container" style="border: 1px solid #eee;height:100%; float:left;"></div>    
+            <input id="smartphone" type="button" value="smartphone"/><br>
+            <div id="container" style="border: 1px solid #eee;height:100%; float:left;"></div>
         </div>
     </body>
 </html>
