@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm type="xmlmenu">
+  <DBS_UID type="private"/>
+  <MNU_ADD type="link" value="" link="#" onclick="newDbConnection();return false;" colAlign="left" colWidth="100">
+    <en><![CDATA[New]]></en>
+  </MNU_ADD>
+  <PAGED_TABLE_ID type="private"/>
+  <PAGED_TABLE_FAST_SEARCH type="FastSearch" label="@G::LoadTranslation(ID_SEARCH)"/>
+  <SEARCH_FILTER_FORM type="private"/>
+  <js type="javascript" replaceTags="1"><![CDATA[
+  add_placeholder("form[PAGED_TABLE_FAST_SEARCH]","@G::LoadTranslation(ID_EMPTY_SEARCH)");
+  function add_placeholder (id, placeholder) {
+   	var el = document.getElementById(id);
+   	el.placeholder = placeholder;
+     
+    el.onfocus = function () {
+    	if(this.value == this.placeholder) {
+    	  this.value = '';
+    	  el.style.cssText  = '';
+    	}
+     };
+     
+    el.onblur = function () {
+  	  if(this.value.length == 0) {
+    	  this.value = this.placeholder;
+    	  el.style.cssText = 'color:#A9A9A9;';
+        }
+    };
+     
+  	el.onblur();
+  }  
+  var currentPagedTable = @#PAGED_TABLE_ID;
+]]></js>
+</dynaForm>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="sysLogin" version="1.0" basedir="" xmlform_type="NORMAL" width="400px">
+  <TITLE type="title">
+    <en><![CDATA[Login]]></en>
+  </TITLE>
+  <USR_USERNAME type="text" size="30" maxlength="50" validate="Any">
+    <en><![CDATA[User]]></en>
+  </USR_USERNAME>
+  <USR_PASSWORD type="password" size="30" maxlength="32" autocomplete="0">
+    <en><![CDATA[Password]]></en>
+  </USR_PASSWORD>
+  <USER_ENV type="dropdown" sqlconnection="dbarray">
+SELECT ENV_ID, ENV_NAME FROM availableWorkspace
+<en><![CDATA[Workspace]]></en>
+</USER_ENV>
+  <USER_LANG type="dropdown" sqlconnection="dbarray">
+SELECT LANG_ID, LANG_NAME FROM langOptions
+<en><![CDATA[Language]]></en>
+</USER_LANG>
+  <BSUBMIT type="submit">
+    <en><![CDATA[Login]]></en>
+  </BSUBMIT>
+  <JS type="javascript"><![CDATA[
+
+
+setFocus (getField ('USR_USERNAME'));
+
+leimnud.event.add(document.getElementById('form[BSUBMIT]'), 'click', function() {
+    createCookie("pm_sys_sys", "{\"sys_sys\": \"" + getField("USER_ENV").value + "\"}", 365);
+
+    var client = getBrowserClient();
+    if (client.browser == "msie" || client.browser == "safari"){
+        document.sysLogin.submit();
+    }
+}.extend(document.getElementById('form[BSUBMIT]')));
+
+try{
+    var s = new String(readCookie("pm_sys_sys"));
+    var obj = eval("(" + s + ")");
+
+    if (obj != null) {
+        getField("USER_ENV").value = obj.sys_sys;
+    }
+} catch(e){}
+
+]]></JS>
+</dynaForm>
+

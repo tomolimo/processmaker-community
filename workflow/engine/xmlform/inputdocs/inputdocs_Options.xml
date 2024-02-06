@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm type="xmlmenu">
+  <MNU_ADD type="link" value="" link="#" onclick="inputdocsAdd(); return false;" colAlign="left" colWidth="100">
+    <en><![CDATA[New]]></en>
+  </MNU_ADD>
+  <PAGED_TABLE_ID type="private"/>
+  <PAGED_TABLE_FAST_SEARCH type="FastSearch" label="@G::LoadTranslation(ID_SEARCH)"/>
+  <PRO_UID type="private"/>
+  <inputdocsEdit type="private" defaultValue="../inputdocs/inputdocs_Edit"/>
+  <inputdocsDelete type="private" defaultValue="../inputdocs/inputdocs_Delete"/>
+  <js type="javascript" replaceTags="1"><![CDATA[
+add_placeholder("form[PAGED_TABLE_FAST_SEARCH]","@G::LoadTranslation(ID_EMPTY_SEARCH)");
+  function add_placeholder (id, placeholder) {
+    	var el = document.getElementById(id);
+    	el.placeholder = placeholder;
+     
+        el.onfocus = function () {
+    		if(this.value == this.placeholder) {
+    			this.value = '';
+    			el.style.cssText  = '';
+    		}
+        };
+     
+        el.onblur = function () {
+    		if(this.value.length == 0) {
+    			this.value = this.placeholder;
+    			el.style.cssText = 'color:#A9A9A9;';
+    		}
+        };
+     
+    	el.onblur();
+  }    
+var currentPagedTable = @#PAGED_TABLE_ID;
+  function inputdocsAdd(){//alert('@G::encryptlink(@#inputdocsEdit)?PRO_UID=@%PRO_UID');
+		popupWindow('@G::LoadTranslation(ID_NEW_INPUTDOCS)', '@G::encryptlink(@#inputdocsEdit)?PRO_UID=@%PRO_UID' , 500, 410);
+  }
+  function inputdocsEdit( uid ) {// alert('@G::encryptlink(@#inputdocsEdit)?INP_DOC_UID='+ uid);
+		popupWindow('@G::LoadTranslation(ID_EDIT_INPUTDOCS)', '@G::encryptlink(@#inputdocsEdit)?INP_DOC_UID='+ uid , 500, 410);
+  }
+  function validate_form(){
+    if(getField('INP_DOC_TITLE').value == ''){
+      alert('@G::LoadTranslation(ID_INPUT_DOC_TITLE_REQUIRED)');
+      getField('INP_DOC_TITLE').focus();
+      return false;
+    }
+
+    oTypeFile = getField('INP_DOC_TYPE_FILE');
+  	if (oTypeFile.value == '' ){
+   	  alert('@G::LoadTranslation(ID_INPUT_DOC_TYPE_FILE_REQUIRED)');
+      oTypeFile.focus();
+      return false;
+    }
+
+    allowedTypes = getField('INP_DOC_TYPE_FILE').value.split(", ");
+    expreg = /^.*\.?[a-zA-Z0-9]{2,15}$/;
+
+    for(i=0; i<allowedTypes.length; i++){
+      atype = allowedTypes[i];
+
+      if ((atype == ".*") || (atype == "*.*") || (expreg.test(atype))) {
+        //
+      } else {
+        alert('@G::LoadTranslation(ID_UPLOAD_ERR_WRONG_ALLOWED_EXTENSION_FORMAT)');
+        oTypeFile.focus();
+        return false;
+      }
+    }
+
+    var maxFilesize = parseInt(getField("INP_DOC_MAX_FILESIZE").value.trim());
+    var maxFilesizeUnit = getField("INP_DOC_MAX_FILESIZE_UNIT").value;
+
+    var uploadMaxFilesize = parseInt(getField("INP_DOC_UPLOAD_MAX_FILESIZE").value);
+
+    maxFilesize = maxFilesize * ((maxFilesizeUnit == "MB")?  1024 * 1024 : 1024);
+
+    if (getField("INP_DOC_MAX_FILESIZE").value != "") {
+        if(maxFilesize > 0) {
+            if(maxFilesize > uploadMaxFilesize) {
+                new leimnud.module.app.alert().make({label: _("ID_INPUT_MAX_SIZE")});
+                getField("INP_DOC_MAX_FILESIZE").focus();
+                return false;
+            }
+        }
+    } else {
+        alert('@G::LoadTranslation(ID_INPUT_DOC_MAX_FILESIZE_REQUIRED)');
+        maxFilesize.focus();
+        return false;
+    }
+
+    return true;
+  }
+  function inputdocsSave( form ) {
+  var nameInput = getField('INP_DOC_TITLE').value;
+  var proUid = getField('PRO_UID').value;
+  if(getField('INP_DOC_UID').value==''){
+      if (validate_form()){
+	  reqName=ajax_function(form.action,'lookForNameInput','NAMEINPUT='+encodeURIComponent(nameInput)+'&proUid='+encodeURIComponent(proUid),'POST') ;
+	  if(reqName){
+	    ajax_post( form.action, form, 'POST' );
+	    currentPopupWindow.remove();
+	    @#PAGED_TABLE_ID.refresh();
+	   }else{
+	   alert(G_STRINGS.ID_EXIST_INPUTDOCUMENT);return false;
+	   }
+	   }
+    }else{
+      if (validate_form()){
+      ajax_post( form.action, form, 'POST' );
+	    currentPopupWindow.remove();
+	    @#PAGED_TABLE_ID.refresh();
+	  }
+    }
+  }
+  function inputdocsDelete( uid ) {
+
+	  result = ajax_function('@G::encryptlink(@#inputdocsDelete)','getRelationInfDoc','INP_DOC_UID='+uid,'POST');
+	  labelToshow = (result)?'@G::LoadTranslation(ID_MSG_CONFIRM_DELETE_IDOCUMENT)':'@G::LoadTranslation(ID_MSG_CONFIRM_DELETE_DOCUMENT)';
+
+    new leimnud.module.app.confirm().make({
+    	label:labelToshow,
+    	action:function()
+    	{
+        ajax_function('@G::encryptlink(@#inputdocsDelete)','deleteInputDocument','INP_DOC_UID='+uid,'POST');
+        @#PAGED_TABLE_ID.refresh();
+      }.extend(this)
+    });
+  }
+]]></js>
+  <SEARCH_FILTER_FORM type="private"/>
+</dynaForm>

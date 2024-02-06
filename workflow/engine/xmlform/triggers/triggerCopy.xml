@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm mode="edit" width="100%" labelWidth="28%" enableTemplate="1">
+  <PRO_UID type="hidden"/>
+  <TRI_UID type="hidden"/>
+  <TRI_PARAM type="hidden"/>
+  <TRI_TYPE type="hidden"/>
+  <FIELDS_REQUIRED type="hidden"/>
+  <LANG type="private"/>
+  <LBLTITLE1 type="title">
+    <en><![CDATA[Trigger Information]]></en>
+  </LBLTITLE1>
+  <PROCESS_UID type="dropdown" dependentfields="TRIGGER_UID"><![CDATA[
+    SELECT PRO.PRO_UID, CON.CON_VALUE
+    FROM   PROCESS AS PRO, CONTENT AS CON
+    WHERE  PRO.PRO_UID = CON.CON_ID AND CON.CON_CATEGORY = 'PRO_TITLE' AND CON.CON_LANG = '@#LANG'
+    ORDER BY CON.CON_VALUE ASC
+    ]]><en><![CDATA[Process]]><option name=""><![CDATA[- Select a process -]]></option></en></PROCESS_UID>
+  <TRIGGER_UID type="dropdown" dependentfields="TRI_WEBBOT,TRI_DESCRIPTION,TRIGGER_UID_AUX"><![CDATA[
+    SELECT TGR.TRI_UID, CON.CON_VALUE
+    FROM   TRIGGERS AS TGR, CONTENT AS CON
+    WHERE  TGR.PRO_UID = '@#PROCESS_UID' AND
+           TGR.TRI_UID = CON.CON_ID AND CON.CON_CATEGORY = 'TRI_TITLE' AND CON.CON_LANG = '@#LANG'
+    ORDER BY CON.CON_VALUE ASC
+    ]]><en><![CDATA[Trigger]]><option name=""><![CDATA[- Select a trigger -]]></option></en></TRIGGER_UID>
+  <TRIGGER_UID_AUX type="text" maxlength="64" validate="Any" size="15" mode="edit"><![CDATA[
+    SELECT TGR.TRI_UID
+    FROM   TRIGGERS AS TGR
+    WHERE  TGR.TRI_UID = '@#TRIGGER_UID'
+    ]]><en><![CDATA[]]></en></TRIGGER_UID_AUX>
+  <TRI_TITLE type="text" size="70" maxlength="100" required="1">
+    <en><![CDATA[Title of the new trigger]]></en>
+  </TRI_TITLE>
+  <TRI_DESCRIPTION type="textarea" rows="3" cols="67"><![CDATA[
+    SELECT CON.CON_VALUE
+    FROM   CONTENT AS CON
+    WHERE  CON.CON_ID = '@#TRIGGER_UID' AND CON.CON_CATEGORY = 'TRI_DESCRIPTION' AND CON.CON_LANG = '@#LANG'
+    ]]><en><![CDATA[Description of the new trigger]]></en></TRI_DESCRIPTION>
+  <TRI_WEBBOT type="textarea" rows="10" cols="67" readonly="1"><![CDATA[
+    SELECT TGR.TRI_WEBBOT
+    FROM   TRIGGERS AS TGR
+    WHERE  TGR.TRI_UID = '@#TRIGGER_UID'
+    ]]><en><![CDATA[Script]]></en></TRI_WEBBOT>
+  <BTNCOPYSAVE type="button" onclick="triggerSave1(this.form);">
+    <en><![CDATA[Copy/Import and Save]]></en>
+  </BTNCOPYSAVE>
+  <BTNCANCEL type="button" onclick="cancel(); triggerFromLibrary();">
+    <en><![CDATA[Cancel]]></en>
+  </BTNCANCEL>
+  <JS type="javascript"><![CDATA[
+
+    function cancel()
+    {
+        currentPopupWindow.remove();
+    }
+
+    function triggerCheckWebbotTimer()
+    {
+        var triUid = getField("TRIGGER_UID_AUX").value;
+
+        if (triUid != triUidPrev) {
+            triUidPrev = triUid;
+            var oRPC = new leimnud.module.rpc.xmlhttp({
+                url : 'processes_TriggersFormatCode',
+                args : 'code='+document.getElementById("form[TRI_WEBBOT]").value
+            });
+            oRPC.callback = function(rpc) {
+              document.getElementById("form[TRI_WEBBOT]").style.display="none";
+              document.getElementById("code").innerHTML = rpc.xmlhttp.responseText;
+            };
+            oRPC.make();
+            
+        } else {
+            setTimeout("triggerCheckWebbotTimer()", 100);
+        }
+    }
+
+    var cboTriggerUid = getField("TRIGGER_UID");
+    var txtTgrTitle = getField("TRI_TITLE");
+    var triUidPrev = "";
+
+    leimnud.event.add(
+        getField("PROCESS_UID"),
+        "change",
+        function ()
+        {
+            txtTgrTitle.value = "";
+            triUidPrev= "";
+        }
+    );
+
+    leimnud.event.add(
+        cboTriggerUid,
+        "change",
+        function ()
+        {
+            if (cboTriggerUid.value != "") {
+                txtTgrTitle.value = cboTriggerUid.options[cboTriggerUid.selectedIndex].text;
+                setTimeout("triggerCheckWebbotTimer()", 100);
+            } else {
+                txtTgrTitle.value = "";
+                triUidPrev= "";
+            }
+        }
+    );
+
+    txtTgrTitle.form.onsubmit = function () { return false; };
+    ]]></JS>
+</dynaForm>

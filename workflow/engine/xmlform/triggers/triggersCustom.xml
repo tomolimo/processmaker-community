@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="triggersProperties" type="xmlform" width="100%" labelWidth="20%" enableTemplate="1">
+  <PRO_UID type="hidden"/>
+  <FIELDS_REQUIRED type="hidden"/>
+  <TITLE type="title" group="1">
+    <en><![CDATA[Trigger Information]]></en>
+  </TITLE>
+  <TRI_UID type="hidden"/>
+  <TRI_TITLE type="text" size="80" maxlength="100" required="1">
+    <en><![CDATA[Title]]></en>
+  </TRI_TITLE>
+  <TRI_PARAM type="hidden" value=""/>
+  <TRI_TYPE type="hidden"/>
+  <TRI_DESCRIPTION type="textarea" rows="3" cols="77">
+    <en><![CDATA[Description]]></en>
+  </TRI_DESCRIPTION>
+  <TRI_WEBBOT type="textareapm" class="formLabel" cols="55" rows="13" width="100%" height="380px" showVars="1" process="@#PRO_UID" style="display:none">
+</TRI_WEBBOT>
+  <SAVE type="button" onclick="triggerSave1(this.form);">
+    <en><![CDATA[Save]]></en>
+  </SAVE>
+  <PARTNER_FLAG type="private"/>
+  <BTN_CANCEL type="button" onclick="cancel(); if('@%PARTNER_FLAG' == '' || '@%PARTNER_FLAG' == 0) { triggerFromLibrary(); }">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <JS type="JavaScript"><![CDATA[
+
+getField('TRI_TITLE').form.onsubmit = function() {return false;};
+var _oVarsPanel_;
+var showDynaformsFormVars = function(sFieldName, sAjaxServer, sProcess, sSymbol) {
+	_oVarsPanel_ = new leimnud.module.panel();
+	_oVarsPanel_.options = {
+    limit    : true,
+    size     : {w:600,h:420},
+    position : {x:0,y:0,center:true},
+    title    : '',
+    theme    : 'processmaker',
+    statusBar: false,
+    control  : {drag:false,resize:true,close:true},
+    fx       : {opacity:true,rolled:false,modal:true}
+  };
+  _oVarsPanel_.make();
+  _oVarsPanel_.events = {
+    remove:function() {
+      delete _oVarsPanel_;
+    }.extend(this)
+  };
+  _oVarsPanel_.loader.show();
+  oRPC = new leimnud.module.rpc.xmlhttp({
+    url   : sAjaxServer,
+    method: 'POST',
+    args  : 'sFieldName=' + sFieldName + '&sProcess=' + sProcess + '&sSymbol=' + sSymbol
+  });
+  oRPC.callback = function(oRPC) {
+    _oVarsPanel_.loader.hide();
+    var scs = oRPC.xmlhttp.responseText.extractScript();
+    _oVarsPanel_.addContent(oRPC.xmlhttp.responseText);
+    scs.evalScript();
+  }.extend(this);
+  oRPC.make();
+};
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+]]></JS>
+</dynaForm>

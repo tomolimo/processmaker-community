@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="currency" type="xmlform" width="100%" enableTemplate="1">
+  <PME_A type="hidden"/>
+  <PME_TYPE type="hidden"/>
+  <PME_PRO_UID type="hidden"/>
+  <PME_DYN_TYPE type="phpvariable"/>
+  <PME_TITLE type="title" enableHTML="1">
+    <en><![CDATA[Properties]]></en>
+  </PME_TITLE>
+  <PME_XMLNODE_NAME type="text" size="32" maxlength="64" validate="NodeName" dependentFields="PME_VALIDATE_NAME" required="1">
+    <en><![CDATA[Field Name]]></en>
+  </PME_XMLNODE_NAME>
+  <PME_XMLNODE_NAME_OLD type="hidden"/>
+  <PME_VALIDATE_NAME type="hidden" sqlConnection="XMLDB">
+SELECT XMLNODE_NAME, TYPE FROM dynaForm WHERE XMLNODE_NAME = @@PME_XMLNODE_NAME
+</PME_VALIDATE_NAME>
+  <PME_LABEL type="text" maxlength="255" size="50">
+    <en><![CDATA[Label]]></en>
+  </PME_LABEL>
+  <PME_SUBTITLE3 type="title" enableHTML="1">
+    <en><![CDATA[Behaviour]]></en>
+  </PME_SUBTITLE3>
+  <!--
+<PME_MAXLENGTH type="text" maxlength="10" size="10" validate="Int" defaultvalue="15">
+  <en>Max. Length</en>
+</PME_MAXLENGTH>
+-->
+  <PME_CURRENCY type="hidden" maxlength="50" size="30" defaultvalue="$">
+    <en>Currency</en>
+  </PME_CURRENCY>
+  <PME_VALIDATE type="dropdown" defaultvalue="Real">
+    <en><![CDATA[Validate]]><option name="Int"><![CDATA[Integer]]></option><option name="Real"><![CDATA[Real Number]]></option></en>
+  </PME_VALIDATE>
+  <PME_COMMA_SEPARATOR type="dropdown" defaultvalue=".">
+    <en><![CDATA[Decimal Separator]]><option name="."><![CDATA[Period [.]]]></option><option name=","><![CDATA[Comma [,]]]></option></en>
+  </PME_COMMA_SEPARATOR>
+  <PME_MASK type="text" maxlength="50" size="50" defaultvalue="###,###,###,###.##">
+    <en><![CDATA[Mask]]></en>
+  </PME_MASK>
+  <PME_REQUIRED type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Required]]></en>
+  </PME_REQUIRED>
+  <PME_READONLY type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Read Only]]></en>
+  </PME_READONLY>
+  <PME_DEFAULTVALUE type="text" maxlength="50" size="30" defaultvalue="">
+    <en><![CDATA[Default Value]]></en>
+  </PME_DEFAULTVALUE>
+  <PME_HINT type="textarea" cols="47" rows="3">
+    <en><![CDATA[Hint]]></en>
+  </PME_HINT>
+  <PME_SUBTITLE type="title" enableHTML="1">
+    <en><![CDATA[Appearance]]></en>
+  </PME_SUBTITLE>
+  <PME_SIZE type="text" maxlength="10" size="10" validate="Int" defaultvalue="15">
+    <en><![CDATA[Size]]></en>
+  </PME_SIZE>
+  <PME_MODE type="dropdown" defaultvalue="edit">
+    <en><![CDATA[Mode]]><option name="edit"><![CDATA[Edit]]></option><option name="view"><![CDATA[View]]></option></en>
+  </PME_MODE>
+  <PME_SUBTITLE_OP type="title" enableHTML="1">
+    <en><![CDATA[Operations]]></en>
+  </PME_SUBTITLE_OP>
+  <PME_FORMULA type="text" maxlength="500" size="30" defaultvalue="">
+    <en><![CDATA[Formula]]></en>
+  </PME_FORMULA>
+  <PME_FUNCTION type="dropdown">
+    <en><![CDATA[Function]]><option name=""><![CDATA[None]]></option><option name="sum"><![CDATA[SUM]]></option><option name="avg"><![CDATA[AVG]]></option></en>
+  </PME_FUNCTION>
+  <PME_SUBTITLE2 type="title" enableHTML="1">
+    <en><![CDATA[Data]]></en>
+  </PME_SUBTITLE2>
+  <PME_SQLCONNECTION type="dropdown" sqlconnection="dbarray"><![CDATA[
+  SELECT * FROM DB_CONNECTIONS
+  ]]><en><![CDATA[Sql Connection]]><option name=""><![CDATA[(none)]]></option></en></PME_SQLCONNECTION>
+  <PME_XMLNODE_VALUE type="textarea" cols="47" rows="3">
+    <en><![CDATA[Sql]]></en>
+  </PME_XMLNODE_VALUE>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <PME_ACCEPT type="button" onclick="fieldsSave( this.form );">
+    <en><![CDATA[Save]]></en>
+  </PME_ACCEPT>
+  <PME_JS type="javascript"><![CDATA[
+var fieldForm="currency";
+var fieldName=getField("PME_XMLNODE_NAME",fieldForm);
+var fieldVal=getField("PME_VALIDATE",fieldForm);
+var fieldSeparator=getField("PME_COMMA_SEPARATOR",fieldForm);
+var fieldMask=getField("PME_MASK",fieldForm);
+var savedFieldName=fieldName.value;
+var pme_validating;
+var separatorOld;
+var separatorNew;
+
+fieldName.focus();
+fieldName.select();
+leimnud.event.add(fieldName, 'change', {method:dynaformVerifyFieldName, instance:fieldName, event:true});
+leimnud.event.add(fieldVal, 'change', {method:checkVal, instance:fieldVal, event:true});
+leimnud.event.add(fieldSeparator, 'change', {method:checkSeparator, instance:fieldSeparator, event:true});
+leimnud.event.add(fieldMask, 'change', {method:checkVal, instance:fieldMask, event:true});
+function verifyFieldName(){
+  pme_validating=true;
+  setTimeout('verifyFieldName1();',0);
+  return true;
+}
+
+var dyntype="@#PME_DYN_TYPE";
+if(dyntype != 'grid'){
+  //hideRowById('PME_SUBTITLE_OP');
+  //hideRowById('PME_FORMULA');
+  hideRowById('PME_FUNCTION');
+}
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+function replaceAll( text, search, change ) {
+    while (text.toString().indexOf(search) != -1) {
+        text = text.toString().replace(search,change);
+    }
+    return text;
+}
+
+function selectSeparator() {
+    switch (fieldSeparator.value) {
+        case '.':
+            separatorOld = ',';
+            separatorNew = '.';
+            break;
+        case ',':
+            separatorOld = '.';
+            separatorNew = ',';
+            break;
+        default:
+            separatorOld = ',';
+            separatorNew = '.';
+            break;
+    }
+}
+function changeVal (positionSeparator) {
+    var maskDecimal = '';
+    var maskInteger = fieldMask.value;
+    if (positionSeparator > 0) {
+      maskDecimal = fieldMask.value.substring(positionSeparator + 1, fieldMask.value.length);
+      maskInteger = fieldMask.value.substring(0, positionSeparator);
+    }
+    maskInteger = replaceAll(maskInteger , separatorNew, separatorOld);
+
+    if (fieldVal.value === 'Int'){
+      fieldMask.value = maskInteger;
+    }
+    if (fieldVal.value === 'Real'){
+      if (maskDecimal == '' || (maskDecimal.length > 6)) {
+        maskDecimal = '######';
+      }
+      fieldMask.value = maskInteger + separatorNew + maskDecimal;
+    }
+}
+function checkSeparator() {
+    selectSeparator();
+    changeVal (fieldMask.value.indexOf(separatorOld));
+}
+
+function checkVal() {
+    selectSeparator();
+    changeVal (fieldMask.value.indexOf(separatorNew));
+}
+
+]]></PME_JS>
+</dynaForm>

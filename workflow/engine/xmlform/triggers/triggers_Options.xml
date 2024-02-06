@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm type="xmlmenu">
+  <MNU_ADD type="link" value="" link="#" onclick="if('@%PARTNER_FLAG' == '' || '@%PARTNER_FLAG' == 0) { triggerFromLibrary(); } else { triggerNewCustom(); } return false;" colAlign="left" colWidth="100">
+    <en><![CDATA[New]]></en>
+  </MNU_ADD>
+  <PRO_UID type="private"/>
+  <PARTNER_FLAG type="private"/>
+  <FIELDS_REQUIRED type="private"/>
+  <triggersEdit type="private" defaultValue="../triggers/triggers_Edit"/>
+  <triggersEditCustom type="private" defaultValue="../triggers/triggers_EditCustom"/>
+  <triggerCopy type="private" defaultValue="../triggers/triggerCopy"/>
+  <triggersDelete type="private" defaultValue="../triggers/triggers_Delete"/>
+  <triggersProperties type="private" defaultValue="../triggers/triggersProperties"/>
+  <triggersOptionList type="private" defaultValue="../triggers/triggersTree"/>
+  <triggerNewWizard type="private" defaultValue="../triggers/triggers_CreateWizard"/>
+  <triggerNewTalend type="private" defaultValue="../triggers/triggers_CreateTalend"/>
+  <triggerNewGoogleWebContent type="private" defaultValue="../triggers/triggers_CreateGoogleWebContent"/>
+  <triggerNewGoogleCreateEvent type="private" defaultValue="../triggers/triggers_CreateGoogleEvent"/>
+  <PAGED_TABLE_ID type="private"/>
+  <PAGED_TABLE_FAST_SEARCH type="FastSearch" label="@G::LoadTranslation(ID_SEARCH)"/>
+  <JS type="javascript" replaceTags="1"><![CDATA[
+  add_placeholder("form[PAGED_TABLE_FAST_SEARCH]","@G::LoadTranslation(ID_EMPTY_SEARCH)");
+  function add_placeholder (id, placeholder){
+   	var el = document.getElementById(id);
+   	el.placeholder = placeholder;
+     
+    el.onfocus = function () {
+    	if(this.value == this.placeholder) {
+    	  this.value = '';
+    	  el.style.cssText  = '';
+    	}
+     };
+     
+    el.onblur = function () {
+  	  if(this.value.length == 0) {
+    	  this.value = this.placeholder;
+    	  el.style.cssText = 'color:#A9A9A9;';
+        }
+    };
+     
+  	el.onblur();
+  }
+  var windowWidth = 600;
+  var windowHeight = 460;
+
+  function triggerEditWizardSource (sUID){
+    window.open('@G::encryptlink(@#triggersEdit)?TRI_UID='+ sUID +'&BYPASS=1','@G::LoadTranslation(ID_EDIT_TRIGGERS)'.replace(/\s/g,'_')+(function(s){var r='';for(var i in s)if(typeof s[i]=='string')r+=s[i].charCodeAt(0);return r;})(document.cookie)+sUID,'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=950,height=570,top='+((screen.height-570)/2)+',left='+((screen.width-950)/2)).focus();
+  }
+
+  function triggerNew() {
+    popupWindow('@G::LoadTranslation(ID_NEW_TRIGGERS)', '@G::encryptlink(@#triggersEdit)?PRO_UID=@%PRO_UID' , 600, 340);
+  }
+
+  function triggerNewCustom()
+  {
+      popupWindow("@G::LoadTranslation(ID_NEW_TRIGGERS)", "@G::encryptlink(@#triggersEditCustom)?PRO_UID=@%PRO_UID" , windowWidth, windowHeight);
+  }
+
+  function triggerCopy()
+  {
+      popupWindow("@G::LoadTranslation(ID_TRIGGER_COPY_TITLE)", "@G::encryptlink(@#triggerCopy)?PRO_UID=@%PRO_UID" , 900, 460);
+  }
+
+  function triggerFromLibrary() {
+    popupWindow('@G::LoadTranslation(ID_NEW_TRIGGERS)', '@G::encryptlink(@#triggersOptionList)?PRO_UID=@%PRO_UID' , 600, 460);
+    if (navigator.appName != "Microsoft Internet Explorer") {
+      try {
+        var oAllPs = document.querySelectorAll("div.panel_content___processmaker");
+        oAllPs[3].style.height = "410px";
+      }
+      catch(e) {
+        // nothing to do
+      }
+    }
+  }
+
+  var windowCode = new Array();
+  function triggerEdit( sUID, modified) {
+    if(parseInt(modified) == 0){
+        if ( !windowCode[sUID] ) {
+            var windowOpen = window.open('@G::encryptlink(@#triggersEdit)?TRI_UID='+ sUID,'@G::LoadTranslation(ID_EDIT_TRIGGERS)'.replace(/\s/g,'_')+(function(s){var r='';for(var i in s)if(typeof s[i]=='string')r+=s[i].charCodeAt(0);return r;})(document.cookie)+sUID,'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=950,height=570,top='+((screen.height-570)/2)+',left='+((screen.width-950)/2));
+            windowOpen.focus();
+            windowCode[sUID]=windowOpen;
+        } else {
+            windowCode[sUID].focus();
+        }
+    } else {
+        popupWindow('@G::LoadTranslation(ID_EDIT_TRIGGERS)', '@G::encryptlink(@#triggersEdit)?TRI_UID='+ sUID, 930, 600);
+    }
+  }
+
+  function triggerProperties( sUID ) {
+    popupWindow('@G::LoadTranslation(ID_TRIGGERS)', '@G::encryptlink(@#triggersProperties)?TRI_UID='+ sUID , 600, 340);
+  }
+
+  function triggerPropertiesSave( form ) {
+    var doc = getField("OUT_DOC_FILENAME");
+    if(doc.value=='')
+     { alert(G_STRINGS.ID_FILEGENERATED);
+     }
+    else
+     { ajax_post( form.action, form, 'POST' );
+       currentPopupWindow.remove();
+       @#PAGED_TABLE_ID.refresh();
+     }
+  }
+
+  function triggerSave(form)
+  {
+    var triUid = "";
+    if(document.getElementById('TRI_UID')) {
+        var triUid = document.getElementById('TRI_UID').value;
+    }
+    var triTitle = document.getElementById('TRI_TITLE').value;
+
+    triTitle = triTitle.replace(/^\s*|\s*$/g,"");
+    if (triTitle == '') {
+        document.getElementById('TRI_TITLE').focus();
+        alert(G_STRINGS.ID_REQUIRED_NAME_TRIGGERS);return false;
+    }
+    document.getElementById('TRI_TITLE').value = triTitle;
+
+    var fieldsRequired = document.getElementById('FIELDS_REQUIRED').value;
+    fieldsRequired = fieldsRequired.split(",");
+    for (i=0; i<fieldsRequired.length; i++)
+    {
+        var field = document.getElementById(fieldsRequired[i]).value;
+        field = field.replace(/^\s*|\s*$/g,"");
+        if (field == '') {
+            document.getElementById(fieldsRequired[i]).focus();
+            alert(_('ID_REQUIRED_FIELDS_ERROR'));return false;
+        }
+        document.getElementById(fieldsRequired[i]).value = field;
+    }
+    if(triUid==''){
+        reqName=ajax_function("../triggers/triggers_Save",'lookforNameTrigger','NAMETRIGGER='+encodeURIComponent(triTitle)+'&proUid='+(document.getElementById('PRO_UID').value),'POST') ;
+        if(!reqName){
+          alert(G_STRINGS.ID_EXIST_TRIGGERS);return false;
+        }else{
+          ajax_post(form.action, form, 'POST');
+         currentPopupWindow.remove();
+         @#PAGED_TABLE_ID.refresh();
+        }
+   }else{
+    	ajax_post(form.action, form, 'POST');
+      currentPopupWindow.remove();
+      @#PAGED_TABLE_ID.refresh();
+   }
+  }
+  //with this function, we are removing the spaces after and before of a string
+  String.prototype.trim = function() {
+  return this.replace(/^\s+|\s+$/g, "");
+  };
+  //for trigger no wizard
+ function triggerSave1(form)
+  {
+  var triUid = "";
+  if(getField('TRI_UID')) {
+    var triUid = getField('TRI_UID').value;
+  }
+   if(triUid==''){
+   var triTitle =getField('TRI_TITLE').value.trim();
+   if(triTitle==''){
+     alert(G_STRINGS.ID_REQUIRED_NAME_TRIGGERS);return false;
+   }
+   reqName=ajax_function("../triggers/triggers_Save",'lookforNameTrigger','NAMETRIGGER='+encodeURIComponent(triTitle)+'&proUid='+(getField('PRO_UID').value),'POST') ;
+   if(!reqName){
+     alert(G_STRINGS.ID_EXIST_TRIGGERS);return false;
+   }else{
+     ajax_post(form.action, form, 'POST');
+    currentPopupWindow.remove();
+    @#PAGED_TABLE_ID.refresh();
+   }
+   }else{
+	     ajax_post(form.action, form, 'POST');
+		   currentPopupWindow.remove();
+		   @#PAGED_TABLE_ID.refresh();
+   }
+  }
+//end for trigger no wirzard
+
+  function triggerDelete(sUID) {
+    var validateResult;
+
+    oRPC = XHRequest();
+    oRPC.options = {
+      url   : '../triggers/triggers_Ajax',
+      method: 'POST',
+      args  : 'request=verifyDependencies&TRI_UID='+sUID
+    }
+    oRPC.callback = function(response) {
+      try{
+	      validateResult = eval("(" + response.xmlhttp.responseText + ")");
+	      if(validateResult.code != 0) {
+	        alert(validateResult.message + G_STRINGS.ID_TRIGGERS_VALIDATE_EERR1);
+	      } else {
+          new leimnud.module.app.confirm().make({
+            label:'@G::LoadTranslation(ID_MSG_CONFIRM_DELETE_TRIGGER)',
+            action:function(){
+              ajax_function('@G::encryptlink(@#triggersDelete)', '', 'TRI_UID=' + sUID, 'POST');
+              @#PAGED_TABLE_ID.refresh();
+            }.extend(this)
+          });
+        }
+      } catch(e){
+        alert("Unreachable response=> "+ response.xmlhttp.responseText);
+      }
+    }.extend(this);
+    oRPC.make();
+  }
+
+  function triggerNewWizard(nameFunction, library) {//alert('@G::encryptlink(@#triggerNewWizard)?PRO_UID=@%PRO_UID&amp;NAME_FUN='+nameFunction+'&amp;	PARAMETERS_FUN='+parametersFunct+'&amp;PAGED_TABLE_ID='+@#PAGED_TABLE_ID);return;
+    popupWindow('@G::LoadTranslation(ID_NEW_TRIGGERS)', '@G::encryptlink(@#triggerNewWizard)?PRO_UID=@%PRO_UID&NAME_FUN='+nameFunction+'&LIBRARY='+library+'&PAGED_TABLE_ID='+@#PAGED_TABLE_ID , 600, 600);
+  }
+  
+  function reloadTriggersShortList(){
+    //@#PAGED_TABLE_ID.refresh();
+    if(Pm.panels.buildingBlocks){
+      Pm.data.render.buildingBlocks.injector('triggers');
+    }
+  }
+
+]]></JS>
+  <!-- Default Search option -->
+  <!--<MNU_SEARCH type="link" value='' link="#" onclick="showHideSearch('@#SEARCH_FILTER_FORM',this);return false;" colAlign="right" colWidth="130">
+  <en>Advanced Search</en>
+</MNU_SEARCH>-->
+  <SEARCH_FILTER_FORM type="private"/>
+</dynaForm>

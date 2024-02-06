@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="dynaforms_List" type="filterform" sql="SELECT * FROM dynaForm WHERE NOT( XMLNODE_NAME = '' OR TYPE = 'javascript' )" sqlConnection="XMLDB" filterForm="dynaforms/dynaform_Fields" width="100%">
+  <XMLNODE_NAME type="text" colWidth="200" titleAlign="left" align="left" dataCompareField="XMLNODE_NAME" dataCompareType="contains">
+    <en><![CDATA[Field]]></en>
+  </XMLNODE_NAME>
+  <TYPE type="dropdown" colWidth="200" titleAlign="left" align="left" dataCompareField="TYPE" dataCompareType="=">
+    <en><![CDATA[Type]]><option name="title"><![CDATA[Title]]></option><option name="subtitle"><![CDATA[Subtitle]]></option><option name="text"><![CDATA[text]]></option><option name="password"><![CDATA[Password]]></option><option name="textarea"><![CDATA[Text Area]]></option><option name="currency"><![CDATA[Currency]]></option><option name="percentage"><![CDATA[Percentage]]></option><option name="date"><![CDATA[date]]></option><option name="yesno"><![CDATA[Yes/No]]></option><option name="link"><![CDATA[link]]></option><option name="file"><![CDATA[file]]></option><option name="checkbox"><![CDATA[Check Box]]></option><option name="button"><![CDATA[Button]]></option><option name="reset"><![CDATA[Reset]]></option><option name="submit"><![CDATA[Submit]]></option><option name="hidden"><![CDATA[Hidden]]></option><option name="dropdown"><![CDATA[Dropdown]]></option><option name="listbox"><![CDATA[List Box]]></option><option name="radiogroup"><![CDATA[Radio Group]]></option><option name="checkgroup"><![CDATA[Check Group]]></option><option name="grid"><![CDATA[grid]]></option><option name="javascript"><![CDATA[Java Script]]></option><option name="private"><![CDATA[Private]]></option></en>
+  </TYPE>
+  <SEARCH type="button" onclick="pagedTableFilter( this.form );" showInTable="0">
+    <en><![CDATA[Apply Filter]]></en>
+  </SEARCH>
+  <PAGED_TABLE_ID type="private" showInTable="0"/>
+  <JSFILTER type="javascript" replaceTags="1" showInTable="0">
+function pagedTableFilter( form ) {
+  @#PAGED_TABLE_ID.doFilter( form );
+}
+</JSFILTER>
+</dynaForm>

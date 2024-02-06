@@ -1,0 +1,30 @@
+[2 weeks ago] 28a3ac3  (origin/feature/FBI-2504) FBI-2504: [Process designer] the process map was lost <Rodrigo Quelca>
+[3 weeks ago] 537401f  FBI-2498:The process designer is sending a PUT request in read-only mode <Fabio Guachalla>
+[3 weeks ago] 5003d37  (origin/feature/FBI-2497) FBI-2497: Disable the save action in the process designer when is in read only mode <Rodrigo Quelca>
+[8 weeks ago] 70d94cf  Email event: Add the option "Default email account" in From <Fabio Guachalla>
+[10 weeks ago] 89ed1eb  FBI-2461:When you create the end event or  another  element, near the crown, the end event goes behind the pool <Fabio Guachalla>
+[3 months ago] 67a0298  FBI-2441: Remove the option 'History of use' <Alex Santos>
+[4 months ago] 21e9767  (origin/feature/FBI-2433) FBI-2433: Refactor Email Event - sender account  field logic, to support  "Default email configuration" <Rodrigo Quelca>
+[5 months ago] bc74b2d  (origin/feature/HOR-4424, origin/feature/FBI-2387_B) FBI-2387: Process Permission: Allow reassignment in certain tasks <Rodrigo Quelca>
+[6 months ago] 94d747f  Update composer.json <Julio Cesar Laura Avendaño>
+[6 months ago] 09ace31  (origin/bugfix/FBI-2362) FBI-2362: Create/complete missing labels on version 3.2.2 <Rodrigo Quelca>
+[6 months ago] 93990e0  FBI-2382:Triggers > when we go to "copy" in triggers, the "required field" alert is being superimposed on the code information <Fabio Guachalla>
+[6 months ago] 0d7845a  FBI-2378:Email event: use the field mess_label <Fabio Guachalla>
+[6 months ago] f098c45  FBI-2377:HTML editor >> Buttons overlap preview panel <Fabio Guachalla>
+[6 months ago] 74c31ef  (origin/bugfix/FBI-2374) FBI-2374: [Zendesk - 5968]Improper Trigger Text Editor Alignment <Rodrigo Quelca>
+[6 months ago] 54954e5  FBI-2375:Changes made in templates are not being reflected when downloading the second time. <Fabio Guachalla>
+[6 months ago] b41ef6e  (origin/feature/HOR-4411) FBI-2343: Email configuration: use the field mess_label <Rodrigo Quelca>
+[7 months ago] 85b0bb3  FBI-2359 <Fabio Guachalla>
+[7 months ago] e4b16c5  (origin/bugfix/FBI-2357_B) FBI-2357: Designer >> The Quicktoolbar does not disappear even though the element is no longer in the canvas. <Rodrigo Quelca>
+[7 months ago] 1ab27cd  FBI-2359: CodeMirror> Triggers window is distorted with imported processes <Rodrigo Quelca>
+[8 months ago] 9827aac  FBI-1202:PMDynaform Designer: Datetime picker allows set its default value to a date which is out of maxDate and minDate range <Fabio Guachalla>
+[8 months ago] a7189e9  FBI-2274:[Zendesk - 5355] Rich Text Editor in template is adding the server in the link field. <Fabio Guachalla>
+[8 months ago] f93fc18  FBI-2261:UNDO/REDO shows an javascript error when a pool was removed <Fabio Guachalla>
+[8 months ago] 5e30513  FBI-2245: Fix Pool removal through click on trash icon <Daniel>
+[8 months ago] ebdbd80  FBI-2002 When importing a .json dynaform, keeps recreating the same variable <dheeyi william>
+[8 months ago] c985d85  FBI-1825 Grid variables are not imported when importing DynaForm files <dheeyi william>
+[8 months ago] 004ae75  The "href" property in Links and setHref() method should not add "http://" to the url <Fabio Guachalla>
+[8 months ago] ae37e7c  FBI-2153 (Mobile) The json form changes after we click over the "x" icon in the input document related in the properties of the multiple file <dheeyi william>
+[8 months ago] 4d74c68  FBI-1949: the Quick ToolBar it appear back the lane and I can't select a option <alex>
+[8 months ago] 867dd07  FBI-1499:Can't select UID for task to copy it <Fabio Guachalla>
+[8 months ago] 19e8ca9  FBI-1246: (Image Web Control) Display mode properties is not functional <alex>

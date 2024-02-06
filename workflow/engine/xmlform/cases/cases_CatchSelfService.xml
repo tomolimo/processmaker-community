@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm enabletemplate="1" name="cases_Resume" type="xmlform" width="500px" labelWidth="100px">
+  <isIE type="hidden" />
+  <TITLE1 type="title">
+    <en><![CDATA[Claim Case]]></en>
+  </TITLE1>
+  <PRO_TITLE type="text" mode="view">
+    <en><![CDATA[Process]]></en>
+  </PRO_TITLE>
+  <STATUS type="text" mode="view">
+    <en><![CDATA[Case Status]]></en>
+  </STATUS>
+  <TITLE type="text" mode="view">
+    <en><![CDATA[Case Title]]></en>
+  </TITLE>
+  <APP_NUMBER type="text" mode="view">
+    <en><![CDATA[Case Number]]></en>
+  </APP_NUMBER>
+  <APP_UID type="text" mode="view">
+    <en><![CDATA[Case Uid]]></en>
+  </APP_UID>
+  <TAS_TITLE type="text" mode="view">
+    <en><![CDATA[Task]]></en>
+  </TAS_TITLE>
+  <DEL_DELEGATE_DATE type="text" mode="view">
+    <en><![CDATA[Task Delegate Date]]></en>
+  </DEL_DELEGATE_DATE>
+  <DEL_TASK_DUE_DATE type="text" mode="view">
+    <en><![CDATA[Task Due Date]]></en>
+  </DEL_TASK_DUE_DATE>
+  <PREVIOUS_TASK type="text" mode="view">
+    <en><![CDATA[Previous Task]]></en>
+  </PREVIOUS_TASK>
+  <PREVIOUS_USER type="text" mode="view">
+    <en><![CDATA[Previous User]]></en>
+  </PREVIOUS_USER>
+  <BTN_CATCH type="submit">
+    <en><![CDATA[Claim this case]]></en>
+  </BTN_CATCH>
+  <BTN_CANCEL type="button" onclick="redirectHistory();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <JS type="javascript"> <![CDATA[
+    function redirectHistory(){
+      if (Boolean(getField("isIE").value)) {
+        if (top.opener) {
+          //Is open the claim case in another tab
+          top.opener.location.reload();
+          top.close();
+        } else {
+          //When isIE with ux skin is not open another tab
+          javascript:history.back();
+        }
+      } else {
+        javascript:history.back();
+      }
+    }
+  ]]></JS>
+</dynaForm>

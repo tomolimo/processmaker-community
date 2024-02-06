@@ -1,0 +1,105 @@
+#!/usr/bin/env php
+<?php
+/**
+ * rest-gen bin command
+ *
+ * This file uses Service_Rest_RestTool class to generate a rest-config.ini file
+ * and build rest crud api for 'Restler' lib.
+ *
+ * @author    Erik Amaru Ortiz <aortiz.erik@gmail.com>
+ */
+
+$basePath = realpath(dirname(__FILE__) . '/../../../');
+include $basePath . '/gulliver/core/Bootstrap.php';
+include $basePath . '/workflow/engine/PmBootstrap.php';
+
+$bootstrap = new PmBootstrap(array('path_trunk' => $basePath));
+$bootstrap->registerClasses();
+$bootstrap->configure();
+
+if (! isset($argv[1])) {
+    $help = <<<EOT
+Usage: {$argv[0]} [build-crud] [gen-ini] [-p <plugin name>] [-w <workspace name>]
+
+Options:
+    build-crud : Task, build Rest Crud API.
+    gen-ini    : Task, generates the rest config ini file.
+    -p         : Specifies a plugin to set as environment to perform the tasks.
+    -w         : Specifies a workspace to set as environment to perform the tasks.
+
+EOT;
+
+    echo $help;
+    exit(0);
+}
+
+$restTool = new Service_Rest_RestTool();
+$restTool->setBasePath(PATH_CORE);
+
+try {
+    switch ($argv[1]) {
+        case 'build-crud':
+        case 'gen-ini':
+            if (isset($argv[2])) {
+                if (! isset($argv[3])) {
+                    throw new Exception("Missing option, need specify a valid argument after option '{$argv[2]}'");
+                }
+
+                switch ($argv[2]) {
+                    case '-p':
+                        // attempt create rest api from a plugin
+                        if (! is_dir(PATH_PLUGINS . $argv[3]))  {
+                            throw new Exception(sprintf("Plugin '%s' doesn't exist.", $argv[3]));
+                        }
+
+                        $restTool->setBasePath($optPath = PATH_PLUGINS . $argv[3] . PATH_SEP);
+                        break;
+
+                    case '-w':
+                        // attempt create rest api from a plugin
+                        if (! is_dir(PATH_DATA . 'sites' . PATH_SEP . $argv[3]))  {
+                            throw new Exception(sprintf("Workspace '%s' doesn't exist.", $argv[3]));
+                        }
+
+                        $path = PATH_DATA . 'sites' . PATH_SEP . $argv[3] . PATH_SEP;
+                        $restTool->setBasePath($path);
+                        $restTool->setConfigFile($path . 'rest-config.ini');
+                        $restTool->setDbXmlSchemaFile(PATH_CONFIG . 'schema.xml');
+                        break;
+
+                    default:
+                        throw new Exception(sprintf("Invalid option '%s'", $argv[2]));
+                }
+            }
+
+            $restTool->init();
+
+            if ($argv[1] == 'build-crud') {
+                $restTool->buildCrudApi();
+            } else {
+                if (file_exists(PATH_CONFIG . '/rest-config.ini')) {
+                    echo "The file 'rest-config.ini' already exits, overwrite (Y/n)? ";
+                    $resp = trim(fgets(STDIN));
+
+                    if (strtolower($resp) != 'y') {
+                        echo "Skipped\n";
+                        exit(0);
+                    }
+                }
+
+                echo "Generating config ini file ... ";
+
+                $genFile = $restTool->buildConfigIni();
+
+                echo "DONE!\n";
+                echo "File generated: $genFile\n\n";
+            }
+            break;
+
+        default:
+            echo "Invalid option!\n";
+            break;
+    }
+} catch (Exception $e) {
+    Service_Rest_RestTool::out($e->getMessage(), 'error');
+}

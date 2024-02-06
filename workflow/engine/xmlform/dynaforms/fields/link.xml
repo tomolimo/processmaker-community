@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="link" type="xmlform" width="100%" labelWidth="400px" enableTemplate="1">
+  <PME_A type="hidden"/>
+  <PME_TYPE type="hidden"/>
+  <PME_TITLE type="title" enableHTML="1">
+    <en><![CDATA[Properties]]></en>
+    <es><![CDATA[Propiedades]]></es>
+  </PME_TITLE>
+  <PME_XMLNODE_NAME type="text" size="42" maxlength="64" validate="NodeName" dependentFields="PME_VALIDATE_NAME" required="1">
+    <en><![CDATA[Field Name]]></en>
+    <es><![CDATA[Nombre del campo]]></es>
+  </PME_XMLNODE_NAME>
+  <PME_XMLNODE_NAME_OLD type="hidden"/>
+  <PME_VALIDATE_NAME type="hidden" sqlConnection="XMLDB">
+    SELECT XMLNODE_NAME, TYPE FROM dynaForm WHERE XMLNODE_NAME = @@PME_XMLNODE_NAME
+  </PME_VALIDATE_NAME>
+  <PME_LABEL type="text" maxlength="255" size="42">
+    <en><![CDATA[Label]]></en>
+  </PME_LABEL>
+  <PME_SUBTITLE3 type="title" enableHTML="1">
+    <en><![CDATA[Behaviour]]></en>
+  </PME_SUBTITLE3>
+  <PME_LINK type="text" maxlength="255" size="42" defaultvalue="">
+    <en><![CDATA[Link]]></en>
+  </PME_LINK>
+  <PME_TARGET_SEL type="dropdown" defaultValue="_blank">
+    <en><![CDATA[Target]]><option name="_blank"><![CDATA[Blank]]></option><option name="_self"><![CDATA[Self]]></option><option name="_parent"><![CDATA[Parent]]></option><option name="_top"><![CDATA[Top]]></option><option name=""><![CDATA[Framename]]></option></en>
+  </PME_TARGET_SEL>
+  <PME_TARGET type="text" size="22"/>
+  <PME_VALUE type="text" maxlength="50" size="42" defaultvalue="">
+    <en><![CDATA[Label]]></en>
+  </PME_VALUE>
+  <PME_HINT type="textarea" cols="40" rows="3">
+    <en><![CDATA[Hint]]></en>
+  </PME_HINT>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <PME_ACCEPT type="button" onclick="fieldsSave( this.form );">
+    <en><![CDATA[Save]]></en>
+  </PME_ACCEPT>
+  <PME_JS type="javascript"><![CDATA[
+ 
+  var fieldForm="link";
+  var fieldName=getField("PME_XMLNODE_NAME",fieldForm);
+  var savedFieldName=fieldName.value;
+  var pme_validating;
+  leimnud.event.add(fieldName, 'change', {method:dynaformVerifyFieldName, instance:fieldName, event:true});
+
+  leimnud.event.add(getField('PME_TARGET_SEL'), 'change', setTarget);
+  setTarget();
+  function setTarget(){ 
+    target = getField('PME_TARGET');
+    targetSel = getField('PME_TARGET_SEL');
+    
+    if(targetSel.value == ''){
+      target.style.display = 'block';
+      if(target.value == '_top' || target.value == '_blank' || target.value == '_parent' || target.value == '_self'){
+        target.value = '';
+      }
+    } else {
+      target.value = targetSel.value;
+      target.style.display = 'none';
+    }
+  }
+
+ 
+  leimnud.event.add(getField('PME_LINK'), 'blur', function() {
+    var valor_form = new input(getField('PME_LINK'));
+    getField('PME_LINK').value=getField('PME_LINK').value.replace(/ /g, '');
+  });
+function cancel(){
+  currentPopupWindow.remove();
+}
+function setFocus1() {
+  var fieldName=getField("PME_XMLNODE_NAME");
+  fieldName.focus();
+  fieldName.select();
+}
+
+setTimeout('setFocus1()', 500);
+  ]]></PME_JS>
+</dynaForm>

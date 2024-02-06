@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<database name="rbac">
+  <table name="RBAC_PERMISSIONS">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_PERMISSIONS"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="5"/>
+      <parameter name="Avg_row_length" value="60"/>
+      <parameter name="Data_length" value="300"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:20:32"/>
+      <parameter name="Update_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Permissions"/>
+    </vendor>
+    <column name="PER_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="PER_CODE" type="VARCHAR" size="64" required="true" default="" />
+    <column name="PER_CREATE_DATE" type="TIMESTAMP" />
+    <column name="PER_UPDATE_DATE" type="TIMESTAMP" />
+    <column name="PER_STATUS" type="INTEGER" required="true" default="1" />
+    <column name="PER_SYSTEM" type="VARCHAR" size="32" required="true" default="00000000000000000000000000000002" />
+    <index name="indexPermissionsCode">
+      <index-column name="PER_CODE"/>
+    </index>
+  </table>
+  <table name="RBAC_ROLES">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_ROLES"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="3"/>
+      <parameter name="Avg_row_length" value="102"/>
+      <parameter name="Data_length" value="308"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Update_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Roles"/>
+    </vendor>
+    <column name="ROL_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="ROL_PARENT" type="VARCHAR" size="32" required="true" default="" />
+    <column name="ROL_SYSTEM" type="VARCHAR" size="32" required="true" default="" />
+    <column name="ROL_CODE" type="VARCHAR" size="32" required="true" default="" />
+    <column name="ROL_CREATE_DATE" type="TIMESTAMP" />
+    <column name="ROL_UPDATE_DATE" type="TIMESTAMP" />
+    <column name="ROL_STATUS" type="INTEGER" required="true" default="1" />
+  </table>
+  <table name="RBAC_ROLES_PERMISSIONS">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_ROLES_PERMISSIONS"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="7"/>
+      <parameter name="Avg_row_length" value="72"/>
+      <parameter name="Data_length" value="504"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Update_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Permissions of the roles"/>
+    </vendor>
+    <column name="ROL_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="PER_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <index name="indexRolesPermissions">
+      <index-column name="ROL_UID"/>
+      <index-column name="PER_UID"/>
+    </index>
+  </table>
+  <table name="RBAC_SYSTEMS">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_SYSTEMS"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="2"/>
+      <parameter name="Avg_row_length" value="60"/>
+      <parameter name="Data_length" value="120"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Update_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Systems"/>
+    </vendor>
+    <column name="SYS_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="SYS_CODE" type="VARCHAR" size="32" required="true" default="" />
+    <column name="SYS_CREATE_DATE" type="TIMESTAMP" />
+    <column name="SYS_UPDATE_DATE" type="TIMESTAMP" />
+    <column name="SYS_STATUS" type="INTEGER" required="true" default="0" />
+    <index name="indexSystemCode">
+      <index-column name="SYS_CODE"/>
+    </index>
+  </table>
+  <table name="RBAC_USERS">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_USERS"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="11"/>
+      <parameter name="Avg_row_length" value="103"/>
+      <parameter name="Data_length" value="1136"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:47:57"/>
+      <parameter name="Update_time" value="2007-12-17 10:58:16"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Users"/>
+    </vendor>
+    <column name="USR_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="USR_USERNAME" type="VARCHAR" size="100" required="true" default="" />
+    <column name="USR_PASSWORD" type="VARCHAR" size="128" required="true" default="" />
+    <column name="USR_FIRSTNAME" type="VARCHAR" size="50" required="true" default="" />
+    <column name="USR_LASTNAME" type="VARCHAR" size="50" required="true" default="" />
+    <column name="USR_EMAIL" type="VARCHAR" size="100" required="true" default="" />
+    <column name="USR_DUE_DATE" type="DATE" required="true" />
+    <column name="USR_CREATE_DATE" type="TIMESTAMP" />
+    <column name="USR_UPDATE_DATE" type="TIMESTAMP" />
+    <column name="USR_STATUS" type="INTEGER" required="true" default="1" />
+    <column name="USR_AUTH_TYPE" type="VARCHAR" size="32" required="true" default="" />
+    <column name="UID_AUTH_SOURCE" type="VARCHAR" size="32" required="true" default="" />
+    <column name="USR_AUTH_USER_DN" type="VARCHAR" size="255" required="true" default="" />
+    <column name="USR_AUTH_SUPERVISOR_DN" type="VARCHAR" size="255" required="true" default="" />
+  </table>
+  <table name="RBAC_USERS_ROLES">
+    <vendor type="mysql">
+      <parameter name="Name" value="RBAC_USERS_ROLES"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="11"/>
+      <parameter name="Avg_row_length" value="56"/>
+      <parameter name="Data_length" value="616"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="2048"/>
+      <parameter name="Data_free" value="0"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2007-12-04 11:20:33"/>
+      <parameter name="Update_time" value="2007-12-17 10:58:16"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value="Roles of the users"/>
+    </vendor>
+    <column name="USR_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="ROL_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+  </table>
+  <table name="RBAC_AUTHENTICATION_SOURCE">
+    <vendor type="mysql">
+      <parameter name="Name" value="AUTHENTICATION_SOURCE"/>
+      <parameter name="Engine" value="InnoDB"/>
+      <parameter name="Version" value="10"/>
+      <parameter name="Row_format" value="Dynamic"/>
+      <parameter name="Rows" value="88"/>
+      <parameter name="Avg_row_length" value="311"/>
+      <parameter name="Data_length" value="27984"/>
+      <parameter name="Max_data_length" value="281474976710655"/>
+      <parameter name="Index_length" value="7168"/>
+      <parameter name="Data_free" value="564"/>
+      <parameter name="Auto_increment" value=""/>
+      <parameter name="Create_time" value="2009-02-18 11:56:00"/>
+      <parameter name="Update_time" value="2009-02-18 11:56:00"/>
+      <parameter name="Check_time" value=""/>
+      <parameter name="Collation" value="utf8_general_ci"/>
+      <parameter name="Checksum" value=""/>
+      <parameter name="Create_options" value=""/>
+      <parameter name="Comment" value=""/>
+    </vendor>
+    <column name="AUTH_SOURCE_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="" />
+    <column name="AUTH_SOURCE_NAME" type="VARCHAR" size="50" required="true" default="" />
+    <column name="AUTH_SOURCE_PROVIDER" type="VARCHAR" size="20" required="true" default="" />
+    <column name="AUTH_SOURCE_SERVER_NAME" type="VARCHAR" size="50" required="true" default="" />
+    <column name="AUTH_SOURCE_PORT" type="INTEGER" default="389" />
+    <column name="AUTH_SOURCE_ENABLED_TLS" type="INTEGER" default="0" />
+    <column name="AUTH_SOURCE_VERSION" type="VARCHAR" size="16" required="true" default="3" />
+    <column name="AUTH_SOURCE_BASE_DN" type="VARCHAR" size="128" required="true" default="" />
+    <column name="AUTH_ANONYMOUS" type="INTEGER" default="0" />
+    <column name="AUTH_SOURCE_SEARCH_USER" type="VARCHAR" size="128" required="true" default="" />
+    <column name="AUTH_SOURCE_PASSWORD" type="VARCHAR" size="150" required="true" default="" />
+    <column name="AUTH_SOURCE_ATTRIBUTES" type="VARCHAR" size="255" required="true" default="" />
+    <column name="AUTH_SOURCE_OBJECT_CLASSES" type="VARCHAR" size="255" required="true" default="" />
+    <column name="AUTH_SOURCE_DATA" type="LONGVARCHAR" />
+  </table>
+</database>

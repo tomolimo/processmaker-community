@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm type="xmlmenu">
+  <MNU_ADD type="link" value="" link="#" onclick="stepAdd(); return false;" colAlign="left" colWidth="100">
+    <en><![CDATA[New]]></en>
+  </MNU_ADD>
+  <PROCESS type="hidden" showInTable="0"/>
+  <TASK type="hidden" showInTable="0"/>
+  <CONFIRM type="hidden" showInTable="0"/>
+  <URL_STEPS_EDIT type="private" defaultValue="../steps/steps_New"/>
+  <URL_STEP_DELETE type="private" defaultValue="../steps/steps_Delete"/>
+  <URL_STEP_UP type="private" defaultValue="../steps/steps_Up"/>
+  <URL_STEP_DOWN type="private" defaultValue="../steps/steps_Down"/>
+  <URL_DYNAFORM_EDITOR type="private" defaultValue="../dynaforms/dynaforms_Editor"/>
+  <triggersEdit type="private" defaultValue="../triggers/triggers_Edit"/>
+  <PAGED_TABLE_ID type="private"/>
+  <js type="javascript"><![CDATA[
+
+  function stepAdd(){
+        popupWindow('@G::LoadTranslation(ID_NEW_STEP)', '@G::encryptlink(@#URL_STEPS_EDIT)?PROCESS=@#PROCESS&TASK=@#TASK', 500, 420);
+  }
+
+  function stepSave(sProcess, sTask, sType, sUID) {
+    PROCESSMAP_STEP_EDIT = true;
+    var oRPC = new leimnud.module.rpc.xmlhttp({
+      url   : '../steps/steps_Save',
+      async : false,
+      method: 'POST',
+      args  : 'sProcess=' + sProcess + '&sTask=' + sTask + '&sType=' + sType + '&sUID=' + sUID + '&sMode=' + document.getElementById('STEP_MODE_' + sUID).value
+      });
+    oRPC.make();
+    currentPopupWindow.remove();
+    @#PAGED_TABLE_ID.refresh();
+  }
+  function
+  stepUp( uid, stepPos  ){
+    result = ajax_function('@G::encryptlink(@#URL_STEP_UP)','','STEP_UID='+uid+'&TASK=@#TASK&STEP_POSITION='+stepPos,'POST');
+    @#PAGED_TABLE_ID.refresh();
+
+  }
+  function stepDown( uid, stepPos  ){
+    result = ajax_function('@G::encryptlink(@#URL_STEP_DOWN)','','STEP_UID='+uid+'&TASK=@#TASK&STEP_POSITION='+stepPos,'POST');
+    @#PAGED_TABLE_ID.refresh();
+
+  }
+  function stepDelete( uid, stepPos  ){
+      PROCESSMAP_STEP_EDIT = true;
+      
+      if (leimnud.browser.isIE) {
+        new leimnud.module.app.confirm().make({label:'@#CONFIRM',width:450, height:110, action:function(){
+        ajax_function('@G::encryptlink(@#URL_STEP_DELETE)','','STEP_UID='+uid+'&TASK=@#TASK&STEP_POSITION='+stepPos,'POST');
+        @#PAGED_TABLE_ID.refresh();
+          }.extend(this)
+        });
+      }else{
+        new leimnud.module.app.confirm().make({label:'@#CONFIRM',action:function(){
+        ajax_function('@G::encryptlink(@#URL_STEP_DELETE)','','STEP_UID='+uid+'&TASK=@#TASK&STEP_POSITION='+stepPos,'POST');
+        @#PAGED_TABLE_ID.refresh();
+          }.extend(this)
+        });
+      }    
+  }
+  
+  function externalStepEdit(stpUid, urlExternalStepEdit ){
+    popupWindow('@G::LoadTranslation(ID_EDIT)', '@G::encryptlink(' + urlExternalStepEdit + ')?STP_UID=' + stpUid , 550, 350);
+  }
+  
+  function dynaformEdit( uid, pro_uid ){
+    window.location.href = "@G::encryptlink(@#URL_DYNAFORM_EDITOR)?PRO_UID="+pro_uid+"&DYN_UID="+uid;
+  }
+
+  // Additional functions required in triggers
+  function triggerEditWizardSource (sUID,STEP_UID,ST_TYPE){
+    window.open('@G::encryptlink(@#triggersEdit)?TRI_UID='+ sUID +'&BYPASS=1&STEP_UID='+STEP_UID+'&ST_TYPE='+ST_TYPE,'@G::LoadTranslation(ID_EDIT_TRIGGERS)'.replace(/\s/g,'_')+(function(s){var r='';for(var i in s)if(typeof s[i]=='string')r+=s[i].charCodeAt(0);return r;})(document.cookie)+sUID,'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=950,height=570,top='+((screen.height-570)/2)+',left='+((screen.width-950)/2)).focus();
+  }
+
+  function triggerSave(form,STEP_UID,ST_TYPE)
+  {
+    var triUid = "";
+    if(document.getElementById('TRI_UID')) {
+      var triUid = document.getElementById('TRI_UID').value;
+    }
+    if(triUid==''){
+      var triTitle =document.getElementById('TRI_TITLE').value;
+      if(triTitle==''){
+        alert(G_STRINGS.ID_REQUIRED_NAME_TRIGGERS);
+        return false;
+      }
+      reqName=ajax_function("../triggers/triggers_Save",'lookforNameTrigger','NAMETRIGGER='+encodeURIComponent(triTitle)+'&proUid='+(document.getElementById('PRO_UID').value),'POST');
+      if(!reqName){
+        alert(G_STRINGS.ID_EXIST_TRIGGERS);
+        return false;
+      } else {
+        ajax_post(form.action, form, 'POST');
+        currentPopupWindow.remove();
+      }
+    } else {
+      ajax_post(form.action, form, 'POST');
+      currentPopupWindow.remove();
+    }
+    showTriggers(STEP_UID,ST_TYPE);
+  }
+
+  function triggerSave1(form)
+  {
+    var triUid = "";
+    if(getField('TRI_UID')) {
+      var triUid = getField('TRI_UID').value;
+    }
+    if(triUid == ''){
+      var triTitle =getField('TRI_TITLE').value.trim();
+      if(triTitle==''){
+        alert(G_STRINGS.ID_REQUIRED_NAME_TRIGGERS);
+        return false;
+      }
+      reqName=ajax_function("../triggers/triggers_Save",'lookforNameTrigger','NAMETRIGGER='+encodeURIComponent(triTitle)+'&proUid='+(getField('PRO_UID').value),'POST');
+      if(!reqName){
+        alert(G_STRINGS.ID_EXIST_TRIGGERS);
+        return false;
+      } else {
+        ajax_post(form.action, form, 'POST');
+        currentPopupWindow.remove();
+      }
+    } else {
+      ajax_post(form.action, form, 'POST');
+      currentPopupWindow.remove();
+    }
+  }
+
+]]></js>
+</dynaForm>

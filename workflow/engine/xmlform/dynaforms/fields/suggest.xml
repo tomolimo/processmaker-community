@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="text" type="xmlform" width="100%" labelWidth="350px" enableTemplate="1">
+  <PME_A type="hidden"/>
+  <PME_TYPE type="hidden"/>
+  <PME_PRO_UID type="hidden"/>
+  <PME_PRO_UID type="hidden"/>
+  <PME_DYN_TYPE type="phpvariable"/>
+  <PME_TITLE type="title" enableHTML="1">
+    <en><![CDATA[Properties]]></en>
+  </PME_TITLE>
+  <PME_XMLNODE_NAME type="text" size="42" maxlength="64" validate="NodeName" dependentFields="PME_VALIDATE_NAME" required="1">
+    <en><![CDATA[Field Name]]></en>
+  </PME_XMLNODE_NAME>
+  <PME_XMLNODE_NAME_OLD type="hidden"/>
+  <PME_VALIDATE_NAME type="hidden" sqlConnection="XMLDB">
+SELECT XMLNODE_NAME, TYPE FROM dynaForm WHERE XMLNODE_NAME = @@PME_XMLNODE_NAME
+</PME_VALIDATE_NAME>
+  <PME_LABEL type="text" maxlength="255" size="42">
+    <en><![CDATA[Label]]></en>
+  </PME_LABEL>
+  <PME_SUBTITLE3 type="title" enableHTML="1">
+    <en><![CDATA[Behaviour]]></en>
+  </PME_SUBTITLE3>
+  <!--<PME_STRTO type="dropdown" defaultvalue="" >
+
+  <en>Text transform
+  <option name=""></option>
+  <option name="UPPER">UPPER</option>
+  <option name="LOWER">LOWER</option>
+  </en>
+</PME_STRTO>-->
+  <PME_REQUIRED type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Required]]></en>
+  </PME_REQUIRED>
+  <!--<PME_READONLY type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+  <en>Read Only</en>
+</PME_READONLY>-->
+  <PME_DEPENDENTFIELDS type="listbox" defaultvalue="" sqlconnection="XMLDB" width="362"><![CDATA[
+select XMLNODE_NAME, XMLNODE_NAME AS NAME FROM dynaForm WHERE	XMLNODE_NAME <> @@PME_XMLNODE_NAME AND XMLNODE_NAME <> "" AND ( TYPE="text" or TYPE="textarea" or TYPE="dropdown" or TYPE="listbox" or TYPE="hidden" or TYPE="suggest")
+  ]]><en><![CDATA[Dependent Fields]]><option name=""><![CDATA[(none)]]></option></en></PME_DEPENDENTFIELDS>
+  <PME_HINT type="textarea" cols="44" rows="1">
+    <en><![CDATA[Hint]]></en>
+  </PME_HINT>
+  <PME_SUBTITLE type="title" enableHTML="1">
+    <en><![CDATA[Appearance]]></en>
+  </PME_SUBTITLE>
+  <PME_SIZE type="text" maxlength="10" size="10" validate="Int" defaultvalue="15">
+    <en><![CDATA[Size]]></en>
+  </PME_SIZE>
+  <PME_MODE type="dropdown" defaultvalue="edit">
+    <en><![CDATA[Mode]]><option name="edit"><![CDATA[Edit]]></option><option name="view"><![CDATA[View]]></option></en>
+  </PME_MODE>
+  <PME_SUBTITLE2 type="title" enableHTML="1">
+    <en><![CDATA[Autosuggest behaviour]]></en>
+  </PME_SUBTITLE2>
+  <PME_SQLCONNECTION type="dropdown" sqlConnection="dbarray" required="1">
+  SELECT * FROM DB_CONNECTIONS
+  <en><![CDATA[Sql Connection]]><option name=""><![CDATA[(none)]]></option></en>
+</PME_SQLCONNECTION>
+  <PME_XMLNODE_VALUE type="textarea" cols="40" rows="3" required="1">
+    <en><![CDATA[Sql]]></en>
+  </PME_XMLNODE_VALUE>
+  <PME_MAXRESULTS type="text" maxlength="10" size="10" validate="Int" defaultvalue="6">
+    <en><![CDATA[Max Results]]></en>
+  </PME_MAXRESULTS>
+  <PME_SHOWNORESULTS type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="1">
+    <en><![CDATA[Show no results message]]></en>
+  </PME_SHOWNORESULTS>
+  <PME_SAVELABEL type="dropdown" falseValue="0" value="1" defaultvalue="1" labelOnRight="1">
+    <en><![CDATA[Save selected option as]]><option name="0"><![CDATA[Value]]></option><option name="1"><![CDATA[Label]]></option></en>
+  </PME_SAVELABEL>
+  <PME_STORE_NEW_ENTRY type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="1">
+    <en><![CDATA[Store new entry]]></en>
+  </PME_STORE_NEW_ENTRY>
+  <PME_SEARCHTYPE type="dropdown" required="0" readonly="0" optgroup="0" mode="edit">
+    <en><![CDATA[Search Type]]><option name="*searchtype*"><![CDATA[Results that contain the entered text]]></option><option name="searchtype*"><![CDATA[Results that start with the entered text]]></option><option name="*searchtype"><![CDATA[Results that finish with the entered text]]></option></en>
+  </PME_SEARCHTYPE>
+  <PME_TABLE_DATA type="hidden"/>
+  <PME_TABLE type="dropdown" sqlconnection="" required="1">
+    <en><![CDATA[Table]]></en>
+  </PME_TABLE>
+  <PME_PRIMARY_KEY_DATA type="hidden"/>
+  <PME_PRIMARY_KEY type="dropdown" sqlconnection="" required="1">
+    <en><![CDATA[Primary Key]]></en>
+  </PME_PRIMARY_KEY>
+  <PME_FIELD type="hidden"/>
+  <PME_PRIMARY_KEY_TYPE_DATA type="hidden"/>
+  <PME_PRIMARY_KEY_TYPE type="dropdown" sqlconnection="">
+    <en><![CDATA[Type]]><option name="0"><![CDATA[]]></option><option name="int"><![CDATA[Integer]]></option><option name="varchar"><![CDATA[Varchar]]></option></en>
+  </PME_PRIMARY_KEY_TYPE>
+  <PME_CALLBACK type="textarea" cols="40" rows="2">
+    <en><![CDATA[Javascript callback to execute by a selection]]></en>
+  </PME_CALLBACK>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <PME_ACCEPT type="button" onclick="doSave(this.form)">
+    <en><![CDATA[Save]]></en>
+  </PME_ACCEPT>
+  <PME_JS type="javascript"><![CDATA[
+    var fieldForm = "text";
+    var fieldName = getField("PME_XMLNODE_NAME", fieldForm);
+    var savedFieldName = fieldName.value;
+    var pme_validating;
+
+    fieldName.focus();
+    fieldName.select();
+
+    leimnud.event.add(fieldName, "change", {method: dynaformVerifyFieldName, instance: fieldName, event: true});
+
+    var dyntype = "@#PME_DYN_TYPE";
+
+    storeNewEntriesOptions(getField("PME_STORE_NEW_ENTRY"));
+
+    leimnud.event.add(
+        getField("PME_STORE_NEW_ENTRY"),
+        "click",
+        function ()
+        {
+            storeNewEntriesOptions(getField("PME_STORE_NEW_ENTRY"));
+        }
+    );
+
+    function storeNewEntriesOptions(o)
+    {
+        if (o.checked) {
+            showRowById("PME_PRIMARY_KEY");
+            getTablesNames();
+            getTableFields()
+            getField("PME_TABLE").value = getField("PME_TABLE_DATA").value.trim();
+            getField("PME_PRIMARY_KEY").value = getField("PME_PRIMARY_KEY_DATA").value.trim();
+            getField("PME_PRIMARY_KEY_TYPE").value = getField("PME_PRIMARY_KEY_TYPE_DATA").value.trim();
+        } else {
+            hideRowById("PME_PRIMARY_KEY");
+        }
+    }
+
+  leimnud.event.add(getField('PME_XMLNODE_VALUE'), 'keyup', function(){
+    getTablesNames();
+  });
+
+  leimnud.event.add(getField('PME_TABLE'), 'change', function(){
+    getTableFields();
+    getField('PME_TABLE_DATA').value = this.value.trim();
+  });
+
+  leimnud.event.add(getField('PME_PRIMARY_KEY'), 'change', function(){
+    getField('PME_PRIMARY_KEY_DATA').value = this.value.trim();
+    for(i=1; i<this.length; i++){
+      if(this.options[i].value != this.value){
+        getField('PME_FIELD').value = this.options[i].value.trim();
+        break;
+      }
+    }
+  });
+
+
+  leimnud.event.add(getField('PME_PRIMARY_KEY_TYPE'), 'change', function(){
+    getField('PME_PRIMARY_KEY_TYPE_DATA').value = this.value.trim();
+  });
+
+  function getTablesNames() {
+    var strSql = getField("PME_XMLNODE_VALUE").value;
+
+    strSql = stringReplace("\\x0A", " ", strSql); //\n 10
+    strSql = stringReplace("\\x0D", " ", strSql); //\r 13
+    strSql = stringReplace("\\x09", " ", strSql); //\t  9
+
+    var s0 = strSql;
+    var s  = strSql.toUpperCase();
+
+    p1 = s.indexOf(" FROM ");
+    if(p1 > 0){
+      p2 = s.indexOf(" WHERE ");
+      if( p2 < 0 ){
+        p2 = s.indexOf(" ORDER ");
+        if( p2 < 0 ){
+          p2 = s.indexOf(" JOIN ");
+          if( p2 < 0 )
+            p2 = s.length
+        }
+      }
+
+
+      ss = s0.substring(p1, p2);
+      ss = ss.replace("FROM", "").trim();
+      ss = ss.replace("from", "").trim();
+
+      aTables = ss.split(',');
+
+      otable = getField('PME_TABLE');
+      oPK = getField('PME_PRIMARY_KEY');
+      oPKT = getField('PME_PRIMARY_KEY_TYPE');
+      oPK.length = 0;
+      oPKT.value = '';
+      otable.length = 0;
+      var newOption = new Option("", "0");
+      otable.options[0] = newOption;
+
+      var t = "";
+
+      for (var i = 0; i <= aTables.length - 1; i++) {
+          t = aTables[i].trim();
+
+          var newOption = new Option(t, t);
+          otable.options[i + 1] = newOption;
+      }
+    }
+  }
+
+  function getTableFields() {
+    var strSql = getField("PME_XMLNODE_VALUE").value;
+
+    strSql = stringReplace("\\x0A", " ", strSql); //\n 10
+    strSql = stringReplace("\\x0D", " ", strSql); //\r 13
+    strSql = stringReplace("\\x09", " ", strSql); //\t  9
+
+    var s0 = strSql;
+    var s  = strSql.toUpperCase();
+
+    p1 = s.indexOf("SELECT ");
+    if(p1 >= 0){
+      p2 = s.indexOf(" FROM ");
+      p2 = (p2 > 0)? p2: s.length;
+      ss = s0.substring(p1, p2);
+      ss = ss.replace("SELECT", "").trim();
+      ss = ss.replace("FROM", "").trim();
+      ss = ss.replace("select", "").trim();
+      ss = ss.replace("from", "").trim();
+
+      aTables = ss.split(',');
+
+      otable = getField('PME_PRIMARY_KEY');
+      otable.length = 0;
+      var newOption = new Option("", "0");
+      otable.options[0] = newOption;
+
+      var t = "";
+
+      for (var i = 0; i <= aTables.length - 1; i++) {
+          t = aTables[i].trim();
+
+          var newOption = new Option(t, t);
+          otable.options[i + 1] = newOption;
+      }
+    }
+  }
+
+
+  function doSave(form){
+    if( getField('PME_STORE_NEW_ENTRY').checked ){
+      if(getField('PME_TABLE').value.trim() != '0' && getField('PME_PRIMARY_KEY').value.trim() != '0' && getField('PME_PRIMARY_KEY_TYPE').value.trim() != '0'){
+        fieldsSave(form);
+      } else {
+        msgBox(G_STRINGS.ID_SUGGEST_NEW_ENTRIES_ALERT, "alert");
+      }
+    } else {
+      fieldsSave(form);
+    }
+  }
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+]]></PME_JS>
+</dynaForm>

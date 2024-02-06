@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="date" type="xmlform" width="100%" labelWidth="120" enableTemplate="1">
+  <PME_A type="hidden"/>
+  <PME_TYPE type="hidden"/>
+  <PME_TITLE type="title" enableHTML="1">
+    <en><![CDATA[Properties]]></en>
+  </PME_TITLE>
+  <PME_XMLNODE_NAME type="text" size="40" maxlength="64" validate="NodeName" dependentFields="PME_VALIDATE_NAME" required="1">
+    <en><![CDATA[Field Name]]></en>
+  </PME_XMLNODE_NAME>
+  <PME_XMLNODE_NAME_OLD type="hidden"/>
+  <PME_VALIDATE_NAME type="hidden" sqlConnection="XMLDB">
+SELECT XMLNODE_NAME, TYPE FROM dynaForm WHERE XMLNODE_NAME = @@PME_XMLNODE_NAME
+</PME_VALIDATE_NAME>
+  <PME_LABEL type="text" maxlength="255" size="40">
+    <en><![CDATA[Label]]></en>
+  </PME_LABEL>
+  <PME_RELATIVEDATE type="dropdown" required="0" mode="edit" defaultvalue="0">
+    <en><![CDATA[Type of date range]]><option name="1"><![CDATA[Relative Dates]]></option><option name="0"><![CDATA[Static Dates]]></option></en>
+  </PME_RELATIVEDATE>
+  <PME_SUBTITLE3 type="title" enableHTML="1">
+    <en><![CDATA[Start and End Dates]]></en>
+  </PME_SUBTITLE3>
+  <PME_STARTDATE type="date" defaultvalue="" beforedate="-100y" afterdate="20y">
+    <en><![CDATA[Start Date]]></en>
+  </PME_STARTDATE>
+  <PME_ENDDATE type="date" defaultvalue="" beforedate="-100y" afterdate="20y">
+    <en><![CDATA[End Date]]></en>
+  </PME_ENDDATE>
+  <PME_SUBTITLE3a type="title" enableHTML="1">
+    <en><![CDATA[Relative Start and End Dates]]></en>
+  </PME_SUBTITLE3a>
+  <PMED_AFTERBEFORE_DESC type="subtitle" defaultvalue="1m" enableHtml="1">
+    <en><![CDATA[<b>Data Codes:</b> A number followed by a letter to indicate the unit of time (d=day m=month y=year).<br/>Use negative numbers for past dates and positive numbers for future dates.<br />    <b>NOTE:</b> These relative dates have priority. If left empty, then the <i>Start and End dates</i> will be used."]]></en>
+  </PMED_AFTERBEFORE_DESC>
+  <PME_BEFOREDATE type="text" defaultvalue="">
+    <en><![CDATA[Start Relative Date]]></en>
+  </PME_BEFOREDATE>
+  <PME_AFTERDATE type="text" defaultvalue="">
+    <en><![CDATA[End Relative Date]]></en>
+  </PME_AFTERDATE>
+  <PME_SUBTITLE3x type="subtitle" enableHTML="1">
+    <en><![CDATA[<b>Mask: </b>%Y=Year, %m=Month, %d=Day]]></en>
+  </PME_SUBTITLE3x>
+  <PME_SUBTITLE3xl type="link" enableHTML="1" onclick="masks(event); return false;">
+    <en><![CDATA[Masks List]]></en>
+  </PME_SUBTITLE3xl>
+  <PME_MASK type="text" maxlength="50" size="30" defaultvalue="%Y-%m-%d">
+    <en><![CDATA[Mask]]></en>
+  </PME_MASK>
+  <PME_SUBTITLE3b type="title" enableHTML="1">
+    <en><![CDATA[Behaviour]]></en>
+  </PME_SUBTITLE3b>
+  <PME_EDITABLE type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Editable]]></en>
+  </PME_EDITABLE>
+  <PME_REQUIRED type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Required]]></en>
+  </PME_REQUIRED>
+  <PME_READONLY type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Read Only]]></en>
+  </PME_READONLY>
+  <PME_SHOWTIME type="checkbox" falseValue="0" value="1" defaultvalue="0" labelOnRight="0">
+    <en><![CDATA[Show time]]></en>
+  </PME_SHOWTIME>
+  <PME_DEFAULTVALUE_SEL type="dropdown" maxlength="50" size="30" defaultvalue="">
+    <en><![CDATA[Default]]><option name="empty"><![CDATA[Empty]]></option><option name="today"><![CDATA[Today]]></option><option name="val"><![CDATA[Value]]></option></en>
+  </PME_DEFAULTVALUE_SEL>
+  <PME_DEFAULTVALUE type="date" beforedate="-10y" afterdate="10y">
+    <en><![CDATA[]]></en>
+  </PME_DEFAULTVALUE>
+  <PME_HINT type="textarea" cols="47" rows="3">
+    <en><![CDATA[Hint]]></en>
+  </PME_HINT>
+  <PME_SUBTITLE type="title" enableHTML="1">
+    <en><![CDATA[Appearance]]></en>
+  </PME_SUBTITLE>
+  <PME_SIZE type="text" maxlength="10" size="10" validate="Int" defaultvalue="15">
+    <en><![CDATA[Size]]></en>
+  </PME_SIZE>
+  <PME_MODE type="dropdown" defaultvalue="edit">
+    <en><![CDATA[Mode]]><option name="edit"><![CDATA[Edit]]></option><option name="view"><![CDATA[View]]></option></en>
+  </PME_MODE>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <PME_ACCEPT type="button" onclick="if(validDate()) fieldsSave(this.form);">
+    <en><![CDATA[Save]]></en>
+  </PME_ACCEPT>
+  <PME_JS type="javascript"><![CDATA[
+function masks(e){
+  oPanel = new leimnud.module.panel();
+  oPanel.options = {
+    size        : {w:400, h:370},
+    position    : {x:e.clientX, y:e.clientY-300, center:false},
+    title       : _('ID_MASKS_LIST'),
+    statusBar   : false,
+    control     : {resize:false,roll:false,drag:true},
+    fx          : {modal:true,opacity:true,blinkToFront:false,fadeIn:false,drag:true}
+  };
+  oPanel.make();
+
+  var oRPC = new leimnud.module.rpc.xmlhttp({url : '../dynaforms/datemask'});
+  oRPC.callback = function(rpc) {
+    oPanel.addContent(rpc.xmlhttp.responseText);
+  }.extend(this);
+  oRPC.make();
+
+  return false;
+}
+
+hideRowById('PME_READONLY');
+showRowById('PME_EDITABLE');
+hideRowById('PME_SHOWTIME');
+
+reltype = getField('PME_RELATIVEDATE').value;
+if (reltype == "1"){
+  hideRowById('PME_SUBTITLE3');
+  hideRowById('PME_STARTDATE');
+  hideRowById('PME_ENDDATE');
+} else {
+  hideRowById('PME_SUBTITLE3a');
+  hideRowById('PMED_AFTERBEFORE_DESC');
+  hideRowById('PME_BEFOREDATE');
+  hideRowById('PME_AFTERDATE');
+}
+
+if(getField('PME_DEFAULTVALUE_SEL').value != 'val'){
+  hideRowById('PME_DEFAULTVALUE');
+}
+var fieldForm="date";
+var fieldName=getField("PME_XMLNODE_NAME",fieldForm);
+var savedFieldName=fieldName.value;
+var pme_validating;
+fieldName.focus();
+fieldName.select();
+leimnud.event.add(fieldName, 'change', {method:dynaformVerifyFieldName, instance:fieldName, event:true});
+
+leimnud.event.add(getField('PME_DEFAULTVALUE_SEL'), 'change', function(){
+switch (getField('PME_DEFAULTVALUE_SEL').value) {
+    case 'val':
+      getField('PME_DEFAULTVALUE').value = '';
+    showRowById('PME_DEFAULTVALUE');
+    break;
+    case 'empty':
+      getField('PME_DEFAULTVALUE').value = '';
+      hideRowById('PME_DEFAULTVALUE');
+    break;
+    case 'today':
+      getField('PME_DEFAULTVALUE').value = 'today';
+      hideRowById('PME_DEFAULTVALUE');
+    break;
+  }}.extend(getField('PME_DEFAULTVALUE_SEL')));
+
+if (getField('PME_DEFAULTVALUE_SEL').value == 'today')
+{
+    getField('PME_DEFAULTVALUE').value = getField('PME_DEFAULTVALUE_SEL').value;
+}
+
+leimnud.event.add(getField('PME_RELATIVEDATE'), 'change', function() {
+  switch (this.value) {
+    case '':
+                getField('PME_RELATIVEDATE').value = '0';
+    case '0':
+    getField('PME_BEFOREDATE').value = '';
+    getField('PME_AFTERDATE').value = '';
+    hideRowById('PME_SUBTITLE3a');
+    hideRowById('PMED_AFTERBEFORE_DESC');
+    hideRowById('PME_BEFOREDATE');
+    hideRowById('PME_AFTERDATE');
+    showRowById('PME_SUBTITLE3');
+    showRowById('PME_STARTDATE');
+    showRowById('PME_ENDDATE');
+    break;
+    case '1':
+    getField('PME_STARTDATE').value = '';
+    //getField('PME_STARTDATE][div').innerHTML = '';
+    getField('PME_ENDDATE').value = '';
+    //getField('PME_ENDDATE][div').innerHTML = '';
+      hideRowById('PME_SUBTITLE3');
+    hideRowById('PME_STARTDATE');
+    hideRowById('PME_ENDDATE');
+      showRowById('PME_SUBTITLE3a');
+      showRowById('PMED_AFTERBEFORE_DESC');
+    showRowById('PME_BEFOREDATE');
+    showRowById('PME_AFTERDATE');
+    break;
+  }
+}.extend(getField('PME_RELATIVEDATE')));
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+function validDate() {
+  reltype = getField('PME_RELATIVEDATE').value;
+
+  if (getField('PME_RELATIVEDATE').value == 1) {
+  }
+  else {
+    if(getField('PME_STARTDATE').value == ''){
+      msgBox('@G::LoadTranslation(ID_SEL_START_DATE)', "alert");
+      return false;
+    }
+
+    if(getField('PME_ENDDATE').value == ''){
+      msgBox('@G::LoadTranslation(ID_SEL_END_DATE)', "alert");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+leimnud.event.add(getField('PME_ENDDATE'), 'change', function() { 
+    validDateRange(getField('PME_STARTDATE'), getField('PME_ENDDATE'))
+});
+leimnud.event.add(getField('PME_AFTERDATE'), 'change', function() { 
+    validDateRange(getField('PME_BEFOREDATE'), getField('PME_AFTERDATE'))
+});
+
+function validDateRange(start, end) {
+    var startDate = Date.parse(start.value);
+    var endDate = Date.parse(end.value);
+    
+    if (isNaN(startDate)) {
+        msgBox('@G::LoadTranslation(ID_START_DATE_NOT_VALID)', "alert");
+        return false;
+    }
+    
+    if (isNaN(endDate)) {
+        msgBox('@G::LoadTranslation(ID_END_DATE_NOT_VALID)', "alert");
+        return false;
+    }
+    
+    if (startDate >= endDate) {
+        msgBox('@G::LoadTranslation(ID_END_DATE_GREATER)', "alert");
+        end.value = "";
+    }
+}
+
+]]></PME_JS>
+</dynaForm>

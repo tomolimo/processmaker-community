@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="outputdocs/outputdocs_Edit" type="xmlform" width="100%" enableTemplate="1">
+  <PRO_UID type="hidden"/>
+  <OUT_DOC_UID type="hidden" showInTable="0"/>
+  <TITLE type="title" group="1">
+    <en><![CDATA[Output Document Information]]></en>
+  </TITLE>
+  <OUT_DOC_TITLE type="text" style="width:90%">
+    <en><![CDATA[Title]]></en>
+  </OUT_DOC_TITLE>
+  <OUT_DOC_FILENAME type="textpm" size="30" maxlength="100" showVars="1" process="@#PRO_UID" symbol="@#" validate="Field">
+    <en><![CDATA[Filename generated]]></en>
+  </OUT_DOC_FILENAME>
+  <OUT_DOC_DESCRIPTION type="textarea" rows="3" style="width:90%;">
+    <en><![CDATA[Description]]></en>
+  </OUT_DOC_DESCRIPTION>
+  <OUT_DOC_REPORT_GENERATOR type="dropdown" required="0" readonly="0" mode="edit">
+    <en><![CDATA[Report Generator]]><option name="HTML2PDF"><![CDATA[HTML2PDF (Old Version)]]></option><option name="TCPDF"><![CDATA[TCPDF]]></option></en>
+  </OUT_DOC_REPORT_GENERATOR>
+  <OUT_DOC_LANDSCAPE type="dropdown">
+    <en><![CDATA[Orientation]]><option name=""><![CDATA[Portrait]]></option><option name="1"><![CDATA[Landscape]]></option></en>
+  </OUT_DOC_LANDSCAPE>
+  <OUT_DOC_GENERATE type="dropdown">
+    <en><![CDATA[Output Document to Generate]]><option name="BOTH"><![CDATA[BOTH]]></option><option name="DOC"><![CDATA[DOC]]></option><option name="PDF"><![CDATA[PDF]]></option></en>
+  </OUT_DOC_GENERATE>
+  <OUT_DOC_VERSIONING type="dropdown">
+    <en><![CDATA[Enable Versioning]]><option name=""><![CDATA[NO]]></option><option name="1"><![CDATA[YES]]></option></en>
+  </OUT_DOC_VERSIONING>
+  <OUT_DOC_MEDIA type="dropdown">
+    <en><![CDATA[Media]]><option name="Letter"><![CDATA[Letter]]></option><option name="Legal"><![CDATA[Legal]]></option><option name="Executive"><![CDATA[Executive]]></option><option name="B5"><![CDATA[B5]]></option><option name="Folio"><![CDATA[Folio]]></option><option name="A0Oversize"><![CDATA[A0Oversize]]></option><option name="A0"><![CDATA[A0]]></option><option name="A1"><![CDATA[A1]]></option><option name="A2"><![CDATA[A2]]></option><option name="A3"><![CDATA[A3]]></option><option name="A4"><![CDATA[A4]]></option><option name="A5"><![CDATA[A5]]></option><option name="A6"><![CDATA[A6]]></option><option name="A7"><![CDATA[A7]]></option><option name="A8"><![CDATA[A8]]></option><option name="A9"><![CDATA[A9]]></option><option name="A10"><![CDATA[A10]]></option><option name="Screenshot640"><![CDATA[Screenshot640]]></option><option name="Screenshot800"><![CDATA[Screenshot800]]></option><option name="Screenshot1024"><![CDATA[Screenshot1024]]></option></en>
+  </OUT_DOC_MEDIA>
+  <OUT_DOC_LEFT_MARGIN type="text" style="width:15%" validate="Int">
+    <en><![CDATA[Left]]></en>
+  </OUT_DOC_LEFT_MARGIN>
+  <OUT_DOC_RIGHT_MARGIN type="text" style="width:15%" validate="Int">
+    <en><![CDATA[Right]]></en>
+  </OUT_DOC_RIGHT_MARGIN>
+  <OUT_DOC_TOP_MARGIN type="text" style="width:15%" validate="Int">
+    <en><![CDATA[Top]]></en>
+  </OUT_DOC_TOP_MARGIN>
+  <OUT_DOC_BOTTOM_MARGIN type="text" style="width:15%" validate="Int">
+    <en><![CDATA[Bottom]]></en>
+  </OUT_DOC_BOTTOM_MARGIN>
+  <OUT_DOC_DESTINATION_PATH type="textpm" size="30" maxlength="200" showVars="1" process="@#PRO_UID" symbol="@#" validate="Path">
+    <en><![CDATA[Destination Path]]></en>
+  </OUT_DOC_DESTINATION_PATH>
+  <OUT_DOC_TAGS type="textpm" size="30" maxlength="200" showVars="1" process="@#PRO_UID" symbol="@#" validate="Tag">
+    <en><![CDATA[Tags]]></en>
+  </OUT_DOC_TAGS>
+  <OUT_DOC_PDF_SECURITY_ENABLED type="dropdown">
+    <en><![CDATA[PDF Security]]><option name="0"><![CDATA[Disabled]]></option><option name="1"><![CDATA[Enabled]]></option></en>
+  </OUT_DOC_PDF_SECURITY_ENABLED>
+  <OUT_DOC_PDF_SECURITY_OPEN_PASSWORD type="password">
+    <en><![CDATA[Open Password]]></en>
+  </OUT_DOC_PDF_SECURITY_OPEN_PASSWORD>
+  <OUT_DOC_PDF_SECURITY_OWNER_PASSWORD type="password">
+    <en><![CDATA[Owner Password]]></en>
+  </OUT_DOC_PDF_SECURITY_OWNER_PASSWORD>
+  <OUT_DOC_PDF_SECURITY_PERMISSIONS type="listbox" mode="edit" options="Array">
+    <en><![CDATA[Allowed Permissions]]><option name="print"><![CDATA[Print]]></option><option name="modify"><![CDATA[Modify]]></option><option name="copy"><![CDATA[Copy]]></option><option name="annot-forms"><![CDATA[Forms]]></option></en>
+  </OUT_DOC_PDF_SECURITY_PERMISSIONS>
+  <OUT_DOC_OPEN_TYPE type="dropdown">
+    <en>By clicking on the generated file link<option name="0">Open the file</option><option name="1">Download the file</option></en>
+  </OUT_DOC_OPEN_TYPE>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <ACCEPT type="button" onclick="verifyTitle(this.form);">
+    <en><![CDATA[Save]]></en>
+  </ACCEPT>
+  <JS type="JavaScript"><![CDATA[
+
+var _oVarsPanel_;
+var showDynaformsFormVars = function(sFieldName, sAjaxServer, sProcess, sSymbol) {
+  _oVarsPanel_ = new leimnud.module.panel();
+  _oVarsPanel_.options = {
+    limit    : true,
+    size     : {w:600,h:420},
+    position : {x:0,y:0,center:true},
+    title    : '',
+    theme    : 'processmaker',
+    statusBar: false,
+    control  : {drag:false,resize:true,close:true},
+    fx       : {opacity:true,rolled:false,modal:true}
+  };
+  _oVarsPanel_.make();
+  _oVarsPanel_.events = {
+    remove:function() {
+      delete _oVarsPanel_;
+    }.extend(this)
+  };
+  _oVarsPanel_.loader.show();
+  oRPC = new leimnud.module.rpc.xmlhttp({
+    url   : sAjaxServer,
+    method: 'POST',
+    args  : 'sFieldName=' + sFieldName + '&sProcess=' + sProcess + '&sSymbol=' + sSymbol + '&sType=2'
+  });
+  oRPC.callback = function(oRPC) {
+    _oVarsPanel_.loader.hide();
+    var scs = oRPC.xmlhttp.responseText.extractScript();
+    _oVarsPanel_.addContent(oRPC.xmlhttp.responseText);
+    scs.evalScript();
+  }.extend(this);
+  oRPC.make();
+};
+
+var insertFormVar = function(sFieldName, sValue) {
+  oAux = document.getElementById(sFieldName);
+  if (oAux.setSelectionRange) {
+    var rangeStart = oAux.selectionStart;
+    var rangeEnd   = oAux.selectionEnd;
+    var tempStr1   = oAux.value.substring(0,rangeStart);
+    var tempStr2   = oAux.value.substring(rangeEnd);
+    oAux.value     = tempStr1 + sValue + tempStr2;
+  }
+  else {
+    if (document.selection) {
+      oAux.focus();
+      document.selection.createRange().text = sValue;
+    }
+  }
+  _oVarsPanel_.remove();
+};
+
+var verifyTitle = function(oForm)
+{ oAux1 = oForm.elements['form[OUT_DOC_TITLE]'];
+  if (oAux1.value == '')
+  {
+    new leimnud.module.app.alert().make({
+      label:G_STRINGS.DBCONNECTIONS_ALERT
+    });
+    oAux1.focus();
+    bContinue = false;
+    return false;
+  }else {
+	  var nameOutPut = getField('OUT_DOC_TITLE').value;
+	  var proUid = getField('PRO_UID').value;
+	  var OutPutID = getField('OUT_DOC_UID').value;
+	  if(OutPutID==''){
+		  reqName=ajax_function('../outputdocs/outputdocs_Ajax','lookForNameOutput','NAMEOUTPUT='+encodeURIComponent(nameOutPut)+'&proUid='+encodeURIComponent(proUid),'POST') ;
+		  if(reqName){
+			 outputdocsPropertiesSave(oForm);
+	    } else {
+		   alert(G_STRINGS.ID_EXIST_OUTPUTDOCUMENT);return false;
+		  }
+	  }else{
+	    outputdocsPropertiesSave(oForm);
+	  }
+  }
+
+}
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+function showPdfSecuritySwitch(){
+if ((getField('OUT_DOC_GENERATE').value == 'PDF')||(getField('OUT_DOC_GENERATE').value == 'BOTH')) {
+    showRow('OUT_DOC_PDF_SECURITY_ENABLED');
+  }
+  else {
+    hideRow('OUT_DOC_PDF_SECURITY_ENABLED');
+    getField('OUT_DOC_PDF_SECURITY_ENABLED').value=0;
+  }
+  togglePDFSecurity();
+}
+function togglePDFSecurity(){
+if ((getField('OUT_DOC_PDF_SECURITY_ENABLED').value == '0')) {
+    hideRow('PDF_SECURITY_SETTINGS');
+  }
+  else {
+    showRow('PDF_SECURITY_SETTINGS');
+  }
+}
+
+leimnud.event.add(getField('OUT_DOC_GENERATE'), 'change', function() {
+  showPdfSecuritySwitch();
+});
+
+
+  leimnud.event.add(getField('OUT_DOC_PDF_SECURITY_ENABLED'), 'change', function() {
+  togglePDFSecurity();
+});
+
+showPdfSecuritySwitch();
+togglePDFSecurity();
+
+]]></JS>
+</dynaForm>

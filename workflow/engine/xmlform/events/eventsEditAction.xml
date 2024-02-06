@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="events/eventsEditAction" type="xmlform" width="100%" labelwidth="25%" enableTemplate="1">
+  <EVN_UID type="hidden"/>
+  <PRO_UID type="hidden"/>
+  <EVN_DESCRIPTION type="hidden"/>
+  <EVN_RELATED_TO type="hidden"/>
+  <TAS_UID type="hidden"/>
+  <EVN_TAS_UID_FROM type="hidden"/>
+  <EVN_TAS_UID_TO type="hidden"/>
+  <EVN_TAS_ESTIMATED_DURATION type="hidden"/>
+  <EVN_TIME_UNIT type="hidden"/>
+  <EVN_WHEN_OCCURS type="hidden"/>
+  <EVN_STATUS type="hidden"/>
+  <EVN_WHEN type="hidden"/>
+  <EVN_ACTION type="hidden"/>
+  <EVN_MESSAGE_SUBJECT type="text" size="50" maxlength="255" required="1">
+    <en><![CDATA[Subject]]></en>
+  </EVN_MESSAGE_SUBJECT>
+  <title1 type="title">
+    <en><![CDATA[Send to]]></en>
+  </title1>
+  <EVN_MESSAGE_TO_TO_SIMPLEADD type="text" size="31" maxlength="255" required="0"/>
+  <EVN_MESSAGE_TO_TO type="listbox" size="4" required="0" sqlconnection="dbarray" width="100%">
+  SELECT id,name FROM eventomsgto
+  <en><![CDATA[TO]]></en>
+</EVN_MESSAGE_TO_TO>
+  <title2 type="title">
+    <en><![CDATA[Carbon Copy]]></en>
+  </title2>
+  <EVN_MESSAGE_TO_CC_SIMPLEADD type="text" size="31" maxlength="255" required="0"/>
+  <EVN_MESSAGE_TO_CC type="listbox" size="4" required="0" sqlconnection="dbarray" width="100%">
+  SELECT id,name FROM eventomsgcc
+  <en><![CDATA[CC]]></en>
+</EVN_MESSAGE_TO_CC>
+  <title3 type="title">
+    <en><![CDATA[Blind Carbon Copy]]></en>
+  </title3>
+  <EVN_MESSAGE_TO_BCC_SIMPLEADD type="text" size="31" maxlength="255" required="0"/>
+  <EVN_MESSAGE_TO_BCC type="listbox" size="4" required="0" sqlconnection="dbarray" width="100%">
+  SELECT id,name FROM eventomsgbcc
+  <en><![CDATA[BCC]]></en>
+</EVN_MESSAGE_TO_BCC>
+  <EVN_MESSAGE_TEMPLATE type="dropdown" sqlconnection="dbarray">
+SELECT TEMPLATE1, TEMPLATE2 FROM templates
+  <en><![CDATA[E-Mail Template]]><option name="alert_message.html"><![CDATA[-- Default --]]></option></en>
+</EVN_MESSAGE_TEMPLATE>
+  <TRI_UID type="dropdown" sqlconnection="dbarray" required="0">
+SELECT TRI_UID, TRI_TITLE FROM triggers
+  <en><![CDATA[Trigger]]><option name=""><![CDATA[-- Select --]]></option></en>
+</TRI_UID>
+  <BTN_CANCEL type="button" onclick="cancel();">
+    <en><![CDATA[Cancel]]></en>
+  </BTN_CANCEL>
+  <SAVE type="button" onclick="eventsSave(this.form);">
+    <en><![CDATA[Save]]></en>
+  </SAVE>
+  <LABEL_ADD type="hidden"/>
+  <LABEL_ADD_CURRENT type="hidden"/>
+  <LABEL_ADD_USERS type="hidden"/>
+  <LABEL_REMOVED_SELECTED type="hidden"/>
+  <LABEL_ADD_DYNAVAR type="hidden"/>
+  <LABEL_ADD_GROUPS type="hidden"/>
+  <JS type="javascript"><![CDATA[
+
+
+switch (getField('EVN_ACTION').value) {
+  case 'SEND_MESSAGE':
+    hideRowById('TRI_UID');
+    removeRequiredById('TRI_UID');
+  break;
+  case 'EXECUTE_TRIGGER':
+    hideRowById('EVN_MESSAGE_TEMPLATE');
+    hideRowById('EVN_MESSAGE_SUBJECT');
+    hideRowById('EVN_MESSAGE_TO_TO');
+    hideRowById('EVN_MESSAGE_TO_CC');
+    hideRowById('EVN_MESSAGE_TO_BCC');
+    removeRequiredById('EVN_MESSAGE_SUBJECT');
+    removeRequiredById('EVN_MESSAGE_TO_TO');
+  break;
+}
+
+
+leimnud.event.add(document.getElementById('form[SAVE]'), 'mouseover', function() {
+	 
+   	o = getField('EVN_MESSAGE_TO_TO');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = true;
+    }
+    o = getField('EVN_MESSAGE_TO_CC');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = true;
+    }
+    o = getField('EVN_MESSAGE_TO_BCC');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = true;
+    }
+   	/*
+   	var client = getBrowserClient();
+   	if (client.browser == "msie" || client.browser == "safari"){ 
+   		document.events_eventsEditAction.submit();
+   	} 
+   	*/
+}.extend(document.getElementById('form[SAVE]'))); 
+
+leimnud.event.add(document.getElementById('form[SAVE]'), 'mouseout', function() {
+	 
+   	o = getField('EVN_MESSAGE_TO_TO');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = false;
+    }
+    o = getField('EVN_MESSAGE_TO_CC');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = false;
+    }
+    o = getField('EVN_MESSAGE_TO_BCC');
+	for(i=0; i<o.options.length; i++){
+		o.options[i].selected = false;
+    }
+   	/*
+   	var client = getBrowserClient();
+   	if (client.browser == "msie" || client.browser == "safari"){ 
+   		document.events_eventsEditAction.submit();
+   	} 
+   	*/
+}.extend(document.getElementById('form[SAVE]'))); 
+
+function cancel(){
+    currentPopupWindow.remove();
+}
+
+
+var lAdd = document.getElementsByName("labelAdd");
+for(var i=0; i<lAdd.length; i++) {
+    lAdd[i].title = getField('LABEL_ADD').value;
+}
+
+var lAddCur = document.getElementsByName("labelAddCurrent");
+for(var i=0; i<lAddCur.length; i++) {
+    lAddCur[i].title = getField('LABEL_ADD_CURRENT').value;
+}
+
+var lAddCur = document.getElementsByName("labelAddUsers");
+for(var i=0; i<lAddCur.length; i++) {
+    lAddCur[i].title = getField('LABEL_ADD_USERS').value;
+}
+
+var lRemo = document.getElementsByName("labelRemoved");
+for(var i=0; i<lRemo.length; i++) {
+    lRemo[i].title = getField('LABEL_REMOVED_SELECTED').value;
+}
+
+var lAddDyn = document.getElementsByName("labelAddDynavar");
+for(var i=0; i<lAddDyn.length; i++) {
+    lAddDyn[i].title = getField('LABEL_ADD_DYNAVAR').value;
+}
+
+var lAddGro = document.getElementsByName("labelAddGroup");
+for(var i=0; i<lAddGro.length; i++) {
+    lAddGro[i].title = getField('LABEL_ADD_GROUPS').value;
+}
+
+]]></JS>
+</dynaForm>

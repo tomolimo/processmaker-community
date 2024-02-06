@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynaForm name="users_NewOptions" type="xmlmenu">
+  <MNU type="link" value="" link="#" onclick="window.location = 'users_List'; return false;" colAlign="left" colWidth="80">
+    <en><![CDATA[Back to list]]></en>
+  </MNU>
+</dynaForm>
