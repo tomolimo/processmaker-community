@@ -65,11 +65,6 @@ class adminProxy extends HttpProxyController
             $updatedConf['expiration_year'] = $httpData->expiration_year;
         }
 
-        $httpData->memory_limit .= 'M';
-        if ($sysConf['memory_limit'] != $httpData->memory_limit) {
-            $updatedConf['memory_limit'] = $httpData->memory_limit;
-        }
-
         if ($sysConf['proxy_host'] != $httpData->proxy_host) {
             $updatedConf['proxy_host'] = $httpData->proxy_host;
         }
@@ -126,7 +121,7 @@ class adminProxy extends HttpProxyController
             $msg = ", Host -> " . $httpData->proxy_host . ", Port -> " . $httpData->proxy_port . ", User -> " . $httpData->proxy_user;
         }
 
-        G::auditLog("UploadSystemSettings", "Time Zone -> " . $httpData->time_zone . ", Memory Limit -> " . $httpData->memory_limit . ", Cookie lifetime -> " . $httpData->max_life_time . ", Default Skin -> " . $httpData->default_skin . ", Default Language -> " . $httpData->default_lang . $msg);
+        G::auditLog("UploadSystemSettings", "Time Zone -> " . $httpData->time_zone . ", Cookie lifetime -> " . $httpData->max_life_time . ", Default Skin -> " . $httpData->default_skin . ", Default Language -> " . $httpData->default_lang . $msg);
     }
 
     public function uxUserUpdate($httpData)
@@ -1584,12 +1579,6 @@ class adminProxy extends HttpProxyController
      */
     public static function validateDataSystemConf($httpData, $envFile)
     {
-        if (!((is_numeric($httpData->memory_limit)) && ((int)$httpData->memory_limit == $httpData->memory_limit) &&
-            ((int)$httpData->memory_limit >= -1))
-        ) {
-            throw new Exception(G::LoadTranslation('ID_MEMORY_LIMIT_VALIDATE'));
-        }
-
         if (!((is_numeric($httpData->max_life_time)) && ((int)$httpData->max_life_time == $httpData->max_life_time) &&
             ((int)$httpData->max_life_time > 0))
         ) {

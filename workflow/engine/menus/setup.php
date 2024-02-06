@@ -192,3 +192,16 @@ if ($RBAC->userCanAccess('PM_SETUP') === 1) {
 if ($RBAC->userCanAccess('PM_SETUP') == 1) {
 }
 
+
+if ($RBAC->userCanAccess('PM_TASK_SCHEDULER_ADMIN') === 1) {
+    $G_TMP_MENU->AddIdRawOption(
+        'ID_MENU_CASE_ACTIONS', '../scheduler/index?category=case_actions',
+        G::LoadTranslation("ID_TASK_SCHEDULER_CASE_ACTIONS"),
+        '', '',  G::LoadTranslation("ID_TASK_SCHEDULER")
+    );
+    $G_TMP_MENU->AddIdRawOption(
+        'ID_MENU_EMAILS_NOTIFICATIONS', '../scheduler/index?category=emails_notifications',
+        G::LoadTranslation("ID_TASK_SCHEDULER_EMAILS_NOTIFICATIONS"),
+        '', '', G::LoadTranslation("ID_TASK_SCHEDULER")
+    );
+}

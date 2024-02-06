@@ -1,30 +1,30 @@
-[9 weeks ago] de7176a2  (origin/bugfix/PMCORE-1268) PMCORE-1268 <Andrea Adamczyk>
-[3 months ago] 4c4cc59e  (origin/bugfix/PMCORE-525) PMCORE-525 Two different labels for the same action (Promotion Manager export) <Roly Rudy Gutierrez Pinto>
-[4 months ago] 791fdb14  (origin/bugfix/PMCORE-502-A) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
-[4 months ago] fab3e34c  (origin/bugfix/PMCORE-502) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
-[4 months ago] 14ce3849  PMC-1528:PROD-1251 >> The Datetime control inside a grid control has its "Aria Label" property <Fabio Guachalla>
-[5 months ago] ac07cf43  (origin/bugfix/PMC-1529) PMC-1529: aria label visible option in checkbox on a grid <Rodrigo Quelca>
-[5 months ago] 6ca0e153  (origin/bugfix/PMC-1527) PMC-1527: PROD-1251 >> The Datetime control inside a grid control has its "Tab Index" property <Rodrigo Quelca>
-[5 months ago] a3659026  (origin/feature/PMC-1463) PMC-1463: Dynaform Designer - Accessibility Improvements Stage 1 <Rodrigo Quelca>
-[8 months ago] f9b28fc0  PMC-39:Use new API for upload files in templates and public files <Fabio Guachalla>
-[8 months ago] 82c5c6c7  (origin/feature/PMC-1159) PMC-1159: Form Designer, Add the property "available ofline" for video, audio and image mobile control <Rodrigo Quelca>
-[9 months ago] 183d7eae  (origin/feature/PMC-1144) PMC-1144: form designer -  add view mode property for all mobile controls <Rodrigo Quelca>
-[9 months ago] d344c42b  (origin/bugfix/PMC-902_C) PMC-902: pop over was not hidden after the user clear the form <Rodrigo Quelca>
-[10 months ago] 72b9165d  (origin/bugfix/PMC-1016) PMC-1016 <Andrea Adamczyk>
-[10 months ago] 0be62d0a  (origin/bugfix/PMC-902_B) PMC-902: The Deprecated Control Warning PopOver does not hide itself. <Rodrigo Quelca>
-[10 months ago] 8a22777b  PMC-1022:PROD-641 >> The validation message is misspelled <Fabio Guachalla>
-[10 months ago] 89f8f18f  PMC-950:PROD-641 >> "Invalid value" alert, does not work in execution time <Fabio Guachalla>
-[10 months ago] 4b4de9d7  (origin/bugfix/PMC-1007) PMC-903:The Deprecated Control Warning PopOver hides itself even though Deprecated Controls exist in the form. <Fabio Guachalla>
-[10 months ago] b36958e4  PMC-902: The Deprecated Control Warning PopOver does not hide itself. <Rodrigo Quelca>
-[11 months ago] 16f9217b  (origin/feature/PMC-72) PMC-73: Suggest field improvements <Fabio Guachalla>
-[11 months ago] 38428965  (origin/feature/PMC-874) PMC-874: Adjust the deprecated message and change the icon color <Rodrigo Quelca>
-[1 year, 1 month ago] 062be721  (origin/bugfix/PMC-708) PMC-708 <Roly Rudy Gutierrez Pinto>
-[1 year, 1 month ago] 154002b0  (origin/bugfix/PMC-161) PMC-161 <Andrea Adamczyk>
-[1 year, 2 months ago] 3bcd950f  PMC-528:Message alert over form is persistent <Fabio Guachalla>
-[1 year, 2 months ago] 8aa4d712  (origin/bugfix/PMC-313) PMC-313 <Roly Rudy Gutierrez Pinto>
-[1 year, 2 months ago] 2b297927  (origin/bugfix/PMC-126) PMC-126 <Andrea Adamczyk>
-[1 year, 3 months ago] bb37017d  PMC-517:Standardize the deprecate Link behavior <Fabio Guachalla>
-[1 year, 3 months ago] 7a810e49  PMC-61 <Roly Rudy Gutierrez Pinto>
-[1 year, 4 months ago] 20bddf16  (origin/bugfix/PMC-163) PMC-163 <Roly Rudy Gutierrez Pinto>
-[1 year, 5 months ago] 5750f940  PMC-322:[Mantis 25900] Add the labels for some English fields in the English .po file <Fabio Guachalla>
-[1 year, 5 months ago] 67d2d9d8  PMC-320:Does not works the "Del/Supr" Key after press "Enter" key in the "Confirm" frame <Fabio Guachalla>
+[8 weeks ago] 8f7a7423  translate <fabio>
+[8 weeks ago] e3dd3b95  PMCORE-1829:default-vaule property does not have hint <fabio>
+[8 weeks ago] 24c0137d  PMCORE-1828:Hint to max-date property of date-time control was not update <fabio>
+[9 weeks ago] 45574666  (origin/bugfix/PMCORE-1776) PMCORE-1776 <Henry Jordan>
+[9 weeks ago] 0b76dd90  (origin/bugfix/PMCORE-1745_B) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
+[9 weeks ago] 50aee6d9  (origin/bugfix/PMCORE-1745) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
+[3 months ago] 970aedbb  PMCORE-1712:PMFTotalCalculation trigger Wizard help letters get out of the box <Fabio Guachalla>
+[3 months ago] e624023a  (origin/bugfix/PMCORE-1688) PMCORE-1688 Review the composer from the release/3.5.0 <Roly Rudy Gutierrez Pinto>
+[3 months ago] 6fd2b782  PMCORE-1682:Rollback PMCORE-506 (Permit same ID Name on Grids) <Fabio Guachalla>
+[3 months ago] 9acb89a9  (origin/bugfix/PMCORE-1654) PMCORE-1654: The auto-completion with variable type @# doesn't work <Rodrigo Quelca>
+[3 months ago] 5e68d789  (origin/feature/PMCORE-503) Code Review <Fabio Guachalla>
+[3 months ago] 5299df09  (origin/feature/PMCORE-1517) Dependent fields memory cache storage <Rodrigo Quelca>
+[3 months ago] f3d79866  (origin/feature/PMCORE-1546) PMCORE-1546: The autocomplete is not working for defaultValue if a field is into a grid. <Rodrigo Quelca>
+[3 months ago] 74a0c640  Revert "Merged in feature/PMCORE-1462 (pull request #1876)" <Rodrigo Quelca>
+[4 months ago] c12fd6ba  PMCORE-506:Processmaker dynaform designer should allow same ID or Name between grids Grids <fabio>
+[4 months ago] e11cdb50  PMCORE-1494:form designer the autocomplete list must filter by field type. <fabio>
+[4 months ago] a6780b8d  (origin/feature/PMCORE-1493) PMCORE-1493: after the form designer was closed the data picker and auto complete was showed <Rodrigo Quelca Sirpa>
+[4 months ago] 655a7342  PMCORE-1462:Intermediate Timer Events properties Variables <fabio>
+[4 months ago] 5a6405b1  (origin/feature/PMCORE-1400) PMCORE-1400: Code auto-completion functionality dynaform designer <Rodrigo Quelca>
+[4 months ago] 98626615  PMCORE-1424:Variables setting intermedial events <fabio>
+[4 months ago] c5039f36  PMCORE-505:The default name for labels for al pmdynaform fields <fabio>
+[5 months ago] e14bc1d6  (origin/bugfix/PMCORE-959) PMCORE-959 <Andrea Adamczyk>
+[6 months ago] de7176a2  (origin/bugfix/PMCORE-1268) PMCORE-1268 <Andrea Adamczyk>
+[7 months ago] 4c4cc59e  (origin/bugfix/PMCORE-525) PMCORE-525 Two different labels for the same action (Promotion Manager export) <Roly Rudy Gutierrez Pinto>
+[8 months ago] 791fdb14  (origin/bugfix/PMCORE-502-A) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
+[8 months ago] fab3e34c  (origin/bugfix/PMCORE-502) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
+[8 months ago] 14ce3849  PMC-1528:PROD-1251 >> The Datetime control inside a grid control has its "Aria Label" property <Fabio Guachalla>
+[9 months ago] ac07cf43  (origin/bugfix/PMC-1529) PMC-1529: aria label visible option in checkbox on a grid <Rodrigo Quelca>
+[9 months ago] 6ca0e153  (origin/bugfix/PMC-1527) PMC-1527: PROD-1251 >> The Datetime control inside a grid control has its "Tab Index" property <Rodrigo Quelca>
+[9 months ago] a3659026  (origin/feature/PMC-1463) PMC-1463: Dynaform Designer - Accessibility Improvements Stage 1 <Rodrigo Quelca>

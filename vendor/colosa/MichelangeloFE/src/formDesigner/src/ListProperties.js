@@ -15,6 +15,7 @@
         this.table.append(this.tbody);
         this.body = $("<div></div>");
         this.body.append(this.table);
+        this.cache = {};
     };
     ListProperties.prototype.addItem = function (propertiesGot, property, properties) {
         var input,
@@ -128,16 +129,16 @@
                 input = $("<input type='text' style='" + width.replace("100%", "50%") + "' id='" + id + "'/><select style='" + width.replace("100%", "50%") + "'></select>");
                 $(input[0]).val(propertiesGot[property].value.text);
                 $(input[0]).on("keyup", function () {
-                    properties.set(property, {text: this.value, select: $(input[1]).val()});
+                    properties.set(property, { text: this.value, select: $(input[1]).val() });
                 });
                 $(input[0]).attr("placeholder", propertiesGot[property].placeholder ? propertiesGot[property].placeholder : "");
                 for (i = 0; i < propertiesGot[property].items.length; i++)
                     $(input[1]).append("<option value='" + propertiesGot[property].items[i].value + "'>" + propertiesGot[property].items[i].label + "</option>");
                 $(input[1]).val(propertiesGot[property].value.select);
                 $(input[1]).on("change", function () {
-                    properties.set(property, {text: $(input[0]).val(), select: this.value});
+                    properties.set(property, { text: $(input[0]).val(), select: this.value });
                 });
-                properties.setNode(property, {text: $(input[0]).val(), select: $(input[1]).val()});
+                properties.setNode(property, { text: $(input[0]).val(), select: $(input[1]).val() });
                 break;
         }
         if (propertiesGot[property].type !== "hidden") {
@@ -157,7 +158,7 @@
                 button[0].title = propertiesGot[property].helpButton.translate();
                 button.tooltip({
                     tooltipClass: propertiesGot[property].helpButtonCss ? propertiesGot[property].helpButtonCss : null,
-                    position: {my: "left+15 center", at: "right center"},
+                    position: { my: "left+15 center", at: "right center" },
                     content: function () {
                         return $(this).prop('title');
                     },
@@ -188,42 +189,43 @@
                 cellValue[0].style.paddingRight = n + "px";
             }
             if (propertiesGot[property].type === "datepicker") {
-                button = $("<img src='" + $.imgUrl + "fd-calendar.png' style='cursor:pointer;position:absolute;top:0;right:" + n + "px;' title='" + "datepicker".translate() + "'>");
-                button.on("click", function (e) {
-                    e.stopPropagation();
-                    if ($(e.target).data("disabled") === true)
-                        return;
-                    if ($(e.target).data("disabledTodayOption") === true)
-                        return;
-                    switch (property) {
-                        case "defaultDate":
-                            minDate = that.getDateByParam(cellValue, "minDate");
-                            maxDate = that.getDateByParam(cellValue, "maxDate");
-                            break;
-                        case "minDate":
-                            maxDate = that.getDateByParam(cellValue, "maxDate");
-                            break;
-                        case "maxDate":
-                            minDate = that.getDateByParam(cellValue, "minDate");
-                            break;
-                    }
-
-                    that.datepicker = that.dateComponentFactory(cellValue, {
-                        minDate: minDate,
-                        maxDate: maxDate,
-                        onSelect: function (dateText, inst) {
-                            properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
-                        },
-                        onClose: function (dateText, inst) {
-                            that.datepicker.datepicker("destroy");
-                            $("#ui-datepicker-div").remove();
+                // init jQuery datepicker
+                that.datepicker = that.dateComponentFactory(cellValue, {
+                    minDate: minDate,
+                    maxDate: maxDate,
+                    onSelect: function (dateText, inst) {
+                        properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
+                    },
+                    onClose: function (dateText, inst) {
+                        $("#ui-datepicker-div").hide();
+                    },
+                    beforeShow: function () {
+                        var params = null;
+                        switch (property) {
+                            case "maxDate":
+                                params = {
+                                    minDate: that.getDateByParam(cellValue, "minDate")
+                                }
+                                break;
+                            case "minDate":
+                                params = {
+                                    maxDate: that.getDateByParam(cellValue, "maxDate")
+                                }
+                                break;
+                            case "defaultDate":
+                                params = {
+                                    maxDate: that.getDateByParam(cellValue, "maxDate"),
+                                    minDate: that.getDateByParam(cellValue, "minDate")
+                                }
+                                break;
                         }
-                    });
-                    cellValue.find(".ui-datepicker-trigger").hide();
+                        return params;
+                    }
                 });
-                cellValue.append(button);
                 n = n + 16;
                 cellValue[0].style.paddingRight = n + "px";
+                // init jQuery autocomplete
+                this.autoCopleteFactory(cellValue, "datetime");
             }
             if (propertiesGot[property].type === "datepicker" && propertiesGot[property].todayOption) {
                 cellValue.append("<span style='text-decoration:underline;'><input type='checkbox'/>" + propertiesGot[property].todayOption + "</span>");
@@ -244,7 +246,7 @@
         scope.find("span,img").each(function (i, e) {
             $(e).data("disabled", disabled);
         });
-        if (!propertiesGot[property].disabled && property === "requiredFieldErrorMessage"){
+        if (!propertiesGot[property].disabled && property === "requiredFieldErrorMessage") {
             scope.find("textarea").prop("disabled", !propertiesGot["required"].value);
         }
         if (!propertiesGot[property].disabled && propertiesGot.type.value === 'multipleFile' &&
@@ -260,6 +262,58 @@
                 $(e).data("disabledTodayOption", propertiesGot[property].disabledTodayOption);
             });
         }
+        if (property === "defaultValue") {
+            // init jQuery autocomplete
+            var dataTypeMap = {
+                text: "string",
+                textarea: "string",
+                dropdown: "string",
+                checkbox: "boolean",
+                checkgroup: "array",
+                radio: "string",
+                suggest: "string",
+                hidden: "string"
+            };
+            this.autoCopleteFactory(cellValue, dataTypeMap[propertiesGot["type"].value] || "string");
+        }
+    };
+    ListProperties.prototype.autoCopleteFactory = function (cellValue, type) {
+        var that = this;
+        // implement autocomple widget
+        cellValue.find("input[type='text']").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var term = request.term,
+                    cachekey = type + "-" + request.term,
+                    regExg = /[@][@#=]+[a-zA-Z]?/;
+
+                // To validate prefix @@ @# @=
+                if (!regExg.test(term)) {
+                    return;
+                }
+                cellValue.find("input[type='text']").datepicker('hide');
+                if (cachekey in that.cache) {
+                    response(that.cache[cachekey]);
+                    return;
+                }
+                // add a new rule to validate
+                term = term.substring(1) !== "@" ? term[0] + encodeURIComponent(term.substring(1)) : term;
+                $.ajax({
+                    url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id + "/process-variables/" + type + "/paged/?search=" + term,
+                    processData: false,
+                    success: function (json) {
+                        that.cache[cachekey] = json;
+                        response(json);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        console.error(errorThrown);
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + PMDesigner.project.keys.access_token);
+                    }
+                });
+            }
+        });
     };
     ListProperties.prototype.load = function (properties) {
         var that = this, property;
@@ -279,42 +333,47 @@
      */
     ListProperties.prototype.dateComponentFactory = function (control, options) {
         var defaults = {
-                showOtherMonths: true,
-                selectOtherMonths: true,
-                dateFormat: "yy-mm-dd",
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "-100:+100",
-                minDate: '',
-                maxDate: '',
-                onSelect: function() {},
-                onClose: function() {}
-            },
+            showOtherMonths: true,
+            selectOtherMonths: true,
+            dateFormat: "yy-mm-dd",
+            changeMonth: true,
+            changeYear: true,
+            yearRange: "-100:+100",
+            minDate: '',
+            maxDate: '',
+            onSelect: function () { },
+            onClose: function () { },
+            beforeShow: function () { }
+        },
             datePicker;
         $.extend(true, defaults, options);
         // append the date picker to the control component
-            datePicker = control
-                .find("input[type='text']")
-                .datepicker({
-                    showOtherMonths: defaults.showOtherMonths,
-                    selectOtherMonths: defaults.selectOtherMonths,
-                    dateFormat: defaults.dateFormat,
-                    showOn: defaults.showOn,
-                    changeMonth: defaults.changeMonth,
-                    changeYear: defaults.changeYear,
-                    yearRange: defaults.yearRange,
-                    minDate: defaults.minDate,
-                    maxDate: defaults.maxDate,
-                    onSelect: defaults.onSelect,
-                    onClose: defaults.onClose
-          });
-        datePicker.datepicker("show");
+        datePicker = control
+            .find("input[type='text']")
+            .datepicker({
+                buttonImage: $.imgUrl + "fd-calendar.png",
+                buttonImageOnly: true,
+                constrainInput: false,
+                buttonText: "Select date",
+                showOn: "button",
+                showOtherMonths: defaults.showOtherMonths,
+                selectOtherMonths: defaults.selectOtherMonths,
+                dateFormat: defaults.dateFormat,
+                changeMonth: defaults.changeMonth,
+                changeYear: defaults.changeYear,
+                yearRange: defaults.yearRange,
+                minDate: defaults.minDate,
+                maxDate: defaults.maxDate,
+                onSelect: defaults.onSelect,
+                onClose: defaults.onClose,
+                beforeShow: defaults.beforeShow
+            }).next(".ui-datepicker-trigger").addClass("datetime-gadget-class");
         return datePicker;
     };
     /**
      * Gets the date according to the passed param
      */
-    ListProperties.prototype.getDateByParam = function(control, param) {
+    ListProperties.prototype.getDateByParam = function (control, param) {
         var varRegex = /\@(?:([\@\%\#\?\$\=\&Qq\!])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*(?:[\\\\][\w\W])?)*)\))((?:\s*\[['"]?\w+['"]?\])+|\-\>([a-zA-Z\_]\w*))?/,
             value = '';
         if (control && param) {

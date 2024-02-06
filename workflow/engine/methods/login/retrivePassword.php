@@ -8,6 +8,7 @@ global $RBAC;
 $rbacUser = new RbacUsers();
 $user = new Users();
 $data['USR_USERNAME'] = strip_tags($data['USR_USERNAME']);
+$data['USR_EMAIL'] = strtolower($data['USR_EMAIL']);
 $userData = $rbacUser->getByUsername($data['USR_USERNAME']);
 $userExists = $userData === false ? false : true;
 
@@ -102,4 +103,3 @@ if ($userExists === true && $userData['USR_EMAIL'] != '' && $userData['USR_EMAIL
     G::SendTemporalMessage($msg, "warning", 'string');
     G::header('location: forgotPassword');
 }
-

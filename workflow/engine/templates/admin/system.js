@@ -97,21 +97,6 @@ Ext.onReady(function(){
           cmbTimeZone,
           {
               xtype: 'numberfield',
-              id: 'memory_limit',
-              name: 'memory_limit',
-              fieldLabel: _('ID_MEMORY_LIMIT'),
-              allowBlank: false,
-              allowDecimals: false,
-              minValue: -1,
-              autoCreate: {tag: "input", type: "text", autocomplete: "off", maxlength: 15},
-              value: sysConf.memory_limit,
-              listeners: {
-                  change: function () {
-                      changeSettings();
-                  }
-              }
-          }, {
-              xtype: 'numberfield',
               id: 'max_life_time',
               name: 'max_life_time',
               fieldLabel: _('ID_MAX_LIFETIME'),

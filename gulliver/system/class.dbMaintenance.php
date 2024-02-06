@@ -436,7 +436,6 @@ class DataBaseMaintenance
      */
     public function restoreFromSql($sqlFile, $type = 'file')
     {
-        ini_set('memory_limit', '64M');
         if ($type == 'file' && !is_file($sqlFile)) {
             throw new Exception("the $sqlFile doesn't exist!");
         }

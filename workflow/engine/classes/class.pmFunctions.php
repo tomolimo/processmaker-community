@@ -32,6 +32,7 @@ use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
 use ProcessMaker\Util\ElementTranslation;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ProcessMaker has made a number of its PHP functions available be used in triggers and conditions.
@@ -243,8 +244,23 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
 {
     $sysSys = (!empty(config("system.workspace")))? config("system.workspace") : "Undefined";
     $aContext = \Bootstrap::getDefaultContextLog();
-    $con = Propel::getConnection( $DBConnectionUID );
-    $con->begin();
+
+    // This means the DBConnectionUID is not loaded yet, so we'll force DbConnections::loadAdditionalConnections
+    if (is_null(config('database.connections.' . $DBConnectionUID . '.driver'))) {
+        // Force to load the external connections
+        DbConnections::loadAdditionalConnections();
+    }
+
+    if (config('database.connections.' . $DBConnectionUID . '.driver') !== 'oracle') {
+        // If the connections drivers are "mysql", "pgsql" or "sqlsrv" we're using Laravel
+        $con = DB::connection($DBConnectionUID);
+        $con->beginTransaction();
+    } else {
+        // If the connection driver is "oracle" we are using the native oci8 functions
+        $con = Propel::getConnection($DBConnectionUID);
+        $con->begin();
+    }
+
     $blackList = System::getQueryBlackList();
     $listQueries = explode('|', isset($blackList['queries']) ? $blackList['queries'] : '');
     $aListAllTables = explode(
@@ -299,36 +315,34 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
         $statement = str_replace( '(', '', $statement );
 
         $result = false;
-        if (getEngineDataBaseName( $con ) != 'oracle') {
+
+        // Check to see if we're not running oracle, which is usually a safe default
+        if (config('database.connections.' . $DBConnectionUID . '.driver') != 'oracle') {
             switch (true) {
                 case preg_match( "/^(SELECT|EXECUTE|EXEC|SHOW|DESCRIBE|EXPLAIN|BEGIN)\s/i", $statement ):
-                    $rs = $con->executeQuery( $SqlStatement );
-                    $result = Array ();
-                    $i = 1;
-                    while ($rs->next()) {
-                        $result[$i ++] = $rs->getRow();
-                    }
-                    $rs->close();
+                    $result = $con->select( $SqlStatement );
+
+                    // Convert to 1 index key array of array results
+                    $result = collect($result)->map(function($x) { return (array)$x; })->toArray();
+                    array_unshift($result, []);
+                    unset($result[0]);
+
                     $con->commit();
                     break;
                 case preg_match( "/^INSERT\s/i", $statement ):
-                    $rs = $con->executeUpdate( $SqlStatement );
-                    $result = $con->getUpdateCount();
+                    $result = $con->insert( $SqlStatement );
                     $con->commit();
                     break;
                 case preg_match( "/^REPLACE\s/i", $statement ):
-                    $rs = $con->executeUpdate( $SqlStatement );
-                    $result = $con->getUpdateCount();
+                    $result = $con->update( $SqlStatement );
                     $con->commit();
                     break;
                 case preg_match( "/^UPDATE\s/i", $statement ):
-                    $rs = $con->executeUpdate( $SqlStatement );
-                    $result = $con->getUpdateCount();
+                    $result = $con->update( $SqlStatement );
                     $con->commit();
                     break;
                 case preg_match( "/^DELETE\s/i", $statement ):
-                    $rs = $con->executeUpdate( $SqlStatement );
-                    $result = $con->getUpdateCount();
+                    $result = $con->delete( $SqlStatement );
                     $con->commit();
                     break;
             }
@@ -444,6 +458,124 @@ function evaluateFunction($aGrid, $sExpresion)
         //end
     }
     return $aGrid;
+}
+
+/**
+ *
+ * @method
+ *
+ * Executes operations in the grid fields, such as sum, average, median, minimum, maximun,
+ * stantard deviation, variance, percentile, count, count distinct
+ * 
+ * @name PMFTotalCalculation
+ * @label PMF TotalCalculation
+ * @link http://wiki.processmaker.com/index.php/ProcessMaker_Functions#PMFTotalCalculation.28.29
+ * @param array | $grid | Grid | The input grid
+ * @param string (32) | $field | Name of field | The name of the field.
+ * @param string (32) | $function | Operation | More information about the type of calculations can be found in https://wiki.processmaker.com/3.2/ProcessMaker_Functions
+ * 
+ * @return mixed | $result | Result | Result according of the operation
+ *
+ */
+function PMFTotalCalculation($grid, $field, $function)
+{
+    $systemConfiguration = Bootstrap::getSystemConfiguration();
+    $floatPointNumber = $systemConfiguration['pmftotalcalculation_floating_point_number'];
+    $function = strtolower($function);
+    $totalRows = count($grid);
+    $result = 0;
+    $sum = 0;
+
+    switch ($function) {
+        case "sum":
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $result += $grid[$i][$field];
+            }
+            break;
+        case "average":
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $result += $grid[$i][$field];
+            }
+            $result = $result / $totalRows;
+            break;
+        case "median":
+            $arrayAux = [];
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $arrayAux[] = $grid[$i][$field];
+            }
+            sort($arrayAux);
+            $term = ($totalRows + 1) / 2;
+            if ($totalRows % 2 === 0) {
+                $term = floor($term);
+                $result = ($arrayAux[$term - 1] + $arrayAux[$term]) / 2;
+            } else {
+                $result = $arrayAux[$term - 1];
+            }
+            break;
+        case "minimum":
+            $result = $grid[1][$field];
+            for ($i = 2; $i <= $totalRows; $i += 1) {
+                if ($grid[$i][$field] < $result) {
+                    $result = $grid[$i][$field];
+                }
+            }
+            break;
+        case "maximum":
+            $result = $grid[1][$field];
+            for ($i = 2; $i <= $totalRows; $i += 1) {
+                if ($grid[$i][$field] > $result) {
+                    $result = $grid[$i][$field];
+                }
+            }
+            break;
+        case "standarddeviation":
+            $mean = 0;
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $mean += $grid[$i][$field];
+            }
+            $mean = $mean / $totalRows;
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $result += pow($grid[$i][$field] - $mean, 2);
+            }
+            $result = sqrt($result / $totalRows);
+            break;
+        case "variance":
+            $mean = 0;
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $mean += $grid[$i][$field];
+            }
+            $mean = $mean / $totalRows;
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $result += pow($grid[$i][$field] - $mean, 2);
+            }
+            $result = $result / $totalRows;
+            break;
+        case "percentile":
+            $result = [];
+            $arrayAux = [];
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $sum += $grid[$i][$field];
+                $arrayAux[$i] = $grid[$i][$field];
+            }
+            for ($i = 1; $i <= count($arrayAux); $i += 1) {
+                $result[$i] = round(($arrayAux[$i] * 100) / $sum, $floatPointNumber);
+            }
+            break;
+        case "count":
+            $result = $totalRows;
+            break;
+        case "countdistinct":
+            $arrayAux = [];
+            for ($i = 1; $i <= $totalRows; $i += 1) {
+                $arrayAux[] = $grid[$i][$field];
+            }
+            $result = count(array_count_values($arrayAux));
+            break;
+    }
+    if ($function !== "percentile") {
+        return round($result, $floatPointNumber);
+    }
+    return $result;
 }
 
 /**
@@ -947,17 +1079,20 @@ function PMFSendMessage(
     $delIndex = 0,
     $config = []
 ) {
-    ini_set ( "pcre.backtrack_limit", 1000000 );
-    ini_set ( 'memory_limit', '-1' );
-    @set_time_limit ( 100000 );
+    ini_set("pcre.backtrack_limit", 1000000);
+    @set_time_limit(100000);
 
     global $oPMScript;
 
-    if (isset($oPMScript->aFields) && is_array($oPMScript->aFields)) {
-        if (is_array($emailTemplateVariables)) {
-            $emailTemplateVariables = array_merge($oPMScript->aFields, $emailTemplateVariables);
-        } else {
-            $emailTemplateVariables = $oPMScript->aFields;
+    if (isset($_SESSION['APPLICATION'])) {
+        if ($caseId == $_SESSION['APPLICATION']) {
+            if (isset($oPMScript->aFields) && is_array($oPMScript->aFields)) {
+                if (is_array($emailTemplateVariables)) {
+                    $emailTemplateVariables = array_merge($oPMScript->aFields, $emailTemplateVariables);
+                } else {
+                    $emailTemplateVariables = $oPMScript->aFields;
+                }
+            }
         }
     }
 
@@ -982,7 +1117,6 @@ function PMFSendMessage(
     if ($result->status_code == 0) {
         return 1;
     } else {
-        error_log($result->message);
         return 0;
     }
 }
@@ -2886,14 +3020,16 @@ function PMFUnpauseCase ($caseUid, $delIndex, $userUid)
  * @param string(32) | $taskUid | ID of the task | The unique ID of the task.
  * @param string(32) | $userUid | ID user | The unique ID of the user who will add note case.
  * @param string | $note | Note of the case | Note of the case.
- * @param int | $sendMail = 1 | Send mail | Optional parameter. If set to 1, will send an email to all participants in the case.
+ * @param int | $sendMail = 0 | Send mail | Optional parameter. If set to 1, will send an email to all participants in the case.
+ * @param array | $files | Array of files | An array of files (full paths) to be attached to the case notes.
+ * 
  * @return int | $result | Result of the add a case note | Returns 1 if the note has been added to the case.; otherwise, returns 0 if an error occurred.
  *
  */
-function PMFAddCaseNote($caseUid, $processUid, $taskUid, $userUid, $note, $sendMail = 1)
+function PMFAddCaseNote($caseUid, $processUid, $taskUid, $userUid, $note, $sendMail = 0, $files = [])
 {
     $ws = new WsBase();
-    $result = $ws->addCaseNote($caseUid, $processUid, $taskUid, $userUid, $note, $sendMail);
+    $result = $ws->addCaseNote($caseUid, $processUid, $taskUid, $userUid, $note, $sendMail, $files);
 
     if ($result->status_code == 0) {
         return 1;

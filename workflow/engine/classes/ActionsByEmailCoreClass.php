@@ -438,18 +438,6 @@ class ActionsByEmailCoreClass extends PMPlugin
     }
 
     /**
-     * Define the properties in the task related the action by email configuration
-     *
-     * @return void
-     */
-    private function defineTaskAbeProperties()
-    {
-        $actionEmailTable = new AbeConfiguration();
-        $properties = $actionEmailTable->getTaskConfiguration($this->getCasePropertiesKey('PRO_UID'), $this->getTask());
-        $this->setTaskAbeProperties($properties);
-    }
-
-    /**
      * Define the email from
      *
      * @param array $emailServerSetup
@@ -623,79 +611,94 @@ class ActionsByEmailCoreClass extends PMPlugin
             self::validateAndSetValues($data);
 
             $emailServerSetup = $this->getEmailServer($dataAbe['ABE_EMAIL_SERVER_UID']);
-            if (!empty($emailServerSetup)) {
-                $cases = new Cases();
-                $caseFields = $cases->loadCase($this->getAppUid(), $this->getIndex());
-                $this->setCaseProperties($caseFields);
-                $this->defineTaskAbeProperties();
-                $caseFields['APP_DATA']['PRO_ID'] = $this->getItemAbeProperties('PRO_ID');
-                $caseFields['APP_DATA']['TAS_ID'] = $this->getItemAbeProperties('TAS_ID');
-                if (!empty($this->getTaskAbeProperties())) {
-                    $this->defineEmailTo($this->getItemAbeProperties('ABE_EMAIL_FIELD'), $caseFields['APP_DATA']);
-
-                    if (!empty($this->getEmailTo())) {
-                        $this->defineSubject($this->getItemAbeProperties('ABE_SUBJECT_FIELD'), $caseFields['APP_DATA']);
-
-                        $request = [
-                            'ABE_REQ_UID' => '',
-                            'ABE_UID' => $this->getItemAbeProperties('ABE_UID'),
-                            'APP_UID' => $this->getAppUid(),
-                            'DEL_INDEX' => $this->getIndex(),
-                            'ABE_REQ_SENT_TO' => $this->getEmailTo(),
-                            'ABE_REQ_SUBJECT' => $this->getSubject(),
-                            'ABE_REQ_BODY' => '',
-                            'ABE_REQ_ANSWERED' => 0,
-                            'ABE_REQ_STATUS' => 'PENDING'
-                        ];
-                        $this->setAbeRequest($request);
-                        $this->registerRequest();
-
-                        if (!empty($this->getItemAbeProperties('ABE_TYPE'))) {
-                            // Email
-                            $_SESSION['CURRENT_DYN_UID'] = $this->getItemAbeProperties('DYN_UID');
-                            $__ABE__ = '';
-
-                            switch ($this->getItemAbeProperties('ABE_TYPE')) {
-                                case 'CUSTOM':
-                                    $__ABE__ .= $this->getCustomTemplate();
-                                    break;
-                                case 'RESPONSE':
-                                    $this->defineReplyTo($dataAbe['ABE_EMAIL_SERVER_RECEIVER_UID']);
-                                    $__ABE__ .= $this->getResponseTemplate();
-                                    break;
-                                case 'LINK':
-                                    $__ABE__ .= $this->getServicePathTemplate();
-                                    break;
-                                case 'FIELD':
-                                    $__ABE__ .= $this->getFieldTemplate();
-                                    break;
-                            }
-                            $__ABE__ = preg_replace('/\<img src=\"\/js\/maborak\/core\/images\/(.+?)\>/', '', $__ABE__);
-                            $__ABE__ = preg_replace('/\<input\b[^>]*\/>/', '', $__ABE__);
-                            $__ABE__ = preg_replace('/<select\b[^>]*>(.*?)<\/select>/is', "", $__ABE__);
-                            $__ABE__ = preg_replace('/align=\"center\"/', '', $__ABE__);
-                            $__ABE__ = preg_replace('/class="tableGrid_view" /', 'class="tableGrid_view" width="100%" ',
-                                $__ABE__);
-                            $caseFields['APP_DATA']['__ABE__'] = $__ABE__;
-
-                            $this->defineEmailFrom($emailServerSetup);
-                            $result = $this->abeSendMessage(
-                                $this->getItemAbeProperties('ABE_TEMPLATE'),
-                                $caseFields['APP_DATA'],
-                                $emailServerSetup
-                            );
-                            $request = [];
-                            $request['ABE_REQ_STATUS'] = ($result->status_code == 0 ? 'SENT' : 'ERROR');
-
-                            $request['ABE_REQ_BODY'] = empty($result->getAppMessUid()) ? '' : AppMessage::getAppMsgBodyByKey($result->getAppMessUid());
-                            $this->addItemAbeRequest($request);
-                            $this->registerRequest();
-                        }
-                    }
-                } else {
-                    throw new Exception('Task does not have an action by email configuration.');
-                }
+            if (empty($emailServerSetup)) {
+                return;
             }
+
+            $cases = new Cases();
+            $caseFields = $cases->loadCase($this->getAppUid(), $this->getIndex());
+            $this->setCaseProperties($caseFields);
+
+            $actionEmailTable = new AbeConfiguration();
+            $properties = $actionEmailTable->getTaskConfiguration($this->getCasePropertiesKey('PRO_UID'), $this->getTask());
+            if (empty($properties)) {
+                throw new Exception('Task does not have an action by email configuration.');
+            }
+            $this->setTaskAbeProperties($properties);
+
+            $caseFields['APP_DATA']['PRO_ID'] = $this->getItemAbeProperties('PRO_ID');
+            $caseFields['APP_DATA']['TAS_ID'] = $this->getItemAbeProperties('TAS_ID');
+
+            $this->defineEmailTo($this->getItemAbeProperties('ABE_EMAIL_FIELD'), $caseFields['APP_DATA']);
+            if (empty($this->getEmailTo())) {
+                return;
+            }
+
+            $this->defineSubject($this->getItemAbeProperties('ABE_SUBJECT_FIELD'), $caseFields['APP_DATA']);
+
+            $request = [
+                'ABE_REQ_UID' => '',
+                'ABE_UID' => $this->getItemAbeProperties('ABE_UID'),
+                'APP_UID' => $this->getAppUid(),
+                'DEL_INDEX' => $this->getIndex(),
+                'ABE_REQ_SENT_TO' => $this->getEmailTo(),
+                'ABE_REQ_SUBJECT' => $this->getSubject(),
+                'ABE_REQ_BODY' => '',
+                'ABE_REQ_ANSWERED' => 0,
+                'ABE_REQ_STATUS' => 'PENDING'
+            ];
+            $this->setAbeRequest($request);
+            $this->registerRequest();
+
+            if (empty($this->getItemAbeProperties('ABE_TYPE'))) {
+                return;
+            }
+            // Email
+            $_SESSION['CURRENT_DYN_UID'] = $this->getItemAbeProperties('DYN_UID');
+
+            $__ABE__ = '';
+            switch ($this->getItemAbeProperties('ABE_TYPE')) {
+                case 'CUSTOM':
+                    $__ABE__ .= $this->getCustomTemplate();
+                    break;
+                case 'RESPONSE':
+                    $this->defineReplyTo($dataAbe['ABE_EMAIL_SERVER_RECEIVER_UID']);
+                    $__ABE__ .= $this->getResponseTemplate();
+                    break;
+                case 'LINK':
+                    $__ABE__ .= $this->getServicePathTemplate();
+                    break;
+                case 'FIELD':
+                    $__ABE__ .= $this->getFieldTemplate();
+                    break;
+            }
+            $__ABE__ = preg_replace('/\<img src=\"\/js\/maborak\/core\/images\/(.+?)\>/', '', $__ABE__);
+            $__ABE__ = preg_replace('/\<input\b[^>]*\/>/', '', $__ABE__);
+            $__ABE__ = preg_replace('/<select\b[^>]*>(.*?)<\/select>/is', "", $__ABE__);
+            $__ABE__ = preg_replace('/align=\"center\"/', '', $__ABE__);
+            $__ABE__ = preg_replace('/class="tableGrid_view" /', 'class="tableGrid_view" width="100%" ', $__ABE__);
+
+            $caseFields['APP_DATA']['__ABE__'] = $__ABE__;
+
+            $this->defineEmailFrom($emailServerSetup);
+
+            $params = [
+                $this->getItemAbeProperties('ABE_TEMPLATE'),
+                $caseFields['APP_DATA'],
+                $emailServerSetup
+            ];
+            $result = $this->abeSendMessage(...$params);
+
+            $request = [
+                'ABE_REQ_STATUS' => $result->status_code == 0 ? 'SENT' : 'ERROR',
+                'ABE_REQ_BODY' => '',
+            ];
+            if (!empty($result->getExtraParam('AppMessUid'))) {
+                $request['ABE_REQ_BODY'] = AppMessage::getAppMsgBodyByKey($result->getExtraParam('AppMessUid'));
+            }
+
+            $this->addItemAbeRequest($request);
+            $this->registerRequest();
         } catch (Exception $error) {
             throw $error;
         }
@@ -879,7 +882,7 @@ class ActionsByEmailCoreClass extends PMPlugin
             }
         }
 
-        $obj = new PmDynaform($dynUid);
+        $obj = new PmDynaform(["CURRENT_DYNAFORM" => $dynUid]);
         $this->addItemAbeProperties(['CURRENT_DYNAFORM' => $dynUid]);
         $file = $obj->printPmDynaformAbe($this->getTaskAbeProperties());
         $html = $file;

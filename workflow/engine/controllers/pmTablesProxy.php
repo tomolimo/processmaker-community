@@ -729,8 +729,12 @@ class pmTablesProxy extends HttpProxyController
      *
      * @param string $httpData->id
      */
-    public function import ($httpData)
+    public function import($httpData)
     {
+        //ob_start is for catching additional errors that have been printed on included files, 
+        //this opening should be closed by ob_end_clean.
+        ob_start();
+
         define('ERROR_PM_TABLES_OVERWRITE', 1);
         define('ERROR_PROCESS_NOT_EXIST', 2);
         define('ERROR_RP_TABLES_OVERWRITE', 3);
@@ -738,63 +742,66 @@ class pmTablesProxy extends HttpProxyController
         define('ERROR_OVERWRITE_RELATED_PROCESS', 5);
 
         $fromAdmin = false;
-        if (isset( $_POST["form"]["TYPE_TABLE"] ) && ! empty( $_POST["form"]["TYPE_TABLE"] )) {
-            if($_POST["form"]["TYPE_TABLE"] == 'admin') {
+        if (isset($_POST["form"]["TYPE_TABLE"]) && !empty($_POST["form"]["TYPE_TABLE"])) {
+            if ($_POST["form"]["TYPE_TABLE"] == 'admin') {
                 $fromAdmin = true;
             }
         }
 
+        $result = new stdClass();
+        $arrayOverwrite = [];
+        $arrayRelated = [];
+        $arrayMessage = [];
+        $validationType = 0;
         try {
             ValidationUploadedFiles::getValidationUploadedFiles()->dispatch(function($validator) {
                 throw new ExceptionRestApi($validator->getMessage());
             });
-            $result = new stdClass();
             $errors = '';
             $fromConfirm = false;
 
-            $overWrite = isset( $_POST['form']['OVERWRITE'] ) ? true : false;
+            $overWrite = isset($_POST['form']['OVERWRITE']) ? true : false;
 
-            if (isset( $_POST["form"]["FROM_CONFIRM"] ) && ! empty( $_POST["form"]["FROM_CONFIRM"] )) {
+            if (isset($_POST["form"]["FROM_CONFIRM"]) && !empty($_POST["form"]["FROM_CONFIRM"])) {
                 $fromConfirm = $_POST["form"]["FROM_CONFIRM"];
                 $_FILES['form'] = $_SESSION['FILES_FORM'];
             }
 
             //save the file
             if ($_FILES['form']['error']['FILENAME'] !== 0) {
-                throw new Exception( G::loadTranslation( 'ID_PMTABLE_UPLOADING_FILE_PROBLEM' ) );
+                throw new Exception(G::loadTranslation('ID_PMTABLE_UPLOADING_FILE_PROBLEM'));
             }
             $_SESSION['FILES_FORM'] = $_FILES['form'];
-
 
             $PUBLIC_ROOT_PATH = PATH_DATA . 'sites' . PATH_SEP . config("system.workspace") . PATH_SEP . 'public' . PATH_SEP;
             $filename = $_FILES['form']['name']['FILENAME'];
             $tempName = $_FILES['form']['tmp_name']['FILENAME'];
 
-            if(!$fromConfirm) {
-                G::uploadFile( $tempName, $PUBLIC_ROOT_PATH, $filename );
+            if (!$fromConfirm) {
+                G::uploadFile($tempName, $PUBLIC_ROOT_PATH, $filename);
             }
 
             if ($fromConfirm == 'clear') {
                 $fromConfirm = true;
             }
 
-            $fileContent = file_get_contents( $PUBLIC_ROOT_PATH . $filename );
+            $fileContent = file_get_contents($PUBLIC_ROOT_PATH . $filename);
 
-            if (strpos( $fileContent, '-----== ProcessMaker Open Source Private Tables ==-----' ) === false) {
+            if (strpos($fileContent, '-----== ProcessMaker Open Source Private Tables ==-----') === false) {
                 $result->success = false;
                 $result->errorType = 'notice';
-                $result->message = G::loadTranslation( 'ID_PMTABLE_INVALID_FILE', array ($filename));
+                $result->message = G::loadTranslation('ID_PMTABLE_INVALID_FILE', array($filename));
                 return $result;
             }
 
             $currentProUid = '';
-            if (isset( $_POST["form"]["PRO_UID_HELP"] ) && !empty($_POST["form"]["PRO_UID_HELP"])) {
+            if (isset($_POST["form"]["PRO_UID_HELP"]) && !empty($_POST["form"]["PRO_UID_HELP"])) {
                 $currentProUid = $_POST["form"]["PRO_UID_HELP"];
             } else {
-                if(isset( $_POST["form"]["PRO_UID"]) && !empty( $_POST["form"]["PRO_UID"])){
+                if (isset($_POST["form"]["PRO_UID"]) && !empty($_POST["form"]["PRO_UID"])) {
                     $currentProUid = $_POST["form"]["PRO_UID"];
                     $_SESSION['PROCESS'] = $currentProUid;
-                } else{
+                } else {
                     $currentProUid = $_SESSION['PROCESS'];
                 }
             }
@@ -816,7 +823,7 @@ class pmTablesProxy extends HttpProxyController
                         break;
                     case '@SCHEMA':
                         $fdataUid = intval(fread($f, 9));
-                        $uid = fread($f, $fdataUid );
+                        $uid = fread($f, $fdataUid);
 
                         $fdata = intval(fread($f, 9));
                         $schema = fread($f, $fdata);
@@ -854,23 +861,19 @@ class pmTablesProxy extends HttpProxyController
             //First Validate the file
             $reportTable = new \ProcessMaker\BusinessModel\ReportTable();
 
-            $arrayOverwrite = array();
-            $arrayRelated = array();
-            $arrayMessage = array();
-            $validationType = 0;
-            if(!$fromConfirm){
+            if (!$fromConfirm) {
                 $aErrors = $reportTable->checkPmtFileThrowErrors(
                     $arrayTableSchema, $currentProUid, $fromAdmin, $overWrite, $_POST['form']['PRO_UID']
                 );
                 $countC = 0;
                 $countM = 0;
                 $countI = 0;
-                foreach($aErrors as $row){
-                    if($row['ERROR_TYPE'] == ERROR_PM_TABLES_OVERWRITE || $row['ERROR_TYPE'] == ERROR_RP_TABLES_OVERWRITE){
+                foreach ($aErrors as $row) {
+                    if ($row['ERROR_TYPE'] == ERROR_PM_TABLES_OVERWRITE || $row['ERROR_TYPE'] == ERROR_RP_TABLES_OVERWRITE) {
                         $arrayOverwrite[$countC] = $row;
                         $countC++;
                     } else {
-                        if($row['ERROR_TYPE'] == ERROR_OVERWRITE_RELATED_PROCESS){
+                        if ($row['ERROR_TYPE'] == ERROR_OVERWRITE_RELATED_PROCESS) {
                             $arrayRelated[$countI] = $row;
                             $countI++;
                         } else {
@@ -879,17 +882,17 @@ class pmTablesProxy extends HttpProxyController
                         }
                     }
                 }
-                if(sizeof($aErrors)){
-                   $validationType = 1; //Yes no
-                   throw new Exception(G::loadTranslation( 'ID_PMTABLE_IMPORT_WITH_ERRORS', array ($filename)));
+                if (sizeof($aErrors)) {
+                    $validationType = 1; //Yes no
+                    throw new Exception(G::loadTranslation('ID_PMTABLE_IMPORT_WITH_ERRORS', array($filename)));
                 }
             }
             //Then create the tables
-            if(isset($_POST["form"]["TABLES_OF_NO"])){
+            if (isset($_POST["form"]["TABLES_OF_NO"])) {
                 $arrayOfNo = $_POST["form"]["TABLES_OF_NO"];
                 $arrayOfNew = $_POST["form"]["TABLES_OF_NEW"];
-                $aTablesCreateNew = explode('|',$arrayOfNew);
-                $aTablesNoCreate = explode('|',$arrayOfNo);
+                $aTablesCreateNew = explode('|', $arrayOfNew);
+                $aTablesNoCreate = explode('|', $arrayOfNo);
                 $errors = $reportTable->createStructureOfTables(
                     $arrayTableSchema,
                     $arrayTableData,
@@ -911,11 +914,11 @@ class pmTablesProxy extends HttpProxyController
 
             if ($errors == '') {
                 $result->success = true;
-                $msg = G::loadTranslation( 'ID_DONE' );
+                $msg = G::loadTranslation('ID_DONE');
             } else {
                 $result->success = false;
                 $result->errorType = 'warning';
-                $msg = G::loadTranslation( 'ID_PMTABLE_IMPORT_WITH_ERRORS', array ($filename) ) . "\n\n" . $errors;
+                $msg = G::loadTranslation('ID_PMTABLE_IMPORT_WITH_ERRORS', array($filename)) . "\n\n" . $errors;
             }
 
             $result->message = $msg;
@@ -933,19 +936,20 @@ class pmTablesProxy extends HttpProxyController
             $result->validationType = $validationType;
             $result->errorType = 'error';
             $result->buildResult = ob_get_contents();
-            ob_end_clean();
             $result->success = false;
 
             // if it is a propel exception message
-            if (preg_match( '/(.*)\s\[(.*):\s(.*)\]\s\[(.*):\s(.*)\]/', $e->getMessage(), $match )) {
+            if (preg_match('/(.*)\s\[(.*):\s(.*)\]\s\[(.*):\s(.*)\]/', $e->getMessage(), $match)) {
                 $result->message = $match[3];
-                $result->type = G::loadTranslation( 'ID_ERROR' );
+                $result->type = G::loadTranslation('ID_ERROR');
             } else {
                 $result->message = $e->getMessage();
-                $result->type = G::loadTranslation( 'ID_EXCEPTION' );
+                $result->type = G::loadTranslation('ID_EXCEPTION');
             }
         }
 
+        //ob_end_clean is used to close the ob_start opening at the beginning of this method.
+        ob_end_clean();
         return $result;
     }
 
@@ -1215,7 +1219,7 @@ class pmTablesProxy extends HttpProxyController
         if (!empty($table) && $table['PRO_UID'] != '') {
             try {
                 $additionalTables->populateReportTable($table['ADD_TAB_NAME'], PmTable::resolveDbSource($table['DBS_UID']), $table['ADD_TAB_TYPE'], $table['PRO_UID'], $table['ADD_TAB_GRID'], $table['ADD_TAB_UID']);
-                $result->message = 'Generated for table ' . $table['ADD_TAB_NAME'];
+                $result->message = G::LoadTranslation("ID_THE_REPORT_TABLE_IS_REGENERATING_PLEASE_COME_BACK_IN_A_FEW_MINUTES");
             } catch (Exception $e) {
                 $context = Bootstrap::getDefaultContextLog();
                 $context['proUid'] = $table['PRO_UID'];

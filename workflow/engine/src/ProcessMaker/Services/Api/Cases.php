@@ -72,6 +72,10 @@ class Cases extends Api
                     $dynaformUid = $this->parameters[$arrayArgs['dyn_uid']];
                     $delIndex = $this->parameters[$arrayArgs['app_index']];
                     $userUid = $this->getUserId();
+                    //check the guest user
+                    if ($userUid === RBAC::GUEST_USER_UID) {
+                        return true;
+                    }
                     //Check if the user has the case
                     $appDelegation = new AppDelegation();
                     $aCurUser = $appDelegation->getCurrentUsers($applicationUid, $delIndex);

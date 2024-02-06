@@ -81,6 +81,7 @@ class PhpDumper extends Dumper
     private $inlinedRequires = [];
     private $circularReferences = [];
     private $singleUsePrivateIds = [];
+    private $preload = [];
     private $addThrow = false;
     private $addGetService = false;
     private $locatedIds = [];
@@ -142,6 +143,7 @@ class PhpDumper extends Dumper
             'hot_path_tag' => 'container.hot_path',
             'inline_factories_parameter' => 'container.dumper.inline_factories',
             'inline_class_loader_parameter' => 'container.dumper.inline_class_loader',
+            'preload_classes' => [],
             'service_locator_tag' => 'container.service_locator',
             'build_time' => time(),
         ], $options);
@@ -226,8 +228,12 @@ class PhpDumper extends Dumper
 
         $proxyClasses = $this->inlineFactories ? $this->generateProxyClasses() : null;
 
+        if ($options['preload_classes']) {
+            $this->preload = array_combine($options['preload_classes'], $options['preload_classes']);
+        }
+
         $code =
-            $this->startClass($options['class'], $baseClass, $preload).
+            $this->startClass($options['class'], $baseClass).
             $this->addServices($services).
             $this->addDeprecatedAliases().
             $this->addDefaultParametersMethod()
@@ -302,7 +308,7 @@ EOF;
             $id = hash('crc32', $hash.$time);
             $this->asFiles = false;
 
-            if ($preload && null !== $autoloadFile = $this->getAutoloadFile()) {
+            if ($this->preload && null !== $autoloadFile = $this->getAutoloadFile()) {
                 $autoloadFile = substr($this->export($autoloadFile), 2, -1);
 
                 $code[$options['class'].'.preload.php'] = <<<EOF
@@ -320,8 +326,13 @@ require __DIR__.'/Container{$hash}/{$options['class']}.php';
 
 EOF;
 
-                foreach ($preload as $class) {
-                    $code[$options['class'].'.preload.php'] .= sprintf("\$classes[] = '%s';\n", $class);
+                foreach ($this->preload as $class) {
+                    if (!$class || false !== strpos($class, '$')) {
+                        continue;
+                    }
+                    if (!(class_exists($class, false) || interface_exists($class, false) || trait_exists($class, false)) || (new \ReflectionClass($class))->isUserDefined()) {
+                        $code[$options['class'].'.preload.php'] .= sprintf("\$classes[] = '%s';\n", $class);
+                    }
                 }
 
                 $code[$options['class'].'.preload.php'] .= <<<'EOF'
@@ -367,6 +378,7 @@ EOF;
         $this->circularReferences = [];
         $this->locatedIds = [];
         $this->exportedVariables = [];
+        $this->preload = [];
 
         $unusedEnvs = [];
         foreach ($this->container->getEnvCounters() as $env => $use) {
@@ -542,8 +554,10 @@ EOF;
         if ($this->inlineRequires && (!$this->isHotPath($definition) || $this->getProxyDumper()->isProxyCandidate($definition))) {
             $lineage = [];
             foreach ($this->inlinedDefinitions as $def) {
-                if (!$def->isDeprecated() && \is_string($class = \is_array($factory = $def->getFactory()) && \is_string($factory[0]) ? $factory[0] : $def->getClass())) {
-                    $this->collectLineage($class, $lineage);
+                if (!$def->isDeprecated()) {
+                    foreach ($this->getClasses($def) as $class) {
+                        $this->collectLineage($class, $lineage);
+                    }
                 }
             }
 
@@ -552,9 +566,10 @@ EOF;
                     && ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE !== $behavior
                     && $this->container->has($id)
                     && $this->isTrivialInstance($def = $this->container->findDefinition($id))
-                    && \is_string($class = \is_array($factory = $def->getFactory()) && \is_string($factory[0]) ? $factory[0] : $def->getClass())
                 ) {
-                    $this->collectLineage($class, $lineage);
+                    foreach ($this->getClasses($def) as $class) {
+                        $this->collectLineage($class, $lineage);
+                    }
                 }
             }
 
@@ -794,20 +809,32 @@ EOF;
 EOF;
         }
 
-        $this->serviceCalls = [];
-        $this->inlinedDefinitions = $this->getDefinitionsFromArguments([$definition], null, $this->serviceCalls);
+        if ($definition->hasErrors() && $e = $definition->getErrors()) {
+            $this->addThrow = true;
 
-        if ($definition->isDeprecated()) {
-            $code .= sprintf("        @trigger_error(%s, E_USER_DEPRECATED);\n\n", $this->export($definition->getDeprecationMessage($id)));
+            $code .= sprintf("        \$this->throw(%s);\n", $this->export(reset($e)));
+        } else {
+            $this->serviceCalls = [];
+            $this->inlinedDefinitions = $this->getDefinitionsFromArguments([$definition], null, $this->serviceCalls);
+
+            if ($definition->isDeprecated()) {
+                $code .= sprintf("        @trigger_error(%s, E_USER_DEPRECATED);\n\n", $this->export($definition->getDeprecationMessage($id)));
+            } else {
+                foreach ($this->inlinedDefinitions as $def) {
+                    foreach ($this->getClasses($def) as $class) {
+                        $this->preload[$class] = $class;
+                    }
+                }
+            }
+
+            if ($this->getProxyDumper()->isProxyCandidate($definition)) {
+                $factoryCode = $asFile ? ($definition->isShared() ? "\$this->load('%s.php', false)" : '$this->factories[%2$s](false)') : '$this->%s(false)';
+                $code .= $this->getProxyDumper()->getProxyFactoryCode($definition, $id, sprintf($factoryCode, $methodName, $this->doExport($id)));
+            }
+
+            $code .= $this->addServiceInclude($id, $definition);
+            $code .= $this->addInlineService($id, $definition);
         }
-
-        if ($this->getProxyDumper()->isProxyCandidate($definition)) {
-            $factoryCode = $asFile ? ($definition->isShared() ? "\$this->load('%s.php', false)" : '$this->factories[%2$s](false)') : '$this->%s(false)';
-            $code .= $this->getProxyDumper()->getProxyFactoryCode($definition, $id, sprintf($factoryCode, $methodName, $this->doExport($id)));
-        }
-
-        $code .= $this->addServiceInclude($id, $definition);
-        $code .= $this->addInlineService($id, $definition);
 
         if ($asFile) {
             $code = implode("\n", array_map(function ($line) { return $line ? substr($line, 8) : $line; }, explode("\n", $code)));
@@ -954,7 +981,15 @@ EOTXT
         $definitions = $this->container->getDefinitions();
         ksort($definitions);
         foreach ($definitions as $id => $definition) {
-            $services[$id] = $definition->isSynthetic() ? null : $this->addService($id, $definition);
+            if (!$definition->isSynthetic()) {
+                $services[$id] = $this->addService($id, $definition);
+            } else {
+                $services[$id] = null;
+
+                foreach ($this->getClasses($definition) as $class) {
+                    $this->preload[$class] = $class;
+                }
+            }
         }
 
         foreach ($definitions as $id => $definition) {
@@ -1020,7 +1055,7 @@ EOTXT
 
             if (\is_array($callable)) {
                 if (!preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $callable[1])) {
-                    throw new RuntimeException(sprintf('Cannot dump definition because of invalid factory method (%s)', $callable[1] ?: 'n/a'));
+                    throw new RuntimeException(sprintf('Cannot dump definition because of invalid factory method (%s).', $callable[1] ?: 'n/a'));
                 }
 
                 if ($callable[0] instanceof Reference
@@ -1055,7 +1090,7 @@ EOTXT
         return $return.sprintf('new %s(%s)', $this->dumpLiteralClass($this->dumpValue($class)), implode(', ', $arguments)).$tail;
     }
 
-    private function startClass(string $class, string $baseClass, ?array &$preload): string
+    private function startClass(string $class, string $baseClass): string
     {
         $namespaceLine = !$this->asFiles && $this->namespace ? "\nnamespace {$this->namespace};\n" : '';
 
@@ -1118,7 +1153,7 @@ EOF;
         $code .= $this->addMethodMap();
         $code .= $this->asFiles && !$this->inlineFactories ? $this->addFileMap() : '';
         $code .= $this->addAliases();
-        $code .= $this->addInlineRequires($preload);
+        $code .= $this->addInlineRequires();
         $code .= <<<EOF
     }
 
@@ -1318,7 +1353,7 @@ EOF;
         return $code;
     }
 
-    private function addInlineRequires(?array &$preload): string
+    private function addInlineRequires(): string
     {
         if (!$this->hotPathTag || !$this->inlineRequires) {
             return '';
@@ -1336,8 +1371,7 @@ EOF;
             $inlinedDefinitions = $this->getDefinitionsFromArguments([$definition]);
 
             foreach ($inlinedDefinitions as $def) {
-                if (\is_string($class = \is_array($factory = $def->getFactory()) && \is_string($factory[0]) ? $factory[0] : $def->getClass())) {
-                    $preload[$class] = $class;
+                foreach ($this->getClasses($def) as $class) {
                     $this->collectLineage($class, $lineage);
                 }
             }
@@ -1366,7 +1400,7 @@ EOF;
 
         foreach ($this->container->getParameterBag()->all() as $key => $value) {
             if ($key !== $resolvedKey = $this->container->resolveEnvPlaceholders($key)) {
-                throw new InvalidArgumentException(sprintf('Parameter name cannot use env parameters: %s.', $resolvedKey));
+                throw new InvalidArgumentException(sprintf('Parameter name cannot use env parameters: "%s".', $resolvedKey));
             }
             $export = $this->exportParameters([$value]);
             $export = explode('0 => ', substr(rtrim($export, " ]\n"), 2, -1), 2);
@@ -1666,7 +1700,11 @@ EOF;
                         if (!$v) {
                             continue;
                         }
-                        $definition = $this->container->findDefinition($id = (string) $v);
+                        $id = (string) $v;
+                        while ($this->container->hasAlias($id)) {
+                            $id = (string) $this->container->getAlias($id);
+                        }
+                        $definition = $this->container->getDefinition($id);
                         $load = !($definition->hasErrors() && $e = $definition->getErrors()) ? $this->asFiles && !$this->inlineFactories && !$this->isHotPath($definition) : reset($e);
                         $serviceMap .= sprintf("\n            %s => [%s, %s, %s, %s],",
                             $this->export($k),
@@ -1755,7 +1793,7 @@ EOF;
             return sprintf('${($_ = %s) && false ?: "_"}', $class);
         }
         if (0 !== strpos($class, "'") || !preg_match('/^\'(?:\\\{2})?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\\{2}[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*\'$/', $class)) {
-            throw new RuntimeException(sprintf('Cannot dump definition because of invalid class name (%s)', $class ?: 'n/a'));
+            throw new RuntimeException(sprintf('Cannot dump definition because of invalid class name (%s).', $class ?: 'n/a'));
         }
 
         $class = substr(str_replace('\\\\', '\\', $class), 1, -1);
@@ -2058,5 +2096,30 @@ EOF;
         }
 
         return null;
+    }
+
+    private function getClasses(Definition $definition): array
+    {
+        $classes = [];
+
+        while ($definition instanceof Definition) {
+            $classes[] = trim($definition->getClass(), '\\');
+            $factory = $definition->getFactory();
+
+            if (!\is_array($factory)) {
+                $factory = [$factory];
+            }
+
+            if (\is_string($factory[0])) {
+                if (false !== $i = strrpos($factory[0], '::')) {
+                    $factory[0] = substr($factory[0], 0, $i);
+                }
+                $classes[] = trim($factory[0], '\\');
+            }
+
+            $definition = $factory[0];
+        }
+
+        return array_filter($classes);
     }
 }

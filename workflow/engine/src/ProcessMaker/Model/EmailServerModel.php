@@ -103,4 +103,22 @@ class EmailServerModel extends Model
 
         return $firstElement;
     }
+
+    /**
+     * Check if the email server is IMAP
+     * 
+     * @param string $emailServerUid
+     * @return boolean
+     */
+    public function isImap($emailServerUid)
+    {
+        $query = EmailServerModel::query()->select(['EMAIL_SERVER.MESS_UID']);
+        $query->where('EMAIL_SERVER.MESS_UID', '=', $emailServerUid);
+        $query->where('MESS_ENGINE', '=', 'IMAP');
+        $res = $query->get()->values()->toArray();
+        if (!empty($res)) {
+            return true;
+        }
+        return false;
+    }
 }

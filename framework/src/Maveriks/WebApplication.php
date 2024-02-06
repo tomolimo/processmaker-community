@@ -536,7 +536,6 @@ class WebApplication
         ini_set('error_reporting', $arraySystemConfiguration['error_reporting']);
         ini_set('short_open_tag', 'On'); //??
         ini_set('default_charset', 'UTF-8'); //??
-        ini_set('memory_limit', $arraySystemConfiguration['memory_limit']);
         ini_set('soap.wsdl_cache_enabled', $arraySystemConfiguration['wsdl_cache']);
         ini_set('date.timezone', TIME_ZONE); //Set Time Zone
 

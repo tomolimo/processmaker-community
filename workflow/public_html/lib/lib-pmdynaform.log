@@ -1,30 +1,30 @@
-[4 weeks ago] 4af5aa86  (origin/bugfix/PMCORE-1357) PMCORE-1357: Dependent fields of 4 levels is not working <Rodrigo Quelca>
-[4 weeks ago] 6ff8f65b  PMCORE-645:Printed dynaform doesn't format well in firefox <fabio>
-[9 weeks ago] 90e07f19  (origin/bugfix/PMCORE-1236) PMCORE-1236 <henry>
-[9 weeks ago] 35cfeeca  PMCORE-541:New lines are not taken into account in printed dynaform <Fabio Guachalla>
-[9 weeks ago] e8ea435d  (origin/bugfix/PMCORE-1249) PMCORE-1249: When you select a control option with the "setValue" method, more "execute-query" requests are executed. <Rodrigo Quelca>
-[9 weeks ago] b9090f1a  (origin/bugfix/PMCORE-1245) PMCORE-1245 <henry>
-[9 weeks ago] 7570efbf  (origin/bugfix/PMCORE-1248) PMCORE-1248: The suggest control does not retrieve the correct text, within a grid <Rodrigo Quelca>
-[9 weeks ago] 76cc789f  (origin/bugfix/PMCORE-1247) PMCORE-1247: Dependent fields with helper setText is not working properly <Rodrigo Quelca>
-[10 weeks ago] 3931aaeb  (origin/bugfix/PMCORE-1228) SetOnChange helper >> The console displays errors and the Dynaform is not rendered. <Rodrigo Quelca>
-[2 months ago] 7e5e5c00  (origin/bugfix/PMCORE-866-A) improve PMDynaform Event Bus <henry>
-[3 months ago] 88ffe480  (origin/feature/PMCORE-1168) PMCORE-1168 <henry>
-[3 months ago] 340b11c7  (origin/feature/PMCORE-1137-B) PMCORE-1137-A <henry>
-[3 months ago] 507bb2ba  (origin/bugfix/PMCORE-1148) PMCORE-1148: PM 3.4.3 with the new Patch3_Knauf is not working in the IE11 browser <Rodrigo Quelca>
-[3 months ago] 01a5207a  PMCORE-1137 <henry>
-[3 months ago] 8d9def5f  (origin/feature/PMCORE-1137-A) PMCORE-1137-A <henry>
-[3 months ago] 66394771  PMCORE-1137 <henry>
-[3 months ago] e770b868  (origin/bugfix/PMCORE-1130) PMCORE-1130 <henry>
-[3 months ago] da9c0731  (origin/bugfix/PMCORE-1111_C) PMCORE-111: Dependent fields in grids lose its values <Rodrigo Quelca>
-[3 months ago] dc282b97  (origin/feature/PMCORE-1127) PMCORE-1127 <henry>
-[3 months ago] 6629d170  PMCORE-541: New lines are not taken into account in printed dynaform <Fabio Guachalla>
-[3 months ago] bb507c9c  FBI-1580: Tooltips in grids are being hidden in middle and small screens or when more than 6 elements are added <alex>
-[3 months ago] 26000aa5  (origin/bugfix/PMCORE-1113) PMCORE-1113 <henry>
-[3 months ago] 21a74c78  (origin/bugfix/PMCORE-1111) PMCORE-1111: Dependent fields in grids lose its values <Rodrigo Quelca>
-[4 months ago] 638f0136  PMCORE-1096:Multiple File Upload Control does not validate Required Field attribute <Fabio Guachalla>
-[4 months ago] e1e7137b  (origin/bugfix/PMCORE-522) PMCORE-522 <henry>
-[4 months ago] 0021eb5c  (origin/feature/PMCORE-1054) PMCORE-1054 <henry>
-[4 months ago] a9b5f45e  (origin/bugfix/PMCORE-1035) PMCORE-1035 <henry>
-[4 months ago] 3b913de7  (origin/bugfix/PMCORE-1019-A) PMCORE-1019 <henry>
-[4 months ago] 2cbeeef4  Words cut off in dynaform printed PDF <Fabio Guachalla>
-[4 months ago] 742d0259  Words cut off in dynaform printed PDF <Fabio Guachalla>
+[9 days ago] 6ec753e0  (HEAD, origin/release/3.5.2) Merged in bugfix/PMCORE-559 (pull request #972) <Rodrigo Quelca>
+[13 days ago] 96ab5933  PMCORE-537:Bug with rows of the grid and multiple file <fabio>
+[2 weeks ago] 0cf32fc3  (origin/bugfix/PMCORE-2052) PMCORE-2052 <Henry Jordan>
+[3 weeks ago] 8db9a803  (origin/bugfix/PMCORE-2045) PMCORE-2045 <Henry Jordan>
+[3 weeks ago] 8dc912cc  (origin/bugfix/PMCORE-2004, origin/bigfix/PMCORE-2004) PMCORE-2004: IE 11>> Values of suggest control are lost in the second task <Rodrigo Quelca>
+[3 weeks ago] a03762cf  (origin/bugfix/PMCORE-1998) PMCORE-1998 <Henry Jordan>
+[3 weeks ago] 7eef0679  (origin/bugfix/PMCORE-2009) PMCORE-2009: IE 11 >> Date time control validation does not disappear, when it is corrected <Rodrigo Quelca>
+[3 weeks ago] 5c92fd62  (origin/bugfix/PMCORE-1112-A) PMCORE-1112-A <Henry Jordan>
+[3 weeks ago] 555883b5  (origin/bugfix/PMCORE-1837) PMCORE-1837 <Henry Jordan>
+[5 weeks ago] a79bc677  (origin/bugfix/PMCORE-1112) PMCORE-1112 <Henry Jordan>
+[5 weeks ago] 8c8d2ba7  (origin/bugfix/PMCORE-1607-B) update v2 <Henry Jordan>
+[5 weeks ago] 87a2a94b  update <Henry Jordan>
+[5 weeks ago] 09ae2de3  PMCORE-1607-B <Henry Jordan>
+[6 weeks ago] 6ccfe4bf  PMCORE-1607-B <Henry Jordan>
+[6 weeks ago] f8537160  (origin/bugfix/PMCORE-1953) PMCORE-1953 <Henry Jordan>
+[6 weeks ago] 9494a66a  (origin/bugfix/PMCORE-1942-B) PMCORE-1942-B <Henry Jordan>
+[6 weeks ago] 7b5993ec  (origin/bugfix/PMCORE-819) PMCORE-819: (Dynaform - Grid) 0025586: TextBox control doesn't display the value with a query with different 'Display mode' <Rodrigo Quelca>
+[6 weeks ago] fe881c0a  (origin/bugfix/PMCORE-1943) PMCORE-1943 <Henry Jordan>
+[6 weeks ago] cddf96fa  (origin/bugfix/PMCORE-1942) PMCORE-1942 <Henry Jordan>
+[6 weeks ago] dfb064b9  (origin/bugfix/PMCORE-1938) PMCORE-1938: First element cache is causing problems in the Text displayed on the Suggest control <Rodrigo Quelca>
+[6 weeks ago] c3610cb7  (origin/bugfix/PMCORE-1937) PMCORE-1937 "memory cache" property always works for the Suggest Control, although the control has that property uncheck <Rodrigo Quelca>
+[7 weeks ago] 48ea7c63  (origin/bugfix/PMCORE-1922-A) PMCORE-1922 <Henry Jordan>
+[7 weeks ago] e9494608  (origin/bugfix/PMCORE-1922) PMCORE-1922 <Henry Jordan>
+[7 weeks ago] 0478edf2  (origin/bugfix/PMCORE-1925) PMCORE-1925: Image control broken the getField helper when the getInfo helper is used <Rodrigo Quelca>
+[7 weeks ago] 8648e851  correction <fabio>
+[7 weeks ago] 3cbc356e  PMCORE-1629:setText function doesn't work inside a grid with date time control <fabio>
+[7 weeks ago] 26be4ccf  (origin/bugfix/PMCORE-1910) PMCORE-1910 <Henry Jordan>
+[7 weeks ago] b825e2b8  (origin/bugfix/PMCORE-1912) PMCORE-1912 <Henry Jordan>
+[7 weeks ago] 8456fe67  (origin/bugfix/PMCORE-1909) PMCORE-1909 <Henry Jordan>
+[8 weeks ago] a8e9c48d  (origin/bugfix/PMCORE-1777) PMCORE-1777 <Henry Jordan>

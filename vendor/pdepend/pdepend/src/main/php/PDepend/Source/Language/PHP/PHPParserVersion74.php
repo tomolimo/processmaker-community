@@ -71,7 +71,12 @@ abstract class PHPParserVersion74 extends PHPParserVersion73
             Tokens::T_CALLABLE,
             Tokens::T_SELF,
         ))) {
-            return $this->parseTypeHint();
+            $type = $this->parseTypeHint();
+            $declaration = $this->parseFieldDeclaration();
+            $declaration->prependChild($type);
+            $declaration->setModifiers($modifiers);
+
+            return $declaration;
         }
 
         return parent::parseUnknownDeclaration($tokenType, $modifiers);
@@ -107,6 +112,7 @@ abstract class PHPParserVersion74 extends PHPParserVersion73
         $closure = $this->builder->buildAstClosure();
         $closure->setReturnsByReference($this->parseOptionalByReference());
         $closure->addChild($this->parseFormalParameters());
+        $closure = $this->parseCallableDeclarationAddition($closure);
 
         $closure->addChild(
             $this->buildReturnStatement(

@@ -63,15 +63,21 @@ class ProcessVariablesMapBuilder
         $tMap = $this->dbMap->addTable('PROCESS_VARIABLES');
         $tMap->setPhpName('ProcessVariables');
 
-        $tMap->setUseIdGenerator(false);
+        $tMap->setUseIdGenerator(true);
+
+        $tMap->addColumn('VAR_ID', 'VarId', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addPrimaryKey('VAR_UID', 'VarUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
         $tMap->addColumn('PRJ_UID', 'PrjUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
+        $tMap->addColumn('PRO_ID', 'ProId', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addColumn('VAR_NAME', 'VarName', 'string', CreoleTypes::VARCHAR, false, 255);
 
         $tMap->addColumn('VAR_FIELD_TYPE', 'VarFieldType', 'string', CreoleTypes::VARCHAR, false, 32);
+
+        $tMap->addColumn('VAR_FIELD_TYPE_ID', 'VarFieldTypeId', 'int', CreoleTypes::INTEGER, false, null);
 
         $tMap->addColumn('VAR_FIELD_SIZE', 'VarFieldSize', 'int', CreoleTypes::INTEGER, false, null);
 

@@ -5,6 +5,7 @@ use ProcessMaker\BusinessModel\User as BmUser;
 // Sanitizing the values sent in the global variables
 $filter = new InputFilter();
 $_POST = $filter->xssFilterHard($_POST);
+
 if (isset($_SESSION['USER_LOGGED'])) {
     $_SESSION['USER_LOGGED'] = $filter->xssFilterHard($_SESSION['USER_LOGGED']);
 }
@@ -145,6 +146,10 @@ try {
                 $permissionsToSaveData = $user->getPermissionsForEdit();
                 $form = $user->checkPermissionForEdit($_SESSION['USER_LOGGED'], $permissionsToSaveData, $form);
 
+                if (!empty($form["USR_EMAIL"])) {
+                    $form["USR_EMAIL"] = strtolower($form["USR_EMAIL"]);
+                }
+                    
                 switch ($_POST['action']) {
                     case 'saveUser':
                         if (!$user->checkPermission($_SESSION['USER_LOGGED'], 'PM_USERS')) {

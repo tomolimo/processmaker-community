@@ -21,6 +21,7 @@ setFlag = function (val) {
     flagRefresh = val;
 };
 
+Ext.BLANK_IMAGE_URL = "data:image/gif;base64,R0lGODlhAQABAID/AMDAwAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 Ext.onReady(function(){
   new Ext.KeyMap(document, {
     key: Ext.EventObject.F5,
@@ -31,6 +32,7 @@ Ext.onReady(function(){
         }
         e.stopEvent();
         updateCasesTree();
+        highlightCasesTree();
       }
       else
        	Ext.Msg.alert(_('ID_REFRESH_LABEL'),_('ID_REFRESH_MESSAGE'));
@@ -132,6 +134,7 @@ Ext.onReady(function(){
                 if (defaultOption.indexOf('open') > -1) {
                     //if it is, then update cases trees
                     updateCasesTree();
+                    highlightCasesTree();
                 }
                 if (_nodeId !== '') {
                     treePanel1 = Ext.getCmp('tree-panel');
@@ -142,6 +145,7 @@ Ext.onReady(function(){
                         node.select();
                         if (_nodeId === 'CASES_START_CASE') {
                             updateCasesTree();
+                            highlightCasesTree();
                         }
                     }
                 }
@@ -177,7 +181,8 @@ Ext.onReady(function(){
       treeMenuItems
     ]
   });
-  mainMenu.setTitle("<div style=\"height: 18px;\"><a href=\"javascript:;\"><img id=\"refreshNotifiers\" src=\"/images/refresh.gif\" onclick=\"updateCasesTree(); updateCasesView();\" /></a></div>");
+  mainMenu.setTitle("<div style=\"height: 18px;\"><a href=\"javascript:;\"><img id=\"refreshNotifiers\" " +
+    "src=\"/images/refresh.gif\" onclick=\"updateCasesTree(); highlightCasesTree(); updateCasesView();\" /></a></div>");
 
   propStore = new Ext.data.Store({
       proxy: new Ext.data.HttpProxy({url: 'debug_vars'}),
@@ -499,9 +504,15 @@ Ext.onReady(function(){
 
   // Get the counters the first time
   updateCasesTree();
+  highlightCasesTree();
 
   // FORMATS.casesListRefreshTime is in seconds
   setInterval("timer()", parseInt(FORMATS.casesListRefreshTime) * 1000);
+
+  // If the feature for highlight the home folders is enabled, add timer for highlight the tree options
+  if (typeof highlightUrlProxy !== "undefined") {
+      setInterval("highlightCasesTree()", (parseInt(highlightRefreshTime) * 60) * 1000);
+  }
 });
 
 function updateCasesView(viewList) {
@@ -530,8 +541,6 @@ function updateCasesView(viewList) {
 function updateCasesTree() {
   document.getElementById('refreshNotifiers').src = '/images/ext/default/grid/loading.gif';
 
-  itemsTypes = Array('CASES_INBOX', 'CASES_DRAFT', 'CASES_CANCELLED', 'CASES_SENT', 'CASES_PAUSED', 'CASES_COMPLETED', 'CASES_SELFSERVICE');
-
   Ext.Ajax.request({
     url: urlProxy + Math.random(),
     success: function (response) {
@@ -559,6 +568,36 @@ function updateCasesTree() {
     },
     params: {'updateCasesTree': true}
   });
+}
+
+/**
+ * Function to highlight the tree options
+ */
+function highlightCasesTree() {
+    if (typeof highlightUrlProxy !== "undefined") {
+        document.getElementById('refreshNotifiers').src = '/images/ext/default/grid/loading.gif';
+
+        Ext.Ajax.request({
+            url: highlightUrlProxy + Math.random(),
+            success: function (response) {
+                var result = Ext.util.JSON.decode(response.responseText);
+                var treePanelObject = Ext.getCmp('tree-panel');
+                for (var i = 0; i < result.length; i++) {
+                    var nodeObject = treePanelObject.getNodeById(result[i].item);
+                    // Set the style for the option
+                    if (result[i].highlight) {
+                        nodeObject.setCls('row_updated');
+                    } else {
+                        nodeObject.setCls('');
+                    }
+                }
+                document.getElementById('refreshNotifiers').src = '/images/refresh.gif';
+            },
+            failure: function () {
+                // Nothing to do for now...
+            }
+        });
+    }
 }
 
 function timer() {

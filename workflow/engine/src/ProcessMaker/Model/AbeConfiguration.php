@@ -97,4 +97,41 @@ class AbeConfiguration extends model
 
         return $res;
     }
+
+    /**
+     * Update the Receiver Uid when the email server is deleted
+     * 
+     * @param string $emailServerUid
+     * @return void
+     */
+    public function updateReceiverUidToEmpty($emailServerUid)
+    {
+        $query = AbeConfiguration::query();
+
+        $query->where('ABE_EMAIL_SERVER_RECEIVER_UID', '=', $emailServerUid);
+
+        $query->update(['ABE_EMAIL_SERVER_RECEIVER_UID' => '']);
+    }
+
+    /**
+     * Update the Email Server Uid when the email server is deleted
+     * 
+     * @param string $emailServerUid
+     * @return void
+     */
+    public function updateEmailServerUidToDefaultOrEmpty($emailServerUid)
+    {
+        $emailServerModel = new EmailServerModel();
+        $emailServerDefault = $emailServerModel->getEmailServerDefault();
+
+        $query = AbeConfiguration::query();
+
+        $query->where('ABE_EMAIL_SERVER_UID', '=', $emailServerUid);
+
+        if (!empty($emailServerDefault)) {
+            $query->update(['ABE_EMAIL_SERVER_UID' => $emailServerDefault['MESS_UID']]);
+        } else {
+            $query->update(['ABE_EMAIL_SERVER_UID' => '']);
+        }
+    }
 }

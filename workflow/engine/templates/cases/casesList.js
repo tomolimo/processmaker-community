@@ -2422,6 +2422,14 @@ Ext.onReady ( function() {
                 typeof filtersValues !== 'undefined' && filtersValues.advanced && filtersValues.advanced.dateTo ?
                 filtersValues.advanced.dateTo : ""
             );
+            storeCases.setBaseParam("user",
+                typeof filtersValues !== 'undefined' && filtersValues.advanced && filtersValues.advanced.user ?
+                filtersValues.advanced.user : ""
+            );
+            storeCases.setBaseParam("user_label",
+                typeof filtersValues !== 'undefined' && filtersValues.advanced && filtersValues.advanced.user_label ?
+                filtersValues.advanced.user_label : ""
+            );
             break;
         case "unassigned":
             storeCases.setBaseParam("category", "");

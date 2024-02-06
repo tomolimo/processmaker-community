@@ -309,7 +309,6 @@ ini_set('display_errors', $config['display_errors']);
 ini_set('error_reporting', $config['error_reporting']);
 ini_set('short_open_tag', 'On');
 ini_set('default_charset', "UTF-8");
-ini_set('memory_limit', $config['memory_limit']);
 ini_set('soap.wsdl_cache_enabled', $config['wsdl_cache']);
 ini_set('date.timezone',
     (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $config['time_zone']); //Set Time Zone
@@ -561,7 +560,6 @@ ini_set('display_errors', $config['display_errors']);
 ini_set('error_reporting', $config['error_reporting']);
 ini_set('short_open_tag', 'On');
 ini_set('default_charset', "UTF-8");
-ini_set('memory_limit', $config['memory_limit']);
 ini_set('soap.wsdl_cache_enabled', $config['wsdl_cache']);
 ini_set('date.timezone', TIME_ZONE); //Set Time Zone
 
@@ -960,6 +958,7 @@ if (!defined('EXECUTE_BY_CRON')) {
         $noLoginFiles[] = 'cases_SaveData';
         $noLoginFiles[] = 'cases_Derivate';
         $noLoginFiles[] = 'cases_NextStep';
+        $noLoginFiles[] = 'casesShowCaseNotes';
         $noLoginFiles[] = 'genericAjax';
         $noLoginFiles[] = 'casesSaveDataView';
         $noLoginFiles[] = 'propelTableAjax';

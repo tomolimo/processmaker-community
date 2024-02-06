@@ -5,7 +5,6 @@ namespace ProcessMaker\Core;
 use Bootstrap;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use ProcessMaker\BusinessModel\Factories\Jobs;
 use ProcessMaker\Core\System;
 use Propel;
 
@@ -186,9 +185,13 @@ class JobsManager
     public function dispatch($name, $callback)
     {
         $environment = $this->getDataSnapshot();
-
-        $instance = Jobs::create($name, function() use ($callback, $environment) {
+        global $RBAC;
+        $referrerRBAC = $RBAC;
+        $instance = $name::dispatch(function() use ($callback, $environment, $referrerRBAC) {
                     try {
+                        global $RBAC;
+                        $RBAC = $referrerRBAC;
+
                         $this->recoverDataSnapshot($environment);
                         $callback($environment);
                     } catch (Exception $e) {

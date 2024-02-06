@@ -72,7 +72,12 @@
         this.data = {label: "data".translate(), value: [], type: "hidden"};
         this.dataType = {label: "variable data type".translate(), value: "", type: "label"};
         this.value = {label: "value".translate(), value: "", type: "text"};
-        this.defaultValue = {label: "default value".translate(), value: "", type: "text"};
+        this.defaultValue = {
+            label: "default value".translate(),
+            value: "",
+            type: "text",
+            helpButton: "Allows setting a default value manually<br>or variables permitted using prefixes @@, @=, @#".translate()
+        };
         this.textTransform = {
             label: "text transform to".translate(), value: "none", type: "select", items: [
                 {value: "none", label: "none".translate()},
@@ -189,6 +194,7 @@
         };
         this.dbConnection = {label: "", value: "workflow", type: "hidden"};
         this.sql = {label: "sql".translate(), value: "", type: "labelbutton", labelButton: "..."};
+        this.memoryCache = {label: "Memory cache".translate(), value: false, type: "checkbox"};
         this.dataVariable = {
             label: "data variable".translate(),
             value: "",
@@ -232,7 +238,7 @@
             label: "min date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Allows date selection after this date<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Allows date selection after this date<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -240,7 +246,7 @@
             label: "max date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Allows date selection before this date<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Allows date selection before this date<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -291,7 +297,7 @@
             label: "default date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Set the date picker to this date by default<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Set the date picker to this date by default<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -464,7 +470,7 @@
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "textTransform",
                 "validate", "validateMessage", "maxLength", "formula", "mode", "operation", "dbConnection",
-                "dbConnectionLabel", "sql"];
+                "dbConnectionLabel", "sql", "memoryCache"];
             if (this.owner instanceof FormDesigner.main.FormItem) {
                 this.operation.type = "hidden";
             }
@@ -477,7 +483,7 @@
         if (type === FormDesigner.main.TypesControl.textarea) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "validate",
-                "validateMessage", "mode", "dbConnection", "dbConnectionLabel", "sql", "rows"];
+                "validateMessage", "mode", "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "rows"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
                 this.tabIndex.type = "hidden";
@@ -487,7 +493,7 @@
         if (type === FormDesigner.main.TypesControl.dropdown) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
                 this.tabIndex.type = "hidden";
@@ -498,6 +504,7 @@
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "options"];
             this.defaultValue.type = "checkbox";
+            this.defaultValue.helpButton = "";
             if (this.owner instanceof FormDesigner.main.FormItem) {
                 this.options.type = "hidden";
             }
@@ -515,12 +522,12 @@
         if (type === FormDesigner.main.TypesControl.checkgroup) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
-                "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.radio) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
-                "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.datetime) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
@@ -541,7 +548,7 @@
         if (type === FormDesigner.main.TypesControl.suggest) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay", "resultsLimit",
+                "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options", "delay", "resultsLimit",
                 "forceSelection"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");

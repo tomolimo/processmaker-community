@@ -1,30 +1,30 @@
-[4 days ago] a3b294e54  (origin/feature/PMCORE-1463) PMCORE-1463 <Julio Cesar Laura Avendaño>
-[12 days ago] 4f54f0c89  PMCORE-1435:APP_DOC_STATUS is kept as ACTIVE when files in multiple file upload control are deleted <fabio>
-[12 days ago] b55ead0e6  (origin/bugfix/PMCORE-631-B) PMCORE-631 <Paula Quispe>
-[3 weeks ago] 278ef8a0b  (origin/bugfix/PMCORE-631-A) PMCORE-631-A <Paula Quispe>
-[3 weeks ago] 0d089bfe0  (origin/bugfix/PMCORE-1254-A) PMCORE-1254 <Paula Quispe>
-[4 weeks ago] c0a8cea5c  (origin/revert-pr-7298) Revert "PMCORE-1129 (pull request #7298)" <Paula Quispe>
-[4 weeks ago] 93fe2c1ae  (origin/bugfix/PMCORE-1338) PMCORE-1338 <Paula Quispe>
-[4 weeks ago] fc6094ec7  (origin/bugfix/PMCORE-1181) PMCORE-1181 Is possible to get an access token without send a valid 'client_id' and 'client_secret' <Roly Rudy Gutierrez Pinto>
-[4 weeks ago] 2475c515c  (origin/bugfix/PMCORE-1191) PMCORE-1191 <Andrea Adamczyk>
-[4 weeks ago] dae4ca5b7  (origin/bugfix/PMCORE-1353) PMCORE-1353 <Julio Cesar Laura Avendaño>
-[4 weeks ago] 38993060d  (origin/bugfix/PMCORE-631) PMCORE-631 <Paula Quispe>
-[5 weeks ago] 252c97567  (origin/bugfix/PMCORE-1288) PMCORE-1288 <Taylor Dondich>
-[5 weeks ago] 98e04ce1a  (origin/bugfix/PMCORE-999) PMCORE-999 <Paula Quispe>
-[5 weeks ago] 399db5240  (origin/bugfix/PMCORE-487-A) PMCORE-487 <Julio Cesar Laura Avendaño>
-[5 weeks ago] 8d0307ef2  PMCORE-1198:The columns in process list change for all users if any other user remove/hide the columns <fabio>
-[5 weeks ago] fe87db50d  (origin/bugfix/PMCORE-1254) PMCORE-1254 <Paula Quispe>
-[5 weeks ago] 0243fddbd  (origin/bugfix/PMCORE-548-A) PMCORE-548-A <Andrea Adamczyk>
-[5 weeks ago] 443bb3c13  (origin/bugfix/PMCORE-1151) PMCORE-1151 <paulis>
-[5 weeks ago] f1d6f250c  (origin/bugfix/PMCORE-876) PMCORE-876 The files are not shown, when we create a PM_Table from an external DB <Roly Gutierrez>
-[6 weeks ago] 3527e6103  (origin/bugfix/PMCORE-548) PMCORE-548 <Andrea Adamczyk>
-[6 weeks ago] cd5564955  (origin/bugfix/PMCORE-547) PMCORE-547 Mapping User Information Between Active Directory and ProcessMaker allows selecting USR_ID in the User Field and breaks the correlative numeration of the USR_ID field in table USERS. <Roly Gutierrez>
-[6 weeks ago] a4399d97c  (origin/bugfix/PMCORE-1129) PMCORE-1129 <Andrea Adamczyk>
-[6 weeks ago] 765535491  PMCORE-1140:Unsupported Media Type on Multiple file control PM3.4.6 <fabio>
-[6 weeks ago] 08b2842e3  (origin/bugfix/PMCORE-624) PMCORE-624 <Julio Cesar Laura Avendaño>
-[6 weeks ago] c986d6ce1  (origin/bugfix/PMCORE-635) PMCORE-635 <Julio Cesar Laura Avendaño>
-[7 weeks ago] 2d842c450  (origin/bugfix/PMCORE-1205_D) MCORE-1205: Columns from process list are not correctly displayed - depending on the other columns width could get hidden <Rodrigo Quelca>
-[7 weeks ago] ec46af1e8  (origin/bugfix/PMCORE-1279) PMCORE-1279 <Paula Quispe>
-[7 weeks ago] b45a73b0f  (origin/bugfix/PMCORE-1205_B) PMCORE-1205 Columns from process list are not correctly displayed - depending on the other columns width could get hidden <Rodrigo Quelca>
-[7 weeks ago] 277d89f22  (origin/bugfix/PMCORE-1289) PMCORE-1289 <Julio Cesar Laura Avendaño>
-[7 weeks ago] a4ced1a09  (origin/bugfix/PMCORE-1203) PMCORE-1203 Help on how batch routing feature works and help to debug the code with a client <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] b218a1488  (origin/bugfix/PMCORE-1882) PMCORE-1882 Suggest Field doesn't show records when we use an alias in a Query <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 794c74423  (origin/bugfix/PMCORE-2062) PMCORE-2062 <Paula Quispe>
+[3 weeks ago] 8ae41e170  (origin/bugfix/PMCORE-1296) PMCORE-1296 <Andrea Adamczyk>
+[3 weeks ago] a3a1e53f6  (origin/bugfix/PMCORE-766) PMCORE-766 <Henry Jordan>
+[3 weeks ago] b588da7e2  (origin/bugfix/PMCORE-1455) PMCORE-1455 <Paula Quispe>
+[3 weeks ago] 12ed0176b  (origin/bugfix/PMCORE-1801) PMCORE-1801 <Julio Cesar Laura Avendaño>
+[3 weeks ago] 2fca85f2a  (origin/bugfix/PMCORE-2056) PMCORE-2056 My case note, it shows empty, when I enter data in the following way "<text ->" <Roly Rudy Gutierrez Pinto>
+[3 weeks ago] 21dc8f5b3  (origin/bugfix/PMCORE-940) PMCORE-940 <Julio Cesar Laura Avendaño>
+[3 weeks ago] 6e2743650  (origin/bugfix/PMCORE-1470) PMCORE-1470 Custom Port not included when using MSSQL instance name in the DB connection <Roly Rudy Gutierrez Pinto>
+[4 weeks ago] f640ad557  (origin/feature/PMCORE-2000) PMCORE-2000 <Julio Cesar Laura Avendaño>
+[5 weeks ago] b38530928  (origin/bugfix/PMCORE-659) PMCORE-659 <Andrea Adamczyk>
+[6 weeks ago] e7e99f1b3  (origin/bugfix/PMCORE-1952) PMCORE-1952 <Julio Cesar Laura Avendaño>
+[6 weeks ago] c4166b3e9  (origin/bugfix/PMCORE-1948) PMCORE-1948 <Paula Quispe>
+[6 weeks ago] e31c7b808  (origin/bugfix/PMCORE-533) PMCORE-533 <Paula Quispe>
+[6 weeks ago] 39697b734  (origin/release/3.5.0) Renaming connection 'report' to 'rp' <Julio Cesar Laura Avendaño>
+[7 weeks ago] 87d0f366c  (origin/bugfix/PMCORE-1930) PMCORE-1930 <Julio Cesar Laura Avendaño>
+[7 weeks ago] 7bd907b7c  (origin/bugfix/PMCORE-1789-B) PMCORE-1789 <Henry Jordan>
+[7 weeks ago] 51c2e0bf5  (origin/bugfix/PMCORE-1911) PMCORE-1911 <Henry Jordan>
+[7 weeks ago] f35c61023  (origin/bugfix/PMCORE-1868) PMCORE-1868 Error when derivate case with trigger which call a class from plugin <Roly Rudy Gutierrez Pinto>
+[7 weeks ago] f87ab9a6d  (origin/bugfix/PMCORE-1767-A) PMCORE-1767 <Paula Quispe>
+[7 weeks ago] 4a763e325  (origin/bugfix/PMCORE-1842) PMCORE-1842 Cases are not routed if there is a process that it has Report Table with external connections <Roly Rudy Gutierrez Pinto>
+[8 weeks ago] 5f3516ef5  (origin/bugfix/DRT-166) DRT-166 Create a method to generate the report using a queue job <Roly Rudy Gutierrez Pinto>
+[8 weeks ago] 051f8b5de  DRT-166 Create a method to generate the report using a queue job <Roly Rudy Gutierrez Pinto>
+[8 weeks ago] 5e602813f  (origin/bugfix/PMCORE-1813) PMCORE-1813 <Paula Quispe>
+[8 weeks ago] 99848b1e0  (origin/bugfix/PMCORE-1872) PMCORE-1872 <Paula Quispe>
+[8 weeks ago] 89f0a9d00  (origin/bugfix/PMCORE-1864) PMCORE-1864} <Henry Jordan>
+[8 weeks ago] 911daafe7  (origin/bugfix/PMCORE-1785) PMCORE-1785 <Paula Quispe>
+[8 weeks ago] 57f496997  (origin/bugfix/PMCORE-1817) PMCORE-1817 <Henry Jordan>
+[8 weeks ago] 4304b9df6  (origin/bugfix/PMCORE-1782) PMCORE-1782 Cannot import a PMTABLE. <Roly Rudy Gutierrez Pinto>
+[8 weeks ago] 2f08d82d9  (origin/bugfix/PMCORE-1841) PMCORE-1841 <Paula Quispe>

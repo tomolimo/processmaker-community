@@ -36,7 +36,6 @@ class PmBootstrap extends Bootstrap
         ini_set('error_reporting', $e_all);
         ini_set('short_open_tag', 'On');
         ini_set('default_charset', "UTF-8");
-        ini_set('memory_limit', $this->pmConfig['memory_limit']);
         ini_set('soap.wsdl_cache_enabled', $this->pmConfig['wsdl_cache']);
         ini_set('date.timezone', (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__'])? 'UTC' : $this->pmConfig['time_zone']); //Set Time Zone
 

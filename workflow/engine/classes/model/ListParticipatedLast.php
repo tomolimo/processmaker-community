@@ -299,6 +299,12 @@ class ListParticipatedLast extends BaseListParticipatedLast implements ListInter
                 break;
             case 'completed':
                 $criteria->add(ListParticipatedLastPeer::APP_STATUS, 'COMPLETED', Criteria::EQUAL);
+                // Check if the case was completed by the user
+                $conditions = [];
+                $conditions[] = [ListParticipatedLastPeer::APP_NUMBER, AppDelegationPeer::APP_NUMBER];
+                $conditions[] = [ListParticipatedLastPeer::DEL_INDEX, AppDelegationPeer::DEL_INDEX];
+                $criteria->addJoinMC($conditions, Criteria::LEFT_JOIN);
+                $criteria->add(AppDelegationPeer::DEL_LAST_INDEX, 1, Criteria::EQUAL);
                 break;
         }
         //Check the inbox to call

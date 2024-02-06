@@ -1,4 +1,5 @@
 <?php
+
 /**
  * cases_Open.php
  *
@@ -15,21 +16,21 @@
  * @link https://wiki.processmaker.com/3.2/Cases/Cases#Search_Criteria
  */
 
-if(isset( $_GET['gmail']) && $_GET['gmail'] == 1){
+if (isset($_GET['gmail']) && $_GET['gmail'] == 1) {
     $_SESSION['gmail'] = 1;
 }
 
 /* Permissions */
-if ($RBAC->userCanAccess( 'PM_CASES' ) != 1) {
-    switch ($RBAC->userCanAccess( 'PM_CASES' )) {
-        case - 2:
-            G::SendTemporalMessage( 'ID_USER_HAVENT_RIGHTS_SYSTEM', 'error', 'labels' );
-            G::header( 'location: ../login/login' );
+if ($RBAC->userCanAccess('PM_CASES') != 1) {
+    switch ($RBAC->userCanAccess('PM_CASES')) {
+        case -2:
+            G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_SYSTEM', 'error', 'labels');
+            G::header('location: ../login/login');
             break;
-        case - 1:
+        case -1:
         default:
-            G::SendTemporalMessage( 'ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels' );
-            G::header( 'location: ../login/login' );
+            G::SendTemporalMessage('ID_USER_HAVENT_RIGHTS_PAGE', 'error', 'labels');
+            G::header('location: ../login/login');
             break;
     }
 }
@@ -42,21 +43,30 @@ Cases::clearCaseSessionData();
 try {
     //Loading data for a Jump request
     if (!isset($_GET['APP_UID']) && isset($_GET['APP_NUMBER'])) {
-        $_GET['APP_UID'] = $caseInstance->getApplicationUIDByNumber( $_GET['APP_NUMBER'] );
+        $_GET['APP_UID'] = $caseInstance->getApplicationUIDByNumber($_GET['APP_NUMBER']);
         //Get the index related to the userLogged but this thread can be OPEN or CLOSED
-        $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation($_GET['APP_UID'], $_SESSION['USER_LOGGED']);
+        if (isset($_GET['actionFromList'])) {
+            if ($_GET['actionFromList'] == 'unassigned') {
+                $_SESSION['APPLICATION'] = $_GET['APP_UID'];
+                $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation($_GET['APP_UID'], $_SESSION['USER_LOGGED'], true);
+            } else {
+                $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation($_GET['APP_UID'], $_SESSION['USER_LOGGED']);
+            }
+        } else {
+            $_GET['DEL_INDEX'] = $caseInstance->getCurrentDelegation($_GET['APP_UID'], $_SESSION['USER_LOGGED']);
+        }
 
         //if the application doesn't exist
         if (is_null($_GET['APP_UID'])) {
-            G::SendMessageText( G::LoadTranslation( 'ID_CASE_DOES_NOT_EXISTS' ), 'info' );
-            G::header( 'location: casesListExtJs' );
+            G::SendMessageText(G::LoadTranslation('ID_CASE_DOES_NOT_EXISTS'), 'info');
+            G::header('location: casesListExtJs');
             exit();
         }
 
         //if the application exists but the
         if (is_null($_GET['DEL_INDEX'])) {
-            G::SendMessageText( G::LoadTranslation( 'ID_CASE_IS_CURRENTLY_WITH_ANOTHER_USER' ), 'info' );
-            G::header( 'location: casesListExtJs' );
+            G::SendMessageText(G::LoadTranslation('ID_CASE_IS_CURRENTLY_WITH_ANOTHER_USER'), 'info');
+            G::header('location: casesListExtJs');
             exit();
         }
     }
@@ -123,7 +133,6 @@ try {
                     require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
                     exit();
                 }
-
             }
 
             //Proceed and try to open the case
@@ -151,8 +160,8 @@ try {
 
             //If the current users is in the AppDelegation row and the thread is open will be open the case
             if (($delegationInfo['USR_UID'] == $_SESSION['USER_LOGGED'] && $delegationInfo['DEL_THREAD_STATUS'] === 'OPEN')
-            && $action != 'sent')
-            {
+                && $action != 'sent'
+            ) {
                 $_SESSION['APPLICATION'] = $appUid;
                 $_SESSION['INDEX'] = $delIndex;
 
@@ -180,7 +189,6 @@ try {
                 $pageOpenCase = $nextStep['PAGE'];
 
                 G::header('location: ' . $pageOpenCase);
-
             } else {
                 $_SESSION['APPLICATION'] = $appUid;
                 $_SESSION['PROCESS'] = $fieldCase['PRO_UID'];
@@ -210,7 +218,6 @@ try {
                 $_SESSION['CURRENT_TASK'] = $fields['TAS_UID'];
 
                 require_once(PATH_METHODS . 'cases' . PATH_SEP . 'cases_Resume.php');
-
             }
             break;
         default: //APP_STATUS IS COMPLETED OR CANCELLED
@@ -231,4 +238,3 @@ try {
     $G_PUBLISH->AddContent('xmlform', 'xmlform', 'login/showMessage', '', $message);
     G::RenderPage('publishBlank', 'blank');
 }
-

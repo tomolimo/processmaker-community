@@ -67,3 +67,7 @@
   background: url(../img/triggerWizard.png) no-repeat;
   background-position: -85px -48px;
 }
+
+.ui-tooltip {
+  overflow-wrap: break-word;
+}

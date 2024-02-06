@@ -81,6 +81,8 @@ class AppDocumentMapBuilder
 
         $tMap->addColumn('DOC_UID', 'DocUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
+        $tMap->addColumn('DOC_ID', 'DocId', 'int', CreoleTypes::INTEGER, false, null);
+
         $tMap->addColumn('USR_UID', 'UsrUid', 'string', CreoleTypes::VARCHAR, true, 32);
 
         $tMap->addColumn('APP_DOC_TYPE', 'AppDocType', 'string', CreoleTypes::VARCHAR, true, 32);
@@ -127,7 +129,7 @@ class AppDocumentMapBuilder
 
         $tMap->addValidator('USR_UID', 'required', 'propel.validator.RequiredValidator', '', 'User UID is required.');
 
-        $tMap->addValidator('APP_DOC_TYPE', 'validValues', 'propel.validator.ValidValuesValidator', 'INPUT|OUTPUT|ATTACHED', 'Please select a valid document type.');
+        $tMap->addValidator('APP_DOC_TYPE', 'validValues', 'propel.validator.ValidValuesValidator', 'INPUT|OUTPUT|ATTACHED|CASE_NOTE', 'Please select a valid document type.');
 
         $tMap->addValidator('APP_DOC_TYPE', 'required', 'propel.validator.RequiredValidator', '', 'Application Document Type is required.');
 

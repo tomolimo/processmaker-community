@@ -240,7 +240,6 @@ emailServer.application = {
             Ext.getCmp("buttonContinue").setVisible(false);
             Ext.getCmp("btnTest").setVisible(true);
             Ext.getCmp("btnSave").setVisible(true);
-
             if (cboEmailEngine === "PHPMAILER") {
                 Ext.getCmp("txtServer").setVisible(true);
                 Ext.getCmp("txtPort").setVisible(true);

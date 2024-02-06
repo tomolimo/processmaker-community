@@ -10,7 +10,6 @@ use ProcessMaker\Model\Process;
 $factory->define(InputDocument::class, function(Faker $faker) {
     return [
         'INP_DOC_UID' => G::generateUniqueID(),
-        'INP_DOC_ID' => $faker->unique()->numberBetween(1, 10000),
         'PRO_UID' => function() {
             $process = factory(Process::class)->create();
             return $process->PRO_UID;

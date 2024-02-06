@@ -6,11 +6,11 @@
 use Faker\Generator as Faker;
 
 $factory->define(\ProcessMaker\Model\Task::class, function(Faker $faker) {
+    $process = factory(\ProcessMaker\Model\Process::class)->create();
     return [
-        'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(),
+        'PRO_UID' => $process->PRO_UID,
+        'PRO_ID' => $process->PRO_ID,
         'TAS_UID' => G::generateUniqueID(),
-        'TAS_ID' => $faker->unique()->numberBetween(),
         'TAS_TITLE' => $faker->sentence(2),
         'TAS_TYPE' => 'NORMAL',
         'TAS_TYPE_DAY' => 1,
@@ -39,7 +39,6 @@ $factory->state(\ProcessMaker\Model\Task::class, 'foreign_keys', function (Faker
         'PRO_UID' => $process->PRO_UID,
         'PRO_ID' => $process->PRO_ID,
         'TAS_UID' => G::generateUniqueID(),
-        'TAS_ID' => $faker->unique()->numberBetween(1, 200000),
         'TAS_TITLE' => $faker->sentence(2),
         'TAS_TYPE' => 'NORMAL',
         'TAS_TYPE_DAY' => 1,

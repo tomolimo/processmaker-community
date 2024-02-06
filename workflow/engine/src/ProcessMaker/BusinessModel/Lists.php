@@ -56,15 +56,20 @@ class Lists
      */
     public function __construct()
     {
-        $this->mapList = array(
+        $this->mapList = [
             'ListInbox' => 'CASES_INBOX',
             'ListDraft' => 'CASES_DRAFT',
             'ListCanceled' => 'CASES_CANCELLED',
             'ListParticipated' => 'CASES_SENT',
             'ListPaused' => 'CASES_PAUSED',
             'ListCompleted' => 'CASES_COMPLETED',
-            'ListSelfService' => 'CASES_SELFSERVICE'
-        );
+        ];
+
+        // If the feature for highlight the home folders is disabled, add self-service list to the map
+        $flag = defined('HIGHLIGHT_HOME_FOLDER_ENABLE') ? HIGHLIGHT_HOME_FOLDER_ENABLE : 0;
+        if (!$flag) {
+            $this->mapList['ListSelfService'] = 'CASES_SELFSERVICE';
+        }
 
         $this->ListInbox = new \ListInbox();
         $this->ListDraft = new \ListInbox();

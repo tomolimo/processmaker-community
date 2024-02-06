@@ -32,6 +32,7 @@ class ClassAliasLoader
     );
 
     /**
+     * @deprecated
      * @var bool
      */
     protected $caseSensitiveClassLoading = true;
@@ -55,7 +56,8 @@ class ClassAliasLoader
     }
 
     /**
-     * @param boolean $caseSensitiveClassLoading
+     * @deprecated
+     * @param bool $caseSensitiveClassLoading
      */
     public function setCaseSensitiveClassLoading($caseSensitiveClassLoading)
     {
@@ -117,16 +119,19 @@ class ClassAliasLoader
     public function loadClassWithAlias($className)
     {
         $originalClassName = $this->getOriginalClassName($className);
+
         return $originalClassName ? $this->loadOriginalClassAndSetAliases($originalClassName) : $this->loadClass($className);
     }
 
     /**
      * Load class with the option to respect case insensitivity
+     * @deprecated
      *
      * @param string $className
      * @return bool|null
      */
-    public function loadClass($className) {
+    public function loadClass($className)
+    {
         $classFound = $this->composerClassLoader->loadClass($className);
         if (!$classFound && !$this->caseSensitiveClassLoading) {
             $classFound = $this->composerClassLoader->loadClass(strtolower($className));
@@ -153,7 +158,7 @@ class ClassAliasLoader
             return $this->aliasMap['aliasToClassNameMapping'][$lowerCasedClassName];
         }
         // No alias registered for this class name, return and remember that info
-        return $this->aliasMap['classNameToAliasMapping'][$aliasOrClassName] = NULL;
+        return $this->aliasMap['classNameToAliasMapping'][$aliasOrClassName] = null;
     }
 
     /**
@@ -185,23 +190,14 @@ class ClassAliasLoader
      */
     protected function classOrInterfaceExists($className)
     {
-        return class_exists($className, false) || interface_exists($className, false);
-    }
-
-    /**
-     * Act as a proxy for method calls to composer class loader
-     *
-     * @param string $method
-     * @param array $arguments
-     * @return mixed
-     */
-    public function __call($method, $arguments)
-    {
-        if (!is_callable(array($this->composerClassLoader, $method))) {
-            throw new \InvalidArgumentException(sprintf('Method "%s" does not exist!', $method), 1422631610);
+        $classOrInterfaceExists = class_exists($className, false) || interface_exists($className, false);
+        if ($classOrInterfaceExists) {
+            return true;
+        }
+        if (function_exists('trait_exists')) {
+            return trait_exists($className, false);
         }
 
-        return call_user_func_array(array($this->composerClassLoader, $method), $arguments);
+        return false;
     }
-
 }

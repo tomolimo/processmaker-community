@@ -354,7 +354,7 @@
 					value="<%-options[i].value%>"
 					type="checkbox"
 					<% if(options[i].selected){%>checked<%}%>
-					<% if(disabled === true){%>disabled<%}%>
+					<% if(disabled === true || mode === 'view'){%>disabled<%}%>
 					<%if(tabIndex !== ""){%>
 						tabindex="<%-tabIndex%>"
 					<%}%>
@@ -380,6 +380,19 @@
 	>
 	<span class="content-print"></span>
 	</div>
+	</div>
+</script>
+
+<script type="text/template" id="tpl-checkbox_view_mode">
+	<div class="<%-namespace%>-field-<%-type%>" style="text-align: center;">
+			<input
+			id = "form<%-id%>"
+			name ="form<%-name%>"
+			value="<%-value%>"
+			type="checkbox"
+			<% if(data.value == '1'){ %>checked <%}%>
+			disabled
+			>
 	</div>
 </script>
 
@@ -419,12 +432,12 @@
 							class="<%-namespace%>-control-<%-type%>"
 							value="<%-options[i].value%>"
 							type="<%-type%>"
-							<% if(value == options[i].value){%>checked<%}%>
+							<% if(data["value"] == options[i].value){%>checked<%}%>
 							<% if(disabled === true){%>disabled<%}%>
 							<%if(tabIndex !== ""){%>
 								tabindex="<%-tabIndex%>"
 							<%}%>
-							<%if(value === options[i].value && ariaLabelVisible){%>
+							<%if(data["value"]  === options[i].value && ariaLabelVisible){%>
 								aria-label="<%-options[i].label%>"
 							<%}%>
 							>
@@ -497,7 +510,7 @@
 					<%}%>
 					<% for(var i=0; i<options.length; i+=1) { %>
 						<option value="<%-options[i].value%>"
-						<%if( options[i].value == value ){%>
+						<%if( options[i].value == data["value"]){%>
 							selected<%}%>
 						><%-options[i].label%></option>
 					<% } %>
@@ -1061,7 +1074,7 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 						name="form[<%-name%>]"
 					<%}%>
 					type = <%-type%> class="<%-namespace%>-control-<%-type%> form-control"
-					placeholder= "<%-placeholder%>" value = "<%-data['label']%>"
+					placeholder= "<%-placeholder%>" value = "<%-data['value']%>"
 					<% if(disabled === true){%>disabled<%}%>
 					<% if (autoComplete === "on" || autoComplete === "off") { %>
 						autocomplete = "<%-autoComplete%>"
@@ -1088,16 +1101,16 @@ is called to PMDynaform.view.Radio method "_setOptions()"
 				<% if ( group === "grid") { %>
 					id = "form<%-id%>"
 					name ="form<%-name%>"
+					value="<%-data['label']%>"
 				<%} else{%>
 					id = "form[<%-id%>_label]"
 					name ="form[<%-name%>_label]"
+					value="<%-data['label']%>"
 				<%}%>
-				value="<%-data['value']%>"
 			>
 		</div>
 	</div>
 </script>
-
 <script type="text/template" id="tpl-grid">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%-namespace%>-<%-mode%>-<%-type%> <%-layout%>">
 		<div class="<%-namespace%>-<%-type%>-new">
@@ -1865,6 +1878,9 @@ is called to PMDynaform.view.Radio method "_setOptions()"
         </div>
     </div>
     <ul class="content-print"></ul>
+    <input name="form<%-id%>[0][appDocUid]" type="hidden" value="">
+    <input name="form<%-id%>[0][name]" type="hidden" value="">
+    <input name="form<%-id%>[0][version]" type="hidden" value="">
 </script>
 
 <script type="text/template" id="tpl-multiplefile-grid-field">

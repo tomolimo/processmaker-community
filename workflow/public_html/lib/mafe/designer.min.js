@@ -34669,7 +34669,7 @@ IntroHelper.prototype.startIntro = function () {
                             valueType: 'string'
                         },
                         emailAcounts,
-                        {
+                        new CriteriaField({
                             id: "ToEmail",
                             pmType: "text",
                             helper: "The email can be a string or a variable (@@myEmail), comma separated list of emails".translate(),
@@ -34681,7 +34681,7 @@ IntroHelper.prototype.startIntro = function () {
                             visible: true,
                             labelWidth: "15%",
                             valueType: 'string'
-                        },
+                        }),
                         new CriteriaField({
                             id: 'subjectEmail',
                             pmType: 'text',

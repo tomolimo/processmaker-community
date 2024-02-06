@@ -48,7 +48,7 @@ if (isset($_GET['BROWSER_TIME_ZONE_OFFSET'])) {
 
             $record = [];
             $record['DYN_CONTENT'] = $configuration['DYN_CONTENT'];
-            $record['PRO_UID']     = $configuration['PRO_UID'];
+            $record['PRO_UID'] = $configuration['PRO_UID'];
             $record['CURRENT_DYNAFORM'] = G::decrypt($_REQUEST['DYN_UID'], URL_KEY);
             $record['APP_UID'] = $_REQUEST['APP_UID'];
             $record['DEL_INDEX'] = $_REQUEST['DEL_INDEX'];
@@ -56,9 +56,21 @@ if (isset($_GET['BROWSER_TIME_ZONE_OFFSET'])) {
             $record['APP_DATA'] = $caseFields['APP_DATA'];
 
             if (is_null($caseFields['DEL_FINISH_DATE'])) {
-                $a = new PmDynaform($record);
-
-                $a->printABE($action,$record);
+                //we define the guest user
+                $restore = false;
+                if (isset($_SESSION["USER_LOGGED"])) {
+                    $restore = $_SESSION["USER_LOGGED"];
+                }
+                $_SESSION["USER_LOGGED"] = RBAC::GUEST_USER_UID;
+                $_SESSION['GUEST_USER'] = RBAC::GUEST_USER_UID;
+                $pmDynaform = new PmDynaform($record);
+                //we must return to the original value of the session
+                if ($restore === false) {
+                    unset($_SESSION["USER_LOGGED"]);
+                } else {
+                    $_SESSION["USER_LOGGED"] = $restore;
+                }
+                $pmDynaform->printABE($action, $record);
             } else {
                 $G_PUBLISH->AddContent(
                     'xmlform',

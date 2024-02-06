@@ -400,6 +400,42 @@ jQuery.fn.extend({
         }
         return this;
     },
+    /**
+     * Sets a field's value into a form or grid async mode
+     * @param {*} value 
+     * @param {*} row 
+     * @param {*} col 
+     * @param {*} fn 
+     */
+    setValueAsync: function (value, row, col, fn) {
+        var field = getFieldById(this.attr("id")) || null;
+        if (field) {
+            if (field.model.get("type") !== "grid") {
+                field.setValueAsync(value, row);
+            } else {
+                field.setValueAsync(value, row, col, fn);
+            }
+        }
+        return this;
+    },
+    /**
+     * Sets a field's text into a form or grid async mode
+     * @param {*} value 
+     * @param {*} row 
+     * @param {*} col 
+     * @param {*} fn 
+     */
+    setTextAsync: function (value, row, col, fn) {
+        var field = getFieldById(this.attr("id")) || null;
+        if (field) {
+            if (field.model.get("type") !== "grid") {
+                field.setTextAsync(value, row);
+            } else {
+                field.setTextAsync(value, row, col, fn);
+            }
+        }
+        return this;
+    },
     setText: function (value, row, col) {
         var field = getFieldById(this.attr("id")) || null;
         if (field) {
@@ -454,7 +490,7 @@ jQuery.fn.extend({
      */
     setOnchange: function (handler) {
         var item = this.getIntanceById(this.attr("id"));
-        if (item && typeof handler === "function" && typeof item.setOnChange === "function")  {
+        if (item && typeof handler === "function" && typeof item.setOnChange === "function") {
             item.setOnChange(handler);
         }
         return this;
@@ -858,9 +894,188 @@ jQuery.fn.extend({
 }());
 
 (function () {
+    /**
+     * Class handler for events in PMDYNAFORM
+     * Object CHANNEL
+     * {
+     *     channel:"channelName",
+     *     type: "joinFork",
+     *     callback: function(){},
+     *     events: [
+     *         {
+     *             event: "eventName",
+     *             complete: true,
+     *             payload: {}
+     *         }
+     *     ]
+     * }
+     *
+     */
     var EventBus = function (options) {
         this.bus = _.extend({}, Backbone.Events);
+        this.channels = {};
         this.topics = [];
+    };
+    /**
+     * Emit events based in Redux Framework
+     * @param event
+     * {
+     *   channel: "",
+     *   event: "",
+     *   payload: "",
+     * }
+     */
+    EventBus.prototype.emit = function (event) {
+        this.bus.trigger(event.channel || "default", event);
+    };
+    /**
+     * Create a channel for event bus
+     * @param {*} t
+     * @returns {EventBus}
+     */
+    EventBus.prototype.createChannel = function (t) {
+        t.channel = t.channel || "default";
+        if (!this.channels[t.channel]) {
+            this.channels[t.channel] = [];
+        }
+        this.channels[t.channel].push(t);
+        return this;
+    };
+    /**
+     * Subscriber for callback in a channel in some TYPE (joinFork|joinForkTwice)
+     * INPUT
+     * {
+     *     channel: "",
+     *     type: "joinFork",
+     *     id:"",
+     *     events:[{
+     *         event:"event1",
+     *         queue:[{payload: ""}]
+     *     }],
+     *     callback: ()=>{}
+     * }
+     * @param {*} t
+     */
+    EventBus.prototype.subscribe = function (t) {
+        var that = this, isDefined = true;
+        t.channel = t.channel || "default";
+        if (!this.channels[t.channel]) {
+            this.channels[t.channel] = [];
+            isDefined = false;
+        }
+        this.channels[t.channel].push(t);
+        if (!isDefined) {
+            PMDynaform.EventBus.on(t.channel, function (payload) {
+                var arr = that.channels[t.channel];
+                payload.channel = payload.channel || "default";
+                if (payload && payload.channel == t.channel) {
+                    _.forEach(arr, function (el) {
+                        _.forEach(el.events, function (e) {
+                            if (e.event == payload.event) {
+                                if (!e.queue) {
+                                    e.queue = [];
+                                }
+                                e.queue.push({
+                                    payload: payload.payload
+                                });
+
+                            }
+                        });
+                        that.pipe(el);
+                    });
+                    that.channels[t.channel] = _.reject(arr, function (el) {
+                        return el.complete && el.deleteOnCompletion;
+                    });
+                }
+            }, t.context);
+        }
+    };
+    /**
+     * Executes a type of pipe joinForkTwice or joinFork
+     * @param {*} el
+     */
+    EventBus.prototype.pipe = function (el) {
+        var evC = true;
+        if (el.type == "joinForkTwice") {
+            _.forEach(el.events, function (e) {
+                if (!e.queue || !(e.queue.length >= 1 && e.queue.length <= 2)) {
+                    evC = false;
+                }
+            });
+            if (evC) {
+                _.forEach(el.events, function (e) {
+                    if (e.queue.length == 2) {
+                        e.queue = [_.last(e.queue)];
+                    }
+                });
+                if (_.isFunction(e.callback)) {
+                    setTimeout(function () {
+                        e.callback();
+                    }, 10);
+                }
+            }
+        }
+
+        //For joinFork way in EventBus
+        if (el.type == "joinFork") {
+            _.forEach(el.events, function (e) {
+                if (!e.queue || !e.queue.length === 1) {
+                    evC = false;
+                }
+            });
+            if (evC) {
+                _.forEach(el.events, function (e) {
+                    e.queue = null;
+                });
+                el.complete = true;
+                if (_.isFunction(el.callback)) {
+                    setTimeout(function () {
+                        el.callback();
+                    }, 10);
+                }
+            }
+        }
+    };
+    /**
+     * Add event to a observable object
+     * INPUT
+     * {
+     *     channel: "",
+     *     id:"",
+     *     events:[{
+     *         event:"event1"
+     *     }]
+     * }
+     * @param {String} t
+     */
+    EventBus.prototype.subscribeEventToJoinFork = function (t) {
+        t.channel = t.channel || "default";
+        var observables = this.channels[t.channel];
+        if (observables) {
+            _.forEach(observables, function (o) {
+                if (o.id == t.id) {
+                    o.events = o.events.concat(t.events);
+                }
+            });
+        }
+        return this;
+    };
+    /**
+     * The method verify if exists in channel a observable id
+     * @param {String} channel
+     * @param {String} idObservable
+     * @returns {*}
+     */
+    EventBus.prototype.verifyObservableChannel = function (channel, idObservable) {
+        channel = channel || "default";
+        var observables = this.channels[channel],
+            obs;
+        if (observables) {
+            obs = _.find(observables, function (o) {
+                return o.id == idObservable
+            });
+        }
+        return obs;
     };
     /**
      * Bind a callback function to an object. The callback will be invoked whenever the event is fired.
@@ -3526,6 +3741,7 @@ xCase.extendNamespace = function (path, newClass) {
         };
         this.options.urlBase = "{server}/api/1.0/{workspace}/{endPointPath}";
         this.options.urlBaseStreaming = "{server}/sys{workspace}/{endPointPath}";
+        this.memoryCache = {};
 
     };
 
@@ -4152,17 +4368,57 @@ xCase.extendNamespace = function (path, newClass) {
                     }
                 },
                 data: function (params) {
-                    return JSON.stringify(suggest.loadDataForExecution(params, suggest.getDataParams()));
+                    var dt = suggest.model.buildDataForQuery();
+                    dt.filter = params.term || "";
+                    return JSON.stringify(dt);
                 },
                 processResults: function (data, params) {
-                    return {
-                        results: $.map(suggest.mergeLocalAndRemoteOptions(data, params), function (item) {
+                    var results = $.map(suggest.model.mergeLocalAndRemoteOptions(data, params), function (item) {
                             return {
                                 id: item.value,
                                 text: item.text || item.label
                             }
+                        });
+                    if (!suggest.model.get('forceSelection') && !_.findWhere(results, {text: params.term})) {
+                        results.unshift({
+                            id: params.term,
+                            text: params.term
                         })
+                    }
+                    return {
+                        results: results
                     };
+                },
+                transport: function (params, success, failure) {
+                    var res,
+                        request,
+                        cacheKey = params.data;
+                    if (params.dataType === "json") {
+                        //Build your cache key, typically with url and search term and page number
+                        if (suggest.model.get("memoryCache") && that.memoryCache && that.memoryCache[cacheKey]) {
+                            res = that.memoryCache[cacheKey];
+                            success(res);
+                            return {
+                                abort: function () {
+                                    console.log("ajax call aborted");
+                                }
+                            }
+                        } else {
+                            request = $.ajax(params);
+                            request.then(function (data) {
+                                that.memoryCache[cacheKey] = data;
+                                return data;
+                            })
+                                .then(success);
+                            request.fail(failure);
+                            return request;
+                        }
+                    } else {
+                        request = $.ajax(params);
+                        request.then(success);
+                        request.fail(failure);
+                        return request;
+                    }
                 },
                 cache: true
             },
@@ -4179,15 +4435,17 @@ xCase.extendNamespace = function (path, newClass) {
             $.extend(retObj, {
                 ajax: {
                     data: function (params) {
-                        return suggest.loadDataForExecution(params, suggest.getDataParams());
+                        var dt = suggest.model.buildDataForQuery();
+                        dt.filter = params.term || "";
+                        return dt;
                     },
                     transport: function (params, success, failure) {
                         var dtQuery = suggest.model.buildDataForQuery();
                         dtQuery.filter = params.data && params.data.filter ? params.data.filter : "";
                         //If there is not sql in suggest return the local options
-                        if (suggest.model.get("sql") === "") {
+                        if (suggest.model.get("datasource") === "database" && suggest.model.get("sql") === "") {
                             res = {
-                                results: $.map(suggest.mergeLocalAndRemoteOptions([], params), function (item) {
+                                results: $.map(suggest.model.mergeLocalAndRemoteOptions([], params), function (item) {
                                     return {
                                         id: item.value,
                                         text: item.text || item.label
@@ -4205,7 +4463,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     callback: function (response) {
                                         if (!response.error) {
                                             res = {
-                                                results: $.map(suggest.mergeLocalAndRemoteOptions(response, params), function (item) {
+                                                results: $.map(suggest.model.mergeLocalAndRemoteOptions(response, params), function (item) {
                                                     return {
                                                         id: item.value,
                                                         text: item.text || item.label
@@ -4271,11 +4529,11 @@ xCase.extendNamespace = function (path, newClass) {
      */
     WebServiceManager.prototype.getFileVersions = function (appDocUid, callback) {
         var url = this.getFullEndPoint({
-                caseUID: this.options.keys.caseUID,
-                docUID: appDocUid, // or use the options one?
-                server: this.options.keys.server,
-                workspace: this.options.keys.workspace
-            }, this.options.urlBase, this.options.endPoints.fileVersionsList),
+            caseUID: this.options.keys.caseUID,
+            docUID: appDocUid, // or use the options one?
+            server: this.options.keys.server,
+            workspace: this.options.keys.workspace
+        }, this.options.urlBase, this.options.endPoints.fileVersionsList),
             that = this;
 
         $.ajax({
@@ -4366,7 +4624,7 @@ xCase.extendNamespace = function (path, newClass) {
                 var message;
                 if (xhr.responseJSON) {
                     message = xhr.responseJSON.error.message;
-                    callback({code: xhr.status, message: message});
+                    callback({ code: xhr.status, message: message });
                 }
             }
         });
@@ -4419,7 +4677,7 @@ xCase.extendNamespace = function (path, newClass) {
         $.ajax({
             url: url,
             type: method,
-            headers: {authorization: "Bearer " + that.options.token.accessToken},
+            headers: { authorization: "Bearer " + that.options.token.accessToken },
             dataType: 'binary',
             async: true,
             responseType: 'blob',
@@ -4444,7 +4702,7 @@ xCase.extendNamespace = function (path, newClass) {
         $.ajax({
             url: url,
             type: method,
-            headers: {authorization: "Bearer " + that.options.token.accessToken},
+            headers: { authorization: "Bearer " + that.options.token.accessToken },
             async: false,
             success: function (data) {
                 response = {
@@ -4459,6 +4717,94 @@ xCase.extendNamespace = function (path, newClass) {
             }
         });
         return response;
+    };
+    /**
+     * New implementation of execute query
+     * @param {*} data 
+     * @param {*} varName 
+     * @param {*} async
+     * @param {*} callback 
+     * @returns {*}
+     */
+    WebServiceManager.prototype.execQuery = function (data, varName, async, memoryCache, callback) {
+        var that = this,
+            method = "POST", url, resp = [],
+            cacheKey = JSON.stringify(data);
+
+        this.setKey('var_name', varName);
+
+        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.query);
+
+        this.deleteKey('var_name');
+
+        data = data || {};
+        data.app_uid = (this.options && this.options.keys && this.options.keys.caseUID) || null;
+        data.del_index = (this.options && this.options.keys && this.options.keys.delIndex) || null;
+        if (memoryCache && this.memoryCache && this.memoryCache[cacheKey]) {
+            callback(this.memoryCache[cacheKey], null);
+            return false;
+        }
+        return $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(data),
+            async: async,
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                if (that.options.language != null) {
+                    xhr.setRequestHeader("Accept-Language", that.options.keys.lang);
+                }
+            },
+            success: function (data, textStatus) {
+                that.memoryCache[cacheKey] = data;
+                callback(data, null);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                callback(null, textStatus);
+            }
+        });
+    };
+    /**
+     * Consumes suggest rest service
+     * @param data
+     * @returns {*}
+     */
+    WebServiceManager.prototype.execQuerySuggest = function (data) {
+        var that = this,
+            dt,
+            method = "POST", url,
+            appUID = this.options && this.options.keys ? this.getKey("caseUID") : null,
+            delIndex = this.options && this.options.keys ? this.getKey("delIndex") : null,
+            cacheKey = JSON.stringify(data);
+
+        this.setKey('var_name', data.variable);
+        url = that.getFullEndPoint(that.options.keys, that.options.urlBase, that.options.endPoints.querySuggest);
+        this.deleteKey('var_name');
+        dt = data.data ? data.data : {};
+        dt.app_uid = appUID;
+        dt.del_index = delIndex;
+        if (this.memoryCache && this.memoryCache[cacheKey]) {
+            data.callback(this.memoryCache[cacheKey], null);
+            return false;
+        }
+        return $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(dt),
+            async: data.async,
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Bearer " + that.options.token.accessToken);
+                if (that.options.language != null) {
+                    xhr.setRequestHeader("Accept-Language", that.options.keys.lang);
+                }
+            },
+            success: function (res, textStatus, xhr) {
+                that.memoryCache[cacheKey] = res;
+                data.callback(res, null);
+            }
+        });
     };
 
     xCase.extendNamespace("xCase.service.WebServiceManager", WebServiceManager);
@@ -4547,6 +4893,7 @@ xCase.extendNamespace = function (path, newClass) {
             fullOptions: [
                 field.defaultValue || field.value
             ],
+            id: field.id,
             data: field.data
         };
     };
@@ -4558,6 +4905,7 @@ xCase.extendNamespace = function (path, newClass) {
             fullOptions: [
                 field.defaultValue || field.value
             ],
+            id: field.id,
             data: field.data
         };
     };
@@ -4578,6 +4926,7 @@ xCase.extendNamespace = function (path, newClass) {
             colSpan: field.colSpan,
             label: field.label,
             fullOptions: validOpt,
+            id: field.id,
             data: field.data
         };
     };
@@ -4592,11 +4941,13 @@ xCase.extendNamespace = function (path, newClass) {
             }
         }
         return {
-            type: "label",
+            type: "checkbox",
             colSpan: field.colSpan,
             label: field.label,
             fullOptions: validOpt,
-            data: field.data
+            id: field.id,
+            data: field.data,
+            mode: field.mode
         };
     };
     TransformJSON.prototype.radio = function (field) {
@@ -4614,6 +4965,7 @@ xCase.extendNamespace = function (path, newClass) {
             colSpan: field.colSpan,
             label: field.label,
             fullOptions: validOpt,
+            id: field.id,
             data: field.data
         };
     };
@@ -4633,6 +4985,7 @@ xCase.extendNamespace = function (path, newClass) {
             colSpan: field.colSpan,
             label: field.label,
             fullOptions: validOpt,
+            id: field.id,
             data: field.data
         };
     };
@@ -4650,6 +5003,7 @@ xCase.extendNamespace = function (path, newClass) {
             fullOptions: [
                 field.defaultValue || field.value
             ],
+            id: field.id,
             data: field.data
         };
     };
@@ -4668,6 +5022,7 @@ xCase.extendNamespace = function (path, newClass) {
             colSpan: field.colSpan,
             label: field.label,
             fullOptions: validOpt,
+            id: field.id,
             data: field.data
         };
     };
@@ -4676,6 +5031,7 @@ xCase.extendNamespace = function (path, newClass) {
             type: "label",
             colSpan: field.colSpan,
             label: field.label,
+            id: field.id,
             options: [
                 field.value
             ]
@@ -4727,7 +5083,7 @@ xCase.extendNamespace = function (path, newClass) {
                 case "view":
                     jsonBuilt = this.json[field.type](field);
                     break;
-                default :
+                default:
                     jsonBuilt = field;
             }
         }
@@ -5745,18 +6101,22 @@ xCase.extendNamespace = function (path, newClass) {
 
 }());
 
-(function() {
+(function () {
     /**
      * @class PMDynaform.util.DependentsFieldManager
      * Class that handles dependent field events
      * @param options {Object} Instance configuration
      */
-    var DependentsFieldManager = function(options) {
+    var DependentsFieldManager = function (options) {
         /**
          * @param {object}: eventsManager, Dependent field event manager
          * extends Backbone.Events
          */
         this.eventsManager = {};
+        this.matrix = {};
+        this.dependencies = {};
+        this.fields;
+
         /**
          * @param {object}: form, Related form
          */
@@ -5767,7 +6127,7 @@ xCase.extendNamespace = function (path, newClass) {
      * initialize the DependentsFieldManager
      * @chainable
      */
-    DependentsFieldManager.prototype.init = function(options) {
+    DependentsFieldManager.prototype.init = function (options) {
         var defaults = {
             form: null
         };
@@ -5781,7 +6141,7 @@ xCase.extendNamespace = function (path, newClass) {
      * @param form {object} instace PMDynaform.model.FormPanel
      * @chainable
      */
-    DependentsFieldManager.prototype.setForm = function(form) {
+    DependentsFieldManager.prototype.setForm = function (form) {
         this.form = form;
         return this;
     };
@@ -5792,7 +6152,7 @@ xCase.extendNamespace = function (path, newClass) {
      * @param target {object} Is the origin of the method call
      * @chainable
      */
-    DependentsFieldManager.prototype.addEvent = function(key, callback, target) {
+    DependentsFieldManager.prototype.addEvent = function (key, callback, target) {
         this.eventsManager.on(key, callback, target);
         return this;
     };
@@ -5800,7 +6160,7 @@ xCase.extendNamespace = function (path, newClass) {
      * removeEvent, Disable Events Logged on the Dependent Field Handler
      * @chainable
      */
-    DependentsFieldManager.prototype.removeEvent = function(observer) {
+    DependentsFieldManager.prototype.removeEvent = function (observer) {
         this.eventsManager.off(observer);
         return this;
     };
@@ -5809,7 +6169,7 @@ xCase.extendNamespace = function (path, newClass) {
      * @param info {object} Information of the item that ejects the event
      * @chainable
      */
-    DependentsFieldManager.prototype.notify = function(info) {
+    DependentsFieldManager.prototype.notify = function (info) {
         this.eventsManager.trigger(info.registrationName, info);
         return this;
     };
@@ -5817,19 +6177,251 @@ xCase.extendNamespace = function (path, newClass) {
      * getForm, obtain the related form
      * @returns {PMDynaform.model.FormPanel}
      */
-    DependentsFieldManager.prototype.getForm = function() {
+    DependentsFieldManager.prototype.getForm = function () {
         return this.form;
     };
     /**
      * getProject, obtain the project related
      * @returns {PMDynaform.core.Project}
      */
-    DependentsFieldManager.prototype.getProject = function() {
+    DependentsFieldManager.prototype.getProject = function () {
         var form = this.getForm();
         if (form && form.get("project")) {
             return form.get("project");
         }
         return null;
+    };
+    /**
+     * registerNewDependencyRelation, Prepares to Record Dependent Field for a Field That Has Dependents
+     * @param name
+     * @chainable
+     */
+    DependentsFieldManager.prototype.registerNewDependencyRelation = function (name) {
+        var relations;
+        relations = this.matrix;
+        if (!relations.hasOwnProperty(name)) {
+            relations[name] = [];
+        }
+        return this;
+    };
+    /**
+     * registerNewDependent,Registers a new dependent field
+     * @param dependency
+     * @param dependent
+     * @chainable
+     */
+    DependentsFieldManager.prototype.registerNewDependent = function (dependency, dependent) {
+        var relations;
+        relations = this.matrix;
+        if (relations.hasOwnProperty(dependency)) {
+            relations[dependency].push(dependent);
+        }
+        return this;
+    };
+    /**
+     * Register a new dependency for field model
+     * @param target
+     * @param dependency
+     * @chainable
+     */
+    DependentsFieldManager.prototype.registerDependency = function (target, dependency) {
+        if (!this.dependencies[target]) {
+            this.dependencies[target] = [];
+        }
+        this.dependencies[target].push(dependency);
+        return this;
+    };
+    /**
+     * Assign the fields to this class
+     * @param fields
+     * @chainable
+     */
+    DependentsFieldManager.prototype.setupFields = function (fields) {
+        this.fields = fields;
+        return this;
+    };
+    /**
+     * Return a field from array fields by ID
+     * @param id
+     * @returns {FieldModel}
+     */
+    DependentsFieldManager.prototype.getFieldById = function (id) {
+        var result;
+        if (id && id !== undefined) {
+            result = _.find(this.fields, function (item) {
+                return item.model.get("id") == id;
+            });
+        }
+        return result;
+    };
+    /**
+     * Dispatch a event
+     * @param {*} payload 
+     */
+    DependentsFieldManager.prototype.emit = function (payload) {
+        PMDynaform.EventBus.emit(payload);
+    };
+    /**
+     * Create dependencies callbacks for field model in desc tree of dependencies
+     * @param {FieldModel} modelField 
+     */
+    DependentsFieldManager.prototype.createOneDirectional = function (modelField) {
+        this.oneDirectional(modelField, "dependencies", "");
+        if (this.matrix[this.getFieldId(modelField)]) {
+            PMDynaform.EventBus.emit({
+                channel: "dependencies",
+                event: this.getFieldId(modelField),
+                payload: ""
+            });
+        }
+    };
+    /**
+     * Return the id from field model for dependencies
+     * @param {*} model 
+     * @returns {String}
+     */
+    DependentsFieldManager.prototype.getFieldId = function (model) {
+        var id,
+            parent = model.get("parent");
+        id = parent.get("type") === "grid" ? (model.get("columnId") || model.get("id")) + "-" + model.get("keyEvent") : model.get("id");
+        return id;
+    };
+    /**
+     * Handle the dependencies when the independent field has default value
+     * Model Field dependent field 
+     * @param {FieldModel} modelField
+     */
+    DependentsFieldManager.prototype.defaultValuesDependency = function (modelField) {
+        var that = this,
+            serial = Date.now().toString(),
+            dt = {};
+        _.forEach(this.dependencies[this.getFieldId(modelField)], function (el) {
+            _.extend(dt, that.getDependenciesData(that.matrix[el][0]));
+        });
+        modelField.executeDependency(dt, serial);
+    };
+    /**
+     * Create dependencies callback in asc and desc order 
+     * Model Field has dependencies 
+     * fn is a function to call when finish all
+     * @param {FieldModel} modelField 
+     * @param {function} fn 
+     */
+    DependentsFieldManager.prototype.createBidirectional = function (modelField, fn) {
+        var that = this,
+            serial = Date.now().toString(),
+            channel = "dependencies",
+            that = this, evs = [];
+        if (this.matrix[this.getFieldId(modelField)]) {
+            _.forEach(this.matrix[this.getFieldId(modelField)], function (el) {
+                evs.push({
+                    event: that.getFieldId(el) + serial
+                });
+            });
+
+            PMDynaform.EventBus.subscribe({
+                channel: channel,
+                type: "joinFork",
+                id: this.getFieldId(modelField) + serial,
+                deleteOnCompletion: true,
+                callback: fn,
+                events: evs
+            });
+            this.oneDirectional(modelField, channel, serial);
+            PMDynaform.EventBus.emit({
+                channel: "dependencies",
+                event: this.getFieldId(modelField) + serial,
+                payload: ""
+            });
+        } else if (_.isFunction(fn)) {
+            fn();
+        }
+    };
+    /**
+     * Create a dependencies callback in asc order
+     * ModelField has dependencies 
+     * channel is a string for subsrcibe in event bus
+     * serial is a unique string for identify the calls
+     * @param {FieldModel} modelField 
+     * @param {String} channel 
+     * @param {String} serial 
+     */
+    DependentsFieldManager.prototype.oneDirectional = function (modelField, channel, serial) {
+        var that = this;
+        if (this.matrix[this.getFieldId(modelField)]) {
+            _.forEach(this.matrix[this.getFieldId(modelField)], function (el) {
+                if (PMDynaform.EventBus.verifyObservableChannel(channel, that.getFieldId(el) + serial)) {
+                    PMDynaform.EventBus.subscribeEventToJoinFork({
+                        channel: channel,
+                        id: that.getFieldId(el) + serial,
+                        events: [{ event: that.getFieldId(modelField) + serial }]
+                    });
+                } else {
+                    PMDynaform.EventBus.subscribe({
+                        channel: channel,
+                        type: "joinFork",
+                        id: that.getFieldId(el) + serial,
+                        deleteOnCompletion: true,
+                        callback: function () {
+                            var dt = that.getDependenciesData(el);
+                            el.executeDependency(dt, serial);
+                        },
+                        events: [{ event: that.getFieldId(modelField) + serial }]
+                    });
+                }
+                if (that.matrix[that.getFieldId(el)]) {
+                    that.oneDirectional(el, "dependencies", serial);
+                }
+            });
+        }
+    };
+    /**
+     * Return data for dependents fields from a field model
+     * @param {FieldModel} model
+     * @returns {*} 
+     */
+    DependentsFieldManager.prototype.getDependenciesData = function (model) {
+        var that = this,
+            deep,
+            grid, row, isColumn = false,
+            res = {}, id = model.get("id");
+        // Get data from row in grid web is not working in mobile
+        if (model.get("parent") && model.get("parent").get("type") === "grid") {
+            if (this.dependencies[this.getFieldId(model)]) {
+                isColumn = true;
+                //For grids in Mobile
+                if (PMDynaform.core.ProjectMobile) {
+                    row = _.find(model.get("parent").get("rowCollection").models, function (row) {
+                        return (row.getCells()[0].get("keyEvent") === model.get("keyEvent"));
+                    });
+                    _.forEach(row.getCells(), function (el) {
+                        res[el.get("id")] = el.get("data")["value"];
+                    });
+                } else { //For grid in Web Application
+                    grid = model.get("parent").get("view");
+                    row = _.find(grid.gridtable, function (row) {
+                        return (row[0].model.get("keyEvent") === model.get("keyEvent"));
+                    });
+                    _.forEach(row, function (el) {
+                        deep = _.find(that.dependencies[that.getFieldId(model)], function (o) { return o === that.getFieldId(el.model); });
+                        if (deep) {
+                            res[el.model.get("columnId")] = el.model.get("data")["value"];
+                        }
+                    });
+                }
+                res["grid_name"] = model.get("parent").get("variable");
+            }
+        }
+        // For form
+        _.forEach(this.dependencies[this.getFieldId(model)], function (el) {
+            var obj = _.find(that.fields, function (f) {
+                return f.model.get("id") == el;
+            });
+            if (obj) {
+                res[obj.model.get("id")] = obj.model.get("data").value;
+            }
+        });
+        return res;
     };
 
     PMDynaform.extendNamespace("PMDynaform.util.DependentsFieldManager", DependentsFieldManager);
@@ -6131,6 +6723,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.render();
             for (i = 0; i < this.views.length; i += 1) {
                 this.views[i].runningFormulator();
+                this.views[i].afterRenderHook();
             }
         },
         printForm: function () {
@@ -6578,28 +7171,28 @@ xCase.extendNamespace = function (path, newClass) {
                 factory: {
                     products: {
                         "text": {
-                            model: PMDynaform.model.Text,
-                            view: PMDynaform.view.Text
+                            model: PMDynaform.model.TextR,
+                            view: PMDynaform.view.TextR
                         },
                         "textarea": {
-                            model: PMDynaform.model.TextArea,
-                            view: PMDynaform.view.TextArea
+                            model: PMDynaform.model.TextAreaR,
+                            view: PMDynaform.view.TextAreaR
                         },
                         "checkgroup": {
-                            model: PMDynaform.model.CheckGroup,
-                            view: PMDynaform.view.CheckGroup
+                            model: PMDynaform.model.CheckGroupR,
+                            view: PMDynaform.view.CheckGroupR
                         },
                         "checkbox": {
                             model: PMDynaform.model.CheckBox,
                             view: PMDynaform.view.CheckBox
                         },
                         "radio": {
-                            model: PMDynaform.model.Radio,
-                            view: PMDynaform.view.Radio
+                            model: PMDynaform.model.RadioR,
+                            view: PMDynaform.view.RadioR
                         },
                         "dropdown": {
-                            model: PMDynaform.model.Dropdown,
-                            view: PMDynaform.view.Dropdown
+                            model: PMDynaform.model.DropdownR,
+                            view: PMDynaform.view.DropdownR
                         },
                         "button": {
                             model: PMDynaform.model.Button,
@@ -6610,16 +7203,16 @@ xCase.extendNamespace = function (path, newClass) {
                             view: PMDynaform.view.Submit
                         },
                         "datetime": {
-                            model: PMDynaform.model.Datetime,
-                            view: PMDynaform.view.Datetime
+                            model: PMDynaform.model.DatetimeR,
+                            view: PMDynaform.view.DatetimeR
                         },
                         "fieldset": {
                             model: PMDynaform.model.Fieldset,
                             view: PMDynaform.view.Fieldset
                         },
                         "suggest": {
-                            model: PMDynaform.model.Suggest,
-                            view: PMDynaform.view.Suggest
+                            model: PMDynaform.model.SuggestR,
+                            view: PMDynaform.view.SuggestR
                         },
                         "link": {
                             model: PMDynaform.model.Link,
@@ -6858,7 +7451,6 @@ xCase.extendNamespace = function (path, newClass) {
                             parentMode: this.model.get("mode"),
                             namespace: this.model.get("namespace"),
                             variable: fields[i][j].variable ? fields[i][j].variable : null,
-                            fieldsRelated: [],
                             name: fields[i][j].name,
                             id: fields[i][j].id || PMDynaform.core.Utils.generateID(),
                             options: fields[i][j].options,
@@ -6924,6 +7516,8 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             this.runningFormulator();
+
+            this.model.get("dependentsManager").setupFields(this.getAllFields());
             return this;
         },
         /**
@@ -6951,6 +7545,41 @@ xCase.extendNamespace = function (path, newClass) {
                     break;
             }
             return defaultColSpan;
+        },
+        /**
+         * Execute a defined hook for all rendered views
+         * @chainable
+         */
+        afterRenderHook: function () {
+            var items,
+                field,
+                i,
+                j,
+                rowCurrent,
+                col,
+                row,
+                rowsAll;
+            items = this.viewsBuilt;
+            for (i = 0; i < items.length; i += 1) {
+                for (j = 0; j < items[i].length; j += 1) {
+                    field = items[i][j];
+                    if (typeof field.model.afterRenderHook === "function") {
+                        field.model.afterRenderHook();
+                    }
+                    if (field.model.get("type") === "grid") {
+                        rowsAll = field.gridtable;
+                        for (row = 0; row < rowsAll.length; row += 1) {
+                            rowCurrent = rowsAll[row];
+                            for (col = 0; col < rowCurrent.length; col += 1) {
+                                if (typeof rowCurrent[col].model.afterRenderHook === "function") {
+                                    rowCurrent[col].model.afterRenderHook();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return this;
         },
         runningFormulator: function () {
             var items,
@@ -6997,62 +7626,6 @@ xCase.extendNamespace = function (path, newClass) {
                     }
                 }
             }
-            return this;
-        },
-        setFieldRelated: function () {
-            var i,
-                j,
-                k,
-                l,
-                fieldA,
-                fieldB,
-                related,
-                relatedA,
-                relatedB,
-                fieldsSubForm,
-                fields = this.items.asArray();
-
-            for (i = 0; i < fields.length; i += 1) {
-                fieldA = fields[i].model.get("variable");
-                if (fieldA) {
-                    for (j = 0; j < fields.length; j += 1) {
-                        if (i !== j) {
-                            fieldB = fields[j].model.get("variable");
-                            if (fieldB) {
-                                if (fieldA.var_uid === fieldB.var_uid) {
-                                    related = fields[i].model.get("fieldsRelated");
-                                    related.push(fields[j]);
-                                    fields[i].model.set("fieldsRelated", related);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (fields[i].model.get("type") === "form") {
-                    fieldsSubForm = fields[i].getItems();
-                    for (k = 0; k < fields.length; k += 1) {
-                        fieldA = fields[k].model.get("variable");
-                        if (fieldA) {
-                            for (l = 0; l < fieldsSubForm.length; l += 1) {
-                                fieldB = fieldsSubForm[l].model.get("variable");
-                                if (fieldB) {
-                                    if (fieldA.var_uid === fieldB.var_uid) {
-                                        relatedA = fields[k].model.get("fieldsRelated");
-                                        relatedA.push(fieldsSubForm[l]);
-                                        fields[k].model.set("fieldsRelated", relatedA);
-
-                                        relatedB = fieldsSubForm[l].model.get("fieldsRelated");
-                                        relatedB.push(fields[k]);
-                                        fieldsSubForm[l].model.set("fieldsRelated", relatedB);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             return this;
         },
         getVariable: function (var_uid) {
@@ -7524,10 +8097,6 @@ xCase.extendNamespace = function (path, newClass) {
 
             return this;
         },
-        changeValuesFieldsRelated: function () {
-            this.model.changeValuesFieldsRelated();
-            return this;
-        },
         /**
          * The method is only supported if the field have options.
          * Checks if the value to sets is inside of the options property.
@@ -7818,7 +8387,9 @@ xCase.extendNamespace = function (path, newClass) {
         setValue: function () {
         },
         getInfo: function () {
-            return this.model.toJSON();
+            var info = this.model.toJSON();
+            // validate if field has a data property
+            return typeof info.data !== "undefined" ? _.extend(info, {value: info.data.value || ""}) : info; 
         },
         setHref: function (value) {
         },
@@ -8230,62 +8801,62 @@ xCase.extendNamespace = function (path, newClass) {
         factory: {},
         initialize: function (options) {
             var factory = {
-                    products: {
-                        "text": {
-                            model: PMDynaform.model.Text,
-                            view: PMDynaform.view.Text
-                        },
-                        "textarea": {
-                            model: PMDynaform.model.TextArea,
-                            view: PMDynaform.view.TextArea
-                        },
-                        "checkbox": {
-                            model: PMDynaform.model.CheckBox,
-                            view: PMDynaform.view.CheckBox
-                        },
-                        "radio": {
-                            model: PMDynaform.model.Radio,
-                            view: PMDynaform.view.Radio
-                        },
-                        "dropdown": {
-                            model: PMDynaform.model.Dropdown,
-                            view: PMDynaform.view.Dropdown
-                        },
-                        "button": {
-                            model: PMDynaform.model.Button,
-                            view: PMDynaform.view.Button
-                        },
-                        "datetime": {
-                            model: PMDynaform.model.Datetime,
-                            view: PMDynaform.view.Datetime
-                        },
-                        "suggest": {
-                            model: PMDynaform.model.Suggest,
-                            view: PMDynaform.view.Suggest
-                        },
-                        "link": {
-                            model: PMDynaform.model.Link,
-                            view: PMDynaform.view.Link
-                        },
-                        "file": {
-                            model: PMDynaform.model.File,
-                            view: PMDynaform.view.File
-                        },
-                        "multiplefile": {
-                            model: PMDynaform.file.MultipleFileModel,
-                            view: PMDynaform.file.MultipleFileView
-                        },
-                        "label": {
-                            model: PMDynaform.model.Label,
-                            view: PMDynaform.view.Label
-                        },
-                        "hidden": {
-                            model: PMDynaform.model.Hidden,
-                            view: PMDynaform.view.Hidden
-                        }
+                products: {
+                    "text": {
+                        model: PMDynaform.model.TextR,
+                        view: PMDynaform.view.TextR
                     },
-                    defaultProduct: "text"
+                    "textarea": {
+                        model: PMDynaform.model.TextAreaR,
+                        view: PMDynaform.view.TextAreaR
+                    },
+                    "checkbox": {
+                        model: PMDynaform.model.CheckBox,
+                        view: PMDynaform.view.CheckBox
+                    },
+                    "radio": {
+                        model: PMDynaform.model.Radio,
+                        view: PMDynaform.view.Radio
+                    },
+                    "dropdown": {
+                        model: PMDynaform.model.DropdownR,
+                        view: PMDynaform.view.DropdownR
+                    },
+                    "button": {
+                        model: PMDynaform.model.Button,
+                        view: PMDynaform.view.Button
+                    },
+                    "datetime": {
+                        model: PMDynaform.model.DatetimeR,
+                        view: PMDynaform.view.DatetimeR
+                    },
+                    "suggest": {
+                        model: PMDynaform.model.SuggestR,
+                        view: PMDynaform.view.SuggestR
+                    },
+                    "link": {
+                        model: PMDynaform.model.Link,
+                        view: PMDynaform.view.Link
+                    },
+                    "file": {
+                        model: PMDynaform.model.File,
+                        view: PMDynaform.view.File
+                    },
+                    "multiplefile": {
+                        model: PMDynaform.file.MultipleFileModel,
+                        view: PMDynaform.file.MultipleFileView
+                    },
+                    "label": {
+                        model: PMDynaform.model.Label,
+                        view: PMDynaform.view.Label
+                    },
+                    "hidden": {
+                        model: PMDynaform.model.Hidden,
+                        view: PMDynaform.view.Hidden
+                    }
                 },
+                defaultProduct: "text"
+            },
                 k,
                 rows = parseInt(this.model.get("rows"), 10);
             this.form = options.form ? options.form : null;
@@ -8411,11 +8982,11 @@ xCase.extendNamespace = function (path, newClass) {
                 if (mergeModel.mode && mergeModel.mode === "parent") {
                     mergeModel.mode = this.model.get("mode");
                 }
-                if ((mergeModel.originalType === "checkbox" || mergeModel.type === "checkbox" ) && mergeModel.mode === "view") {
+                if ((mergeModel.originalType === "checkbox" || mergeModel.type === "checkbox") && mergeModel.mode === "view") {
                     mergeModel.mode = "disabled";
                     mergeModel.disabled = true;
                 }
-                if ((mergeModel.originalType === "checkbox" || mergeModel.type === "checkbox" ) && mergeModel.mode === "disabled") {
+                if ((mergeModel.originalType === "checkbox" || mergeModel.type === "checkbox") && mergeModel.mode === "disabled") {
                     mergeModel.mode = "disabled";
                     mergeModel.disabled = true;
                 }
@@ -8457,6 +9028,7 @@ xCase.extendNamespace = function (path, newClass) {
                     columnWidth: mergeModel.columnWidth || "",
                     defaultValue: mergeModel.defaultValue || "",
                     sql: mergeModel.sql || "",
+                    datasource: mergeModel.datasource || "",
                     required: mergeModel.required || false,
                     hint: mergeModel.hint || "",
                     format: mergeModel.format || null,
@@ -8529,14 +9101,14 @@ xCase.extendNamespace = function (path, newClass) {
                 varSelected,
                 variables = this.model.get("variables");
             loop_variables:
-                if (_.isArray(variables)) {
-                    for (i = 0; i < variables.length; i += 1) {
-                        if (variables[i] && variables[i].var_uid === var_uid) {
-                            varSelected = variables[i];
-                            break loop_variables;
-                        }
+            if (_.isArray(variables)) {
+                for (i = 0; i < variables.length; i += 1) {
+                    if (variables[i] && variables[i].var_uid === var_uid) {
+                        varSelected = variables[i];
+                        break loop_variables;
                     }
                 }
+            }
             return varSelected;
         },
         checkColSpanResponsive: function () {
@@ -8827,6 +9399,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     nameControl = "";
                                     nameHiddeControl = ""
                                 }
+                                $(cell.getIdSelect()).select2('destroy');
                                 idcontrol = "form" + this.changeIdField(this.model.get("id"), i + 1, this.columnsModel[j].id);
                                 control.attr({
                                     name: nameControl,
@@ -8836,6 +9409,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     name: nameHiddeControl,
                                     id: nameHiddeControl
                                 });
+                                $(cell.getIdSelect()).select2(cell.initializeSelect2Query());
                                 this.updateModelCell(cell, i, j);
                                 break;
                             case "label":
@@ -8894,7 +9468,7 @@ xCase.extendNamespace = function (path, newClass) {
                                     this.updateModelCell(cell, i, j);
                                 }
                                 break;
-                            default :
+                            default:
                                 control = $(cell.$el.find(".form-control"));
                                 hiddenControls = element.find("input[type='hidden']");
                                 if (this.model.get("variable") !== "") {
@@ -9429,7 +10003,7 @@ xCase.extendNamespace = function (path, newClass) {
                         elementList = jQuery("<li class = 'sec_" +
                             Math.ceil(this.gridtable.length / 5) + "'><a data-target='#" + this.model.get("id") + "-body' data-slide-to='" +
                             (Math.ceil(this.gridtable.length / this.pageSize) - 1) + "' href=''>" + Math.ceil(this.gridtable.length / this.pageSize) + "</a></li>");
-                        elementList.css({display: "none"});
+                        elementList.css({ display: "none" });
                         if (htmlPager.find(".toNext").length === 0 && (Number(elementList.text().trim()) > 5)) {
                             ellipsis = jQuery('<li class="toNext"><a data-target="#' + this.model.get("id") + '" data-rotate="' + this.model.get("paginationRotate") + '" href="javascript:void(0)">...</a></li>');
                             htmlPager.find(".showItem").last().after(ellipsis);
@@ -9479,7 +10053,7 @@ xCase.extendNamespace = function (path, newClass) {
                 pagerItems = htmlPager.children().not(":first").not(':last').not('.toPrevItem').not('.toNextItem');
                 htmlPager.children().not(":first").not(':last').not('.toPrevItem').not('.toNextItem').eq(0).addClass("active");
                 if (Math.ceil(this.gridtable.length / 5) > 5) {
-                    pagerItems.eq(5 - 1).nextAll().not(':last').not('.toNextItem').css({display: "none"});
+                    pagerItems.eq(5 - 1).nextAll().not(':last').not('.toNextItem').css({ display: "none" });
                     pagerItems.eq(5).prevAll().not(".toFirst").addClass("showItem");
                     pagerItems.eq(5).before('<li class="toNext"><a data-target="#' + this.model.get("id") + '" data-rotate="' + this.model.get("paginationRotate") + '" href="javascript:void(0)">...</a></li>');
                 } else {
@@ -9596,7 +10170,7 @@ xCase.extendNamespace = function (path, newClass) {
                             label.innerHTML = icon + ": ";
                             result.value = title;
                             result.id = (operation + "-" + this.model.get("name") + "-" +
-                            this.gridtable[0][k].model.get("columnName"));
+                                this.gridtable[0][k].model.get("columnName"));
                             $(td).addClass("function-result-" + this.gridtable[0][k].model.get("columnName"));
                             td.appendChild(label);
                             td.appendChild(result);
@@ -9683,6 +10257,7 @@ xCase.extendNamespace = function (path, newClass) {
                     model: rowModel[i],
                     form: this.form
                 });
+
                 cellView.setColumnIndex(i);
                 cellView.setOnFieldFocusCallback(function () {
                     that.scrollToColumn(this.columnIndex);
@@ -9758,8 +10333,8 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             if (this.model.get("layout") === "responsive") {
-                jQuery(tdNumber).css({width: this.indexResponsive});
-                jQuery(tdRemove).css({width: this.removeResponsive});
+                jQuery(tdNumber).css({ width: this.indexResponsive });
+                jQuery(tdRemove).css({ width: this.removeResponsive });
             }
             this.flagRow += 1;
             if (this.paged) {
@@ -9801,7 +10376,7 @@ xCase.extendNamespace = function (path, newClass) {
                             that.setValuesGridFunctions({
                                 row: this.model.attributes.row,
                                 col: this.model.attributes.col,
-                                data: this.model.attributes.value
+                                data: this.model.get("data").value
                             });
                             that.createHTMLTotal();
                         });
@@ -9852,19 +10427,9 @@ xCase.extendNamespace = function (path, newClass) {
          */
         _executeDependenciesByRow: function (row, rowsDataSchema, isHelper) {
             var i;
-            if (_.isArray(row)) {
-                if (_.isArray(rowsDataSchema) && !isHelper) {
-                    for (i = 0; i < row.length; i += 1) {
-                        if ((row[i].getValue() === "" || row[i].getValue() === null) && rowsDataSchema[i] && !rowsDataSchema[i].defined) {
-                            this._runDependencyRow(row[i]);
-                        }
-                    }
-                } else {
-                    for (i = 0; i < row.length; i += 1) {
-                        if (row[i].getValue() === "" || row[i].getValue() === null || isHelper === true) {
-                            this._runDependencyRow(row[i]);
-                        }
-                    }
+            if (_.isArray(row) && (_.isArray(rowsDataSchema) && rowsDataSchema.length === 0 || isHelper)) { //Only works in new Row in GridTable
+                for (i = 0; i < row.length; i += 1) {
+                    this._runDependencyRow(row[i]);
                 }
             }
         },
@@ -9879,8 +10444,8 @@ xCase.extendNamespace = function (path, newClass) {
                 case "textarea":
                 case "dropdown":
                 case "label":
-                    if (row.model.runDependency) {
-                        row.model.runDependency();
+                    if (row.model.get("datasource") === "database" && row.setValueWithoutTriggerDependencies) {
+                        row.setValueWithoutTriggerDependencies(row.model.get("data").value);
                     }
                     break;
             }
@@ -9890,11 +10455,11 @@ xCase.extendNamespace = function (path, newClass) {
          * @param {*} cell
          * @param {*} data
          */
-        _completeRowData: function(cell, data) {
+        _completeRowData: function (cell, data) {
             var type = cell.model.get("originalType"),
                 viewMode = cell.model.get("mode");
             if (type !== "multipleFile") {
-                (viewMode === "edit" || viewMode === "disabled")  ?
+                (viewMode === "edit" || viewMode === "disabled") ?
                     this._setDataToEditMode(cell, data) : this._setDataToViewMode(cell, data);
             }
             return this;
@@ -9909,7 +10474,7 @@ xCase.extendNamespace = function (path, newClass) {
         },
         _setDataToEditMode: function (cell, data) {
             var fixedData;
-            if (cell && data !== undefined && data !== null) {
+            if (cell && data !== undefined && data !== null && data.value) {
                 // Sanitizing the data because from helper arrives only the value and row works wit value and label
                 fixedData = {
                     value: data.value || '',
@@ -9922,12 +10487,16 @@ xCase.extendNamespace = function (path, newClass) {
                         cell.setValue(fixedData.value);
                         break;
                     case 'file':
-                        fixedData.value = fixedData.value === 'string'? [] : fixedData.value;
+                        fixedData.value = fixedData.value === 'string' ? [] : fixedData.value;
                         cell.setData(fixedData);
                         break;
                     case 'text':
-                        cell.model.set({"data": fixedData}, {silent: true});
-                        cell.model.set({"value": fixedData.value}, {silent: true});
+                        cell.model.set({ "data": fixedData }, { silent: true });
+                        cell.model.set({ "value": fixedData.value }, { silent: true });
+                        cell.model.set("toDraw", true);
+                        break;
+                    case 'dropdown':
+                        cell.model.set({ "data": fixedData }, { silent: true });
                         cell.model.set("toDraw", true);
                         break;
                     default:
@@ -9936,8 +10505,8 @@ xCase.extendNamespace = function (path, newClass) {
                         if (!data.label) {
                             cell.setData(fixedData);
                         } else {
-                            cell.model.set({"data": fixedData}, {silent: true});
-                            cell.model.set({"value": fixedData.value}, {silent: true});
+                            cell.model.set({ "data": fixedData }, { silent: true });
+                            cell.model.set({ "value": fixedData.value }, { silent: true });
                             cell.model.set("toDraw", true);
                         }
                         break;
@@ -10443,6 +11012,44 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Method to set Value Async in grid field 
+         * @param {*} value 
+         * @param {*} row 
+         * @param {*} col 
+         * @param {*} fn 
+         */
+        setValueAsync: function (value, row, col, fn) {
+            if (value !== undefined) {
+                if (row !== undefined && col !== undefined) {
+                    if ((row > 0 && col > 0) && row <= this.gridtable.length && col <= this.columnsModel.length) {
+                        return this.gridtable[row - 1][col - 1].setValueAsync(value, fn);
+                    } else {
+                        return null;
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Method to set Text Async in grid field 
+         * @param {*} text 
+         * @param {*} row 
+         * @param {*} col 
+         * @param {*} fn 
+         */
+        setTextAsync: function (text, row, col, fn) {
+            if (text !== undefined) {
+                if (row !== undefined && col !== undefined) {
+                    if ((row > 0 && col > 0) && row <= this.gridtable.length && col <= this.columnsModel.length) {
+                        return this.gridtable[row - 1][col - 1].setTextAsync(text, fn);
+                    } else {
+                        return null;
+                    }
+                }
+            }
+            return this;
+        },
         getValue: function (row, col) {
             return this.model.getValue(row, col);
         },
@@ -10456,7 +11063,7 @@ xCase.extendNamespace = function (path, newClass) {
          */
         createPostVariables: function (rowIndex, columnName, suffix) {
             var index = this.model.get("variable") || this.model.get("id"),
-                suffix =  suffix || '' ;
+                suffix = suffix || '';
             return "form[" + index + "][" + rowIndex + "][" + columnName + suffix + "]";
         },
 
@@ -10890,9 +11497,9 @@ xCase.extendNamespace = function (path, newClass) {
 (function () {
     var DropDownView = PMDynaform.view.Field.extend({
         events: {
-            "change select": "eventListener",
+            "change select": "changeSelectEvent",
             "keydown select": "preventEvents",
-            "focus select": "runDependetOptions"
+            "focus select": "focusSelectEvent"
         },
         clicked: false,
         jsonData: {},
@@ -10904,46 +11511,6 @@ xCase.extendNamespace = function (path, newClass) {
         templateOptions: _.template($("#tpl-dropdown-options").html()),
         existHTML: false,
         /**
-         * runDependetOptions(): when this component is dependent the other field, the options
-         * are set for set full remote options
-         * @return {Dropdown}
-         */
-        runDependetOptions: function () {
-            var value,
-                parent = this.parent,
-                item,
-                that = this,
-                data = {},
-                dependency,
-                i,
-                postRender = true;
-            if (this.firstLoad && this.model.get("sql")) {
-                if (!this.dirty && parent) {
-                    this.tagControl.empty();
-                    value = this.model.get("value") || "";
-                    dependency = this.model.get("dependency");
-                    for (i = 0; i < dependency.length; i += 1) {
-                        if (parent.model.get("type") === "grid") {
-                            item = parent.model.findCellInRow(this.model.get("row"), dependency[i]);
-                        } else {
-                            item = parent.model.get("fields")[dependency[i]];
-                        }
-                        if (item) {
-                            data[dependency[i]] = item.get("value");
-                        }
-                    }
-                    this.model.set("showDependentSpinners", false);
-                    this.model.recoverySyncRemoteOptions(data, postRender, function () {
-                        that.dirty = true;
-                        that.model.trigger("change:options");
-                        that.tagControl.val(value);
-                    });
-                }
-                this.firstLoad = false;
-            }
-            return this;
-        },
-        /**
          * Initializes properties
          * @param options
          */
@@ -10951,10 +11518,9 @@ xCase.extendNamespace = function (path, newClass) {
             this.form = options.form ? options.form : null;
             this.previousValue = this.getValue();
             this.formulaFieldsAssociated = [];
-            this.model.on("change:value", this.eventListener, this, {change: true});
             this.model.on("change:options", this.redrawOptions, this);
             this.model.on("change:toDraw", this.refreshHTML, this);
-            this.model.on("change:data", this.onChangeData, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
         /**
          * removePlaceholder(), this method remove placeholder option,
@@ -10968,8 +11534,7 @@ xCase.extendNamespace = function (path, newClass) {
         /**
          * Default function
          */
-        onChangeCallback: function () {
-        },
+        onChangeCallback: null,
         /**
          * Sets onChangeCallback function
          * @param fn {function}
@@ -10981,47 +11546,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        /**
-         * Listens to change event
-         * @param event
-         * @param value
-         */
-        eventListener: function (event, value) {
-            this.onChange(event, value);
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-        },
-        /**
-         * Executes onChangeCallback function
-         */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
-            // For execute formulas in the fields associated
-            this.onFieldAssociatedHandler();
-        },
-        preventEvents: function (event) {
-            //Validation for the Submit event
-            if (event.which === 13) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            return this;
-        },
         setValueDefault: function () {
             var val = $(this.el).find(":selected").val();
             if (val != undefined && val != null) {
@@ -11030,58 +11554,10 @@ xCase.extendNamespace = function (path, newClass) {
                 this.model.set("value", "");
             }
         },
-        updateValues: function (event, value) {
-            var hiddenInput,
-                label,
-                newValue,
-                option;
-            if (!event.type) {
-                this.tagControl.val(value);
-            }
-            option = this.tagControl.find(":selected");
-            if (this.tagControl) {
-                this.tagControl.children().removeAttr("selected");
-                option.prop("selected", true);
-                option.attr("selected", "selected");
-                label = option.text().trim();
-                hiddenInput = this.$el.find("input[type='hidden']");
-                hiddenInput.val(label);
-                newValue = this.tagControl.val();
-                this.model.set("keyLabel", label);
-                this.model.set({"value": newValue}, {silent: true});
-                this.updateDataModel(newValue, label);
-            }
-            return this;
-        },
-        updateDataModel: function (value, label) {
-            var data;
-            data = {
-                value: value,
-                label: label
-            };
-            this.model.set("data", data);
-            this.$el.find(".content-print").text(data.label);
-            return this;
-        },
-        /**
-         * Updates data and value
-         * @param event
-         * @param value
-         * @returns {DropDownView}
-         */
-        onChange: function (event, value) {
-            if (this.model.get("therePlaceholder")) {
-                this.removePlaceholder();
-            }
-            this.updateValues(event, value);
-            this.validate();
-            this.clicked = false;
-            return this;
-        },
         validate: function () {
             var drpValue;
             drpValue = this.$el.find("select").val() || "";
-            this.model.set({value: drpValue}, {validate: true});
+            this.model.set({ value: drpValue }, { validate: true });
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
                     this.validator.$el.remove();
@@ -11098,18 +11574,6 @@ xCase.extendNamespace = function (path, newClass) {
             } else {
                 this.model.attributes.valid = true;
             }
-            return this;
-        },
-        updateValueControl: function () {
-            var i,
-                options = this.$el.find("select").find("option");
-            loop:
-                for (i = 0; i < options.length; i += 1) {
-                    if (options[i].selected) {
-                        this.model.set("value", options[i].value);
-                        break loop;
-                    }
-                }
             return this;
         },
         on: function (e, fn) {
@@ -11134,9 +11598,9 @@ xCase.extendNamespace = function (path, newClass) {
          * Refresh dropdown in grids
          * @return {DropDownView}
          */
-        refreshHTML: function () {
+        refreshHTML: function () { //this method is used in grid when set data and executes this method, it's works in load data from BackEnd
             if (this.existHTML && this.model.get("group") === "grid") {
-                if (_.isArray(this.model.get("dependency")) && this.model.get("dependency").length) {
+                if (!this.model.findValueInOptions(this.model.get("data")["value"])) {
                     this._setOptions([this.model.get("data")]);
                     this.tagHiddenToLabel.val(this.model.get("data")["label"]);
                 } else {
@@ -11145,6 +11609,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Render the field View
+         * @return {DropDownView}
+         */
         render: function () {
             var hidden,
                 name;
@@ -11171,8 +11639,7 @@ xCase.extendNamespace = function (path, newClass) {
             }
             this.$el.find(".content-print").text(this.model.get("data")["label"]);
             this.tagControl = this.$el.find("select");
-            this.tagControl.val(this.model.get("value") || "");
-            this.tagControl.val(this.model.get("value").toString() || "");
+            this.tagControl.val(this.model.get("data")["value"].toString() || "");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
             // Append  Spinner
@@ -11180,39 +11647,11 @@ xCase.extendNamespace = function (path, newClass) {
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
-        mergeOptions: function (remoteOptions, returnOptions) {
-            var k, remoteOpt = [],
-                localOpt,
-                options;
-            for (k = 0; k < remoteOptions.length; k += 1) {
-                remoteOpt.push({
-                    value: remoteOptions[k].value,
-                    label: remoteOptions[k].text || remoteOptions[k].label || ""
-                });
-            }
-            localOpt = this.model.get("localOptions");
-            this.model.attributes.remoteOptions = remoteOpt;
-            this.model.attributes.optionsSql = remoteOpt;
-            options = localOpt.concat(remoteOpt);
-            this.model.attributes.options = options;
-            this._setOptions(this.model.get("options"));
-            if (returnOptions) {
-                return options;
-            }
-            if (options.length) {
-                this.model.attributes.data = {
-                    value: options[0].value,
-                    label: options[0].label
-                };
-                if (this.model.get("validator")) {
-                    this.model.get("validator").set("valid", true);
-                }
-                this.model.set("value", options[0].value);
-            } else {
-                this.model.set("value", "");
-            }
-            return options;
-        },
+        /**
+         * Set options in html control
+         * @param {*} options 
+         * @return {DropDownView}
+         */
         _setOptions: function (options) {
             var htmlOptions,
                 placeholderOption = {},
@@ -11230,45 +11669,36 @@ xCase.extendNamespace = function (path, newClass) {
             selectControl.append(htmlOptions);
             return this;
         },
+        /**
+         * Set data in options
+         * @return {DropDownView}
+         */
         _setDataOption: function () {
             var data = this.model.get("data");
-            if (data && data["value"]) {
+            if (data && data["value"] && !this.model.findOption(data["value"], "value")) {
                 this._setOptions([data]);
             }
             return this;
         },
         /**
-         * Sets value and updates previousValue
-         * @param value
-         * @returns {DropDownView}
+         * Returns a label from model
+         * @return {*}
          */
-        setValue: function (value) {
-            var currentValue = this.model.get("value");
-            if (value !== undefined) {
-                this.previousValue = this.getValue();
-                if (value === currentValue && this.firstLoad) {
-                    this.model.trigger("change:value", this.model, value);
-                } else {
-                    // force to execute the dependent field if there is
-                    if (this.model.get("group") === "grid" && this.firstLoad) {
-                        this.runDependetOptions();
-                    }
-                    this.form.model.set("isSync", true);
-                    this.model.set("value", value);
-                    this.form.model.set("isSync", false);
-                    this.switchSpinnerByControl();
-                }
-                this.firstLoad = false;
-            }
-            return this;
-        },
         getText: function () {
             var data = this.model.get("data");
             return data ? data["label"] : null;
         },
+        /**
+         * Returns the value model
+         * @return {String}
+         */
         getValue: function () {
             return this.model.getValue();
         },
+        /**
+         * Returns the control field
+         * @return {*}
+         */
         getControl: function () {
             var htmlControl = this.$el.find("select");
             return htmlControl;
@@ -11286,22 +11716,296 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * onChangeData, set label of the data in the hidden tag
-         * @chainable
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @return {DropDownView}
          */
-        onChangeData: function () {
+        changeSelectEvent: function (event, value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+                that.validate();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value 
+         * @param {*} fn 
+         * @return {DropDownView}
+         */
+        changeHelperEvent: function (value, fn) {
+            var dt, that = this;
+            this.tagControl.val(value);
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            });
+            return this;
+        },
+
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @param {*} fn 
+         * @return {DropDownView}
+         */
+        updateView: function (fn) {
+            var dt = {
+                value: "",
+                label: ""
+            }
+            dt = this.updateFieldView();
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            //The validation works with the model data: value-label, in this moment the model data is correct
+            this.validate();
+            return this;
+        },
+        /**
+         * Update the view
+         * @return {*}
+         */
+        updateFieldView: function () {
+            var hiddenInput,
+                label,
+                option;
+            if (this.model.get("therePlaceholder")) {
+                this.removePlaceholder();
+            }
+            option = this.tagControl.find(":selected");
+            if (this.tagControl) {
+                this.tagControl.children().removeAttr("selected");
+                option.prop("selected", true);
+                option.attr("selected", "selected");
+                label = option.text().trim();
+                hiddenInput = this.$el.find("input[type='hidden']");
+                hiddenInput.val(label);
+                value = this.tagControl.val();
+            }
+            this.$el.find(".content-print").text(label);
+            this.clicked = false;
+            return {
+                value: value,
+                label: label
+            };
+        },
+        /**
+         * Helper setValue
+         * @param {*} value 
+         * @param {*} fn 
+         * @return {DropDownView}
+         */
+        setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Helper setText
+         * @param {*} txt 
+         * @return {DropDownView}
+         */
+        setText: function (txt) {
+            var opt = this.model.findTextInOptions(txt);
+            if (opt) {
+                this.setValue(opt["value"]);
+            }
+            return this;
+        },
+        /**
+         * Helper setText async mode
+         * @param {*} txt 
+         * @param {function} fn 
+         * @return {DropDownView}
+         */
+        setTextAsync: function (txt, fn) {
+            var that = this,
+                callback,
+                currentValue = this.model.get("data").value;
+            if (txt) {
+                this.previousValue = currentValue;
+                callback = function () {
+                    var opt = that.model.findTextInOptions(txt);
+                    if (opt && opt["value"]) {
+                        that.changeHelperEvent(opt && opt["value"] ? opt["value"] : "", fn);
+                        that.firstLoad = false;
+                    }
+                    that.switchSpinnerByControl();
+                };
+                this.switchControlBySpinner();
+                if (txt !== currentValue && this.firstLoad) {
+                    this.model.getRemoteOptions(callback);
+                } else {
+                    callback();
+                }
+            }
+            return this;
+        },
+        /**
+         * Helper SetValueAsync
+         * @param {*} value
+         * @param {*} fn
+         * @return {DropDownView}
+         */
+        setValueAsync: function (value, fn) {
+            var that = this,
+                callback,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                callback = function () {
+                    that.changeHelperEvent(value, fn);
+                    that.firstLoad = false;
+                    that.switchSpinnerByControl();
+                };
+                this.switchControlBySpinner();
+                if (value !== currentValue && this.firstLoad) {
+                    this.model.getRemoteOptions(callback);
+                } else {
+                    callback();
+                }
+            }
+            return this;
+        },
+        /**
+         * SetValue, get Remote options, update the view and model but not trigger the dependencies without execute onchangecallbacks
+         * @param {*} value
+         * @param {*} fn
+         * @return {DropDownView}
+         */
+        setValueWithoutTriggerDependencies: function (value, fn) {
+            var that = this,
+                dataOption,
+                criteria = "value";
+            if (value !== undefined && value !== null) {
+                this.model.getRemoteOptions(function (data, err) {
+                    dataOption = that.model.findOption(value, criteria);
+                    that.model.setFirstOptionInData();
+                    // If not exist the value in options, we need show the first options and we need update the hidden
+                    if (dataOption) {
+                        that.model.set("data", dataOption);
+                        that.refreshHTML();
+                    }
+                    //Always we need update the hidden
+                    that.changeHidden();
+                    if (_.isFunction(fn)) {
+                        fn();
+                    }
+                });
+            }
+            return this;
+        },
+        /**
+         * Prevents bubble events in dropdown
+         * @param {*} event 
+         * @return {DropDownView}
+         */
+        preventEvents: function (event) {
+            //Validation for the Submit event
+            if (event.which === 13) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            return this;
+        },
+        /**
+         * Event focus in Select, trigger the remote options
+         * @return {DropDownView}
+         */
+        focusSelectEvent: function () {
+            var value, that = this;
+            if (this.firstLoad && this.model.get("sql")) {
+                this.tagControl.empty();
+                //Save the value older to set when exeecute query for remote options 
+                value = this.model.get("data").value || "";
+                this.model.set("showDependentSpinners", false);
+                this.model.getRemoteOptions(function (data, err) {
+                    that.tagControl.val(value);
+                    that.switchSpinnerByControl();
+                });
+                if (PMDynaform.core.ProjectMobile) {
+                    this.model.trigger("change:options"); // Only display with old data in dropdown
+                }
+            }
+            return this;
+        },
+        /**
+         * Change the hidden view in Dropdown field
+         * @return {DropDownView}
+         */
+        changeHidden: function () {
             var data = this.model.get("data"),
                 hiddenInput = this.tagHiddenToLabel;
             if (data.hasOwnProperty("label")) {
                 hiddenInput.val(data.label);
             }
             return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        dependencyDidUpdateView: function () {
+            this.changeHidden();
+            this.switchSpinnerByControl();
+            this.validate();
+        },
+        /**
+         * Execute the change callback on view
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            if (paramsValue.current !== paramsValue.previous) {
+                if (_.isFunction(this.onChangeCallback)) {
+                    this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                }
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+            }
+            this.onFieldAssociatedHandler();
+            this.switchSpinnerByControl();
+        },
+        setData: function (data) {
+            var value, label;
+            if (this.model.get("type") !== "submit" && this.model.get("type") !== "button" && this.model.get("type") !== "panel") {
+                if (this.model.get("type") === "label") {
+                    this.setValue(data);
+                } else {
+                    value = data["value"];
+                    this.setValue(value);
+                }
+            }
+            return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.view.Dropdown", DropDownView);
+    PMDynaform.extendNamespace("PMDynaform.view.DropdownR", DropDownView);
 
 }());
-
 (function () {
     var RadioView = PMDynaform.view.Field.extend({
         clicked: false,
@@ -11310,7 +12014,7 @@ xCase.extendNamespace = function (path, newClass) {
         templateOptions: _.template($("#tpl-radio-options").html()),
         existHTML: false,
         events: {
-            "change input": "eventListener",
+            "change input": "changeRadioEvent",
             "keydown input": "preventEvents"
         },
         /**
@@ -11322,10 +12026,15 @@ xCase.extendNamespace = function (path, newClass) {
             this.previousValue = this.getValue();
             // this property have a control of formulas field
             this.formulaFieldsAssociated = [];
-            this.model.on("change:value", this.eventListener, this);
             this.model.on("change:options", this.redrawOptions, this);
             this.model.on("change:toDraw", this.render, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
+        /**
+         * Prevent propagation
+         * @param {*} event 
+         * @returns {RadioView}
+         */
         preventEvents: function (event) {
             //Validation for the Submit event
             if (event.which === 13) {
@@ -11351,38 +12060,9 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Listens to change event
-         * @param event
-         * @param value
+         * Render the view
+         * @returns {RadioView}
          */
-        eventListener: function (event, value) {
-            this.onChange(event, value);
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-        },
-        /**
-         * Executes onChangeCallBack function
-         */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            // For execute the formula field associated
-            this.onFieldAssociatedHandler();
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
-        },
         render: function () {
             this.existHTML = true;
             this.$el.html(this.template(this.model.toJSON()));
@@ -11403,8 +12083,12 @@ xCase.extendNamespace = function (path, newClass) {
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
+        /**
+         * Validate the model and update the view with the validators
+         * @returns {RadioView}
+         */
         validate: function () {
-            this.model.set({}, {validate: true});
+            this.model.set({}, { validate: true });
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
                     this.validator.$el.remove();
@@ -11419,65 +12103,6 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             } else {
                 this.model.attributes.valid = true;
-            }
-            return this;
-        },
-        /**
-         * Updates data and value
-         * @param event
-         * @param value
-         */
-        onChange: function (event, value) {
-            var option;
-            this.clicked = true;
-            if (value !== undefined && value !== null) {
-                option = this.model.findOption(value, "value");
-                this.updateDom(option);
-                this.$el.find(".content-print").text(this.model.get("data")["label"]);
-            } else {
-                option = $(event.target);
-                this.updateModel(option);
-            }
-            if (option) {
-                this.validate();
-                //find and execute dependent fields
-                this.clicked = false;
-            }
-        },
-        updateDom: function (option) {
-            var selectedHTMLOption;
-
-            if (option !== null) {
-                selectedHTMLOption = this.tagControl.find('input[type=radio][value="' + option.value + '"]');
-            }
-            if (selectedHTMLOption && selectedHTMLOption.length) {
-                selectedHTMLOption[0].checked = true;
-                this.updateValueHiddenControl(option.label);
-            } else {
-                this.tagControl.find('input[type=radio]').attr('checked', false);
-            }
-            return this;
-        },
-        /**
-         * Updates data and value of the model
-         * @param tagOption
-         * @returns {RadioView}
-         */
-        updateModel: function (tagOption) {
-            var option,
-                value = tagOption.val();
-            option = this.model.findOption(value, "value");
-            if (option && option.value) {
-                this.model.set("data", {
-                    value: option.value,
-                    label: option.label
-                });
-                this.$el.find(".content-print").text(option.label);
-                //update aria-label
-                this.updateAccessibility({ariaLabel: option.label, tagOption: tagOption});
-                this.model.attributes.value = option.value;
-                this.model.attributes.keyLabel = option.label;
-                this.updateValueHiddenControl(option.label);
             }
             return this;
         },
@@ -11501,29 +12126,24 @@ xCase.extendNamespace = function (path, newClass) {
             return this.$el.find(".pmdynaform-control-radio-list");
         },
         /**
-         * Sets value and updates previous value
-         * @param value
-         * @returns {RadioView}
+         * Helper getText
+         * @returns {Object}
          */
-        setValue: function (value) {
-            var dataSelected = this.model.findOption(value, "value") || {value: "", label: ""};
-            this.previousValue = this.getValue();
-            this.form.model.set("isSync", true);
-            this.model.set("data", {
-                value: dataSelected.value,
-                label: dataSelected.label
-            });
-            this.model.set("value", value);
-            this.form.model.set("isSync", false);
-            return this;
-        },
         getText: function () {
             var data = this.model.get("data");
             return data ? data["label"] : null;
         },
+        /**
+         * Helper getValue
+         * @returns {Object}
+         */
         getValue: function () {
             return this.model.getValue();
         },
+        /**
+         * Render the options model
+         * @returns {RadioView}
+         */
         renderOptions: function () {
             var htmlOptions,
                 contendControl,
@@ -11545,6 +12165,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Returns the html control
+         * @returns {*}
+         */
         getControl: function () {
             return this.$el.find("input[type='radio']");
         },
@@ -11559,10 +12183,185 @@ xCase.extendNamespace = function (path, newClass) {
                 this.updateValueHiddenControl(data["label"] || "");
             }
             return this;
+        },
+        /**
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @returns {RadioView}
+         */
+        changeRadioEvent: function (event, value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {RadioView}
+         */
+        changeHelperEvent: function (value, fn) {
+            var that = this;
+            this.updateView(function () {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            }, value);
+            return this;
+        },
+        /**
+        * EXECUTION DEPENDENCIES METHOD
+        * Update only view of checkgroup
+        * @param {*} value 
+        * @param {*} fn 
+        * @returns {RadioView}
+        */
+        updateView: function (fn, value) {
+            var dt = {
+                value: "",
+                label: ""
+            }
+            dt = this.updateFieldView(value);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            this.validate();
+            return this;
+        },
+        /**
+         * Update the view radio items
+         * @param {*} value 
+         * @returns {*}
+         */
+        updateFieldView: function (value) {
+            var tagOption, option, selectedHTMLOption;
+            this.clicked = true;
+            if (value) {
+                option = this.model.findOption(value, "value");
+                if (option !== null) {
+                    selectedHTMLOption = this.tagControl.find('input[type=radio][value="' + option.value + '"]');
+                }
+                if (selectedHTMLOption && selectedHTMLOption.length) {
+                    selectedHTMLOption[0].checked = true;
+                    this.updateValueHiddenControl(option.label);
+                } else {
+                    this.tagControl.find('input[type=radio]').attr('checked', false);
+                }
+                this.$el.find(".content-print").text(this.model.get("data")["label"]);
+            } else {
+                tagOption = $(event.target);
+                value = tagOption.val();
+                option = this.model.findOption(value, "value");
+                if (option && option.value) {
+                    this.$el.find(".content-print").text(option.label);
+                    this.updateAccessibility({ ariaLabel: option.label, tagOption: tagOption });
+                    this.updateValueHiddenControl(option.label);
+                }
+            }
+            if (option) {
+                this.clicked = false;
+            }
+            return option;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        dependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate").error && this.model.get("dependencyDidUpdate").error !== "abort") {
+                this.showQueryFailMessage();
+            }
+            this.switchSpinnerByControl();
+            this.validate();
+        },
+        /**
+         * Executes onChangeCallBack function
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            // For execute the formula field associated
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+            }
+            this.onFieldAssociatedHandler();
+        },
+        /**
+         * Sets value and update previousValue
+         * @param value
+         * @returns {RadioView}
+         */
+        setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Sets value and update previousValue
+         * @param value
+         * @returns {RadioView}
+         */
+        setValueAsync: function (value, fn) {
+            var that = this,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                that.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * Helper setText
+         * @param {*} txt 
+         * @returns {RadioView}
+         */
+        setText: function (txt) {
+            var opt = this.model.findTextInOptions(txt);
+            if (opt) {
+                this.setValue(opt["value"]);
+            }
+            return this;
+        },
+        /**
+         * Helper setText async mode
+         * @param {*} txt
+         * @returns {RadioView} 
+         */
+        setTextAsync: function (txt, fn) {
+            var opt = this.model.findTextInOptions(txt);
+            if (opt) {
+                this.setValueAsync(opt["value"], fn);
+            }
+            return this;
         }
     });
 
-    PMDynaform.extendNamespace("PMDynaform.view.Radio", RadioView);
+    PMDynaform.extendNamespace("PMDynaform.view.RadioR", RadioView);
 }());
 
 (function () {
@@ -11623,7 +12422,7 @@ xCase.extendNamespace = function (path, newClass) {
         keyPressed: false,
         previousValue: "",
         events: {
-            "change textarea": "eventListener",
+            "change textarea": "changeInputEvent",
             "keydown textarea": "refreshBinding"
         },
         /**
@@ -11650,48 +12449,17 @@ xCase.extendNamespace = function (path, newClass) {
             // this property have a control of formulas field
             this.form = options.form ? options.form : null;
             this.formulaFieldsAssociated = [];
-            this.model.on("change:value", this.eventListener, this);
+            this.model.on("change:data", this.updateValueInput, this);
             this.model.on("change:toDraw", this.render, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
+        /**
+         * Update the keypressed property
+         * @returns {TextareaView}
+         */
         refreshBinding: function () {
             this.keyPressed = true;
             return this;
-        },
-        /**
-         * Listens to event change
-         * @param event
-         * @returns {TextareaView}
-         */
-        eventListener: function (event) {
-            this.onChange(event);
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-            return this;
-        },
-        /**
-         * Executes onChangeCallback function
-         */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            this.onFieldAssociatedHandler();
-            if (this.model.get("operation")) {
-                this.onChangeCallbackOperation(this);
-            }
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
         },
         /**
          * Updates the values in the inputs controls nodes
@@ -11708,40 +12476,9 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Updates data and value
-         * @param event
+         * Render method
          * @returns {TextareaView}
          */
-        onChange: function (event) {
-            var label = "";
-            if (event.type !== "change") {
-                this.updateValueInput();
-            }
-            if (event.type === "change") {
-                this.updateDataModel();
-                this.updateValueInput();
-            }
-            if (this.model.get("data") !== undefined) {
-                label = this.model.get("data")["label"] ? this.model.get("data")["label"] : "";
-                this.$el.find(".content-print").text(label);
-            }
-            this.validate(event);
-            this.clicked = false;
-            return this;
-        },
-        /**
-         * Updates model's data
-         * @returns {TextareaView}
-         */
-        updateDataModel: function () {
-            var data;
-            data = {
-                value: this.tagControl.val(),
-                label: this.tagControl.val()
-            };
-            this.model.set("data", data);
-            return this;
-        },
         render: function () {
             var hidden, name;
             this.$el.html(this.template(this.model.toJSON()));
@@ -11769,6 +12506,11 @@ xCase.extendNamespace = function (path, newClass) {
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
+        /**
+         * Validate the model and views validators
+         * @param {*} event 
+         * @returns {TextareaView}
+         */
         validate: function (event) {
             var originalValue;
             originalValue = this.tagControl.val();
@@ -11790,12 +12532,15 @@ xCase.extendNamespace = function (path, newClass) {
             } else {
                 this.model.attributes.valid = true;
             }
-            this.changeValuesFieldsRelated();
             this.keyPressed = false;
             // For execute the formula field associated
             this.onFieldAssociatedHandler();
             return this;
         },
+        /**
+         * Suscribe listeners in field
+         * @returns {TextareaView}
+         */
         on: function (e, fn) {
             var that = this,
                 control = this.$el.find("textarea");
@@ -11812,29 +12557,10 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Gets HTML textarea of the control
+         * @returns {*}
          */
         getHTMLControl: function () {
             return this.$el.find("textarea");
-        },
-        mergeOptions: function (remoteOptions, click) {
-            var k, item;
-            if (_.isArray(remoteOptions) && remoteOptions.length) {
-                item = remoteOptions[0];
-                if (item.hasOwnProperty("value")) {
-                    this.model.attributes.data = {
-                        value: item["value"],
-                        label: item["value"]
-                    };
-                    this.model.set("value", item["value"]);
-                } else {
-                    this.model.set("value", "");
-                    this.model.attributes.data = {value: "", label: ""};
-                }
-            } else {
-                this.model.attributes.data = {value: "", label: ""};
-                this.model.set("value", "");
-            }
-            return this;
         },
         /**
          * Calls setValue of the TextareaModel
@@ -11860,15 +12586,208 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Gets value of data
+         * @returns {*}
          */
         getValue: function () {
             return this.model.getValue();
         },
+        /**
+         * Returns the html control
+         * @returns {*}
+         */
         getControl: function () {
             return this.$el.find("textarea");
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @returns {TextareaView}
+         */
+        updateView: function (fn, val) {
+            var dt = {
+                value: "",
+                label: ""
+            }
+            dt = this.updateFieldView(val);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            this.validate();
+            return this;
+        },
+        /**
+         * Update the view and return the data to update the model
+         * @param {*} val 
+         */
+        updateFieldView: function (val) {
+            var label = "",
+                textInput = this.getControl(),
+                hiddenInput = this.$el.find("input[type='hidden']");
+            if (val && val != "") {
+                textInput.val(val);
+            }
+            hiddenInput.val(textInput.val());
+            this.$el.find(".content-print").text(textInput.val());
+            this.clicked = false;
+            return {
+                value: textInput.val(),
+                label: textInput.val()
+            }
+        },
+        /**
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @returns {TextareaView}
+         */
+        changeInputEvent: function (event, value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextareaView}
+         */
+        changeHelperEvent: function (value, fn) {
+            var dt, that = this;
+            this.tagControl.val(value);
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            }, value);
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        dependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate").error && this.model.get("dependencyDidUpdate").error !== "abort") {
+                this.showQueryFailMessage();
+            }
+            this.switchSpinnerByControl();
+        },
+        /**
+         * Executes onChangeCallBack function
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            if (this.model.get("group") === "grid" && this.onChangeCallbackOperation) {
+                if (typeof this.onChangeCallbackOperation === "function") {
+                    this.onChangeCallbackOperation();
+                }
+            }
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+            }
+            this.onFieldAssociatedHandler();
+        },
+        /**
+         * Helper SetValueAsync
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextareaView}
+         */
+        setValueAsync: function (value, fn) {
+            var that = this,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                that.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * Helper SetValueAsync
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextareaView}
+         */
+        setTextAsync: function (value, fn) {
+            var that = this,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                that.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * Helper setValue
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextareaView}
+         */
+        setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Helper setText
+         * @param {*} txt 
+         * @returns {TextareaView}
+         */
+        setText: function (txt) {
+            this.setValue(txt);
+            return this;
+        },
+        /**
+         * SetValue, get Remote options, update the view and model but not trigger the dependencies without execute onchangecallbacks
+         * @param {*} value
+         * @param {*} fn
+         * @return {TextAreaView}
+         */
+        setValueWithoutTriggerDependencies: function (value, fn) {
+            var that = this,
+                dataOption,
+                criteria = "value";
+            if (value !== undefined && value !== null) {
+                this.model.getRemoteOptions(function (data, err) {
+                    dataOption = that.model.findOption(value, criteria);
+                    if (dataOption) {
+                        that.updateFieldView(dataOption.value);
+                    } else {
+                        that.model.setFirstOptionInData();
+                    }
+                    if (_.isFunction(fn)) {
+                        fn();
+                    }
+                });
+            }
+            return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.view.TextArea", TextareaView);
+    PMDynaform.extendNamespace("PMDynaform.view.TextAreaR", TextareaView);
 }());
 
 (function () {
@@ -11883,7 +12802,7 @@ xCase.extendNamespace = function (path, newClass) {
         jsonData: {},
         spinner: null,
         events: {
-            "change input": "eventListener",
+            "change input": "changeInputEvent",
             "keydown input": "refreshBinding"
         },
         /**
@@ -11903,139 +12822,23 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Sets onChangeCallbackOperation
-         * @param fn {function}
-         * @returns {TextView}
-         */
-        setOnChangeCallbackOperation: function (fn) {
-            if (typeof fn === "function") {
-                this.onChangeCallbackOperation = fn;
-            }
-            return this;
-        },
-        /**
          * Initializes field properties
          * @param options {object}
          */
         initialize: function (options) {
+            var that = this;
             this.form = options.form ? options.form : null;
             this.previousValue = this.model.get("value");
             this.formulaFieldsAssociated = [];
-            this.model.on("change:data", this.eventListener, this);
-            this.model.on("change:value", this.eventListener, this);
+            this.model.on("change:data", this.updateValueInput, this);
             this.model.on("change:toDraw", this.render, this);
-        },
-        on: function (e, fn) {
-            var that = this,
-                control,
-                localEvents = {
-                    "changeValues": "setOnChangeCallbackOperation"
-                };
-            if (localEvents[e]) {
-                this[localEvents[e]](fn);
-            } else {
-                control = this.$el.find("input");
-                if (control) {
-                    control.on(e, function (event) {
-                        fn(event, that);
-                        event.stopPropagation();
-                    });
-                } else {
-                    throw new Error("Is not possible find the HTMLElement associated to field");
-                }
-            }
-            return this;
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
         /**
-         * Listen to event change
-         * @param event
+         * Prevent Events
+         * @param {*} event 
          * @returns {TextView}
          */
-        eventListener: function (event) {
-            this.onChange(event);
-            this.onFieldAssociatedHandler();
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-            return this;
-        },
-        /**
-         * Executes onChangeCallBack function
-         */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            if (this.model.get("group") === "grid" && this.onChangeCallbackOperation) {
-                if (typeof this.onChangeCallbackOperation === "function") {
-                    this.onChangeCallbackOperation();
-                }
-            }
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
-        },
-        /**
-         * Updates data and value
-         * @param event
-         * @returns {TextView}
-         */
-        onChange: function (event) {
-            var label = "";
-            if (event.type === "change") {
-                this.updateDataModel(event);
-            } else {
-                this.updateValueInput();
-            }
-            this.onTextTransform(this.tagControl.val());
-            if (this.model.get("data") !== undefined) {
-                label = this.model.get("data")["label"] ? this.model.get("data")["label"] : "";
-                this.$el.find(".content-print").text(label);
-            }
-            this.validate(event);
-            this.clicked = false;
-            return this;
-        },
-        /**
-         * Updates the values in the inputs controls nodes
-         * @returns {TextView}
-         */
-        updateValueInput: function () {
-            var currentLabel = this.getText(),
-                textInput = this.getControl(),
-                hiddenInput = this.$el.find("input[type='hidden']");
-            textInput.val(currentLabel);
-            hiddenInput.val(currentLabel);
-            return this;
-        },
-        /**
-         * Update model (data and value)
-         * @returns {TextView}
-         */
-        updateDataModel: function (event) {
-            var controlHtml = this.getControl(),
-                valueControl = controlHtml.val() || "";
-            this.setValue(valueControl);
-            return this;
-        },
-        findKeyValue: function (value) {
-            var i, options = this.model.get("options");
-            for (i = 0; i < options.length; i += 1) {
-                if (options[i]["label"] === value) {
-                    return options[i]["value"];
-                }
-            }
-            return null;
-        },
         refreshBinding: function (event) {
             //Validation for the Submit event
             if (event.which === 13) {
@@ -12045,6 +12848,11 @@ xCase.extendNamespace = function (path, newClass) {
             this.keyPressed = true;
             return this;
         },
+        /**
+         * Merge remote options 
+         * @param {*} remoteOptions 
+         * @param {*} click 
+         */
         mergeOptions: function (remoteOptions, click) {
             var item;
             if (remoteOptions.length) {
@@ -12058,6 +12866,13 @@ xCase.extendNamespace = function (path, newClass) {
                 this.model.setValue("");
             }
         },
+        /**
+         * Validate the view
+         * @param {*} event 
+         * @param {*} b 
+         * @param {*} c 
+         * @returns {TextView}
+         */
         validate: function (event, b, c) {
             this.keyPressed = true;
             this.model.set("validate", true);
@@ -12078,11 +12893,6 @@ xCase.extendNamespace = function (path, newClass) {
                 this.model.attributes.valid = true;
             }
             this.keyPressed = false;
-            return this;
-        },
-        updateValueControl: function () {
-            var inputVal = this.$el.find("input").val();
-            this.model.set("value", inputVal);
             return this;
         },
         /**
@@ -12198,10 +13008,15 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Gets HTML input of the control
+         * @returns {*}
          */
         getHTMLControl: function () {
             return this.$el.find("input");
         },
+        /**
+         * Render method
+         * @returns {TextView}
+         */
         render: function () {
             var hidden,
                 name;
@@ -12215,7 +13030,7 @@ xCase.extendNamespace = function (path, newClass) {
                 name = this.model.get("name");
                 name = name.substring(0, name.length - 1).concat("_label]");
                 hidden.name = hidden.id = "form" + name;
-                hidden.value = this.model.get("value");
+                hidden.value = this.model.get("data").value;
             }
             if (this.model.get("group") === "form" && this.model.get("formula")) {
                 this.onFormula();
@@ -12235,20 +13050,6 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Sets value and updates previousValue
-         * @param value {string}
-         * @returns {TextView}
-         */
-        setValue: function (value) {
-            if (value !== undefined) {
-                this.previousValue = this.getValue();
-                this.form.model.set("isSync", true);
-                this.model.setValue(value);
-                this.form.model.set("isSync", false);
-            }
-            return this;
-        },
-        /**
          * Gets label of data
          * @returns {null}
          */
@@ -12258,18 +13059,262 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Gets value of data
+         * @returns {*}
          */
         getValue: function () {
             return this.model.getValue();
         },
         /**
          * Gets HTML control
+         * @returns {*}
          */
         getControl: function () {
             return this.$el.find(":input:not([type=hidden])") //hidden is not considered
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @param {*} fn
+         * @param {*} val  
+         * @returns {TextView}
+         */
+        updateView: function (fn, val) {
+            var dt = {
+                value: "",
+                label: ""
+            }
+            dt = this.updateFieldView(val);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            this.validate();
+            return this;
+        },
+        /**
+         * Update the field view :: if exist val, the execution comes from helper
+         * @param {*} val 
+         * @returns {*}
+         */
+        updateFieldView: function (val) { // ATTENTION:: With any change verify the fix with helpers, change input, the hidden update and the textTransform method
+            var textInput = this.getControl(),
+                hiddenInput = this.$el.find("input[type='hidden']");
+            if (!val) {
+                // The execution comes from change in input 
+                val = textInput.val();
+            }
+            this.onTextTransform(val);
+            hiddenInput.val(val);
+            this.$el.find(".content-print").text(textInput.val());
+            this.clicked = false;
+            return {
+                value: val,
+                label: val
+            }
+        },
+        /**
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @returns {TextView}
+         */
+        changeInputEvent: function (event, value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextView}
+         */
+        changeHelperEvent: function (value, fn) {
+            var dt, that = this;
+            this.tagControl.val(value);
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            }, value);
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        dependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate").error && this.model.get("dependencyDidUpdate").error !== "abort") {
+                this.showQueryFailMessage();
+            }
+            this.onFieldAssociatedHandler();
+            this.switchSpinnerByControl();
+        },
+        /**
+         * Executes onChangeCallBack function
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            if (this.model.get("group") === "grid" && this.onChangeCallbackOperation) {
+                if (typeof this.onChangeCallbackOperation === "function") {
+                    this.onChangeCallbackOperation();
+                }
+            }
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+            }
+            this.onFieldAssociatedHandler();
+        },
+        /**
+         * Helper SetValueAsync
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextView}
+         */
+        setValueAsync: function (value, fn) {
+            var that = this,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                that.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * Helper Set Text in Async mode
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {TextView}
+         */
+        setTextAsync: function (value, fn) {
+            var that = this,
+                currentValue = this.model.get("data").value;
+            if (value !== undefined) {
+                this.previousValue = currentValue;
+                that.changeHelperEvent(value, fn);
+            }
+            return this;
+        },
+        /**
+         * Helper setValue
+         * @param {*} value 
+         * @returns {TextView}
+         */
+        setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Helper setText
+         * @param {*} txt 
+         * @returns {TextView}
+         */
+        setText: function (txt) {
+            this.setValue(txt);
+            return this;
+        },
+        /**
+         * Suscribe listeners to field
+         * @param {*} e 
+         * @param {*} fn 
+         * @returns {TextView}
+         */
+        on: function (e, fn) {
+            var that = this,
+                control,
+                localEvents = {
+                    "changeValues": "setOnChangeCallbackOperation"
+                };
+            if (localEvents[e]) {
+                this[localEvents[e]](fn);
+            } else {
+                control = this.$el.find("input");
+                if (control) {
+                    control.on(e, function (event) {
+                        fn(event, that);
+                        event.stopPropagation();
+                    });
+                } else {
+                    throw new Error("Is not possible find the HTMLElement associated to field");
+                }
+            }
+            return this;
+        },
+        /**
+         * Updates the values in the inputs controls nodes
+         * @returns {TextView}
+         */
+        updateValueInput: function () {
+            var currentLabel = this.getText(),
+                textInput = this.getControl(),
+                hiddenInput = this.$el.find("input[type='hidden']");
+            textInput.val(currentLabel);
+            hiddenInput.val(currentLabel);
+            return this;
+        },
+        /**
+         * Sets onChangeCallbackOperation this is used in functions (SUM, AVG)
+         * @param fn {function}
+         * @returns {TextView}
+         */
+        setOnChangeCallbackOperation: function (fn) {
+            if (typeof fn === "function") {
+                this.onChangeCallbackOperation = fn;
+            }
+            return this;
+        },
+        /**
+         * SetValue, get Remote options, update the view and model but not trigger the dependencies without execute onchangecallbacks
+         * @param {*} value
+         * @param {*} fn
+         * @return {TextView}
+         */
+        setValueWithoutTriggerDependencies: function (value, fn) {
+            var that = this,
+                dataOption,
+                criteria = "value";
+            if (value !== undefined && value !== null) {
+                this.model.getRemoteOptions(function (data, err) {
+                    dataOption = that.model.findOption(value, criteria);
+                    if (dataOption) {
+                        that.updateFieldView(dataOption.value);
+                    } else {
+                        that.model.setFirstOptionInData();
+                    }
+                    if (_.isFunction(fn)) {
+                        fn();
+                    }
+                });
+            }
+            return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.view.Text", TextView);
+    PMDynaform.extendNamespace("PMDynaform.view.TextR", TextView);
 }());
 
 (function () {
@@ -12716,7 +13761,7 @@ xCase.extendNamespace = function (path, newClass) {
          */
         existHTML: false,
         events: {
-            "change input": "eventListener",
+            "change input": "changeSelectEvent",
             "keydown input": "preventEvents"
         },
         /**
@@ -12741,51 +13786,27 @@ xCase.extendNamespace = function (path, newClass) {
          */
         initialize: function (options) {
             this.form = options.form ? options.form : null;
-            this.model.on("change:value", this.eventListener, this);
             this.model.on("change:options", this.redrawOptions, this);
             this.model.on("change:toDraw", this.render, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
         /**
-         * events triggered "change" and "validate when the field undergoes a change,
-         * this method is llamdo by the set function or action
-         */
-        eventListener: function (event, value) {
-            this.onChange(event, value);
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-        },
-        /**
-         * Executes onChangeCallback function
+         * Stop the propagation events
+         * @param {*} event 
          * @returns {CheckGroupView}
          */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: JSON.stringify(this.getValue()),
-                    previous: JSON.stringify(this.previousValue)
-                };
-
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(this.getValue(), paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-            }
-        },
         preventEvents: function (event) {
             //Validation for the Submit event
             if (event.which === 13) {
                 event.preventDefault();
                 event.stopPropagation();
             }
-
             return this;
         },
+        /**
+         * Render the field view
+         * @returns {CheckGroupView}
+         */
         render: function () {
             var hidden,
                 name;
@@ -12800,7 +13821,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.setValueToDomain();
             this.$el.find("input[type='hidden']")[0].name = "form[" + this.model.get("name") + "_label]";
             this.setValueHideControl();
-            this.previousValue = this.model.get("value");
+            this.previousValue = this.model.get("data").value;
             if (this.model.get("name").trim().length === 0) {
                 this.$el.find("input[type='checkbox']").attr("name", "");
                 this.$el.find("input[type='hidden']").attr("name", "");
@@ -12813,8 +13834,203 @@ xCase.extendNamespace = function (path, newClass) {
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
         },
+        /**
+         * Update accessibility HTML attributes
+         * @param {Object} params
+         * @chainable
+         */
+        updateAccessibility: function (params) {
+            var i,
+                value;
+            if (this.model.get("ariaLabelVisible")) {
+                this.$el.find("input[type='checkbox']").removeAttr("aria-label");
+                for (i = 0; i < params.data.values.length; i += 1) {
+                    value = params.data.values[i].replace(/(:|\.|\[|\]|,|=|@|%|&|\$|;|<|>|^|~|\{|\}|\+|\*|#|\?|\/)/g, "\\$1");
+                    this.$el.find("input[type='checkbox'][value=" + value + "]").attr("aria-label", params.data.labels[i]);
+                }
+            }
+            return this;
+        },
+        /**
+         * Return the array of options checked
+         * @returns {*}
+         */
+        getDataChecked: function () {
+            var dataChecked = {
+                values: [],
+                labels: []
+            },
+                checkedControls = this.$el.find("input[type='checkbox']:checked");
+            checkedControls.each(function (index, element) {
+                dataChecked.values.push(element.value);
+                dataChecked.labels.push($(element).next().text());
+            });
+            return dataChecked;
+        },
+        /**
+         * Verify if exist a check in options
+         * @param {*} item 
+         * @returns {boolean}
+         */
+        checkValueInOptions: function (item) {
+            var options,
+                i;
+            options = this.model.get("options");
+            for (i = 0; i < options.length; i += 1) {
+                if (options[i]["value"] === item) {
+                    return {
+                        value: options[i]["value"],
+                        label: options[i]["label"],
+                        index: i
+                    }
+                }
+            }
+            return false;
+        },
+        /**
+         * Gets the html control using its class identifier
+         * @returns {Object}
+         */
+        getHTMLControl: function () {
+            return this.$el.find(".pmdynaform-control-checkbox-list");
+        },
+        /**
+         * Update the input hidden 
+         * @returns {CheckGroupView}
+         */
+        setValueHideControl: function () {
+            var control;
+            control = this.$el.find("input[type='hidden']");
+            $(control).val(this.model.get("data").label);
+            return this;
+        },
+        /**
+         * Helper get Text
+         * @returns {*}
+         */
+        getText: function () {
+            var data = this.model.get("data");
+            return data ? data["label"] : null;
+        },
+        /**
+         * Helper getValue
+         * @returns {array}
+         */
+        getValue: function () {
+            return this.model.get("data").value;
+        },
+        /**
+         * Return the control html object
+         * @returns {*}
+         */
+        getControl: function () {
+            var htmlControl = this.$el.find("input[type='checkbox']");
+            return htmlControl;
+        },
+        /**
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @returns {CheckGroupView}
+         */
+        changeSelectEvent: function (event, value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+                that.validate();
+            });
+            return this;
+        },
+        /**
+         * When the source of change is a helper
+         * @param {*} value 
+         * @param {*} fn 
+         * @returns {CheckGroupView}
+         */
+        changeHelperEvent: function (value, fn) {
+            var that = this;
+            this.updateView(function () {
+                that.executeChangeCallback();
+                if (_.isFunction(fn)) {
+                    fn();
+                }
+            }, value);
+            return this;
+        },
+        /**
+         * Execute the onChangeCallback after the executes de dependencies
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: JSON.stringify(this.model.get("data").value),
+                    previous: JSON.stringify(this.previousValue)
+                };
+
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(this.model.get("data").value, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.model.get("data").value;
+            }
+        },
+        /**
+         * Populate Checkgroup in print mode
+         * @param arrayItems
+         */
+        populateItemsPrintMode: function (arrayItems) {
+            var i,
+                max,
+                containerPrint = this.$el.find(".content-print");
+            containerPrint.empty();
+            for (i = 0, max = arrayItems.length; i < max; i += 1) {
+                containerPrint.append("<li>" + arrayItems[i] + "</li>");
+            }
+
+        },
+        /**
+         * Render options from model
+         * @returns {CheckGroupView}
+         */
+        renderOptions: function () {
+            var htmlOptions,
+                contendControl,
+                config;
+            contendControl = this.$el.find(".pmdynaform-checkbox-items");
+            contendControl.empty();
+
+            if (_.isArray(this.model.get("options"))) {
+                config = {
+                    name: this.model.get("name"),
+                    id: this.model.get("id"),
+                    type: "checkbox",
+                    namespace: this.model.get("namespace"),
+                    disabled: this.model.get("disabled"),
+                    options: this.model.get("options")
+                };
+                htmlOptions = this.templateOptions(config);
+                contendControl.append(htmlOptions);
+            }
+            return this;
+        },
+        /**
+         * redrawOptions, Draw component options
+         * @chainable
+         */
+        redrawOptions: function () {
+            if (this.existHTML) {
+                this.renderOptions();
+            }
+            return this;
+        },
+        /**
+         * Method for validate the model and update the view with validators
+         * @returns {CheckGroupView}
+         */
         validate: function () {
-            this.model.set({}, {validate: true});
+            this.model.set({ value: this.model.get("data").value }, { validate: true });
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
                     this.validator.$el.remove();
@@ -12832,11 +14048,34 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        onChange: function (event, value) {
-            this.updateValues(event, value);
+        /**
+        * EXECUTION DEPENDENCIES METHOD
+        * method UPDATE very IMPORTANT
+        * Update only view of checkgroup
+        * @param {function} fn 
+        * @param {string} value 
+        * @returns {CheckGroupView}
+        */
+        updateView: function (fn, value) {
+            var dt = {
+                value: "",
+                label: ""
+            }
+            dt = this.updateFieldView(value);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
             this.validate();
+            return this;
         },
-        updateValues: function (event, values) {
+        /**
+         * Method for update the view in this field and return the data to update the model
+         * @param {*} values 
+         * @returns {*}
+         */
+        updateFieldView: function (values) {
             var i,
                 dataChecked = {
                     values: [],
@@ -12863,80 +14102,30 @@ xCase.extendNamespace = function (path, newClass) {
             } else {
                 dataChecked = this.getDataChecked();
             }
-            this.updateAccessibility({data: dataChecked});
-            this.model.set("labelsSelected", dataChecked.labels);
-            this.model.attributes.value = dataChecked.values;
-            this.updateDataModel(dataChecked.values, dataChecked.labels);
-            this.$el.find("input[type='hidden']").val(JSON.stringify(dataChecked.labels));
-            return this;
-        },
-        /**
-         * Update accessibility HTML attributes
-         * @param {Object} params
-         * @chainable
-         */
-        updateAccessibility: function (params) {
-            var i;
-            if (this.model.get("ariaLabelVisible")) {
-                this.$el.find("input[type='checkbox']").removeAttr("aria-label");
-                for (i = 0; i < params.data.values.length; i += 1) {
-                    this.$el.find("input[type='checkbox'][value=" + params.data.values[i] + "]").attr("aria-label", params.data.labels[i]);
-                }
-            }
-            return this;
-        },
-        getDataChecked: function () {
-            var dataChecked = {
-                    values: [],
-                    labels: []
-                },
-                checkedControls = this.$el.find("input[type='checkbox']:checked");
-            checkedControls.each(function (index, element) {
-                dataChecked.values.push(element.value);
-                dataChecked.labels.push($(element).next().text());
-            });
-            return dataChecked;
-        },
-        checkValueInOptions: function (item) {
-            var options,
-                i;
-            options = this.model.get("options");
-            for (i = 0; i < options.length; i += 1) {
-                if (options[i]["value"] === item) {
-                    return {
-                        value: options[i]["value"],
-                        label: options[i]["label"],
-                        index: i
-                    }
-                }
-            }
-            return false;
-        },
-        updateDataModel: function (value, label) {
-            var data;
-            if (jQuery.isArray(label)) {
-                label = JSON.stringify(label);
-            }
-            data = {
-                value: value,
-                label: label
-            };
-            this.model.set("data", data);
+            this.updateAccessibility({ data: dataChecked });
             this.populateItemsPrintMode(this.getKeyLabels());
-            return this;
+            this.$el.find("input[type='hidden']").val(JSON.stringify(dataChecked.labels));
+            return {
+                value: dataChecked.values,
+                label: JSON.stringify(dataChecked.labels)
+            };
         },
         /**
-         * Gets the html control using its class identifier
-         * @returns {Object}
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
          */
-        getHTMLControl: function () {
-            return this.$el.find(".pmdynaform-control-checkbox-list");
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
         },
-        setValueHideControl: function () {
-            var control;
-            control = this.$el.find("input[type='hidden']");
-            $(control).val(JSON.stringify(this.model.get("labelsSelected")));
-            return this;
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         */
+        dependencyDidUpdateView: function () {
+            this.validate();
         },
         /**
          * Sets value and update previousValue
@@ -12944,69 +14133,48 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {CheckGroupView}
          */
         setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Sets value and update previousValue
+         * @param value
+         * @param callback
+         * @returns {CheckGroupView}
+         */
+        setValueAsync: function (value, fn) {
             if (value && $.isArray(value)) {
                 this.previousValue = this.getValue();
-                this.model.set("value", value);
+                this.changeHelperEvent(value, fn);
                 this.switchSpinnerByControl();
             }
             return this;
         },
-        getText: function () {
-            var data = this.model.get("data");
-            return data ? data["label"] : null;
-        },
-        getValue: function () {
-            return this.model.getValue();
-        },
-        renderOptions: function () {
-            var htmlOptions,
-                contendControl,
-                config;
-            contendControl = this.$el.find(".pmdynaform-checkbox-items");
-            contendControl.empty();
-
-            if (_.isArray(this.model.get("options"))) {
-                config = {
-                    name: this.model.get("name"),
-                    id: this.model.get("id"),
-                    type: "checkbox",
-                    namespace: this.model.get("namespace"),
-                    disabled: this.model.get("disabled"),
-                    options: this.model.get("options")
-                };
-                htmlOptions = this.templateOptions(config);
-                contendControl.append(htmlOptions);
-            }
-            return this;
-        },
-        getControl: function () {
-            var htmlControl = this.$el.find("input[type='checkbox']");
-            return htmlControl;
-        },
         /**
-         * redrawOptions, Draw component options
-         * @chainable
+         * Set text 
+         * @param txt
+         * @param fn
+         * @returns {CheckGroupView}
          */
-        redrawOptions: function () {
-            if (this.existHTML) {
-                this.renderOptions();
-                this.updateValues();
+        setTextAsync: function (txt, fn) {
+            var options = this.model.get("options"),
+                arrayDataValue = [], arrayDataLabel = [];
+            for (i = 0; i < options.length; i += 1) {
+                options[i].selected = false;
+                if (txt.indexOf(options[i].label) > -1) {
+                    options[i].selected = true;
+                    arrayDataLabel.push(options[i].label);
+                    arrayDataValue.push(options[i].value);
+                }
             }
+            data = {
+                value: arrayDataValue,
+                label: arrayDataLabel
+            };
+            this.setValueAsync(data["value"], fn);
             return this;
-        },
-        /**
-         * Populate Checkgroup in print mode
-         * @param arrayItems
-         */
-        populateItemsPrintMode: function (arrayItems) {
-            var i,
-                max,
-                containerPrint = this.$el.find(".content-print");
-            containerPrint.empty();
-            for (i = 0, max = arrayItems.length; i < max; i += 1) {
-                containerPrint.append("<li>" + arrayItems[i] + "</li>");
-            }
-
         },
         /**
          * Return an array with the items selected.
@@ -13016,7 +14184,7 @@ xCase.extendNamespace = function (path, newClass) {
             var i,
                 j,
                 arrayItems = [],
-                values = this.model.getValue(),
+                values = this.getDataChecked().values,
                 options = this.model.get("options");
             for (i = 0; i < options.length; i += 1) {
                 for (j = 0; j < values.length; j += 1) {
@@ -13028,13 +14196,14 @@ xCase.extendNamespace = function (path, newClass) {
             return arrayItems;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.view.CheckGroup", CheckGroupView);
+    PMDynaform.extendNamespace("PMDynaform.view.CheckGroupR", CheckGroupView);
 }());
 
 (function () {
     var CheckBoxView = PMDynaform.view.Field.extend({
         item: null,
         template: _.template($("#tpl-checkbox_yes_no").html()),
+        templateView: _.template($("#tpl-checkbox_view_mode").html()),
         previousValue: null,
         /**
          * This property is a handler the events
@@ -13139,13 +14308,19 @@ xCase.extendNamespace = function (path, newClass) {
                 this.$el.find("input[type='checkbox']").attr("name", "");
                 this.$el.find("input[type='hidden']").attr("name", "");
             }
-            this.updateAccessibility({ariaLabel: this.model.get("data")["label"]});
+            this.updateAccessibility({ ariaLabel: this.model.get("data")["label"] });
             this.$el.find(".content-print").text(this.model.get("data")["label"]);
             this.tagControl = this.$el.find(".pmdynaform-checkbox-items");
             this.tagHiddenToLabel = this.$el.find("input[type='hidden']");
             this.keyLabelControl = this.$el.find("input[type='hidden']");
             PMDynaform.view.Field.prototype.render.apply(this, arguments);
             return this;
+        },
+        /**
+         * Render checkbox only, it's works in grid mobile 
+         */
+        renderView: function () {
+            this.$el.html(this.templateView(this.model.toJSON()));
         },
         /**
          * Update accessibility HTML attributes
@@ -13162,7 +14337,7 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         validate: function () {
-            this.model.set({}, {validate: true});
+            this.model.set({}, { validate: true });
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
                     this.validator.$el.remove();
@@ -13228,7 +14403,7 @@ xCase.extendNamespace = function (path, newClass) {
                     secondCheckbox.prop("checked", true);
                     newValue = "0";
                 }
-                this.model.set({value: newValue}, {silent: true});
+                this.model.set({ value: newValue }, { silent: true });
             } else {
                 newValue = value;
                 if (valuesForTrue.indexOf(newValue) !== -1) {
@@ -13242,7 +14417,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.updateDataModel(newValue);
             data = this.model.get("data");
             firstCheckbox.val(data.value);
-            this.updateAccessibility({ariaLabel: data.label});
+            this.updateAccessibility({ ariaLabel: data.label });
             this.$el.find(".content-print").text(data.label);
             this.$el.find("input[type='hidden']").val(data.label);
             return this;
@@ -13287,7 +14462,6 @@ xCase.extendNamespace = function (path, newClass) {
     var SuggestView = PMDynaform.view.Field.extend({
         template: _.template($("#tpl-suggest2").html()),
         validator: null,
-        elements: [],
         input: null,
         makeFlag: false,
         keyPressed: false,
@@ -13307,7 +14481,7 @@ xCase.extendNamespace = function (path, newClass) {
         containerOpened: false,
         events: {
             'change': function (event) {
-                this.eventListener(event, this.getDataSelect2('change'));
+                this.changeSuggestEvent(this.getDataSelect2('change'));
             }
         },
         stamp: null,
@@ -13340,7 +14514,9 @@ xCase.extendNamespace = function (path, newClass) {
         selectedListItem: null,
         iconLoadingActive: true,
         keyNavigatorPress: false,
-
+        /**
+         * Abort the xhr jquery
+         */
         _abortRequest: function () {
             if (this.xhr) {
                 this.xhr.abort();
@@ -13372,9 +14548,9 @@ xCase.extendNamespace = function (path, newClass) {
             this.form = options.form ? options.form : null;
             this.formulaFieldsAssociated = [];
             this.numberOfOptions = parseInt(this.model.get('resultsLimit')) || defaultLimit;
-            this.model.on("change:value", this.eventListener, this);
             this.setTimeToWait(parseInt(this.model.get("delay")));
             this.model.on("change:toDraw", this.render, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
         },
         /**
          * Get ID Select2 Control
@@ -13394,53 +14570,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        preventFocusIn: function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            return false;
-        },
-        /**
-         * Listens to change event
-         * @param event
-         * @param value
-         */
-        eventListener: function (event, value) {
-            if (event instanceof Backbone.Model) {
-                this.onChange(event, value);
-                this.onFieldAssociatedHandler();
-            } else {
-                this.onChange(event, value);
-                this.onFieldAssociatedHandler();
-                this.keyNavigatorPress = false;
-            }
-        },
-        isListNavigationEvents: function (code) {
-            var resp = false;
-            if (code && this.navigationKeys.indexOf(code) !== -1) {
-                resp = true;
-            }
-            return resp;
-        },
-        /**
-         * Executes onChangeCallBack function
-         */
-        checkBinding: function () {
-            //If the key is not pressed, executes the render method
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
-                this.previousLabel = this.getText();
-            }
-        },
         /**
          * Updates value dom
          * @returns {SuggestView}
@@ -13456,44 +14585,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        setValueDefault: function () {
-            this.model.set("value", $(this.el).find(":input").val());
-        },
-        _getScrollOffsets: function () {
-            return document.body.scrollTop || document.documentElement.scrollTop || window.pageYOffset || getScrollTop();
-        },
-        /**
-         * Updates data and value
-         * @param event
-         * @param value
-         * @returns {SuggestView}
-         */
-        onChange: function (event, value) {
-            this.updateValues(event, value);
-            this.validate(event);
-            this.clicked = false;
-            if (this.model.get("form").get("isSync")) {
-                this.checkBinding();
-            } else if (!this.model.get("form").get("dependencyRelations")[this.model.get("id")]) {
-                this.checkBinding();
-            }
-            return this;
-        },
-        /**
-         * Updates model's data
-         * @param event
-         * @param value
-         * @returns {SuggestView}
-         */
-        updateValues: function (event, value) {
-            var data = this.getSelectedData(value);
-            this.updateHiddenInput(data);
-            this.updateHtmlSelect2(data);
-            this.model.set("keyLabel", data.label);
-            this.model.attributes.value = data.value;
-            this.updateDataModel(data.value, data.label);
-            return this;
-        },
         /**
          * Update the Hidden Input
          * @param data
@@ -13504,85 +14595,11 @@ xCase.extendNamespace = function (path, newClass) {
             hiddenInput.val(data.label);
             return this;
         },
-        /**
-         * Update the Select2 Html
-         * @param data
+        /** 
+         * Validate the model and validator views
+         * @param event
          * @returns {SuggestView}
          */
-        updateHtmlSelect2: function (data) {
-            var id = this.getIdSelect();
-            if (!data.value) {
-                $(id).val(null);
-            }
-            return this;
-        },
-        /**
-         * Get Object Data
-         * @param value
-         * @returns {{value: string, label: string}}
-         */
-        getSelectedData: function (value) {
-            var data = {
-                value: '',
-                label: ''
-            };
-            if (value.value === '' || value.label === '') {
-                return data;
-            }
-            data = {
-                value: value.value || value || '',
-                label: value.label || value || ''
-            };
-            return data;
-        },
-        updateDataModel: function (value, label) {
-            var data,
-                classPrint = ".content-print";
-            data = {
-                value: value,
-                label: label
-            };
-            this.model.set("data", data);
-            this.$el.find(".content-print").text(data.label);
-            return this;
-        },
-        addLoadingIcon: function () {
-            var spinner;
-            if (this.iconLoadingActive) {
-                spinner = this.$el.find(".spinner-icon");
-                spinner.addClass("active-spinner");
-            }
-            return this;
-        },
-        makeNewListItems: function (localData, val, event) {
-            var that = this, controlVal;
-            if (this.canExecuteQuery()) {
-                this.executeSuggestQuery(function (data, xhr) {
-                    controlVal = that.controlSuggest.val();
-                    if (controlVal && that.xhr === xhr) {
-                        that.refreshSuggestList(localData.concat(data), val, that.numberOfOptions, event);
-                        if (localData.length > 0 || data.length > 0) {
-                            that._calculatePosition();
-                        } else {
-                            that.hideSuggest();
-
-                        }
-
-                    }
-                });
-            } else {
-                this.refreshSuggestList(localData, val, this.numberOfOptions);
-                if (_.isArray(localData) && localData.length > 0) {
-                    this._calculatePosition();
-                } else {
-                    this.hideSuggest();
-                }
-            }
-            return this;
-        },
-        canExecuteQuery: function () {
-            return this.model.canExecuteQuery();
-        },
         validate: function (event) {
             if (event && (event.which === 9) && (event.which !== 0)) { //tab key
                 this.keyPressed = true;
@@ -13623,7 +14640,7 @@ xCase.extendNamespace = function (path, newClass) {
                     self.afterRenderSelect2();
                 }
             }, 0);
-            this.model.set({"toDraw": false}, {silent: true});
+            this.model.set({ "toDraw": false }, { silent: true });
             return this;
         },
         /**
@@ -13635,7 +14652,7 @@ xCase.extendNamespace = function (path, newClass) {
                 options,
                 variable,
                 uidModal = (this.model.get('nameModalSuggest')) ? $('#' + this.model.get('nameModalSuggest')) : null,
-                data = this.getDataParams();
+                data = this.model.buildDataForQuery({});
             prj = this.model.get("project");
             if (this.model.get("group") === "grid") {
                 variable = this.model.get("columnName");
@@ -13649,82 +14666,6 @@ xCase.extendNamespace = function (path, newClass) {
             return prj.webServiceManager.executeSuggestSelect2(data, variable, uidModal, this);
         },
         /**
-         * Get Data Params for execute Suggest
-         * @returns {Object}
-         */
-        getDataParams: function () {
-            var data = {
-                "filter": this.model.get('value'),
-                "order_by": "ASC",
-                "limit": this.numberOfOptions,
-                "app_uid": (PMDynaform.getProjectKeys() && PMDynaform.getProjectKeys().caseUID) ?
-                    PMDynaform.getProjectKeys().caseUID : null
-            };
-            _.extend(data, this.model.buildDataForQuery({}));
-            return data;
-        },
-        /**
-         * Load Data For Execution
-         * @param params
-         * @param data
-         * @returns {Object}
-         */
-        loadDataForExecution: function (params, data) {
-            this.elements = [];
-            data.filter = params.term || this.model.get('filter');
-            this.elements = this.generateOptions(data.filter);
-            data.limit = (this.elements.length) ? data.limit - this.elements.length : data.limit;
-            return data;
-        },
-        /**
-         * Generate local options
-         * @param val
-         * @returns {Array}
-         */
-        generateOptions: function (val) {
-            var localData,
-                elements = this.model.get('options') || [];
-            localData = this.filterLocalOptions(val, this.numberOfOptions, elements);
-            return localData;
-        },
-        /**
-         * Filter local options
-         * @param value
-         * @param maxItems
-         * @param elements
-         * @returns {Array}
-         */
-        filterLocalOptions: function (value, maxItems, elements) {
-            var itemLabel,
-                count = 0,
-                data = [];
-            if (value) {
-                $.grep(elements, function (options) {
-                    itemLabel = options.label.toString();
-                    if ((itemLabel.toLowerCase().indexOf(value.toLowerCase()) !== -1) && count < maxItems) {
-                        data.push(options);
-                        count += 1;
-                    }
-                });
-            } else {
-                data = $.grep(elements, function (n, i) {
-                    return (i < maxItems);
-                });
-            }
-            return data;
-        },
-        /**
-         * Merge Local Options And Remote Options
-         * @param data
-         * @param params
-         * @returns {*}
-         */
-        mergeLocalAndRemoteOptions: function (data, params) {
-            data = this.elements.concat(data);
-            data = (!data.length && !params.term) ? data.concat(this.getDataSelect2()) : data;
-            return data;
-        },
-        /**
          * Set in the control suggest the Data of the Case Data
          * @returns {SuggestView}
          */
@@ -13736,10 +14677,9 @@ xCase.extendNamespace = function (path, newClass) {
             this.previousLabel = data.label || '';
             if (data.value !== '' && data.label !== '') {
                 if ($(id).find("option[value='" + data.value + "']").length) {
-                    $(id).val(data.value).trigger('change');
+                    $(id).val(data.value);
                 } else {
-                    newOption = new Option(data.label, data.value, false, false);
-                    $(id).append(newOption).trigger('change');
+                    this.setOption(data);
                 }
             }
             this.firstLoad = false;
@@ -13750,126 +14690,53 @@ xCase.extendNamespace = function (path, newClass) {
         },
         /**
          * Execute the executeSuggest query from Helpers
-         * @param type
+         * @param data
+         * @param callback
          * @returns {SuggestView}
          */
-        executeSelect2Query: function (params) {
-            var prj,
-                variable,
-                match = (params.typeSearch === 'text') ? {text: params.value} : {value: params.value},
-                data = {
-                    "query": {
-                        match: match
-                    },
-                    "order_by": "ASC",
-                    "limit": this.numberOfOptions,
-                    "app_uid": (PMDynaform.getProjectKeys() && PMDynaform.getProjectKeys().caseUID) ?
-                        PMDynaform.getProjectKeys().caseUID : null
-                };
-            _.extend(data, this.model.buildDataForQuery({}));
-            prj = this.model.get("project");
-            if (this.model.get("group") === "grid") {
-                variable = this.model.get("columnName");
-            } else {
-                if (this.model.get("variable") !== "") {
-                    variable = this.model.get("variable");
-                } else {
-                    variable = this.model.get("id");
-                }
-            }
-            if (PMDynaform.core.ProjectMobile) {
-                prj.requestManager.channelEvents(
-                    {
-                        handler: this.model.get("id"),
-                        type: this.model.eventsMobile.EXECUTE_QUERY_SUGGEST,
-                        bridge: true,
-                        data: data,
-                        callback: function (response) {
-                            if (!response.error) {
-                                callback(response);
-                            }
+        executeSelect2Query: function (data, callback) {
+            var dt, that = this;
+            this.model.executeQuery(data, function (response, err) {
+                if (response) {
+                    dt = that.afterExecuteQuery(response, data);
+                    that.updateViewFromHelper(function () {
+                        that.executeChangeCallback();
+                        if (_.isFunction(callback)) {
+                            callback(response);
                         }
-                    });
-            } else {
-                if (this.form.model.get("isSync")) {
-                    resp = this.xhr = prj.webServiceManager.executeSyncQuerySuggest(
-                        data,
-                        variable
-                    );
-                    this.afterExecuteQuery(resp, null, {
-                        value: params.value,
-                        typeSearch: params.typeSearch,
-                    })
-
-                } else {
-                    this.xhr = prj.webServiceManager.executeQuerySuggest(
-                        data,
-                        variable,
-                        this,
-                        {
-                            value: params.value,
-                            typeSearch: params.typeSearch,
-
-                        }
-                    );
+                    }, dt);
                 }
-            }
+            });
             return this;
         },
-        mergeOptions: function (remoteOptions) {
-            var k,
-                remoteOpt = [],
-                localOpt,
-                options;
-            for (k = 0; k < remoteOptions.length; k += 1) {
-                remoteOpt.push({
-                    value: remoteOptions[k].value,
-                    label: remoteOptions[k].text
-                });
-            }
-            localOpt = this.model.get("localOptions");
-            this.model.attributes.remoteOptions = remoteOpt;
-            options = localOpt.concat(remoteOpt);
-            this.model.attributes.options = options;
-            if (options.length) {
-                this.model.attributes.data = {
-                    value: options[0]["value"],
-                    label: options[0]["label"]
-                };
-                this.updateValueInput();
-                this.model.set("value", options[0]["value"]);
-            }
-            return options;
-        },
-        toggleItemSelected: function (selectedItem) {
-            if (selectedItem instanceof jQuery) {
-                if (selectedItem.length !== -1) {
-                    this.selectedListItem = selectedItem;
-                    this.deselectItems();
-                    selectedItem.addClass("pmdynaform-suggest-list-keyboard");
-                }
-            }
-            return this;
-        },
+        /**
+         * Deselect the items in DOM html
+         * @returns {SuggestView}
+         */
         deselectItems: function () {
             if (this.containerOpened) {
                 this.containerList.find("li").removeClass("pmdynaform-suggest-list-keyboard");
             }
             return this;
         },
-        updateValueControl: function () {
-            var inputVal = this.$el.find("input[type='suggest']").val();
-
-            this.model.set("value", inputVal);
-
-            return this;
-        },
+        /**
+         * Return the html control
+         * @returns {*}
+         */
         getHTMLControl: function () {
             return this.$el.find("input[type='suggest']");
         },
+        /**
+         * Abstract method
+         * @returns {SuggestView}
+         */
         afterRender: function () {
             return this;
         },
+        /**
+         * Update the name in hidden associated
+         * @returns {SuggestView}
+         */
         setNameHiddenControl: function () {
             var hidden,
                 name;
@@ -13902,20 +14769,44 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Sets value and updates previousValue
+         * Set text async mode
+         * @param value
+         * @param fn
+         * @returns {SuggestView}
+         */
+        setTextAsync: function (value, fn) {
+            if (value) {
+                this.executeSelect2Query({
+                    value: value,
+                    typeSearch: 'text'
+                }, fn);
+            }
+            return this;
+        },
+        /**
+         * Sets value in view
          * @param value {string}
          * @returns {SuggestView}
          */
         setValue: function (value) {
+            this.form.model.set("isSync", true);
+            this.setValueAsync(value, null);
+            this.form.model.set("isSync", false);
+            return this;
+        },
+        /**
+         * Sets value Async and updates previousValue
+         * @param value {string}
+         * @param fn {function}
+         * @returns {SuggestView}
+         */
+        setValueAsync: function (value, fn) {
             if (value !== undefined) {
                 this.previousValue = this.getValue();
-                this.form.model.set("isSync", true);
                 this.executeSelect2Query({
                     value: value,
-                    typeSearch: 'val',
-                    callback: this.afterExecuteQuery
-                });
-                this.form.model.set("isSync", false);
+                    typeSearch: 'val'
+                }, fn);
             }
             return this;
         },
@@ -13926,19 +14817,18 @@ xCase.extendNamespace = function (path, newClass) {
          * @param options
          * @returns {SuggestView}
          */
-        afterExecuteQuery: function (response, xhr, options) {
+        afterExecuteQuery: function (response, options) {
             var option = this._findOption(response, options.typeSearch, options.value),
                 id = this.getIdSelect(),
                 data;
-            data = this._forceSelectionIsConfigurated(option, options.value);
-            newOpt = new Option(data.text, data.id, true, true);
-            this.model.set("data", {
+            data = this._forceSelectionIsConfigurated(option, options);
+            data = {
                 value: data.id,
                 label: data.text
-            });
-            this.updateHiddenInput(this.model.get("data"));
-            $(id).append(newOpt).trigger("change");
-            return this;
+            };
+            this.updateHiddenInput(data);
+            this.setOption(data);
+            return data;
         },
         /**
          * Look up the value and the text
@@ -13972,22 +14862,32 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns {{id: string, text: string}}
          * @private
          */
-        _forceSelectionIsConfigurated: function (option, value) {
+        _forceSelectionIsConfigurated: function (option, options) {
             var dataOption = {
                 id: '',
                 text: ''
-            };
+            },
+                value = options.value,
+                type = options.typeSearch;
             if (this.model.get('forceSelection')) {
                 if (option) {
                     dataOption.id = option.value;
                     dataOption.text = option.text || option.label;
                 }
-            } else {
+            } else if (type !== "text") {
                 dataOption.id = (option) ? option.value : value;
+                dataOption.text = (option) ? option.text || option.label : value;
+            } else {
+                dataOption.id = (option) ? option.value : this.model.getValue();
                 dataOption.text = (option) ? option.text || option.label : value;
             }
             return dataOption;
         },
+        /**
+         * Update data model property
+         * @param {*} data 
+         * @returns {SuggestView}
+         */
         setData: function (data) {
             var dataObject;
             if (typeof data === "object") {
@@ -14000,32 +14900,27 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Helper getText
+         * @returns {*}
+         */
         getText: function () {
             var data = this.model.get("data");
             return data ? data["label"] : null;
         },
+        /**
+         * Helper getValue
+         * @returns {*}
+         */
         getValue: function () {
             return this.model.getValue();
         },
+        /**
+         * Return the control object html
+         * @returns {*}
+         */
         getControl: function () {
             return this.$el.find(".select2-selection__rendered");
-        },
-        /**
-         * get the data if there from an html element
-         * return [object]
-         */
-        getListData: function (element) {
-            var data = {
-                value: "",
-                label: ""
-            };
-            if (element) {
-                data = {
-                    label: $(element).data() ? $(element).data().label : "",
-                    value: $(element).data() ? $(element).data().value : ""
-                }
-            }
-            return data;
         },
         /**
          * PreparePostData, Prepares the additional data to execute the service to execute the query
@@ -14064,33 +14959,139 @@ xCase.extendNamespace = function (path, newClass) {
                 label: dataSelected ? dataSelected.text : '',
                 value: dataSelected ? dataSelected.id : ''
             };
-            this._clearOptionsSelect2(dataSelected, id, type);
+            if (!dataSelected) {
+                $(id).find("option").remove();
+            }
             return data;
         },
         /**
-         * Clear Options Select2
-         * @param dataSelected
-         * @param id
-         * @param type
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @param fn
+         * @param val
          * @returns {SuggestView}
-         * @private
          */
-        _clearOptionsSelect2: function (dataSelected, id, type) {
-            var params = {_type: 'query'},
-                clearResults = {};
-
-            if (dataSelected && type) {
-                clearResults.results = [{id: dataSelected.id, text: dataSelected.text}];
-                $(id).data('select2').trigger('results:all', {
-                    data: clearResults,
-                    query: params
-                });
+        updateView: function (fn, val) {
+            var dt = {
+                value: "",
+                label: ""
             }
+            dt = this.updateFieldView(val);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            this.onFieldAssociatedHandler();
+            this.validate();
             return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @param fn
+         * @param dt
+         * @returns {SuggestView}
+         */
+        updateViewFromHelper: function (fn, dt) {
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            this.validate();
+            return this;
+        },
+        /**
+         * Update view method and return a data to update the model
+         * @param {*} data 
+         * @returns {*}
+         */
+        updateFieldView: function (data) {
+            var id = this.getIdSelect(),
+                hiddenInput = this.$el.find("input[type='hidden']");
+            //Update hidden input
+            hiddenInput.val(data.label);
+            //Update select2   
+            if (!data.value) {
+                $(id).val(null);
+            }
+            this.$el.find(".content-print").text(data.label);
+            this.keyNavigatorPress = false;
+            return data;
+        },
+        /**
+         * When The select control change value
+         * @param {*} event 
+         * @param {*} value 
+         * @returns {SuggestView}
+         */
+        changeSuggestEvent: function (value) {
+            var that = this, dt;
+            dt = this.updateView(function () {
+                that.executeChangeCallback();
+            }, value);
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of text
+         */
+        dependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate").error && this.model.get("dependencyDidUpdate").error !== "abort") {
+
+            }
+            this.setOption(this.model.get("data"));
+            this.onFieldAssociatedHandler();
+        },
+        /**
+         * Executes onChangeCallBack function
+         */
+        executeChangeCallback: function () {
+            //If the key is not pressed, executes the render method
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+                this.previousLabel = this.getText();
+            }
+            this.onFieldAssociatedHandler();
+        },
+        /**
+         * Set option force in suggest
+         * @param {*} data 
+         */
+        setOption: function (data) {
+            var option = new Option(data.label, data.value, true, true);
+            $(this.getIdSelect()).empty().append(option);
+            $(this.getIdSelect()).trigger({
+                type: 'change.select2',
+                params: {
+                    data: { id: data.value, text: data.label }
+                }
+            });
         }
+
     });
 
-    PMDynaform.extendNamespace("PMDynaform.view.Suggest", SuggestView);
+    PMDynaform.extendNamespace("PMDynaform.view.SuggestR", SuggestView);
 }());
 
 (function () {
@@ -14260,8 +15261,8 @@ xCase.extendNamespace = function (path, newClass) {
                         }
                     }
                 }
-                this.model.set({"data": optionDefault}, {silent: true});
-                this.model.set({"value": optionDefault.value}, {silent: true});
+                this.model.set({ "data": optionDefault }, { silent: true });
+                this.model.set({ "value": optionDefault.value }, { silent: true });
                 this.model.set("fullOptions", [optionDefault.label]);
             }
             return this;
@@ -14486,12 +15487,12 @@ xCase.extendNamespace = function (path, newClass) {
         setRadioText: function (text) {
             var data;
             data = this.model.findOption(text, "label");
-            return data ? data : {label: "", value: ""};
+            return data ? data : { label: "", value: "" };
         },
         setDropdownText: function (text) {
             var data;
             data = this.model.findOption(text, "label");
-            return data ? data : {label: "", value: ""};
+            return data ? data : { label: "", value: "" };
         },
         setChekgroupTexts: function (texts) {
             var data,
@@ -14508,7 +15509,7 @@ xCase.extendNamespace = function (path, newClass) {
         setCheckboxText: function (text) {
             var data;
             data = this.model.findOption(text, "label");
-            return data ? data : {label: "", value: ""};
+            return data ? data : { label: "", value: "" };
         },
         updateTextData: function (data) {
             if (data && data.hasOwnProperty("value")) {
@@ -14519,7 +15520,7 @@ xCase.extendNamespace = function (path, newClass) {
                 this.model.set("value", data["value"]);
             } else {
                 this.model.set("value", "");
-                this.model.set("data", {value: "", label: ""});
+                this.model.set("data", { value: "", label: "" });
             }
             return this;
         },
@@ -14564,9 +15565,9 @@ xCase.extendNamespace = function (path, newClass) {
         },
         findDefValueInOptions: function (defVal) {
             var data = {
-                    value: "",
-                    label: ""
-                },
+                value: "",
+                label: ""
+            },
                 originalType,
                 i,
                 items,
@@ -14634,7 +15635,7 @@ xCase.extendNamespace = function (path, newClass) {
                         break;
                 }
             } else {
-                this.model.set("data", {value: "", label: ""});
+                this.model.set("data", { value: "", label: "" });
                 this.model.set("value", "");
             }
             return this;
@@ -14666,6 +15667,56 @@ xCase.extendNamespace = function (path, newClass) {
         getHTMLControl: function () {
             return this.$el.find(".pmdynaform-label-options");
         },
+        /**
+         * SetValue, get Remote options, update the view and model but not trigger the dependencies without execute onchangecallbacks
+         * @param {*} value
+         * @param {*} fn
+         * @return {Label}
+         */
+        setValueWithoutTriggerDependencies: function (value, fn) {
+            var that = this,
+                dataOption;
+            if (value !== undefined && value !== null) {
+                this.model.getRemoteOptions(function (data, err) {
+                    dataOption = that.findDefValueInOptions(value)
+                    if (dataOption) {
+                        that.updateFieldView(dataOption);
+                    } else {
+                        that.model.setFirstOptionInData();
+                    }
+                    if (_.isFunction(fn)) {
+                        fn();
+                    }
+                });
+            }
+            return this;
+        },
+        /**
+         * Update the field view
+         * @param {Object} data 
+         * @returns {Label}
+         */
+        updateFieldView: function (data) {
+            var originalType = this.model.get("originalType") || "";
+            switch (originalType) {
+                case "text":
+                case "textarea":
+                case "suggest":
+                    this.updateTextData(data);
+                    break;
+                case "dropdown":
+                    this.updateDropdownData(data)
+                    break;
+                case "checkgroup":
+                    this.updateCheckgroupData(data);
+                    break;
+                case "radio":
+                    this.updateRadioData(data);
+                    break;
+            }
+            this.model.set("fullOptions", [this.model.get("data").label]);
+            return this;
+        }
     });
 
     PMDynaform.extendNamespace("PMDynaform.view.Label", Label);
@@ -14699,6 +15750,20 @@ xCase.extendNamespace = function (path, newClass) {
             if (text !== undefined) {
                 this.model.set("label", text);
                 this.tagLabel.text(text);
+            }
+        },
+        /**
+         * SetValueAsync works as SetValue
+         * @param text
+         * @param fn
+         */
+        setValueAsync: function (text, fn) {
+            if (text !== undefined) {
+                this.model.set("label", text);
+                this.tagLabel.text(text);
+                if (_.isFunction(fn)) {
+                    fn();
+                }
             }
         },
         getText: function () {
@@ -15363,8 +16428,8 @@ xCase.extendNamespace = function (path, newClass) {
          */
         initialize: function (options) {
             this.form = options.form ? options.form : null;
-            this.model.on("change:value", this.eventListener, this);
             this.model.on("change:toDraw", this.render, this);
+            this.model.on("change:dependencyDidUpdate", this.afterDependencyDidUpdateView, this);
             this.initLanguage();
             this.previousValue = this.getValue();
         },
@@ -15388,38 +16453,41 @@ xCase.extendNamespace = function (path, newClass) {
                 defaultFormatted = this.prepareFormatValue(localeDate);
             if (moment(defaultFormatted).isValid()) {
                 this.tagHiddenToLabel.val(this.getStandardFormat(defaultFormatted));
+                this.validate();
             }
             event.preventDefault();
             event.stopPropagation();
             return this;
         },
         /**
-         * Listens to change event
-         * @param event
-         * @param value
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of Datetime
          */
-        eventListener: function (event, value) {
-            this.onChange(event, value);
-            this.checkBinding();
+        afterDependencyDidUpdateView: function () {
+            if (this.model.get("dependencyDidUpdate")) {
+                this.dependencyDidUpdateView();
+            }
+            this.model.set({ "dependencyDidUpdate": false }, { silent: true });
         },
         /**
-         * Executes onChangeCallback function
-         * @returns {DatetimeView}
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of Datetime
          */
-        checkBinding: function () {
-            var form = this.form,
-                paramsValue = {
-                    idField: this.model.get("id"),
-                    current: this.getValue(),
-                    previous: this.previousValue
-                };
-            if (paramsValue.current !== paramsValue.previous) {
-                this.onChangeCallback(paramsValue.current, paramsValue.previous);
-                if (form) {
-                    form.checkBinding(paramsValue);
-                }
-                this.previousValue = this.getValue();
+        dependencyDidUpdateView: function () {
+            this.changeHidden();
+            this.validate();
+        },
+        /**
+         * Change the hidden view in Datetime field
+         * @return {DatetimeView}
+         */
+        changeHidden: function () {
+            var data = this.model.get("data"),
+                hiddenInput = this.tagHiddenToLabel;
+            if (data.hasOwnProperty("value")) {
+                hiddenInput.val(data.value);
             }
+            return this;
         },
         /**
          * Default function
@@ -15438,49 +16506,12 @@ xCase.extendNamespace = function (path, newClass) {
             return this;
         },
         /**
-         * Updates data and value
-         * @param event
-         * @param value
-         */
-        onChange: function (event, value) {
-            this.updateValue(value);
-            this.validate(event);
-        },
-        /**
-         * Update the value in DOM and update it's model
-         * @param event
-         * @param value
-         * @returns {DatetimeView}
-         */
-        updateValue: function (value) {
-            var newData = this.formatData(value);
-            if (newData) {
-                this.updateDataModel(newData);
-            }
-            return this;
-        },
-        /**
-         * Update the data model with an formatted data whit contains a
-         * value and label attributes.
-         * @param data
-         * @returns {DatetimeView}
-         */
-        updateDataModel: function (data) {
-            if (data) {
-                this.model.set({"data": data}, {silent: true});
-                this.model.set({"value": data.value}, {silent: true});
-                this.tagHiddenToLabel.val(data.value);
-                this.$el.find(".content-print").text(data.label);
-            }
-            return this;
-        },
-        /**
          * Validate if the field is required or has an RegEx
          * @param event
          * @returns {DatetimeView}
          */
         validate: function (event) {
-            this.model.set({validate: true});
+            this.model.set({ validate: true });
             this.model.validate();
             if (this.model.get("enableValidate")) {
                 if (this.validator) {
@@ -15590,7 +16621,7 @@ xCase.extendNamespace = function (path, newClass) {
             }).on('dp.hide', function () {
                 that.$el.find('input.form-control').eq(0).blur();
             }).on('dp.change', function (event) {
-                that.dpOnChange(event.date);
+                that.changeSelectEvent(event.date);
             }).find('.form-control').attr('readonly', this.project.isMobile());
             this.datePickerObject = this.$el.find('#datetime-container-control').data()["DateTimePicker"];
             this.tagControl = this.$el.find("input[type='text']");
@@ -15641,17 +16672,6 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
         },
-
-        /**
-         * Datetime picker onChange handler.
-         * Set The changed value to datetime model.
-         * @param date
-         * @returns {DatetimeView}
-         */
-        dpOnChange: function (date) {
-            this.model.set("value", date ? this.prepareFormatValue(date) : "");
-            return this;
-        },
         /**
          * Prepares the value in the required format.
          * if has time we will use "datetimeIsoFormat" format
@@ -15661,7 +16681,7 @@ xCase.extendNamespace = function (path, newClass) {
          */
         prepareFormatValue: function (userValue) {
             var formattedValue = null;
-            if (userValue) {
+            if (userValue && userValue instanceof moment) {
                 formattedValue = !this.timeFormatRegEx.test(this.model.get('format')) ?
                     userValue.format(this.model.get("dateIsoFormat")) : userValue.format(this.model.get("datetimeIsoFormat"));
             }
@@ -15984,9 +17004,123 @@ xCase.extendNamespace = function (path, newClass) {
         getControl: function () {
             var htmlControl = this.$el.find("input[type='text']");
             return htmlControl;
+        },
+        /**
+         * When the select control change value
+         * @param {*} date 
+         * @return {DatetimeView}
+         */
+        changeSelectEvent: function (date) {
+            var that = this, dt;
+            dt = this.updateView(date, function () {
+                that.executeChangeCallback();
+            });
+            return this;
+        },
+
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of Datetime
+         * @param {*} fn 
+         * @return {DatetimeView}
+         */
+        updateView: function (date, fn) {
+            var dt = {
+                    value: "",
+                    label: ""
+                },
+                newData = this.formatData(date ? this.prepareFormatValue(date) : "");
+            this.model.set({ "data": newData }, { silent: true });
+            this.model.set({ "value": newData.value }, { silent: true });
+
+            dt = this.updateFieldView(newData);
+            // is very important pass the control to dependencyWillUpdate
+            this.model.dependencyWillUpdate({
+                data: dt,
+                fn: fn
+            });
+            return this;
+        },
+        /**
+         * Update the view
+         * @return {DatetimeView}
+         */
+        updateFieldView: function (data) {
+            if (data) {
+                this.tagHiddenToLabel.val(data.value);
+                this.tagControl.val(data.label);
+                this.$el.find(".content-print").text(data.label);
+
+            }
+        },
+        /**
+         * Execute the change callback on view
+         */
+        executeChangeCallback: function () {
+            var form = this.form,
+                paramsValue = {
+                    idField: this.model.get("id"),
+                    current: this.getValue(),
+                    previous: this.previousValue
+                };
+            if (paramsValue.current !== paramsValue.previous) {
+                this.onChangeCallback(paramsValue.current, paramsValue.previous);
+                if (form) {
+                    form.checkBinding(paramsValue);
+                }
+                this.previousValue = this.getValue();
+            }
+        },
+        /**
+         * Update bootstrap DateTimePicker widget
+         * @param {Object} options
+         * @return {DatetimeView}
+         */
+        updateSettings: function (options) {
+            var maxDate = moment(options.maxDate || null),
+                minDate = moment(options.minDate || null),
+                currentData = moment(this.model.get("data").value ? this.model.get("data").value : null);
+
+            if (this.validator) {
+                this.validator.$el.remove();
+                this.$el.removeClass('has-error');
+            }
+            if (minDate.isValid() && currentData.isValid() && currentData.diff(minDate) < 0 && this.model.get("data").value !== "") {
+                this.applyErrorStyle();
+                this.clear();
+                this.datePickerObject.options(options);
+                return this;
+            }
+            if (maxDate.isValid() && currentData.isValid() && maxDate.diff(currentData) < 0 && this.model.get("data").value !== "") {
+                this.applyErrorStyle();
+                this.clear();
+                this.datePickerObject.options(options);
+                return this;
+            }
+            if (maxDate.isValid() && minDate.isValid() && maxDate.diff(minDate) < 0) {
+                this.applyErrorStyle();
+                return this;
+            }
+            this.datePickerObject.options(options);
+            this.model.attributes.valid = true;
+            return this;
+        },
+        /**
+         * Apply error styles
+         * @return {DatetimeView}
+         */
+        applyErrorStyle: function () {
+            this.validator = new PMDynaform.view.Validator({
+                model: this.model.get("validator")
+            });
+            this.$el.find(".control-group").parent().append(this.validator.el);
+            this.applyStyleError();
+            this.model.attributes.valid = false;
+            return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.view.Datetime", DatetimeView);
+
+    PMDynaform.extendNamespace("PMDynaform.view.DatetimeR", DatetimeView);
 }());
 (function () {
     var PanelField = PMDynaform.view.Field.extend({
@@ -18910,18 +20044,7 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("label", this.get("label"));
             this.set("defaultValue", this.get("defaultValue"));
         },
-        /**
-         * Create all topics in EventBus related to this field
-         */
-        createChannelEventBus: function () {
-            var that = this;
-            PMDynaform.EventBus.callbackJoinForkTopic({
-                topic: "onChange/" + this.get("id"),
-                callback: function () {
-                    that.get("view").checkBinding()
-                }
-            });
-        },
+
         /**
          * Generate default data object
          * @param defaultValue
@@ -19072,7 +20195,7 @@ xCase.extendNamespace = function (path, newClass) {
             if (data) {
                 this.set("data", data);
             } else {
-                this.set("data", {value: "", label: ""});
+                this.set("data", { value: "", label: "" });
             }
             this.set("text", this.get("data")["label"]);
             return this;
@@ -19083,7 +20206,7 @@ xCase.extendNamespace = function (path, newClass) {
             if (data) {
                 this.set("data", data);
             } else {
-                this.set("data", {value: "", label: ""});
+                this.set("data", { value: "", label: "" });
             }
             this.set("value", this.get("data")["value"]);
             return this;
@@ -19141,67 +20264,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
 
             return endPointFixed;
-        },
-        /**
-         * The method check all the fields related to the current field based of the variable and
-         * set the same value to others. After set the value, all the fields are rendered.
-         */
-        changeValuesFieldsRelated: function () {
-            var i,
-                currentValue = this.get("value"),
-                fieldsRelated = this.get("fieldsRelated") || [];
-
-            for (i = 0; i < fieldsRelated.length; i += 1) {
-                fieldsRelated[i].model.attributes.value = currentValue;
-                fieldsRelated[i].model.get("validator").set({
-                    valueDomain: this.get("value"),
-                    options: fieldsRelated[i].model.attributes.options || [],
-                    domain: true
-                });
-                fieldsRelated[i].model.get("validator").verifyValue();
-                fieldsRelated[i].render();
-            }
-
-            return this;
-        },
-        reviewRemoteVariable: function () {
-            var prj = this.get("project"),
-                url,
-                restClient,
-                that = this,
-                endpoint,
-                data = {};
-            if (this.get("group") === "grid") {
-                data["field_id"] = this.get("columnName");
-            } else {
-                data["field_id"] = this.get("id");
-            }
-            if (this.get("form")) {
-                if (this.get("form").model.get("form")) {
-                    data["dyn_uid"] = this.get("form").get("form").get("id");
-                } else {
-                    data["dyn_uid"] = this.get("form").model.get("id");
-                }
-            }
-
-            endpoint = this.getEndpointVariable({
-                type: "executeQuery",
-                keys: {
-                    "{var_name}": this.get("var_name") || ""
-                }
-            });
-            url = prj.getFullURL(endpoint);
-            restClient = new PMDynaform.core.Proxy({
-                url: url,
-                method: 'POST',
-                data: data,
-                keys: prj.token,
-                successCallback: function (xhr, response) {
-                    that.mergeOptions(response);
-                }
-            });
-            this.set("proxy", restClient);
-            return this;
         },
         setLocalOptions: function () {
             if (this.get("options")) {
@@ -19346,7 +20408,7 @@ xCase.extendNamespace = function (path, newClass) {
             } else if (project) {
                 this._abortRequest();
                 xhr = project.webServiceManager.executeQuery(data, this.get("variable") || "", this);
-                this.set({xhr: xhr});
+                this.set({ xhr: xhr });
             }
             return this;
         },
@@ -19450,16 +20512,9 @@ xCase.extendNamespace = function (path, newClass) {
                     variable = variable.substring(2, variable.length);
 
                     relationName = parent.get("type") === "grid" ? variable + ":" + this.attributes.keyEvent : variable;
-                    // save the relations in the main form
-                    form.registerNewDependencyRelation(relationName);
-                    form.registerNewDependent(relationName, this);
-                    // add event
-                    this.addEvent(variable);
-                    // Add eventBus Todo
-                    PMDynaform.EventBus.addJoinForkTopic({
-                        topic: "onChange/" + relationName,
-                        event: this.get("id")
-                    });
+                    form.get("dependentsManager").registerNewDependencyRelation(relationName);
+                    form.get("dependentsManager").registerNewDependent(relationName, this);
+                    form.get("dependentsManager").registerDependency(this.get("id"), variable);
                 }
             }
             return this;
@@ -19475,7 +20530,7 @@ xCase.extendNamespace = function (path, newClass) {
                 prefix = "dependency:";
             if (_.indexOf(this.get("dependency"), variable) === -1) {
                 this.get("dependency").push(variable);
-                form.addEvent(prefix + this.getNameToRegisterEvent(variable), this.dependentHandler, this);
+                form.get("dependentsManager").addEvent(prefix + this.getNameToRegisterEvent(variable), this.dependentHandler, this);
             }
             return this;
         },
@@ -19636,8 +20691,8 @@ xCase.extendNamespace = function (path, newClass) {
                     label: value
                 }
             }
-            this.set({"data": data}, {silent: true});
-            this.set({"value": value}, {silent: true});
+            this.set({ "data": data }, { silent: true });
+            this.set({ "value": value }, { silent: true });
             this.set("toDraw", true);
             return this;
         },
@@ -19685,37 +20740,6 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        /*
-         * Run all dependencies of a field.
-         */
-        runDependency: function () {
-            var parent = this.get("parent"),
-                data = {},
-                i,
-                item,
-                dependency = [];
-            if (_.isArray(this.get("dependency")) && this.get("dependency").length) {
-                dependency = this.get("dependency");
-                if (parent) {
-                    for (i = 0; i < dependency.length; i += 1) {
-                        if (parent.get("type") === "grid") {
-                            item = parent.findCellInRow(this.get("row"), dependency[i]);
-                            // data will be filled only if it isn't null or has not value.
-                            if (item !== null && item.get("value")) {
-                                data[dependency[i]] = item.get("value");
-                            }
-                        }
-                    }
-                    // options will be recovered only if there is a item in the data array.
-                    if (Object.keys(data).length > 0) {
-                        if (this.get("view")) {
-                            this.get("view").switchControlBySpinner();
-                        }
-                        this.recoveryRemoteOptions(data, true);
-                    }
-                }
-            }
-        },
         /**
          * Enable the dependent field spinner
          * @chainable
@@ -19729,6 +20753,924 @@ xCase.extendNamespace = function (path, newClass) {
         }
     });
     PMDynaform.extendNamespace("PMDynaform.model.Field", FieldModel);
+}());
+
+(function () {
+    var FieldModel = Backbone.Model.extend({
+        defaults: {
+            colSpan: 12,
+            id: PMDynaform.core.Utils.generateID(),
+            label: "Untitled",
+            name: PMDynaform.core.Utils.generateName(),
+            value: "",
+            nameGridColum: null,
+            text: "",
+            data: null,
+            _hidden: false,
+            /**
+             * @param {object}: dataForDependent, Stores data to eject dependent field service
+             */
+            dataForDependent: {},
+            /**
+             * toDraw: When this property change, the view is redrawn
+             * @member {boolean}
+             */
+            toDraw: false,
+            /**
+             * @param {object}: stores the request ajax instance
+             */
+            xhr: null,
+            tabIndex: "",
+            ariaLabel: "",
+            isSync: false
+        },
+        eventsMobile: {
+            EXECUTE_QUERY: "dependentField/executeQuery",
+            SYNC_EXECUTE_QUERY: "dependentField/syncExecuteQuery"
+        },
+        initialize: function (options) {
+            this.set("label", this.get("label"));
+            this.set("defaultValue", this.get("defaultValue"));
+        },
+        /**
+         * Generate default data object
+         * @param defaultValue
+         * @param value
+         * @param data
+         * @returns {{label: string, value: string}|*}
+         */
+        initData: function (defaultValue, value, data) {
+            var auxData,
+                auxValue = "0",
+                auxLabel = "false",
+                options = this.get("options"),
+                i;
+
+            if (typeof data === "object") {
+                if (data.hasOwnProperty("value") && data["value"] !== "") {
+                    if (this.get("optionsToFalse").indexOf(data["value"]) > -1) {
+                        auxValue = "0";
+                    } else {
+                        if (this.get("optionsToTrue").indexOf(data["value"]) > -1) {
+                            auxValue = "1";
+                        }
+                    }
+                } else {
+                    if (typeof defaultValue === "boolean") {
+                        if (this.get("optionsToFalse").indexOf(defaultValue) > -1) {
+                            auxValue = "0";
+                        } else {
+                            if (this.get("optionsToTrue").indexOf(defaultValue) > -1) {
+                                auxValue = "1";
+                            }
+                        }
+                    }
+                }
+            }
+            for (i = 0; i < options.length; i += 1) {
+                if (options[i].value === auxValue) {
+                    auxLabel = options[i].label;
+                    break;
+                }
+            }
+            auxData = {
+                label: auxLabel,
+                value: auxValue
+            };
+            return auxData;
+        },
+        /**
+         * Define events (Deprecated in the new classes)
+         */
+        defineModelEvents: function () {
+            this.on("change:text", this.onChangeText, this);
+            this.on("change:options", this.onChangeOptions, this);
+            this.on("change:data", this.onChangeData, this);
+            return this;
+        },
+        /**
+         * onChangeData: This event is executed by modifying the data property
+         * @chainable
+         */
+        onChangeData: function () {
+            this.setDataToSuggest();
+            this.executeDependentsEvents();
+        },
+        /**
+         * onChangeData: Executes the dependency event if it is registered in the
+         * "PMDynaform.util.DependentsFieldManager" in the form
+         * @chainable
+         */
+        executeDependentsEvents: function () {
+            var form = this.get("form"),
+                name = this.evaluateName(),
+                data = this.get("data");
+            if (form) {
+                // creates visited to register all nodes that was walked
+                form.visited = [];
+                // here enables the dependency spinner for all dependent fields
+                this.enableDependencySpinners();
+                // register the dependency events
+                form.dispachEvents("dependency:" + this.getNameToRegisterEvent(name), name, data);
+            }
+            return this;
+        },
+        /**
+         * setDataToSuggest: PMDynaform.model.Suggest type fields are not executed in form-dependent
+         * field events, but the dataForDependent property must be updated to be used in suggest
+         * @chainable
+         */
+        setDataToSuggest: function () {
+            var form = this.get("form"),
+                dependent,
+                dependentsRelation,
+                dependents,
+                i,
+                data = {},
+                name = this.evaluateName();
+            if (this.get("group") === "grid") {
+                name = name + ":" + this.attributes.keyEvent;
+            }
+            if (form) {
+                dependentsRelation = this.get("form").get("dependencyRelations") || {};
+                if (dependentsRelation.hasOwnProperty(name)) {
+                    dependents = dependentsRelation[name];
+                    for (i = 0; i < dependents.length; i += 1) {
+                        dependent = dependents[i];
+                        if (dependent.get("type") === "suggest") {
+                            data[this.evaluateName()] = this.get("data")["value"] || "";
+                            dependent.set("dataForDependent", data);
+                            dependent.set("value", "");
+                            dependent.get("view").$el.find(".select2-selection__rendered").text("");
+                            $(dependent.get('view').getIdSelect()).empty();
+                        }
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * evaluateName:  Evaluates the valid name either a cell or a regular field
+         * @chainable
+         */
+        evaluateName: function () {
+            var parent = this.get("group"),
+                name = "";
+            if (parent === "form") {
+                name = this.get("variable") || this.get("id");
+            } else if (parent === "grid") {
+                name = this.get("columnName") || this.get("columnId");
+            }
+            return name;
+        },
+        /**
+         * getNameToRegisterEvent: Creates an identifier to register in the event handler of form-dependent fields
+         * @param variable {string}: Is the base name to create a new key
+         * @returns {string}, the new key for registered event
+         */
+        getNameToRegisterEvent: function (variable) {
+            var result = "",
+                row = this.get("row"),
+                parent = this.get("parent");
+            if (parent.get("type") === "form") {
+                result = variable;
+            } else if (parent.get("type") === "grid") {
+                result = variable + ":" + this.get("keyEvent");
+            }
+            return result;
+        },
+        /**
+         * Handler for change value (Deprecated in the new classes)
+         * @param {*} attrs 
+         * @param {*} item
+         * @returns {FieldModel}
+         */
+        onChangeValue: function (attrs, item) {
+            var data;
+            data = this.findOption(item, "value");
+            if (data) {
+                this.set("data", data);
+            } else {
+                this.set("data", { value: "", label: "" });
+            }
+            this.set("text", this.get("data")["label"]);
+            return this;
+        },
+        /**
+         * Handler for change text property (Deprecated in the new classes)
+         * @param {*} attrs 
+         * @param {*} item
+         * @returns {FieldModel}
+         */
+        onChangeText: function (attrs, item) {
+            var data;
+            data = this.findOption(item, "label");
+            if (data) {
+                this.set("data", data);
+            } else {
+                this.set("data", { value: "", label: "" });
+            }
+            this.set("value", this.get("data")["value"]);
+            return this;
+        },
+        /**
+         * Return data with value
+         * @returns {Object}
+         */
+        getData: function () {
+            return {
+                name: this.get("name") ? this.get("name") : "",
+                value: this.get("value")
+            }
+        },
+        /**
+         * Get Control HTML default
+         * @returns {Array}
+         */
+        getControl: function () {
+            return this.get("mode") !== "edit" ? undefined : [];
+        },
+        /**
+         * Function base for others models
+         * @param {*} attrs
+         * @returns {FieldModel}
+         */
+        validate: function (attrs) {
+            return this;
+        },
+        /**
+        * Return the url endpoint
+        * @param {*} urlObj
+        * @returns {String} 
+        */
+        getEndpointVariable: function (urlObj) {
+            var prj = this.get("project"),
+                endPointFixed,
+                variable,
+                endpoint;
+
+            if (prj.endPointsPath[urlObj.type]) {
+                endpoint = prj.endPointsPath[urlObj.type]
+                for (variable in urlObj.keys) {
+                    if (urlObj.keys.hasOwnProperty(variable)) {
+                        endPointFixed = endpoint.replace(new RegExp(variable, "g"), urlObj.keys[variable]);
+                    }
+                }
+            }
+
+            return endPointFixed;
+        },
+        /**
+         * Set the localoptions (Array hardcode from designer)
+         * @returns {FieldModel}
+         */
+        setLocalOptions: function () {
+            if (this.get("options")) {
+                this.set("localOptions", this.get("options"));
+            }
+            return this;
+        },
+        /**
+         * Set the options from sql query
+         * @returns {FieldModel}
+         */
+        setRemoteOptions: function () {
+            if (this.get("remoteOptions")) {
+                this.set("remoteOptions", this.get("optionsSql"));
+            }
+            return this;
+        },
+        /**
+         * Merge local options with the sql options
+         * @returns {FieldModel}
+         */
+        mergeOptionsSql: function () {
+            var options = [];
+            if (this.get("options") && this.get("optionsSql"))
+                options = this.get("localOptions").concat(this.get("optionsSql"));
+            this.set("options", options);
+            return this;
+        },
+        /**
+         * This function add value from a field in a field formula
+         * @param formulator
+         * @returns {FieldModel}
+         */
+        addFormulaTokenAssociated: function (formulator) {
+            if (formulator instanceof PMDynaform.core.Formula) {
+                formulator.addTokenValue(this.get("id"), this.get("data")["value"]);
+            }
+            return this;
+        },
+        /**
+         * This function update the field with formula
+         * @param field
+         * @returns {FieldModel}
+         */
+        updateFormulaValueAssociated: function (field) {
+            var resultField = field.model.get("formulator").evaluate();
+            field.model.set("data", {
+                value: resultField,
+                label: resultField
+            });
+            return this;
+        },
+        /**
+         * findOption(): This method find and return a option in the array options if exist
+         * @param value = the filter in the search  "value", "label" or "defaultValue"
+         * @param criteria = is the criteria in the find the option should be a "value", "label"
+         * @returns {boolean||object}
+         */
+        findOption: function (value, criteria) {
+            var i,
+                index = -1,
+                options,
+                option = null;
+            if (_.isArray(this.get("options"))) {
+                options = this.get("options").slice(0);
+                if (_.isArray(options) && value !== undefined && typeof criteria === "string") {
+                    for (i = 0; i < options.length; i += 1) {
+                        if (options[i] && (value == options[i][criteria])) {
+                            option = _.extend({}, options[i]);
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (option !== null) {
+                option['index'] = index;
+            }
+            return option;
+        },
+        /**
+         * findOptions(): This method find and return multiple options in the array options if exist the values
+         * @param values = the filter in the search "value" or  "label"
+         * @param criteria = is the criteria in the find the option should be a "value" or "label"
+         * @returns {Array}
+         */
+        findOptions: function (values, criteria) {
+            var options = this.get("options"),
+                filterOptions = [];
+            if (typeof values === "string") {
+                values = values.split('|');
+            }
+            if (_.isArray(values) && _.isArray(options) && typeof criteria === "string") {
+                filterOptions = options.filter(function (item) {
+                    index = _.find(values, function (num) {
+                        return item[criteria] == num;
+                    });
+                    if (index) {
+                        return item;
+                    }
+                });
+            }
+            return filterOptions;
+        },
+        /**
+         * returnOptionsData(): This build the data for the multiple options
+         * @param options: this options the field
+         * @returns {{value: Array, label: Array}}
+         */
+        returnOptionsData: function (options) {
+            var i,
+                labels = [],
+                values = [],
+                options = options || this.get("options");
+            if (_.isArray(options)) {
+                for (i = 0; i < options.length; i += 1) {
+                    values.push(options[i]["value"]);
+                    labels.push(options[i]["label"]);
+                }
+            }
+            return {
+                value: values,
+                label: labels
+            }
+        },
+        /**
+         * Executes the dependency query
+         * using the data parameters
+         * @param {*} data  necessary data for execute the query
+         * @returns {FieldModel}
+         */
+        executeQuery: function (data) {
+            var project = this.get("project"),
+                that = this,
+                xhr;
+            if (PMDynaform.core.ProjectMobile) {
+                data.var_name = this.get("variable") || "";
+                data.sql = this.get("sql") || "";
+                project.requestManager.channelEvents(
+                    {
+                        handler: this.get("id"),
+                        type: this.eventsMobile.EXECUTE_QUERY,
+                        bridge: true,
+                        data: data,
+                        callback: function (response) {
+                            if (response.error) {
+                                that.afterExecuteQueryFail(response.error);
+                            } else {
+                                that.afterExecuteQuery(response);
+                            }
+                        }
+                    });
+            } else if (project) {
+                this._abortRequest();
+                xhr = project.webServiceManager.executeQuery(data, this.get("variable") || "", this);
+                this.set({ xhr: xhr });
+            }
+            return this;
+        },
+        /**
+         * preparePostData, Prepares the additional data to execute the service to execute the query
+         * @returns data {object}
+         */
+        preparePostData: function () {
+            var data = {},
+                parent = this.get("parent"),
+                project = this.get("project");
+            if (this.get("group") === "grid") {
+                data["field_id"] = this.get("columnName");
+            } else {
+                data["field_id"] = this.get("id");
+            }
+            if (project) {
+                data["dyn_uid"] = project.getDynUID() || "";
+            } else {
+                data["dyn_uid"] = "";
+            }
+            return data;
+        },
+        /**
+         * isDependent, Verify if a field is dependent
+         * @returns dependent {boolean}
+         */
+        isDependent: function () {
+            var dependent = false,
+                parentDependents = this.get("dependency");
+            if (_.isArray(parentDependents) && parentDependents.length > 0) {
+                dependent = true;
+            }
+            return dependent;
+        },
+        /**
+         * Verify if the model contains sql property
+         * @returns {boolean}
+         */
+        canExecuteQuery: function () {
+            var sql = this.get('sql'),
+                flag = false,
+                executeQueryMap = ["database", "datavariable"];
+            if (sql && sql.length) {
+                flag = true;
+            } else {
+                //verify by datasource property
+                flag = executeQueryMap.indexOf(this.get('datasource').toLowerCase()) > -1 ? true : false;
+            }
+            return flag;
+        },
+        /**
+         * Abstract method
+         * @returns {String}
+         */
+        getValue: function () {
+            var value = "";
+            return value;
+        },
+        /**
+         * Trigger a event bus an specific topic [onChange/target/source]
+         * @param topic
+         */
+        triggerTopicEventBus: function (topic) {
+            var that = this,
+                deps = this.get("dependency");
+            _.forEach(deps, function (dep) {
+                PMDynaform.EventBus.trigger(topic + "/" + dep + "/" + that.get("id"), "");
+            });
+        },
+
+        /**
+         * _dependentFieldEventRegister, if this component depends on another field, the dependence is recorded
+         * @param sql {string}, Is the query, of which is made the search of the
+         * variables on which this component depends
+         * @chainable
+         */
+        _dependentFieldEventRegister: function (sql) {
+            var parse,
+                result,
+                variable = null,
+                form = this.get("form"),
+                parent = this.get("parent"),
+                hasMultipleDependents = false,
+                relationName;
+            this.set("dependency", []);
+            parse = /\@(?:([\@\%\#\=\?\!Qq])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*?)*)\))/g;
+            while ((result = parse.exec(sql)) !== null) {
+                if (_.isArray(result) && result.length) {
+                    variable = result[0];
+                    variable = variable.substring(2, variable.length);
+                    relationName = parent.get("type") === "grid" ? form.getField(variable) ? variable : variable + "-" + this.attributes.keyEvent : variable;
+                    form.get("dependentsManager").registerNewDependencyRelation(relationName);
+                    form.get("dependentsManager").registerNewDependent(relationName, this);
+                    form.get("dependentsManager").registerDependency(parent.get("type") === "grid" ? this.get("id") + "-" + this.attributes.keyEvent : this.get("id"), relationName);
+                }
+            }
+            return this;
+        },
+        /**
+         * Dependent field handler, this callback is instanced for all register event,
+         * and runs when the event logged in PMDynaform.util.DependentsFieldManager
+         * param info {object}, Is the field information on which this component depends
+         * @param {*} info 
+         * @returns {FieldModel}
+         */
+        dependentHandler: function (info) {
+            var data = this.buildDataForQuery(info);
+            this.executeQuery(data);
+            return this;
+        },
+        /**
+         * getDependentsManager, Retrieves form-dependent field handler
+         * @returns {PMDynaform.util.DependentsFieldManager}
+         */
+        getDependentsManager: function () {
+            var form;
+            form = this.get("form");
+            if (form) {
+                return this.get("form").get("dependentsManager");
+            }
+            return null;
+        },
+        /*
+         * buildDataForQuery, Builds the data needed to execute the query correctly
+         * @param info {object}: the initial data of the fields on which this component depends
+         * @returns dataForDependent {object}
+         */
+        buildDataForQuery: function (info) {
+            var dependency = this.get("dependency"),
+                i,
+                dataForDependent = this.get("dataForDependent"),
+                dependencyItem,
+                form = this.get("form"),
+                parent = this.get("parent");
+            if (!_.isEmpty(info)) {
+                dataForDependent[info.target] = info.data.value;
+            }
+            if (_.isArray(dependency)) {
+                for (i = 0; i < dependency.length; i += 1) {
+                    if (parent && parent.get("type") === "grid") {
+                        dependencyItem = parent.findCellInRow(this.get("row"), dependency[i]);
+                    } else {
+                        dependencyItem = form.get("fields")[dependency[i]];
+                    }
+                    if (dependencyItem) {
+                        dataForDependent[dependency[i]] = dependencyItem.get("data").value;
+                    }
+                }
+            }
+            _.extend(dataForDependent, this.preparePostData());
+            return dataForDependent;
+        },
+        /**
+         * Abstract Method
+         * @param {*} response 
+         */
+        afterExecuteQuery: function (response) {
+        },
+        /*
+         * Method fires when the service fails
+         * @param {*} response
+         * @chainable
+         */
+        afterExecuteQueryFail: function (response) {
+            var form = this.get("form"),
+                name = this.evaluateName();
+            form.visited = [];
+            if (this.get("view")) {
+                this.get("view").switchSpinnerByControl();
+            }
+            if (response !== "abort") {
+                this.get("view").showQueryFailMessage();
+            }
+            form.disableDependencySpinners(this.getNameToRegisterEvent(name));
+            return this;
+        },
+        /*
+         * Abstract method,
+         */
+        onChangeOptions: function () {
+        },
+        /* mergeRemoteOptions, merge the options obtained from the query to the
+         * service with the local options
+         * @chainable
+         */
+        mergeRemoteOptions: function (remoteOptions) {
+            var k,
+                remoteOpt = [],
+                localOpt = this.get("localOptions") || [],
+                options;
+            for (k = 0; k < remoteOptions.length; k += 1) {
+                remoteOpt.push({
+                    value: remoteOptions[k].value,
+                    label: remoteOptions[k].text || remoteOptions[k].label || ""
+                });
+            }
+            this.set("optionsSql", remoteOpt);
+            options = localOpt.concat(remoteOpt);
+            this.set("options", options);
+            if (this.get("view") && this.get("view").firstLoad) {
+                this.trigger('change:options', this.model, options);
+            }
+            this.updateJsonOptions({
+                optionsSql: remoteOpt
+            });
+            return this;
+        },
+        /**
+         * Update json in Project Model
+         * @param json
+         */
+        updateJsonOptions: function (json) {
+            var prj = this.get("project");
+            if (prj && prj.updateModel) {
+                prj.updateModel(this.get("id"), json);
+            }
+        },
+        /**
+         * Load the remote options by referring to the service
+         * Anonymous 
+         * @returns {FieldModel}
+         */
+        loadRemotesOptions: function () {
+            var data;
+            data = this.buildDataForQuery({});
+            dependentsManager = this.getDependentsManager();
+            this.executeQuery(data);
+            return this;
+        },
+        /**
+         * Retrieves the domain of the component based on
+         * the fields on which it depends
+         * @param data {object}: Data of the fields on which it depends
+         */
+        recoveryRemoteOptions: function (data) {
+            var dependentsManager = this.getDependentsManager(),
+                response;
+            if (typeof data === "object" && _.isArray(this.get("options"))) {
+                _.extend(data, this.preparePostData());
+                this.executeQuery(data);
+            }
+            return this;
+        },
+        /**
+         * setAppData: Sets the corresponding data that is obtained from the
+         * service to the component
+         * @param data {object} valid data for this component
+         */
+        setAppData: function (value) {
+            var data;
+            data = this.findOption(value, "value");
+            if (!data) {
+                data = {
+                    value: value,
+                    label: value
+                }
+            }
+            this.set({ "data": data }, { silent: true });
+            this.set({ "value": value }, { silent: true });
+            this.set("toDraw", true);
+            return this;
+        },
+        /**
+         * Return the name and name_label data
+         * @param value
+         * @returns {object}
+         */
+        getAppData: function () {
+            var dt = this.get("data") || {},
+                data = {};
+            data[this.get("name")] = dt.value;
+            data[this.get("name") + "_label"] = dt.label;
+            return data;
+        },
+        /**
+         * selectedOptions, Select an option from the option set
+         * @param criteria {string}, is the search criterion
+         * @param values {array}, set of the values
+         * @returns {FieldModel}
+         */
+        selectedOptions: function (criteria, values) {
+            var options = this.get("options"),
+                i,
+                validCriteria = ["index", "value", "label"];
+            if (_.isArray(options) && validCriteria.indexOf(criteria) > -1) {
+                for (i = 0; i < options.length; i += 1) {
+                    if (criteria === "index" && values.indexOf(i) > -1) {
+                        options[i].selected = true;
+                    } else if (values.indexOf(options[i][criteria]) > -1) {
+                        options[i].selected = true;
+                    } else {
+                        options[i].selected = false;
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Abort the current ajax request
+         * @returns {FieldModel}
+         */
+        _abortRequest: function () {
+            if (this.get("xhr")) {
+                this.get("xhr").abort();
+            }
+            return this;
+        },
+        /**
+         * Enable the dependent field spinner
+         * @chainable
+         */
+        enableDependencySpinners: function () {
+            var name = this.evaluateName(),
+                form = this.get("form");
+            form.visited = [];
+            form.enableDependencySpinners(this.getNameToRegisterEvent(name));
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @returns {FieldModel}
+         */
+        dependencyWillUpdate: function (any) {
+            if (any.data) {
+                this.set({
+                    data: any.data
+                }, { silent: true });
+            }
+            this.get("form").get("dependentsManager").createBidirectional(this, any.fn);
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Subscribe the changes in dependencies
+         * @param {*} dt 
+         * @param {*} serial
+         * @returns {FieldModel} 
+         */
+        executeDependency: function (dt, serial) {
+            var that = this,
+                data = _.extend(dt, this.preparePostData()),
+                callback = function (data, err) {
+                    that.dependencyDidUpdate(data, dt, err);
+                    that.get("form").get("dependentsManager").emit({
+                        channel: "dependencies",
+                        event: that.getFieldId() + serial,
+                        payload: ""
+                    });
+                };
+            if (this.get("view")) {
+                this.get("view").switchControlBySpinner();
+            }
+            if (PMDynaform.core.ProjectMobile) {
+                this.executeQueryMobile(data, callback);
+            } else {
+                this.executeQueryWeb(data, this.get("form").get("isSync") ? false : true, callback);
+            }
+            return this;
+        },
+        /**
+         * Execute Query for Mobile
+         * @param {*} data 
+         * @param {*} callback 
+         * @returns {FieldModel}
+         */
+        executeQueryMobile: function (data, callback) {
+            var project = this.get("project"),
+                that = this;
+            data.var_name = this.get("variable") || "";
+            data.sql = this.get("sql") || "";
+            project.requestManager.channelEvents({
+                handler: this.get("id"),
+                type: this.eventsMobile.EXECUTE_QUERY,
+                bridge: true,
+                data: data,
+                callback: callback
+            });
+            return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Update only view of dropdown
+         * @param {*} data 
+         * @param {*} err 
+         */
+        dependencyDidUpdate: function (data, dt, err) {
+            var that = this;
+            if (data) {
+                that.afterExecuteQuery(data);
+            } else {
+                that.afterExecuteQueryFail(err);
+            }
+            this.set("dependencyDidUpdate", { error: err || false });
+            this.trigger('change:dependencyDidUpdate');
+        },
+        /**
+         * Will update the column model 
+         * in order to create a new cell
+         * @param {Object} dt 
+         */
+        updateGridModels: function (dt) {
+        },
+        /**
+         * Execute query for web
+         * @param {*} data 
+         * @param {*} async 
+         * @param {*} callback
+         * @returns {FieldModel}
+         */
+        executeQueryWeb: function (data, async, callback) {
+            var project = this.get("project"),
+                xhr;
+            this._abortRequest();
+            xhr = project.webServiceManager.execQuery(data, this.get("variable") || this.get("columnName") || "", async, this.get("memoryCache"), callback);
+            this.set({ xhr: xhr });
+            return this;
+        },
+        /**
+         * Return the id for triggers the dependencies
+         * @returns {String}
+         */
+        getFieldId: function () {
+            var id,
+                parent = this.get("parent");
+            id = parent.get("type") === "grid" ? (this.get("columnId") || this.get("id")) + "-" + this.get("keyEvent") : this.get("id");
+            return id;
+        },
+        /**
+         * Find text in options model
+         * @param {*} text 
+         * @returns {Array}
+         */
+        findTextInOptions: function (text) {
+            var options = this.get("options");
+            return _.find(options, function (o) {
+                return o.label === text;
+            });
+        },
+        /**
+         * Find the val in options model
+         * @param {*} val 
+         * @returns {Array}
+         */
+        findValueInOptions: function (val) {
+            var options = this.get("options");
+            return _.find(options, function (o) {
+                return o.value === val;
+            });
+        },
+        /**
+         * Execute the remote options for this field
+         * @param {*} fn
+         * @chainable
+         */
+        getRemoteOptions: function (fn) {
+            var that = this,
+                data = this.get("form").get("dependentsManager").getDependenciesData(this);
+            if(this.get("sql")){
+                    data = _.extend(data, this.preparePostData());
+                if (data) {
+                    if (PMDynaform.core.ProjectMobile) {
+                        this.executeQueryMobile(data, function (res, err) {
+                            that.mergeRemoteOptions(res && _.isArray(res) ? res : []);
+                            if (_.isFunction(fn)) {
+                                fn(res, err);
+                            }
+                        })
+                    } else {
+                        this.executeQueryWeb(data, false, function (res, err) {
+                            that.mergeRemoteOptions(res && _.isArray(res) ? res : []);
+                            if (_.isFunction(fn)) {
+                                fn(res, err);
+                            }
+                        });
+                    }
+                }
+            }
+            return this;
+        },
+        /**
+         * Clear the options and optionsSql property of a field (dropdown).
+         * @chainable
+         */
+        clearOptions: function () {
+            this.set('options', []);
+            this.set('optionsSql', []);
+            return this;
+        }
+    });
+    PMDynaform.extendNamespace("PMDynaform.model.FieldR", FieldModel);
 }());
 
 (function () {
@@ -20109,7 +22051,34 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return null;
+        },
+        /**
+         * Update the grid model and columnModel property in order
+         * to create new rows
+         * @param {Object} dt 
+         * @param {Object} options
+         * @returns {PMDynaform.model.Field}
+         */
+        updateGridColumn: function (dt, options) {
+            this.updateColumnCollection(this.get("columns"), dt, options);
+            this.updateColumnCollection(this.get("view").columnsModel, dt, options);
+            return this;
+        },
+        /**
+         * Update a column object into the collection
+         * @param {Array} collection 
+         * @param {Object} dt 
+         * @param {Object} options 
+         * @returns {PMDynaform.model.Field}
+         */
+        updateColumnCollection: function (collection, dt, options) {
+            var match = _.find(collection, function(item) { return item.id === dt.field_id })
+            if (match) {
+                _.extend(match, options);
+            }
+            return this;
         }
+
     });
 
     PMDynaform.extendNamespace("PMDynaform.model.GridPanel", GridModel);
@@ -20136,7 +22105,7 @@ xCase.extendNamespace = function (path, newClass) {
     PMDynaform.extendNamespace("PMDynaform.model.Button", ButtonModel);
 }());
 (function () {
-    var DropdownModel = PMDynaform.model.Field.extend({
+    var DropdownModel = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -20165,19 +22134,15 @@ xCase.extendNamespace = function (path, newClass) {
             var_uid: null,
             var_name: null,
             variableInfo: {},
-            value: "",
             columnName: null,
             originalType: null,
             data: {
                 value: "",
                 label: ""
             },
-            itemClicked: false,
-            keyLabel: "",
             optionsSql: [],
             enableValidate: true,
             placeholder: "",
-            text: "",
             /**
              * this parameter verify if exist placeholder in the component
              */
@@ -20193,8 +22158,10 @@ xCase.extendNamespace = function (path, newClass) {
             /**
              * @param {object}: dataForDependent, Stores data to eject dependent field service
              */
-            dataForDependent: {},
-            showDependentSpinners: true
+            showDependentSpinners: true,
+            isSync: false,
+            dependencyDidUpdate: false,
+            memoryCache: false
         },
         initValidators: function () {
             this.set("validator", new PMDynaform.model.Validator({
@@ -20215,8 +22182,6 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("dataForDependent", {});
             data = this.get("data");
             if (data && data["value"] !== "") {
-                this.attributes.value = data["value"];
-                this.attributes.keyLabel = data["label"];
             } else {
                 this.setDataOfOptions();
             }
@@ -20227,14 +22192,11 @@ xCase.extendNamespace = function (path, newClass) {
                     this.attributes.name = this.get("id");
                 }
             }
-            this.set("text", data["label"]);
             //create a placeholder option if exist
             if (this.get("therePlaceholder")) {
                 this.set("placeholderOption", this.createPlaceHolderOption());
             }
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.createChannelEventBus();
         },
         /**
          * Verify if exist placeholder, when exist set paremeter therePlacehodler = true
@@ -20266,7 +22228,7 @@ xCase.extendNamespace = function (path, newClass) {
                         label: this.get("options")[0]["label"]
                     });
                 } else {
-                    this.set("data", {value: "", label: ""});
+                    this.set("data", { value: "", label: "" });
                     this.set("value", "");
                 }
             }
@@ -20314,16 +22276,6 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("valid", this.get("validator").get("valid"));
             return this;
         },
-        reviewRemotesOptions: function () {
-            var sql;
-            if ((this.get("variable") && this.get("variable").trim().length) || this.get("group") == "grid") {
-                sql = this.get("sql");
-                if (sql) {
-                    this.reviewRemoteVariable();
-                }
-            }
-            return this;
-        },
         setLocalOptions: function () {
             var item = {};
             if (this.get("options")) {
@@ -20347,22 +22299,67 @@ xCase.extendNamespace = function (path, newClass) {
             return data ? data["value"] : null;
         },
         /**
-         * Set value
-         * @param value
-         * @returns {DropdownModel}
+         * Set value method, this method only will works for gridMobile class.
+         * @param {*} value 
+         * @param {*} callback 
          */
-        setValue: function (value) {
-            var dataOption,
+        setValue: function (value, callback) {
+            var that = this,
+                dataOption,
                 criteria = "value";
             if (value !== undefined && value !== null) {
-                dataOption = this.findOption(value, criteria);
-                if (dataOption && dataOption.hasOwnProperty("value") && dataOption.hasOwnProperty("label")) {
-                    this.set("value", value);
-                    this.set("data", {
-                        value: dataOption.value || "",
-                        label: dataOption.label || ""
+                this.getRemoteOptions(function (data, err) {
+                    dataOption = that.findOption(value, criteria);
+                    that.dependencyWillUpdate({
+                        data: dataOption,
+                        fn: callback
                     });
-                }
+                });
+            }
+            return this;
+        },
+        /**
+         * SetValue, get Remote options, update the view and model but not trigger the dependencies without execute onchange callbacks only works in mobile
+         * @param {*} value
+         * @param {*} fn
+         * @return {DropDownModel}
+         */
+        setValueWithoutTriggerDependencies: function (value, fn) {
+            var that = this,
+                dataOption,
+                criteria = "value";
+            if (value !== undefined && value !== null) {
+                this.getRemoteOptions(function (data, err) {
+                    dataOption = that.findOption(value, criteria);
+                    that.setFirstOptionInData();
+                    // If not exist the value in options, we need show the first option and we need update the hidden
+                    if (dataOption) {
+                        that.set("data", dataOption);
+                    }
+                    if (_.isFunction(fn)) {
+                        fn();
+                    }
+                });
+            }
+            return this;
+        },
+        /**
+         * Set text method, this method only will works for gridMobile class.
+         * @param {*} txt 
+         * @param {*} callback 
+         */
+        setText: function (txt, callback) {
+            var that = this,
+                dataOption,
+                criteria = "label";
+            if (typeof txt !== undefined && txt !== null) {
+                this.getRemoteOptions(function (data, err) {
+                    dataOption = that.findOption(txt, criteria);
+                    that.dependencyWillUpdate({
+                        data: dataOption,
+                        fn: callback
+                    });
+                });
             }
             return this;
         },
@@ -20384,25 +22381,8 @@ xCase.extendNamespace = function (path, newClass) {
             if (_.isArray(response) && response.length > 0 && this.get("showDependentSpinners") && currentValue !== newValue) {
                 this.set("showDependentSpinners", true);
             }
-            if (this.get("view")) {
-                this.get("view").switchSpinnerByControl();
-            }
-
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
-            }
             return this;
         },
-        /**
-         * Clear the options and optionsSql property of a field (dropdown).
-         * @chainable
-         */
-        clearOptions: function () {
-            this.set('options', []);
-            this.set('optionsSql', []);
-            return this;
-        },
-
         /*
          * Handler when the execute-query service fails.
          * @param {*} response
@@ -20435,83 +22415,10 @@ xCase.extendNamespace = function (path, newClass) {
                 defaultData = _.find(options, function (item) {
                     return item.value === val;
                 });
-                this.set({value: val});
-                this.set("data", defaultData || {value: '', label: ''});
+                this.set("data", defaultData || { value: '', label: '' });
             } else {
-                this.set({value: ""}, {silent: true});
-                this.set("data", {value: '', label: ''});
-                this.get('view').checkBinding();
-            }
-            return this;
-        },
-        /**
-         * Load the remote options by referring to the service
-         * Anonymous function
-         */
-        loadRemotesOptions: function () {
-
-        },
-        /**
-         * Retrieves the domain of the component based on
-         * the fields on which it depends
-         * @param data {object}: Data of the fields on which it depends
-         * @param postRender {boolean}: Checks if the call is after the view exists
-         */
-        recoveryRemoteOptions: function (data, postRender) {
-            if (postRender) {
-                if (typeof data === "object" && _.isArray(this.get("options"))) {
-                    _.extend(data, this.preparePostData());
-                    this.executeQuery(data);
-                }
-            }
-            return this;
-        },
-        /**
-         * Retrieves synchronously the domain of the component based on
-         * the fields on which it depends
-         * @param data {object}: Data of the fields on which it depends
-         * @param postRender {boolean}: Checks if the call is after the view exists
-         */
-        recoverySyncRemoteOptions: function (data, postRender, callback) {
-            var dependentsManager = this.getDependentsManager(),
-                that = this,
-                response,
-                project = this.get("project");
-            if (postRender) {
-                if (typeof data === "object" && _.isArray(this.get("options"))) {
-                    _.extend(data, this.preparePostData());
-                    if (dependentsManager) {
-                        if (PMDynaform.core.ProjectMobile) {
-                            data.var_name = this.get("variable") || "";
-                            data.sql = this.get("sql") || "";
-                            project.requestManager.channelEvents(
-                                {
-                                    handler: this.get("id"),
-                                    type: this.eventsMobile.SYNC_EXECUTE_QUERY,
-                                    bridge: true,
-                                    data: data,
-                                    callback: function (response) {
-                                        if (_.isArray(response)) {
-                                            that.mergeRemoteOptions(response);
-                                            that.get("view").switchSpinnerByControl();
-                                            if (_.isFunction(callback)) {
-                                                callback();
-                                            }
-                                        }
-                                    }
-                                });
-                        } else {
-                            response = project.webServiceManager.executeSyncQuery(data, this.get("variable") || "");
-                        }
-                    }
-                    if (_.isArray(response)) {
-                        this.mergeRemoteOptions(response);
-                        this.get("view").switchSpinnerByControl();
-                        if (_.isFunction(callback)) {
-                            callback();
-                        }
-                    }
-                }
+                this.set("data", { value: '', label: '' });
+                this.set('toDraw', true);
             }
             return this;
         },
@@ -20533,18 +22440,54 @@ xCase.extendNamespace = function (path, newClass) {
                     }
                 }
             }
-            this.set({"data": newData}, {silent: true});
-            this.set({"value": newData.value}, {silent: true});
+            this.set({ "data": newData }, { silent: true });
             this.set("toDraw", true);
+            return this;
+        },
+        /**
+         * Execute the remote options for this field
+         * @param {*} fn
+         * @chainable
+         */
+        getRemoteOptions: function (fn) {
+            var that = this,
+                data = this.get("form").get("dependentsManager").getDependenciesData(this);
+            data = _.extend(data, this.preparePostData());
+            if (data) {
+                if (PMDynaform.core.ProjectMobile) {
+                    this.executeQueryMobile(data, function (res, err) {
+                        that.mergeRemoteOptions(res && _.isArray(res) ? res : []);
+                        if (_.isFunction(fn)) {
+                            fn(res, err);
+                        }
+                    })
+                } else {
+                    this.executeQueryWeb(data, false, function (res, err) {
+                        that.mergeRemoteOptions(res && _.isArray(res) ? res : []);
+                        if (_.isFunction(fn)) {
+                            fn(res, err);
+                        }
+                    });
+                }
+            }
+            return this;
+        },
+        /**
+         * Will update the column model 
+         * in order to create a new cell
+         * @param {Object} dt 
+         */
+        updateGridModels: function (dt) {
+            newOptions = { optionsSql: this.get("options") };
+            this.get("parent").updateGridColumn(dt, newOptions);
             return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.Dropdown", DropdownModel);
-
+    PMDynaform.extendNamespace("PMDynaform.model.DropdownR", DropdownModel);
 }());
 
 (function () {
-    var RadioboxModel = PMDynaform.model.Field.extend({
+    var RadioboxModel = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -20574,18 +22517,22 @@ xCase.extendNamespace = function (path, newClass) {
             var_uid: null,
             var_name: null,
             variableInfo: {},
-            value: "",
             columnName: null,
             originalType: null,
             itemClicked: false,
-            keyLabel: "",
             optionsSql: [],
             enableValidate: true,
             data: {
                 value: "",
                 label: ""
-            }
+            },
+            dependencyDidUpdate: false,
+            memoryCache: false
         },
+        /**
+         * Initialize Field Model
+         * @param {*} attrs 
+         */
         initialize: function (attrs) {
             var data = this.get("data");
             this.set("label", this.get("label"));
@@ -20601,12 +22548,9 @@ xCase.extendNamespace = function (path, newClass) {
             this.initControl();
 
             if (data && data["value"].toString()) {
-                this.attributes.value = data["value"];
-                this.attributes.keyLabel = data["label"];
                 this.set("data", data);
             } else {
-                this.set("data", {value: "", label: ""});
-                this.set("value", "");
+                this.set("data", { value: "", label: "" });
             }
             if (this.get("group") === "form") {
                 if (this.get("variable").trim().length === 0) {
@@ -20615,10 +22559,11 @@ xCase.extendNamespace = function (path, newClass) {
             } else {
                 this.attributes.name = this.get("id");
             }
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.createChannelEventBus();
         },
+        /**
+         * Init the values in Field
+         */
         initControl: function () {
             var opts = this.get("options"),
                 i,
@@ -20626,7 +22571,10 @@ xCase.extendNamespace = function (path, newClass) {
                 itemsSelected = [];
 
             if (this.get("defaultValue")) {
-                this.set("value", this.get("defaultValue"));
+                this.set("data", {
+                    value: this.get("defaultValue"),
+                    label: this.get("data").label
+                });
             }
             for (i = 0; i < opts.length; i += 1) {
                 if (opts[i].selected) {
@@ -20642,27 +22590,46 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("options", newOpts);
             this.set("selected", itemsSelected);
         },
+        /**
+         * Set the local options in model
+         * @returns {RadioboxModel}
+         */
         setLocalOptions: function () {
             this.set("localOptions", this.get("options"));
             return this;
         },
+        /**
+         * Verify the validation in model
+         * @returns {boolean}
+         */
         isValid: function () {
             this.set("valid", this.get("validator").get("valid"));
             return this.get("valid");
         },
+        /**
+         * Verify the data in control
+         */
         verifyControl: function () {
             var opts = this.get("options"), i;
             for (i = 0; i < opts.length; i += 1) {
                 opts[i].value = opts[i].value.toString();
             }
-            this.set("value", this.get("value").toString());
+            this.set("data", {
+                value: this.get("data").value.toString(),
+                label: this.get("data").label
+            });
         },
+        /**
+         * Validate the radio Model
+         * @param {*} attrs
+         * @returns {RadioboxModel}
+         */
         validate: function (attrs) {
             if (this.get("enableValidate")) {
                 if (attrs) {
                     this.get("validator").set("type", attrs.type);
-                    this.get("validator").set("value", attrs.value);
-                    this.get("validator").set("valueDomain", attrs.value);
+                    this.get("validator").set("value", attrs.data.value);
+                    this.get("validator").set("valueDomain", attrs.data.value);
                     this.get("validator").set("required", attrs.required);
                     this.get("validator").set("dataType", attrs.dataType);
                 }
@@ -20673,6 +22640,11 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("valid", this.get("validator").get("valid"));
             return this;
         },
+        /**
+         * Set the selected option
+         * @param {*} itemUpdated 
+         * @returns {RadioboxModel}
+         */
         setItemClicked: function (itemUpdated) {
             var opts = this.get("options"),
                 selected = this.get("selected"),
@@ -20687,13 +22659,16 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Returns the data model
+         * @returns {Object}
+         */
         getData: function () {
             if (this.get("group") == "grid") {
                 return {
                     name: this.get("columnName") ? this.get("columnName") : "",
                     value: this.get("value")
                 }
-
             } else {
                 return {
                     name: this.get("name") ? this.get("name") : "",
@@ -20701,6 +22676,12 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
         },
+        /**
+         * Listener for value property in Radio Model
+         * @param {*} attrs 
+         * @param {*} value 
+         * @returns {RadioboxModel}
+         */
         onChangeValue: function (attrs, value) {
             var option;
             this.attributes.value = attrs.attributes.value;
@@ -20723,6 +22704,10 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
+        /**
+         * Returns the value model
+         * @returns {Object}
+         */
         getValue: function () {
             var data = this.get("data");
             return data ? data["value"] : null;
@@ -20731,17 +22716,11 @@ xCase.extendNamespace = function (path, newClass) {
          * afterExecuteQuery: After executing the dependent field service,
          * it retrieves a data array, here it handles the new data
          * @param response {array}: response data set
+         * @returns {RadioboxModel}
          */
         afterExecuteQuery: function (response) {
-            this.set("data", {value: "", label: ""});
-            this.set({value: ""}, {silent: true});
+            this.set("data", { value: "", label: "" });
             this.mergeRemoteOptions(response);
-            if (this.get("view")) {
-                this.get("view").switchSpinnerByControl();
-            }
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
-            }
             return this;
         },
         /*
@@ -20754,8 +22733,6 @@ xCase.extendNamespace = function (path, newClass) {
                 name = this.evaluateName();
             form.visited = [];
             if (response !== "abort") {
-                this.get("view").switchSpinnerByControl();
-                this.get("view").showQueryFailMessage();
                 form.disableDependencySpinners(this.getNameToRegisterEvent(name));
             }
             this.mergeRemoteOptions([]);
@@ -20766,21 +22743,20 @@ xCase.extendNamespace = function (path, newClass) {
          * service to the component
          * @param value {object} valid data for this component
          * @param dependencyData {object}, data to complete the component domain
+         * @returns {RadioboxModel}
          */
         setAppData: function (value, dependencyData) {
             var data;
             if (dependencyData) {
                 this.recoveryRemoteOptions(dependencyData);
             }
-            data = this.findOption(value, "value") || {value: "", label: ""};
-            this.set({"data": data}, {silent: true});
-            this.set({"value": value}, {silent: true});
-            this.set({"keyLabel": data.label}, {silent: true});
+            data = this.findOption(value, "value") || { value: "", label: "" };
+            this.set({ "data": data }, { silent: true });
             this.set("toDraw", true);
             return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.Radio", RadioboxModel);
+    PMDynaform.extendNamespace("PMDynaform.model.RadioR", RadioboxModel);
 }());
 
 (function () {
@@ -20804,7 +22780,7 @@ xCase.extendNamespace = function (path, newClass) {
     PMDynaform.extendNamespace("PMDynaform.model.Submit", SubmitModel);
 }()); 
 (function () {
-    var TextAreaModel = PMDynaform.model.Field.extend({
+    var TextAreaModel = PMDynaform.model.FieldR.extend({
         defaults: {
             type: "textarea",
             placeholder: "",
@@ -20833,30 +22809,22 @@ xCase.extendNamespace = function (path, newClass) {
             columnName: null,
             originalType: null,
             data: null,
-            keyLabel: "",
             enableValidate: true,
-            text: "",
-            variable: ''
+            variable: '',
+            memoryCache: false
         },
         getData: function () {
             if (this.get("group") == "grid") {
                 return {
                     name: this.get("columnName") ? this.get("columnName") : "",
-                    value: this.get("value")
+                    value: this.get("data").value
                 }
             } else {
                 return {
                     name: this.get("name") ? this.get("name") : "",
-                    value: this.get("value")
+                    value: this.get("data").value
                 }
             }
-        },
-        defineModelEvents: function () {
-            this.on("change:text", this.onChange, this);
-            this.on("change:value", this.onChange, this);
-            this.on("change:label", this.onChangeLabel, this);
-            this.on("change:data", this.onChangeData, this);
-            return this;
         },
         initialize: function (attrs) {
             var data, maxLength;
@@ -20883,11 +22851,9 @@ xCase.extendNamespace = function (path, newClass) {
                     label: data["value"]
                 };
                 this.set("data", data);
-                this.set("value", data["value"]);
                 this.set("defaultValue", data["value"]);
             } else {
-                this.set("data", {value: "", label: ""});
-                this.set("value", "");
+                this.set("data", { value: "", label: "" });
             }
             this.initControl();
 
@@ -20898,10 +22864,7 @@ xCase.extendNamespace = function (path, newClass) {
                     this.attributes.name = this.get("id");
                 }
             }
-            this.set("text", this.get("data")["label"]);
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.createChannelEventBus();
         },
         initControl: function () {
             if (this.get("defaultValue")) {
@@ -20926,33 +22889,36 @@ xCase.extendNamespace = function (path, newClass) {
             }
             return this;
         },
-        onChange: function (attrs, item) {
-            var data;
-            data = {
-                value: item || "",
-                label: item || ""
-            };
-            this.set("data", data);
-            this.set({text: item, value: item});
-            return this;
-        },
         getValue: function () {
             var data = this.get("data");
             return data ? data["value"] : null;
         },
         /**
-         * Set value
-         * @param value
-         */
-        setValue: function (value) {
-            if (value !== undefined) {
-                this.set("value", value);
-                this.set("text", value);
-                this.set("data", {
-                    value: value,
-                    label: value
+        * Set value Only works from gridMobile
+        * @param value
+        * @param callback
+        * @returns {DropdownModel}
+        */
+        setValue: function (value, callback) {
+            if (value) {
+                this.dependencyWillUpdate({
+                    data: {
+                        value: value,
+                        label: value
+                    },
+                    fn: callback
                 });
             }
+            return this;
+        },
+        /**
+         * Set text Only works from gridMobile
+         * @param txt
+         * @param callback
+         * @returns {DropdownModel}
+         */
+        setText: function (txt, callback) {
+            this.setValue(txt, callback);
             return this;
         },
         /**
@@ -20961,29 +22927,36 @@ xCase.extendNamespace = function (path, newClass) {
          * @param response {array}: response data set
          */
         afterExecuteQuery: function (response) {
+            var currentValue = this.get("value"),
+                newValue;
+            this.clearOptions();
+            this.mergeRemoteOptions(response);
+            this.setFirstOptionInData();
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /**
+         * setFirstOptionInData: Sets the first domain option if it exists
+         * if there are not domain a default empty data has been setted
+         */
+        setFirstOptionInData: function() {
             var indexValue = 0,
                 val,
                 responseDefault = [{
                     value: "",
                     text: ""
                 }],
-                currentValue = this.get("value"),
-                newValue;
-            response = response ? response : [];
-            _.defaults(response, responseDefault);
-            if (_.isArray(response)) {
-                val = response[indexValue].value;
-                this.set({"value": val, silent: true});
-            }
-            if (this.get("view")) {
-                this.get("view").switchSpinnerByControl();
-            }
-            newValue = this.get("value");
-            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
-                this.enableDependencySpinners();
-            }
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
+                options = this.get("options") || [];
+            _.defaults(options, responseDefault);
+            if (_.isArray(options)) {
+                val = options[indexValue].value;
+                this.set("data", {
+                    value: val,
+                    label: val
+                });
             }
             return this;
         },
@@ -21001,12 +22974,9 @@ xCase.extendNamespace = function (path, newClass) {
                 };
             form.visited = [];
             if (response !== "abort") {
-                this.get("view").showQueryFailMessage();
-                this.get("view").switchSpinnerByControl();
                 form.disableDependencySpinners(this.getNameToRegisterEvent(name));
             }
             this.set("data", data);
-            this.set("value", data.value);
             return this;
         },
         /**
@@ -21020,14 +22990,24 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return this;
+        },
+        /**
+         * Will update the column model 
+         * in order to create a new cell
+         * @param {Object} dt 
+         */
+        updateGridModels: function(dt) {
+            newOptions = {data: this.get("data")};
+            this.get("parent").updateGridColumn(dt, newOptions);
+            return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.TextArea", TextAreaModel);
+    PMDynaform.extendNamespace("PMDynaform.model.TextAreaR", TextAreaModel);
 }());
 
 (function () {
 
-    var TextModel = PMDynaform.model.Field.extend({
+    var TextModel = PMDynaform.model.FieldR.extend({
         defaults: {
             type: "text",
             placeholder: "",
@@ -21043,7 +23023,6 @@ xCase.extendNamespace = function (path, newClass) {
             tooltipLabel: "",
             tabIndex: "",
             ariaLabel: "",
-            value: "",
             group: "form",
             defaultValue: "",
             dataType: "string",
@@ -21065,24 +23044,16 @@ xCase.extendNamespace = function (path, newClass) {
             originalType: null,
             data: null,
             keyValue: null,
-            keyLabel: "",
             formulaAssociatedObject: [],
             enableValidate: true,
-            text: "",
-            formula: ''
-        },
-        defineModelEvents: function () {
-            this.on("change:text", this.onChange, this);
-            this.on("change:value", this.onChange, this);
-            this.on("change:data", this.onChangeData, this);
-            return this;
+            formula: '',
+            memoryCache: false
         },
         initialize: function (attrs) {
             var data, maxLength;
             this.set("optionsSql", null);
             this.set("dataType", this.get("dataType").trim().length ? this.get("dataType") : "string");
             this.set("label", this.get("label"));
-            this.set("dataForDependent", {});
             this.set("defaultValue", this.get("defaultValue"));
             this.set("validator", new PMDynaform.model.Validator({
                 "type": this.get("type"),
@@ -21105,7 +23076,6 @@ xCase.extendNamespace = function (path, newClass) {
 
             data = this.get("data");
             if (data && data["value"] !== "") {
-                this.set("keyValue", data["value"]);
                 if (data["label"] !== "") {
                     data = {
                         value: data["value"],
@@ -21118,13 +23088,9 @@ xCase.extendNamespace = function (path, newClass) {
                     };
                 }
                 this.set("data", data);
-                this.set("value", data["value"]);
                 this.set("defaultValue", data["value"]);
-                this.set("keyLabel", data["value"]);
             } else {
-                this.set("data", {value: "", label: ""});
-                this.set("value", "");
-                this.set("keyLabel", "");
+                this.set("data", { value: "", label: "" });
             }
             this.initControl();
             if (this.get("variable").trim().length === 0) {
@@ -21134,15 +23100,9 @@ xCase.extendNamespace = function (path, newClass) {
                     this.attributes.name = this.get("id");
                 }
             }
-            this.set("text", this.get("data")["label"]);
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.createChannelEventBus();
         },
         initControl: function () {
-            if (this.get("defaultValue")) {
-                this.set("value", this.get("defaultValue"));
-            }
             if (typeof this.get("formula") === "string" &&
                 this.get('formula') !== "undefined" &&
                 this.get('formula') !== "null" &&
@@ -21161,9 +23121,10 @@ xCase.extendNamespace = function (path, newClass) {
             this.get("formulator").addField("field", otherField);
             return this;
         },
+        // Update the field with formula property
         updateFormulaValueAssociated: function (field) {
             var resultField = field.model.get("formulator").evaluate();
-            field.model.setValue(resultField);
+            field.setValue(resultField);
             return this;
         },
         isValid: function () {
@@ -21187,41 +23148,54 @@ xCase.extendNamespace = function (path, newClass) {
             if (this.get("group") == "grid") {
                 return {
                     name: this.get("columnName") ? this.get("columnName") : "",
-                    value: this.get("value")
+                    value: this.get("data").value
                 }
             } else {
                 return {
                     name: this.get("name") ? this.get("name") : "",
-                    value: this.get("value")
+                    value: this.get("data").value
                 }
             }
         },
         getData2: function () {
             var data = {}, name, value;
             name = this.get("variable") ? this.get("variable").var_name : this.get("name");
-            value = this.get("value");
+            value = this.get("data").value;
             data[name] = value;
             return data;
         },
-        reviewRemotesOptions: function () {
-            var sql;
-            if (this.get("variable") && this.get("variable").trim().length) {
-                sql = this.get("sql");
-                if (sql) {
-                    this.reviewRemoteVariable();
-                }
+        /**
+         * Set value Only works from gridMobile
+         * @param value
+         * @param callback
+         * @returns {TextModel}
+         */
+        setValue: function (value, callback) {
+            if (value) {
+                this.dependencyWillUpdate({
+                    data: {
+                        value: value,
+                        label: value
+                    },
+                    fn: callback
+                });
             }
             return this;
         },
-        setValue: function (value) {
-            this.set({"text": value}, {silent: true});
-            this.set({"value": value}, {silent: true});
-            this.set("data", {
-                value: value,
-                label: value
-            });
+        /**
+         * Set text Only works from gridMobile
+         * @param txt
+         * @param callback
+         * @returns {TextModel}
+         */
+        setText: function (txt, callback) {
+            this.setValue(txt, callback);
             return this;
         },
+        /**
+         * Returns the value from model
+         * @returns {TextModel}
+         */
         getValue: function () {
             var data = this.get("data");
             return data ? data["value"] : null;
@@ -21232,29 +23206,36 @@ xCase.extendNamespace = function (path, newClass) {
          * @param response {array}: response data set
          */
         afterExecuteQuery: function (response) {
+            var currentValue = this.get("value"),
+                newValue;
+            this.clearOptions();
+            this.mergeRemoteOptions(response);
+            this.setFirstOptionInData();
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /**
+         * setFirstOptionInData: Sets the first domain option if it exists
+         * if there are not domain a default empty data has been setted
+         */
+        setFirstOptionInData: function() {
             var indexValue = 0,
                 val,
                 responseDefault = [{
                     value: "",
                     text: ""
                 }],
-                currentValue = this.get("value"),
-                newValue;
-            response = response ? response : [];
-            _.defaults(response, responseDefault);
-            if (_.isArray(response)) {
-                val = response[indexValue].value;
-                this.set("value", val);
-            }
-            if (this.get("view")) {
-                this.get("view").switchSpinnerByControl();
-            }
-            newValue = this.get("value");
-            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
-                this.enableDependencySpinners();
-            }
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
+                options = this.get("options") || [];
+            _.defaults(options, responseDefault);
+            if (_.isArray(options)) {
+                val = options[indexValue].value;
+                this.set("data", {
+                    value: val,
+                    label: val
+                });
             }
             return this;
         },
@@ -21272,46 +23253,23 @@ xCase.extendNamespace = function (path, newClass) {
                 };
             form.visited = [];
             if (response !== "abort") {
-                this.get("view").showQueryFailMessage();
-                this.get("view").switchSpinnerByControl();
                 form.disableDependencySpinners(this.getNameToRegisterEvent(name));
             }
             this.set("data", data);
-            this.set("value", data.value);
             return this;
         },
         /**
-         * Superclass override method
+         * Will update the column model 
+         * in order to create a new cell
+         * @param {Object} dt 
          */
-        recoveryRemoteOptions: function (data, postRender) {
-            if (postRender) {
-                if (typeof data === "object") {
-                    _.extend(data, this.preparePostData());
-                    this.executeQuery(data);
-                }
-            }
-            return this;
-        },
-        /**
-         * This function execute on change data
-         * @param attrs
-         * @param item
-         */
-        onChange: function (attrs, item) {
-            var data;
-            item = (item === null || item === undefined) ? '' : item;
-            data = {
-                value: item,
-                label: item
-            };
-            this.attributes.text = item;
-            this.attributes.value = item;
-            this.attributes.keyLabel = item;
-            this.set("data", data);
+        updateGridModels: function(dt) {
+            newOptions = {data: this.get("data")};
+            this.get("parent").updateGridColumn(dt, newOptions);
             return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.Text", TextModel);
+    PMDynaform.extendNamespace("PMDynaform.model.TextR", TextModel);
 }());
 
 (function () {
@@ -21550,7 +23508,7 @@ xCase.extendNamespace = function (path, newClass) {
 }());
 
 (function () {
-    var CheckGroupModel = PMDynaform.model.Field.extend({
+    var CheckGroupModel = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -21577,14 +23535,17 @@ xCase.extendNamespace = function (path, newClass) {
             type: "checkgroup",
             validator: null,
             valid: true,
-            value: [],
             columnName: null,
             originalType: null,
-            data: {},
+            data: {
+                value: [],
+                label: ""
+            },
             defaultValue: [],
-            labelsSelected: [],
             variable: "",
-            enableValidate: true
+            enableValidate: true,
+            dependencyDidUpdate: false,
+            memoryCache: false
         },
         initialize: function (attrs) {
             var data;
@@ -21603,15 +23564,12 @@ xCase.extendNamespace = function (path, newClass) {
                 this.attributes.value = this.get("data")["value"];
             }
             this.initControl();
-            this.get("validator").set("value", this.get("value"));
+            this.get("validator").set("value", this.get("data").value);
 
             if (this.get("variable") === "") {
                 this.attributes.name = "";
             }
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.on("change:value", this.updateItemSelected, this);
-            this.createChannelEventBus();
             return this;
         },
         initData: function (defaultV, value, data) {
@@ -21627,16 +23585,12 @@ xCase.extendNamespace = function (path, newClass) {
                                     auxData["label"].push(this.get("options")[i]["label"]);
                                 }
                             }
-                            this.attributes.labelsSelected = auxData["label"];
                         } else {
                             if ($.isArray(data["label"])) {
-                                this.attributes.labelsSelected = data["label"];
-                                data["label"] = JSON.stringify(this.attributes.labelsSelected);
+                                data["label"] = JSON.stringify(data["label"]);
                                 auxData = data;
                             } else {
                                 if (data["label"].indexOf("[") === 0 && data["label"].lastIndexOf("]") === data["label"].length - 1) {
-                                    this.attributes.labelsSelected = JSON.parse(data["label"]);
-                                    data["label"] = JSON.stringify(this.attributes.labelsSelected);
                                     auxData = data;
                                 }
                             }
@@ -21654,19 +23608,16 @@ xCase.extendNamespace = function (path, newClass) {
                         if (!data.hasOwnProperty("value") || data["value"] === "") {
                             auxData["value"] = [];
                             auxData["label"] = [];
-                            this.attributes.labelsSelected = [];
                         }
                         existData = true;
                     }
                 } else {
                     auxData["value"] = [];
                     auxData["label"] = [];
-                    this.attributes.labelsSelected = [];
                 }
             } else {
                 auxData["value"] = [];
                 auxData["label"] = [];
-                this.attributes.labelsSelected = [];
             }
             if (defaultV && !existData) {
                 var defaultV = defaultV.split("|");
@@ -21678,7 +23629,6 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             if ($.isArray(auxData["label"])) {
-                this.attributes.labelsSelected = auxData["label"];
                 auxData["label"] = JSON.stringify(auxData["label"]);
             }
             return auxData;
@@ -21735,7 +23685,6 @@ xCase.extendNamespace = function (path, newClass) {
             var opts = this.get("options"),
                 selected = [],
                 i;
-            this.attributes.labelsSelected = [];
             if (opts) {
                 for (i = 0; i < opts.length; i += 1) {
                     if (opts[i].value.toString() === itemUpdated.value.toString()) {
@@ -21749,7 +23698,6 @@ xCase.extendNamespace = function (path, newClass) {
                     }
                     if (opts[i].selected) {
                         selected.push(opts[i].value);
-                        this.attributes.labelsSelected.push(opts[i].label);
                     }
                 }
                 if (selected.length) {
@@ -21826,9 +23774,6 @@ xCase.extendNamespace = function (path, newClass) {
             if (this.get("view")) {
                 this.get("view").switchSpinnerByControl();
             }
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
-            }
             return this;
         },
         /*
@@ -21871,15 +23816,23 @@ xCase.extendNamespace = function (path, newClass) {
                     data.label.push(options[i].label);
                 }
             }
-            this.set("labelsSelected", data.label);
             data.label = JSON.stringify(data.label);
-            this.set({"data": data}, {silent: true});
-            this.set({"value": data.value}, {silent: true});
+            this.set({ "data": data }, { silent: true });
+            this.set({ "value": data.value }, { silent: true });
             this.set("toDraw", true);
+            return this;
+        },
+        /**
+         * Trigger the dependencies for this Field
+         * @param {*} fn 
+         * @returns {CheckGroupModel}
+         */
+        triggerDependencies: function (fn) {
+            this.get("form").get("dependentsManager").createBidirectional(this, fn);
             return this;
         }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.CheckGroup", CheckGroupModel);
+    PMDynaform.extendNamespace("PMDynaform.model.CheckGroupR", CheckGroupModel);
 }());
 
 (function () {
@@ -21969,7 +23922,6 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             this.defineModelEvents();
-            this.createChannelEventBus();
             return this;
         },
         initControl: function () {
@@ -22129,7 +24081,7 @@ xCase.extendNamespace = function (path, newClass) {
 }());
 
 (function () {
-    var DatetimeModel = PMDynaform.model.Field.extend({
+    var DatetimeModel = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -22182,7 +24134,9 @@ xCase.extendNamespace = function (path, newClass) {
             type: "datetime",
             label: "untitled label",
             datetimeIsoFormat: "YYYY-MM-DD HH:mm:ss",
-            dateIsoFormat: "YYYY-MM-DD"
+            dateIsoFormat: "YYYY-MM-DD",
+            dependentOptions: {},
+            dependencyDidUpdate: false
         },
         getData: function () {
             if (this.get("group") == "grid") {
@@ -22212,7 +24166,8 @@ xCase.extendNamespace = function (path, newClass) {
                 },
                 defaultDate,
                 maxOrMinDate,
-                flag = true;
+                flag = true,
+                dependentOption;
             this.redefinepropertiesV4(options);
 
             if (this.get("useCurrent") === "true") {
@@ -22338,6 +24293,12 @@ xCase.extendNamespace = function (path, newClass) {
             }
             this.defineModelEvents();
             this.set("text", this.get("data")["label"]);
+            // Registering dependency events
+            if (this.get("dependentOptions")) {
+                for (dependentOption in this.get("dependentOptions")) {
+                    this._dependentFieldEventRegister(this.get("dependentOptions")[dependentOption]);
+                }
+            }
             return this;
         },
         customPickTimeIcon: function (format) {
@@ -22425,9 +24386,10 @@ xCase.extendNamespace = function (path, newClass) {
         /**
          * Set value
          * @param value
+         * @param {callback} fn
          * @returns {DatetimeModel}
          */
-        setValue: function (value) {
+        setValue: function (value, fn) {
             if (value !== undefined && value !== null) {
                 this.set("value", value);
                 this.set("text", value);
@@ -22435,8 +24397,22 @@ xCase.extendNamespace = function (path, newClass) {
                     value: value,
                     label: value
                 });
+                if (_.isFunction(fn)) {
+                    fn();
+                }
             }
             return this;
+        },
+        /**
+         * Set text
+         * @param value 
+         * @param {callback} fn
+         */
+        setText: function (value, fn) {
+            this.setValue(value);
+            if (_.isFunction(fn)) {
+                fn();
+            }
         },
         /**
          * setAppData: Sets the corresponding data that is obtained from the
@@ -22453,15 +24429,70 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
             return this;
+        },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * Subscribe the changes in dependencies
+         * @param {*} dt 
+         * @param {*} serial
+         * @returns {FieldModel} 
+         */
+        executeDependency: function (dt, serial) {
+            var that = this;
+            _.extend(dt, this.preparePostData());
+            this.set("dependencyDidUpdate", { error: false });
+            this.get("form").get("dependentsManager").emit({
+                channel: "dependencies",
+                event: that.getFieldId() + serial,
+                payload: ""
+            });
+            newOptions = this.getWidgetOption(dt);
+            this.get("view").updateSettings(newOptions);
+            if (this.get("parent").get("type") === "grid" && dt.internalType !== "grid" ) {
+                this.get("parent").updateGridColumn(dt, newOptions);
+            }
+            return this;
+        },
+        /**
+         * Get and prepare options for bootstrap DateTimepicker widget
+         * @param {Object} dt
+         * @returns {Object}
+         */
+        getWidgetOption:function(dt) {
+            var widgetOption = {},
+                option,
+                item,
+                optionSelected;
+            for (item in dt) {
+                optionSelected = null;
+                for (option in this.get("dependentOptions")) {
+                    if (this.get("dependentOptions")[option].substr(2) === item){
+                        optionSelected = option;
+                        break;
+                    }
+                }
+                if (optionSelected && moment(dt[item]).isValid()) {
+                    widgetOption[optionSelected] = moment(dt[item]).format(this.get("format"));
+                }
+            }
+            return widgetOption;
+        },
+        /**
+         * After render Handler, will be fired if the form was rendered
+         * First time the dependent fields need to be update if there is dependencies 
+         */
+        afterRenderHook: function() {
+            if (!_.isEmpty(this.get("dependentOptions"))) {
+                this.get("form").get("dependentsManager").defaultValuesDependency(this);
+            }
+            return this;
         }
     });
-
-    PMDynaform.extendNamespace("PMDynaform.model.Datetime", DatetimeModel);
+    PMDynaform.extendNamespace("PMDynaform.model.DatetimeR", DatetimeModel);
 }());
 
 (function () {
-
-    var SuggestModel = PMDynaform.model.Field.extend({
+    var SuggestModel = PMDynaform.model.FieldR.extend({
         defaults: {
             autoComplete: "off",
             type: "suggest",
@@ -22473,7 +24504,6 @@ xCase.extendNamespace = function (path, newClass) {
             colSpanLabel: 3,
             colSpanControl: 9,
             namespace: "pmdynaform",
-            value: "",
             group: "form",
             defaultValue: "",
             tabIndex: "",
@@ -22501,18 +24531,25 @@ xCase.extendNamespace = function (path, newClass) {
             clickedControl: true,
             keyLabel: "",
             enableValidate: true,
-            text: "",
             filter: '',
             data: {
                 value: '',
                 label: ''
             },
             hint: '',
-            nameModalSuggest: null
+            nameModalSuggest: null,
+            dependencyDidUpdate: false,
+            memoryCache: false,
+            dataForDependent: {},
+            resultsLimit: "10"
         },
         eventsMobile: {
             EXECUTE_QUERY_SUGGEST: "suggestField/executeQuery"
         },
+        /**
+         * Initialize the Field model
+         * @param {*} attrs 
+         */
         initialize: function (attrs) {
             var data;
             this.set("dataType", this.get("dataType").trim().length ? this.get("dataType") : "string");
@@ -22527,14 +24564,6 @@ xCase.extendNamespace = function (path, newClass) {
             this.initControl();
             this.setLocalOptions();
             this.setRemoteOptions();
-            data = this.get("data");
-            if (data && data["value"] !== "" && data["label"] !== "") {
-                this.set("value", data["value"]);
-                this.set("keyLabel", data["label"]);
-            } else {
-                this.set("data", {value: "", label: ""});
-                this.set("value", "");
-            }
             if (this.get("variable").trim().length === 0) {
                 if (this.get("group") === "form") {
                     this.attributes.name = "";
@@ -22542,26 +24571,42 @@ xCase.extendNamespace = function (path, newClass) {
                     this.attributes.name = this.get("id");
                 }
             }
-            this.set("text", data["label"]);
-            this.defineModelEvents();
             this._dependentFieldEventRegister(this.get("sql"));
-            this.createChannelEventBus();
         },
+        /**
+         * Init the control with the default value
+         */
         initControl: function () {
-            if (this.get("defaultValue")) {
-                this.set("value", this.get("defaultValue"));
+            var data = this.get("data");
+            if (data && data["value"] === "" && data["label"] === "") {
+                if (this.get("defaultValue")) {
+                    this.set("data", {
+                        label: this.get("data").label,
+                        value: this.get("defaultValue")
+                    });
+                }
             }
         },
+        /**
+         * Set the local options in model
+         * @returns {SuggestModel}
+         */
         setLocalOptions: function () {
             this.set("localOptions", this.get("options"));
             return this;
         },
+        /**
+         * Return the flag valid
+         * @returns {boolean}
+         */
         isValid: function () {
             return this.get("valid");
         },
-        emptyValue: function () {
-            this.set("value", "");
-        },
+        /**
+         * Validate the model 
+         * @param {*} attrs 
+         * @returns {SuggestModel}
+         */
         validate: function (attrs) {
             var valueFixed = this.get("data")["value"];
             if (this.get("enableValidate")) {
@@ -22576,13 +24621,16 @@ xCase.extendNamespace = function (path, newClass) {
             this.set("valid", this.get("validator").get("valid"));
             return this;
         },
+        /**
+         * Return the data in format
+         * @returns {Object}
+         */
         getData: function () {
             if (this.get("group") == "grid") {
                 return {
                     name: this.get("columnName") ? this.get("columnName") : "",
                     value: this.get("value")
                 }
-
             } else {
                 return {
                     name: this.get("name") ? this.get("name") : "",
@@ -22590,83 +24638,75 @@ xCase.extendNamespace = function (path, newClass) {
                 }
             }
         },
-        reviewRemotesOptions: function () {
-            var sql;
-            if (this.get("variable") && this.get("variable").trim().length) {
-                sql = this.get("sql");
-                if (sql) {
-                    this.reviewRemoteVariable();
-                }
-            }
-            return this;
-        },
-        onChangeValue: function (attrs, item) {
-            var data;
-            data = this.findOption(item, "value");
-            if (!data) {
-                data = {
-                    value: item,
-                    label: item
-                }
-            }
-            this.set("data", data);
-            this.set("text", data["label"]);
-            return this;
-        },
-        onChangeText: function (attrs, item) {
-            var data;
-            data = this.findOption(item, "label");
-            if (!data) {
-                data = {
-                    value: item,
-                    label: item
-                }
-            }
-            this.set("data", data);
-            this.set("text", data["label"]);
-            return this;
-        },
+        /**
+         * Return the value
+         * @returns {Object}
+         */
         getValue: function () {
             var data = this.get("data");
             return data ? data["value"] : null;
         },
         /**
-         * Set Value
+         * Set Value Only works in mobile GRID ATTENTION!!!!
          * @param value
+         * @param callback
          * @returns {SuggestModel}
          */
-        setValue: function (value) {
-            if (value !== undefined) {
-                this.set("value", value);
-                this.set("data", {
-                    value: value
-                });
-            }
-            return this;
+        setValue: function (value, callback) {
+            var that = this, dt;
+            this.executeQuery({
+                value: value,
+                typeSearch: 'val'
+            }, function (response, err) {
+                if (response) {
+                    dt = that._findOption(response, 'val', value);
+                    that.dependencyWillUpdate({
+                        data: {
+                            value: dt.value,
+                            label: dt.text
+                        },
+                        fn: callback
+                    });
+                }
+            });
+        },
+        /**
+         * Set Text Only works in mobile GRID ATTENTION!!!!
+         * @param value
+         * @param callback
+         * @returns {SuggestModel}
+         */
+        setText: function (value, callback) {
+            var that = this, dt;
+            this.executeQuery({
+                value: value,
+                typeSearch: 'text'
+            }, function (response, err) {
+                if (response) {
+                    dt = that._findOption(response, 'text', value);
+                    that.dependencyWillUpdate({
+                        data: {
+                            value: dt.value,
+                            label: dt.text
+                        },
+                        fn: callback
+                    });
+                }
+            });
         },
         /**
          * setAppData: Sets the corresponding data that is obtained from the
          * service to the component
          * @param data {object} valid data for this component
+         * @returns {SuggestModel}
          */
         setAppData: function (data) {
             if (data.hasOwnProperty("value") && data.hasOwnProperty("label")) {
-                this.set({"data": data}, {silent: true});
-                this.set({"value": data.value}, {silent: true});
+                this.set({ "data": data }, { silent: true });
+                this.set({ "value": data.value }, { silent: true });
                 this.set("toDraw", true);
             }
             return this;
-        },
-        /**
-         * Executes the dependency query
-         * using the data parameters
-         * @param {*} data  necessary data for execute the query
-         * @returns {FieldModel}
-         */
-        executeQuery: function (data) {
-            if (!this.get("form").get("isSync")) {
-                this.triggerTopicEventBus("onChange");
-            }
         },
         /**
          * buildDataForQuery, Builds the data needed to execute the query correctly
@@ -22674,41 +24714,152 @@ xCase.extendNamespace = function (path, newClass) {
          * @returns dataForDependent {object}
          */
         buildDataForQuery: function (info) {
-            var dependency = this.get("dependency"),
-                i,
-                dataForDependent = this.get("dataForDependent"),
-                dependencyItem,
-                form = this.get("form"),
-                parent = this.get("parent");
-            if (!_.isEmpty(info)) {
-                dataForDependent[info.target] = info.data.value;
-            }
-            if (_.isArray(dependency)) {
-                for (i = 0; i < dependency.length; i += 1) {
-                    if (parent && parent.get("type") === "grid") {
-                        dependencyItem = parent.findCellInRow(this.get("row"), dependency[i]);
-                    } else {
-                        dependencyItem = form.get("fields")[dependency[i]];
-                    }
-                    if (dependencyItem) {
-                        dataForDependent[dependency[i]] = dependencyItem.get("data").value;
-                    }
-                }
-            }
+            var dataForDependent = this.get("form").get("dependentsManager").getDependenciesData(this);
             _.extend(dataForDependent, this.preparePostData());
             _.extend(dataForDependent, {
                 app_uid: (PMDynaform.getProjectKeys() && PMDynaform.getProjectKeys().caseUID) ?
                     PMDynaform.getProjectKeys().caseUID : null,
-                filter: this.get('value'),
+                filter: this.get('data').value,
                 order_by: "ASC",
                 var_name: this.get("id"),
-                limit: 10,
+                limit: this.get("resultsLimit"),
                 sql: this.get("sql")
             });
+            if (this.get("dataForDependent")) {
+                _.extend(dataForDependent, this.get("dataForDependent"));
+            }
             return dataForDependent;
         },
+        /**
+         * EXECUTION DEPENDENCIES METHOD
+         * @param {*} dt 
+         * @param {*} serial 
+         * @returns {SuggestModel}
+         */
+        executeDependency: function (dt, serial) {
+            this.set("data", {
+                label: "",
+                value: ""
+            });
+            this.set("dataForDependent", _.extend(dt, this.preparePostData()));
+            this.set("dependencyDidUpdate", { error: false });
+            this.trigger('change:dependencyDidUpdate');
+            this.get("form").get("dependentsManager").emit({
+                channel: "dependencies",
+                event: this.getFieldId() + serial,
+                payload: ""
+            });
+            return this;
+        },
+        /**
+         * Only work with setValue helper or setOnChange helper
+         * @param {*} params 
+         * @param {*} callback 
+         */
+        executeQuery: function (params, callback) {
+            var prj = this.get("project"),
+                variable,
+                data = {
+                    "query": {
+                        match: (params.typeSearch === 'text') ? { text: params.value } : { value: params.value }
+                    }
+                };
+            _.extend(data, this.buildDataForQuery({}));
+
+            if (this.get("group") === "grid") {
+                variable = this.get("columnName");
+            } else {
+                variable = this.get("id");
+            }
+
+            if (PMDynaform.core.ProjectMobile) {
+                prj.requestManager.channelEvents({
+                    handler: this.get("id"),
+                    type: this.eventsMobile.EXECUTE_QUERY_SUGGEST,
+                    bridge: true,
+                    data: data,
+                    callback: function (response) {
+                        if (_.isFunction(callback)) {
+                            callback(response);
+                        }
+                    }
+                });
+            } else {
+                this.xhr = prj.webServiceManager.execQuerySuggest({
+                    data: data,
+                    variable: variable,
+                    callback: callback,
+                    async: this.get("form").get("isSync") ? false : true
+                });
+            }
+        },
+        /**
+         * Filter local options
+         * @param value
+         * @param maxItems
+         * @param elements
+         * @returns {Array}
+         */
+        filterLocalOptions: function (value, maxItems, elements) {
+            var itemLabel,
+                count = 0,
+                data = [];
+            if (value) {
+                $.grep(elements, function (options) {
+                    itemLabel = options.label.toString();
+                    if ((itemLabel.toLowerCase().indexOf(value.toLowerCase()) !== -1) && count < maxItems) {
+                        data.push(options);
+                        count += 1;
+                    }
+                });
+            } else {
+                data = $.grep(elements, function (n, i) {
+                    return (i < maxItems);
+                });
+            }
+            return data;
+        },
+        /**
+         * Merge Local Options And Remote Options
+         * @param data
+         * @param params
+         * @returns {*}
+         */
+        mergeLocalAndRemoteOptions: function (data, params) {
+            var elements = [],
+                par = params && params.data ? params.data.filter : params.term;
+            elements = this.filterLocalOptions(par, this.get("resultsLimit"), this.get('options'));
+            data = elements.concat(data);
+            data = (!data.length && !params.term) ? data.concat(this.get("view").getDataSelect2()) : data;
+            return data;
+        },
+        /**
+         * Look up the value and the text
+         * @param response
+         * @param typeSearch
+         * @param value
+         * @returns {*}
+         * @private
+         */
+        _findOption: function (response, typeSearch, value) {
+            var newOpt,
+                dataMerge = response.concat(this.get('options'));
+            if (typeSearch === 'text') {
+                //if the setText helper is executed
+                newOpt = _.find(dataMerge, function (item) {
+                    var text = item.label || item.text;
+                    return text.toUpperCase() === value.toUpperCase();
+                });
+            } else {
+                //if the setValue helper is executed
+                newOpt = _.find(dataMerge, function (item) {
+                    return item.value.toUpperCase() === value.toUpperCase();
+                });
+            }
+            return newOpt;
+        }
     });
-    PMDynaform.extendNamespace("PMDynaform.model.Suggest", SuggestModel);
+    PMDynaform.extendNamespace("PMDynaform.model.SuggestR", SuggestModel);
 }());
 
 (function () {
@@ -22823,7 +24974,7 @@ xCase.extendNamespace = function (path, newClass) {
 }());
 (function () {
 
-    var Label = PMDynaform.model.Field.extend({
+    var Label = PMDynaform.model.FieldR.extend({
         defaults: {
             colSpan: 12,
             colSpanLabel: 3,
@@ -23216,6 +25367,22 @@ xCase.extendNamespace = function (path, newClass) {
          * @chainable
          */
         afterExecuteQuery: function (response) {
+            var currentValue = this.get("value"),
+                newValue;
+            this.clearOptions();
+            this.mergeRemoteOptions(response);
+            this.setFirstOptionInData();
+            newValue = this.get("value");
+            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
+                this.enableDependencySpinners();
+            }
+            return this;
+        },
+        /**
+         * setFirstOptionInData: Sets the first domain option if it exists
+         * if there are not domain a default empty data has been setted
+         */
+        setFirstOptionInData: function() {
             var index = 0,
                 supportedOptions = this.get("supportedOptions"),
                 data,
@@ -23224,19 +25391,18 @@ xCase.extendNamespace = function (path, newClass) {
                     value: "",
                     text: ""
                 }],
-                currentValue = this.get("value"),
-                newValue;
-            response = response ? response : [];
-            _.defaults(response, responseDefault);
+                options = this.get("options") || [];
+            
+            _.defaults(options, responseDefault);
             if (this.get("view")) {
                 this.get("view").switchSpinnerByControl();
             }
-            if (_.isArray(response)) {
+            if (_.isArray(options)) {
                 if (supportedOptions) {
-                    this.mergeRemoteOptions(response);
+                    this.mergeRemoteOptions(options);
                     this.setDomainValue(index, 'index');
                 } else {
-                    value = response[index].value ? response[index].value : "";
+                    value = options[index].value ? options[index].value : "";
                     data = {
                         value: value,
                         label: value
@@ -23244,10 +25410,6 @@ xCase.extendNamespace = function (path, newClass) {
                     this.set("data", data);
                 }
                 this.set("value", this.get("data").value);
-            }
-            newValue = this.get("value");
-            if (_.isArray(response) && response.length > 1 && this.get("showDependentSpinners") && currentValue !== newValue) {
-                this.enableDependencySpinners();
             }
             return this;
         },
@@ -23561,6 +25723,16 @@ xCase.extendNamespace = function (path, newClass) {
                     label: value
                 });
             }
+            return this;
+        },
+        /**
+         * Will update the column model 
+         * in order to create a new cell
+         * @param {Object} dt 
+         */
+        updateGridModels: function(dt) {
+            newOptions = {data: this.get("data")};
+            this.get("parent").updateGridColumn(dt, newOptions);
             return this;
         }
     });
@@ -25421,7 +27593,9 @@ xCase.extendNamespace = function (path, newClass) {
                 if (this.model.get('group') === 'grid'
                     && data[this.parent.model.get('id')]
                     && data[this.parent.model.get('id')][this.model.get('row') + 1]
-                    && data[this.parent.model.get('id')][this.model.get('row') + 1][this.model.get('columnId')]) {
+                    && data[this.parent.model.get('id')][this.model.get('row') + 1][this.model.get('columnId')]
+                    && data[this.parent.model.get('id')][this.model.get('row') + 1][this.model.get('columnId')][0].appDocUid !== "") {
+                    this.clearHiddenByModel();
                     this.setData({
                         value: data[this.parent.model.get('id')][this.model.get('row') + 1][this.model.get('columnId')],
                         label: data[this.parent.model.get('id')][this.model.get('row') + 1][this.model.get('columnId')]
@@ -25858,6 +28032,12 @@ xCase.extendNamespace = function (path, newClass) {
                 };
                 this.project.flashMessage(flashModel);
             }
+        },
+        /**
+         * Remove the inputs type hidden.
+         */
+        clearHiddenByModel: function () {
+            $(this.el).find('input[type="hidden"]').remove();
         }
     });
 
@@ -26590,6 +28770,7 @@ xCase.extendNamespace = function (path, newClass) {
         createHiddenForProperty: function () {
             var parentView = this.model.get('parent').get('view');
             if (parentView) {
+                parentView.clearHiddenByModel();
                 parentView.createAllHiddens('add');
             }
         },

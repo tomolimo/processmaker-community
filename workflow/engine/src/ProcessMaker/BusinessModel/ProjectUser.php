@@ -2,8 +2,15 @@
 
 namespace ProcessMaker\BusinessModel;
 
-use \G;
+use Cases;
+use Criteria;
+use Exception;
+use G;
+use GroupUserPeer;
 use ProcessMaker\Core\System;
+use ResultSet;
+use TaskPeer;
+use TaskUserPeer;
 
 class ProjectUser
 {
@@ -90,71 +97,75 @@ class ProjectUser
     }
 
     /**
-     * Return starting task
+     * Return starting tasks
      *
-     * @param string $sProcessUID {@min 32} {@max 32}
+     * @param string $processUid
      *
-     * return array
+     * @return array
+     *
+     * @throws Exception
      *
      * @access public
      */
-    public function getProjectStartingTasks($sProcessUID)
+    public function getProjectStartingTasks($processUid)
     {
         try {
-            Validator::proUid($sProcessUID, '$prj_uid');
-            $aUsers = array();
-            $usersIds = array();
+            Validator::proUid($processUid, '$prj_uid');
+            $users = [];
+            $usersIds = [];
 
-            $oCriteria = new \Criteria('workflow');
-            $oCriteria->addSelectColumn(\TaskUserPeer::USR_UID);
-            $oCriteria->addJoin(\TaskPeer::TAS_UID, \TaskUserPeer::TAS_UID,  \Criteria::LEFT_JOIN);
-            $oCriteria->add(\TaskPeer::PRO_UID, $sProcessUID);
-            $oCriteria->add(\TaskUserPeer::TU_TYPE, 1);
-            $oCriteria->add(\TaskUserPeer::TU_RELATION, 1);
-            $oDataset = \TaskUserPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-            while ($oDataset->next()) {
-                $aRow = $oDataset->getRow();
-                if (!in_array($aRow['USR_UID'], $usersIds)) {
-                    $usersIds[] = $aRow['USR_UID'];
+            $criteria = new Criteria('workflow');
+            $criteria->addSelectColumn(TaskUserPeer::USR_UID);
+            $criteria->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID,  Criteria::LEFT_JOIN);
+            $criteria->add(TaskPeer::PRO_UID, $processUid);
+            $criteria->add(TaskUserPeer::TU_TYPE, 1);
+            $criteria->add(TaskUserPeer::TU_RELATION, 1);
+            $dataSet = TaskUserPeer::doSelectRS($criteria);
+            $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            while ($dataSet->next()) {
+                $row = $dataSet->getRow();
+                if (!in_array($row['USR_UID'], $usersIds)) {
+                    $usersIds[] = $row['USR_UID'];
                 }
             }
 
-            $oCriteria = new \Criteria('workflow');
-            $oCriteria->addSelectColumn(\GroupUserPeer::USR_UID);
-            $oCriteria->addJoin(\TaskPeer::TAS_UID, \TaskUserPeer::TAS_UID,  \Criteria::LEFT_JOIN);
-            $oCriteria->addJoin(\TaskUserPeer::USR_UID, \GroupUserPeer::GRP_UID, \Criteria::LEFT_JOIN);
-            $oCriteria->add(\TaskPeer::PRO_UID, $sProcessUID);
-            $oCriteria->add(\TaskUserPeer::TU_TYPE, 1);
-            $oCriteria->add(\TaskUserPeer::TU_RELATION, 2);
-            $oDataset = \TaskUserPeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-            while ($oDataset->next()) {
-                $aRow = $oDataset->getRow();
-                if (!in_array($aRow['USR_UID'], $usersIds)) {
-                    $usersIds[] = $aRow['USR_UID'];
+            $criteria = new Criteria('workflow');
+            $criteria->addSelectColumn(GroupUserPeer::USR_UID);
+            $criteria->addJoin(TaskPeer::TAS_UID, TaskUserPeer::TAS_UID,  Criteria::LEFT_JOIN);
+            $criteria->addJoin(TaskUserPeer::USR_UID, GroupUserPeer::GRP_UID, Criteria::LEFT_JOIN);
+            $criteria->add(TaskPeer::PRO_UID, $processUid);
+            $criteria->add(TaskUserPeer::TU_TYPE, 1);
+            $criteria->add(TaskUserPeer::TU_RELATION, 2);
+            $dataSet = TaskUserPeer::doSelectRS($criteria);
+            $dataSet->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            while ($dataSet->next()) {
+                $row = $dataSet->getRow();
+                if (!in_array($row['USR_UID'], $usersIds)) {
+                    $usersIds[] = $row['USR_UID'];
                 }
             }
 
             foreach($usersIds as $value) {
-                $oCase = new \Cases();
-                $startTasks = $oCase->getStartCases( $value );
+                $cases = new Cases();
+                $startTasks = $cases->getStartCases($value, true);
                 foreach ($startTasks as $task) {
-                    if ((isset( $task['pro_uid'] )) && ($task['pro_uid'] == $sProcessUID) ) {
-                        $taskValue = explode( '(', $task['value'] );
-                        $tasksLastIndex = count( $taskValue ) - 1;
-                        $taskValue = explode( ')', $taskValue[$tasksLastIndex] );
-                        $aUsers[] = array('act_name' => $taskValue[0],
-                                          'act_uid' => $task['uid']);
+                    if ((isset($task['pro_uid'])) && ($task['pro_uid'] == $processUid)) {
+                        $taskValue = explode('(', $task['value']);
+                        $tasksLastIndex = count($taskValue) - 1;
+                        $taskValue = explode(')', $taskValue[$tasksLastIndex]);
+                        $users[] = [
+                            'act_name' => $taskValue[0],
+                            'act_uid' => $task['uid']
+                        ];
                     }
                 }
             }
-            $new = array();
-            $exclude = array("");
-            for ($i = 0; $i<=count($aUsers)-1; $i++) {
-                if (!in_array(trim($aUsers[$i]["act_uid"]) ,$exclude)) {
-                     $new[] = $aUsers[$i];
-                     $exclude[] = trim($aUsers[$i]["act_uid"]);
+            $new = [];
+            $exclude = [""];
+            for ($i = 0; $i <= count($users) - 1; $i++) {
+                if (!in_array(trim($users[$i]["act_uid"]) ,$exclude)) {
+                     $new[] = $users[$i];
+                     $exclude[] = trim($users[$i]["act_uid"]);
                 }
             }
             return $new;

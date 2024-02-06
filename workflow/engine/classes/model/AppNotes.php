@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\Documents;
 use ProcessMaker\Util\DateTime;
 
 /**
@@ -180,21 +181,29 @@ class AppNotes extends BaseAppNotes
      * @param string $noteRecipients
      * @param string $from
      * @param integer $delIndex
+     * @param integer $noteId
      * @return void
      * @throws Exception
      *
      * @see AppNotes->addCaseNote()
      * @see AppNotes->postNewNote()
      * @see workflow/engine/src/ProcessMaker/Util/helpers.php::postNote()
-    */
-    public function sendNoteNotification ($appUid, $usrUid, $noteContent, $noteRecipients, $from = '', $delIndex = 0)
+     */
+    public function sendNoteNotification(
+        $appUid,
+        $usrUid,
+        $noteContent,
+        $noteRecipients,
+        $from = '',
+        $delIndex = 0,
+        $noteId = 0
+    )
     {
         try {
-
             $configuration = System::getEmailConfiguration();
 
             $msgError = "";
-            if (! isset( $configuration['MESS_ENABLED'] ) || $configuration['MESS_ENABLED'] != '1') {
+            if (!isset($configuration['MESS_ENABLED']) || $configuration['MESS_ENABLED'] != '1') {
                 $msgError = "The default configuration wasn't defined";
                 $configuration['MESS_ENGINE'] = '';
             }
@@ -211,20 +220,31 @@ class AppNotes extends BaseAppNotes
             $cases = new Cases();
             $fieldCase = $cases->loadCase($appUid, $delIndex);
             $configNoteNotification['subject'] = G::LoadTranslation('ID_MESSAGE_SUBJECT_NOTE_NOTIFICATION') . " @#APP_TITLE ";
+
             //Define the body for the notification
             $configNoteNotification['body'] = $this->getBodyCaseNote($authorName, $noteContent);
             $body = nl2br(G::replaceDataField($configNoteNotification['body'], $fieldCase, 'mysql', false));
 
+            // Get the files related to the specific case note
+            if ($noteId !== 0) {
+                $attachFileLinks = $this->getAttachedFilesFromTheCaseNote($noteId);
+            }
+
+            if (!empty($attachFileLinks)) {
+                $body = $body . "<br />" . G::LoadTranslation('ID_ATTACHED_FILES') . ":&nbsp; <br />" . implode("<br />", $attachFileLinks);
+            }
             $users = new Users();
             $recipientsArray = explode(",", $noteRecipients);
 
             foreach ($recipientsArray as $recipientUid) {
                 $userInfo = $users->load($recipientUid);
-                $to = ((($userInfo['USR_FIRSTNAME'] != '') || ($userInfo['USR_LASTNAME'] != '')) ? $userInfo['USR_FIRSTNAME'] . ' ' . $userInfo['USR_LASTNAME'] . ' ' : '') . '<' . $userInfo['USR_EMAIL'] . '>';
+                $ifUserNameDefined = $userInfo['USR_FIRSTNAME'] != '' || $userInfo['USR_LASTNAME'] != '';
+                $to = ($ifUserNameDefined ? $userInfo['USR_FIRSTNAME'] . ' ' . $userInfo['USR_LASTNAME'] . ' ' : '') . '<' . $userInfo['USR_EMAIL'] . '>';
 
                 $spool = new SpoolRun();
                 $spool->setConfig($configuration);
-                $messageArray = AppMessage::buildMessageRow(
+
+                $parameters = [
                     '',
                     $appUid,
                     $delIndex,
@@ -244,7 +264,8 @@ class AppNotes extends BaseAppNotes
                     (isset($fieldCase['APP_NUMBER'])) ? $fieldCase['APP_NUMBER'] : 0,
                     (isset($fieldCase['PRO_ID'])) ? $fieldCase['PRO_ID'] : 0,
                     (isset($fieldCase['TAS_ID'])) ? $fieldCase['TAS_ID'] : 0
-                );
+                ];
+                $messageArray = AppMessage::buildMessageRow(...$parameters);
                 $spool->create($messageArray);
 
                 if ($msgError == '') {
@@ -252,12 +273,28 @@ class AppNotes extends BaseAppNotes
                         $spool->sendMail();
                     }
                 }
-
             }
-            //Send derivation notification - End
         } catch (Exception $exception) {
             throw $exception;
         }
+    }
+
+    /**
+     * Get attached files from a specific case note
+     * @param int $docId
+     * @return array
+     */
+    public function getAttachedFilesFromTheCaseNote(int $docId): array
+    {
+        $attachFileLinks = [];
+        $url = System::getServerMainPath();
+        $result = Documents::getFiles($docId);
+        foreach ($result as $item) {
+            $href = $url . "/cases/casesShowCaseNotes?a={$item['APP_DOC_UID']}&v={$item['DOC_VERSION']}";
+            $attachFileLinks[] = "<a href='{$href}'>{$item['APP_DOC_FILENAME']}</a>";
+        }
+
+        return $attachFileLinks;
     }
 
     public function addCaseNote($applicationUid, $userUid, $note, $sendMail)

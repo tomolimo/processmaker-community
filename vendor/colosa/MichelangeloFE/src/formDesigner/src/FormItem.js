@@ -388,10 +388,17 @@
         this.properties.setDisabled(disabled);
     };
     FormItem.prototype.setVariable = function (variable) {
-        var that = this, b;
+        var that = this,
+            b,
+            label;
         that.variable = variable;
+        label = this.defaultLabel(variable);
+        that.properties.set("label", label);
         that.properties.set("var_uid", variable.var_uid);
         b = that.properties.set("variable", variable.var_name);
+        if (b.node) {
+            that.properties.label.node.value = label;
+        }
         if (b.node)
             b.node.textContent = variable.var_name;
         b = that.properties.set("dataType", variable.var_field_type);
@@ -514,6 +521,43 @@
         } else {
             this.deprecatedIcon.hide();
         }
+    };
+
+    /**
+     * Get a default label from a variable
+     * @param {object} variable
+     * @returns {string}
+     */
+    FormItem.prototype.defaultLabel = function (variable) {
+        var name = variable.var_name,
+            stringAux,
+            flagUpper = true,
+            i = 1;
+        name = name.replace(/_/g, " ");
+        if (name === name.toUpperCase()) {
+            name = name.toLowerCase();
+        }
+        stringAux = name.charAt(0).toUpperCase();
+        while (i < name.length) {
+            if (name.charAt(i) !== " ") {
+                if (name.charAt(i) !== name.charAt(i).toUpperCase()) {
+                    stringAux += name.charAt(i);
+                    flagUpper = true;
+                } else {
+                    if (flagUpper) {
+                        stringAux += " " + name.charAt(i);
+                    } else {
+                        stringAux +=  name.charAt(i).toLowerCase();
+                    }
+                    flagUpper = false;
+                }
+            } else {
+                i += 1;    
+                stringAux += " " + name.charAt(i).toUpperCase();
+            }
+            i += 1;
+        }
+        return stringAux;
     };
     FormDesigner.extendNamespace('FormDesigner.main.FormItem', FormItem);
 }());

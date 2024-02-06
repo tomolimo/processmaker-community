@@ -6,9 +6,9 @@ use Faker\Generator as Faker;
 
 $factory->define(\ProcessMaker\Model\Process::class, function(Faker $faker) {
     // Return with default values
+    //The incremental fields of the tables must not be specified in the creation list.
     return [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => '00000000000000000000000000000001',
@@ -19,7 +19,9 @@ $factory->define(\ProcessMaker\Model\Process::class, function(Faker $faker) {
         'PRO_TYPE_PROCESS' => 'PUBLIC',
         'PRO_UPDATE_DATE' => $faker->dateTime(),
         'PRO_CREATE_DATE' => $faker->dateTime(),
-        'PRO_CATEGORY' => '',
+        'PRO_CATEGORY' => function() {
+            return factory(\ProcessMaker\Model\ProcessCategory::class)->create()->CATEGORY_UID;
+        },
     ];
 });
 
@@ -28,7 +30,6 @@ $factory->state(\ProcessMaker\Model\Process::class, 'foreign_keys', function (Fa
     $user = factory(\ProcessMaker\Model\User::class)->create();
     return [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => $user->USR_UID,
@@ -49,7 +50,6 @@ $factory->state(\ProcessMaker\Model\Process::class, 'flow', function (Faker $fak
     $user = factory(\ProcessMaker\Model\User::class)->create();
     $process = [
         'PRO_UID' => G::generateUniqueID(),
-        'PRO_ID' => $faker->unique()->numberBetween(1, 1000000),
         'PRO_TITLE' => $faker->sentence(3),
         'PRO_DESCRIPTION' => $faker->paragraph(3),
         'PRO_CREATE_USER' => $user->USR_UID,

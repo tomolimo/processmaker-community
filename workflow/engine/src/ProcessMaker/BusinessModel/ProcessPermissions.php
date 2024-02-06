@@ -161,14 +161,6 @@ class ProcessPermissions
                     $objectType = G::LoadTranslation('MSGS_HISTORY');
                     $object = G::LoadTranslation('ID_ALL');
                     break;
-                /*----------------------------------********---------------------------------*/
-                case 'REASSIGN_MY_CASES':
-                    $objectType = G::LoadTranslation('ID_REASSIGN_MY_CASES');
-                    $object = self::DOES_NOT_APPLY;
-                    $aRow['OP_ACTION'] = self::DOES_NOT_APPLY;
-                    $participated = self::DOES_NOT_APPLY;
-                    break;
-                /*----------------------------------********---------------------------------*/
                 default:
                     $objectType = G::LoadTranslation('ID_ALL');
                     $object = G::LoadTranslation('ID_ALL');

@@ -120,6 +120,7 @@ CREATE TABLE `APP_DOCUMENT`
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
 	`DEL_INDEX` INTEGER default 0 NOT NULL,
 	`DOC_UID` VARCHAR(32) default '' NOT NULL,
+	`DOC_ID` INTEGER default 0,
 	`USR_UID` VARCHAR(32) default '' NOT NULL,
 	`APP_DOC_TYPE` VARCHAR(32) default '' NOT NULL,
 	`APP_DOC_CREATE_DATE` DATETIME  NOT NULL,
@@ -154,7 +155,7 @@ CREATE TABLE `APP_MESSAGE`
 	`DEL_INDEX` INTEGER default 0 NOT NULL,
 	`APP_MSG_TYPE` VARCHAR(100) default '' NOT NULL,
 	`APP_MSG_TYPE_ID` TINYINT default 0,
-	`APP_MSG_SUBJECT` VARCHAR(150) default '' NOT NULL,
+	`APP_MSG_SUBJECT` VARCHAR(998) default '' NOT NULL,
 	`APP_MSG_FROM` VARCHAR(100) default '' NOT NULL,
 	`APP_MSG_TO` MEDIUMTEXT  NOT NULL,
 	`APP_MSG_BODY` MEDIUMTEXT  NOT NULL,
@@ -935,8 +936,10 @@ DROP TABLE IF EXISTS `DB_SOURCE`;
 
 CREATE TABLE `DB_SOURCE`
 (
+	`DBS_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`DBS_UID` VARCHAR(32) default '' NOT NULL,
 	`PRO_UID` VARCHAR(32) default '0' NOT NULL,
+	`PRO_ID` INTEGER default 0,
 	`DBS_TYPE` VARCHAR(8) default '0' NOT NULL,
 	`DBS_SERVER` VARCHAR(100) default '0' NOT NULL,
 	`DBS_DATABASE_NAME` VARCHAR(100) default '0' NOT NULL,
@@ -947,7 +950,9 @@ CREATE TABLE `DB_SOURCE`
 	`DBS_CONNECTION_TYPE` VARCHAR(32) default 'NORMAL',
 	`DBS_TNS` VARCHAR(256) default '',
 	PRIMARY KEY (`DBS_UID`,`PRO_UID`),
-	KEY `indexDBSource`(`PRO_UID`)
+	UNIQUE KEY `DBS_ID` (`DBS_ID`),
+	KEY `indexDBSource`(`PRO_UID`),
+	KEY `INDEX_PRO_ID`(`PRO_ID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='DB_SOURCE';
 #-----------------------------------------------------------------------------
 #-- STEP_SUPERVISOR
@@ -1579,6 +1584,7 @@ DROP TABLE IF EXISTS `APP_NOTES`;
 
 CREATE TABLE `APP_NOTES`
 (
+	`NOTE_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`APP_UID` VARCHAR(32) default '' NOT NULL,
 	`USR_UID` VARCHAR(32) default '' NOT NULL,
 	`NOTE_DATE` DATETIME  NOT NULL,
@@ -1589,6 +1595,7 @@ CREATE TABLE `APP_NOTES`
 	`NOTE_AFFECTED_OBJ1` VARCHAR(32) default '',
 	`NOTE_AFFECTED_OBJ2` VARCHAR(32) default '' NOT NULL,
 	`NOTE_RECIPIENTS` MEDIUMTEXT,
+	UNIQUE KEY `NOTE_ID` (`NOTE_ID`),
 	KEY `indexAppNotesDate`(`APP_UID`, `NOTE_DATE`),
 	KEY `indexAppNotesUser`(`APP_UID`, `USR_UID`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Application Notes';
@@ -2274,10 +2281,13 @@ DROP TABLE IF EXISTS `PROCESS_VARIABLES`;
 
 CREATE TABLE `PROCESS_VARIABLES`
 (
+	`VAR_ID` INTEGER  NOT NULL AUTO_INCREMENT,
 	`VAR_UID` VARCHAR(32)  NOT NULL,
 	`PRJ_UID` VARCHAR(32)  NOT NULL,
+	`PRO_ID` INTEGER default 0,
 	`VAR_NAME` VARCHAR(255) default '',
 	`VAR_FIELD_TYPE` VARCHAR(32) default '',
+	`VAR_FIELD_TYPE_ID` INTEGER default 0,
 	`VAR_FIELD_SIZE` INTEGER,
 	`VAR_LABEL` VARCHAR(255) default '',
 	`VAR_DBCONNECTION` VARCHAR(32),
@@ -2287,7 +2297,9 @@ CREATE TABLE `PROCESS_VARIABLES`
 	`VAR_ACCEPTED_VALUES` MEDIUMTEXT,
 	`INP_DOC_UID` VARCHAR(32) default '',
 	PRIMARY KEY (`VAR_UID`),
-	KEY `indexPrjUidVarName`(`PRJ_UID`, `VAR_NAME`)
+	UNIQUE KEY `VAR_ID` (`VAR_ID`),
+	KEY `indexPrjUidVarName`(`PRJ_UID`, `VAR_NAME`),
+	KEY `INDEX_PRO_ID`(`PRO_ID`)
 )ENGINE=InnoDB ;
 #-----------------------------------------------------------------------------
 #-- APP_TIMEOUT_ACTION_EXECUTED
@@ -3314,6 +3326,34 @@ CREATE TABLE `JOBS_FAILED`
 	`payload` MEDIUMTEXT  NOT NULL,
 	`exception` MEDIUMTEXT  NOT NULL,
 	`failed_at` DATETIME  NOT NULL,
+	PRIMARY KEY (`id`)
+)ENGINE=InnoDB  DEFAULT CHARSET='utf8';
+#-----------------------------------------------------------------------------
+#-- SCHEDULER
+#-----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `SCHEDULER`;
+
+
+CREATE TABLE `SCHEDULER`
+(
+	`id` BIGINT(20)  NOT NULL AUTO_INCREMENT,
+	`title` VARCHAR(255),
+	`startingTime` VARCHAR(100),
+	`endingTime` VARCHAR(100),
+	`everyOn` VARCHAR(255),
+	`interval` VARCHAR(10),
+	`description` VARCHAR(255),
+	`expression` VARCHAR(255),
+	`default_value` MEDIUMTEXT,
+	`body` VARCHAR(255),
+	`type` VARCHAR(255),
+	`category` VARCHAR(255),
+	`system` TINYINT(3),
+	`timezone` VARCHAR(255),
+	`enable` TINYINT(3),
+	`creation_date` DATETIME,
+	`last_update` DATETIME,
 	PRIMARY KEY (`id`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8';
 # This restores the fkey checks, after having unset them earlier

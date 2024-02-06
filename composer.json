@@ -22,6 +22,10 @@
         {
             "type": "git",
             "url": "git@bitbucket.org:colosa/pmui.git"
+        },
+        {
+            "type": "git",
+            "url": "git@bitbucket.org:colosa/taskscheduler.git"
         }
     ],
     "minimum-stability": "dev",
@@ -31,9 +35,10 @@
         "laravel/framework": "5.7.*",
         "luracast/restler": "^3.0",
         "bshaffer/oauth2-server-php": "v1.0",
-        "colosa/pmui": "release/3.4.8-dev",
-        "colosa/michelangelofe": "release/3.4.8-dev",
-        "colosa/pmdynaform": "release/3.4.8-dev",
+        "colosa/pmui": "release/3.5.0-dev",
+        "colosa/michelangelofe": "release/3.5.0-dev",
+        "colosa/pmdynaform": "release/3.5.0-dev",
+        "colosa/taskscheduler": "release/1.0.0-dev",
         "google/apiclient": "1.1.6",
         "dapphp/securimage": "^3.6",
         "psr/log": "1.0.0",
@@ -54,7 +59,9 @@
         "league/oauth2-client": "^2.4",
         "league/oauth2-google": "^3.0",
         "tecnickcom/tcpdf": "6.3.*",
-        "fzaninotto/faker": "^1.7"
+        "fzaninotto/faker": "^1.7",
+        "predis/predis": "1.1.1",
+        "phpmyadmin/sql-parser": "^5.3"
     },
     "require-dev": {
         "guzzlehttp/guzzle": "^6.3",

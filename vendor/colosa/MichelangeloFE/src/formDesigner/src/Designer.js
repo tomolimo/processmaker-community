@@ -1028,8 +1028,11 @@
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
-        for (var i = 0; i < a.length; i++)
-            $(a[i]).show();
+        for (var i = 0; i < a.length; i++) {
+            if (!($(a[i]).hasClass("ui-datepicker") || $(a[i]).hasClass("ui-autocomplete"))) {
+                $(a[i]).show();
+            }
+        }
         $(this.container).remove();
         this._disposeAuxForm();
         $(".loader").hide();

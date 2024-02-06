@@ -12,6 +12,8 @@ class Triggers extends Model
     public $timestamps = false;
     //primary key
     protected $primaryKey = 'TRI_UID';
+    //No incrementing
+    public $incrementing = false;
 
     /**
      * Scope a query to filter an specific process

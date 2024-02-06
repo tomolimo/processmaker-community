@@ -7,6 +7,9 @@ use Exception;
 use G;
 use Illuminate\Support\Facades\Crypt;
 use ProcessMaker\Core\System;
+use ProcessMaker\Model\AbeConfiguration;
+use ProcessMaker\Model\EmailEvent;
+use ProcessMaker\Model\EmailServerModel;
 use SpoolRun;
 use TemplatePower;
 use WsBase;
@@ -1071,12 +1074,29 @@ class EmailServer
     public function delete($emailServerUid)
     {
         try {
+            $emailServerModel = new EmailServerModel();
+            //Verify if the email server is IMAP
+            $isImap = $emailServerModel->isImap($emailServerUid);
+            $abeConfiguration = new AbeConfiguration();
+            
             //Verify data
             $this->throwExceptionIfNotExistsEmailServer($emailServerUid, $this->arrayFieldNameForException["emailServerUid"]);
             $this->throwExceptionIfIsDefault($emailServerUid, $this->arrayFieldNameForException["emailServerUid"]);
             $criteria = $this->getEmailServerCriteria();
             $criteria->add(\EmailServerPeer::MESS_UID, $emailServerUid, \Criteria::EQUAL);
             \EmailServerPeer::doDelete($criteria);
+
+            //If the email server protocol is IMAP, then the field Receiver account of the Email Response option in Actions by Email will be empty.
+            if ($isImap) {
+                $abeConfiguration->updateReceiverUidToEmpty($emailServerUid);
+            }
+
+            //Update the ABE_CONFIGURATION email server
+            $abeConfiguration->updateEmailServerUidToDefaultOrEmpty($emailServerUid);
+
+            //Update the events that use this server
+            $emailEvent = new EmailEvent();
+            $emailEvent->updateServerAndFromToDefaultOrEmpty($emailServerUid);
 
             //Logging the delete action
             $this->getDefaultContextLog();

@@ -7,106 +7,102 @@ use Cases as ClassesCases;
 use Exception;
 use G;
 use PmDynaform;
-
+use ProcessMaker\Model\ProcessVariables;
+use ProcessMaker\Util\Common;
 
 class Variable
 {
     private $variableTypes = ['string', 'integer', 'float', 'boolean', 'datetime', 'grid', 'array', 'file', 'multiplefile', 'object'];
+    public static $varTypesValues = [
+        'string' => 1, 
+        'integer' => 2,
+        'float' => 3,
+        'boolean' => 4,
+        'datetime' => 5,
+        'grid' => 6,
+        'array' => 7,
+        'file' => 8,
+        'multiplefile' => 9,
+        'object'  => 10
+    ];
+
+    /**
+     * Get the variables types accepted
+     * 
+     * @return array 
+     */
+    public function getVariableTypes()
+    {
+        return $this->variableTypes;
+    }
 
     /**
      * Create Variable for a Process
      *
-     * @param string $processUid Unique id of Process
+     * @param string $proUid Unique id of Process
      * @param array $arrayData Data
      *
      * @return array, return data of the new Variable created
      * @throws Exception
      */
-    public function create($processUid, array $arrayData)
+    public function create($proUid, array $arrayData)
     {
         try {
-            //Verify data
-            Validator::proUid($processUid, '$prj_uid');
+            $attributes = [];
+            // Verify the process
+            $proId = Validator::proUid($proUid, '$prj_uid');
+            $attributes["PRJ_UID"] = $proUid;
+            $attributes["PRO_ID"] = $proId;
+            // Get the unique varUid
+            $varUid = Common::generateUID();
+            $attributes["VAR_UID"] = $varUid;
+            // Get the attributes
             $arrayData = array_change_key_case($arrayData, CASE_UPPER);
-            $this->existsName($processUid, $arrayData["VAR_NAME"], "");
-            $this->throwExceptionFieldDefinition($arrayData);
-
-            //Create
-            $cnn = \Propel::getConnection("workflow");
-            try {
-                $variable = new \ProcessVariables();
-                $sPkProcessVariables = \ProcessMaker\Util\Common::generateUID();
-
-                $variable->setVarUid($sPkProcessVariables);
-                $variable->setPrjUid($processUid);
-
-                if ($variable->validate()) {
-                    $cnn->begin();
-
-                    if (isset($arrayData["VAR_NAME"])) {
-                        $variable->setVarName($arrayData["VAR_NAME"]);
-                    } else {
-                        throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", array('$var_name')));
-                    }
-                    if (isset($arrayData["VAR_FIELD_TYPE"])) {
-                        $arrayData["VAR_FIELD_TYPE"] = $this->validateVarFieldType($arrayData["VAR_FIELD_TYPE"]);
-                        $variable->setVarFieldType($arrayData["VAR_FIELD_TYPE"]);
-                    } else {
-                        throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", array('$var_field_type')));
-                    }
-                    if (isset($arrayData["VAR_FIELD_SIZE"])) {
-                        $variable->setVarFieldSize($arrayData["VAR_FIELD_SIZE"]);
-                    }
-                    if (isset($arrayData["VAR_LABEL"])) {
-                        $variable->setVarLabel($arrayData["VAR_LABEL"]);
-                    } else {
-                        throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", array('$var_label')));
-                    }
-                    if (isset($arrayData["VAR_DBCONNECTION"])) {
-                        $variable->setVarDbconnection($arrayData["VAR_DBCONNECTION"]);
-                    } else {
-                        $variable->setVarDbconnection("");
-                    }
-                    if (isset($arrayData["VAR_SQL"])) {
-                        $variable->setVarSql($arrayData["VAR_SQL"]);
-                    } else {
-                        $variable->setVarSql("");
-                    }
-                    if (isset($arrayData["VAR_NULL"])) {
-                        $variable->setVarNull($arrayData["VAR_NULL"]);
-                    } else {
-                        $variable->setVarNull(0);
-                    }
-                    if (isset($arrayData["VAR_DEFAULT"])) {
-                        $variable->setVarDefault($arrayData["VAR_DEFAULT"]);
-                    }
-                    if (isset($arrayData["VAR_ACCEPTED_VALUES"])) {
-                        $encodeAcceptedValues = G::json_encode($arrayData["VAR_ACCEPTED_VALUES"]);
-                        $variable->setVarAcceptedValues($encodeAcceptedValues);
-                    }
-                    if (isset($arrayData["INP_DOC_UID"])) {
-                        $variable->setInpDocUid($arrayData["INP_DOC_UID"]);
-                    }
-                    $variable->save();
-                    $cnn->commit();
-                } else {
-                    $msg = "";
-
-                    foreach ($variable->getValidationFailures() as $validationFailure) {
-                        $msg = $msg . (($msg != "") ? "\n" : "") . $validationFailure->getMessage();
-                    }
-
-                    throw new Exception(G::LoadTranslation("ID_RECORD_CANNOT_BE_CREATED") . "\n" . $msg);
-                }
-            } catch (Exception $e) {
-                $cnn->rollback();
-
-                throw $e;
+            // Validate properties that cannot be empty
+            if (!empty($arrayData["VAR_NAME"])) {
+                $attributes["VAR_NAME"] = $arrayData["VAR_NAME"];
+            } else {
+                throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", ['$var_name']));
             }
-
-            //Return
-            $variable = $this->getVariable($processUid, $sPkProcessVariables);
-
+            if (!empty($arrayData["VAR_FIELD_TYPE"])) {
+                $attributes["VAR_FIELD_TYPE"] = $this->validateVarFieldType($arrayData["VAR_FIELD_TYPE"]);
+                $attributes["VAR_FIELD_TYPE_ID"] = self::$varTypesValues[$arrayData["VAR_FIELD_TYPE"]];
+            } else {
+                throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", ['$var_field_type']));
+            }
+            if (!empty($arrayData["VAR_LABEL"])) {
+                $attributes["VAR_LABEL"] = $arrayData["VAR_LABEL"];
+            } else {
+                throw new Exception(G::LoadTranslation("ID_CAN_NOT_BE_NULL", ['$var_label']));
+            }
+            if (!empty($arrayData["VAR_FIELD_SIZE"])) {
+                $attributes["VAR_FIELD_SIZE"] = $arrayData["VAR_FIELD_SIZE"];
+            }
+            if (!empty($arrayData["VAR_DBCONNECTION"])) {
+                $attributes["VAR_DBCONNECTION"] = $arrayData["VAR_DBCONNECTION"];
+            }
+            if (!empty($arrayData["VAR_SQL"])) {
+                $attributes["VAR_SQL"] = $arrayData["VAR_SQL"];
+            }
+            if (!empty($arrayData["VAR_NULL"])) {
+                $attributes["VAR_NULL"] = $arrayData["VAR_NULL"];
+            }
+            if (!empty($arrayData["VAR_DEFAULT"])) {
+                $attributes["VAR_DEFAULT"] = $arrayData["VAR_DEFAULT"];
+            }
+            if (!empty($arrayData["VAR_ACCEPTED_VALUES"])) {
+                $attributes["VAR_ACCEPTED_VALUES"] = G::json_encode($arrayData["VAR_ACCEPTED_VALUES"]);
+            }
+            if (!empty($arrayData["INP_DOC_UID"])) {
+                $attributes["INP_DOC_UID"] = $arrayData["INP_DOC_UID"];
+            }
+            // Additional validations over the data
+            $this->existsName($proUid, $arrayData["VAR_NAME"], "");
+            $this->throwExceptionFieldDefinition($arrayData);
+            // Register the new variable
+            $processVariables = ProcessVariables::create($attributes);
+            // Return theriable created
+            $variable = $this->getVariable($proUid, $varUid);
             return $variable;
         } catch (Exception $e) {
             throw $e;
@@ -155,6 +151,8 @@ class Variable
                     if (isset($arrayData["VAR_FIELD_TYPE"])) {
                         $arrayData["VAR_FIELD_TYPE"] = $this->validateVarFieldType($arrayData["VAR_FIELD_TYPE"]);
                         $variable->setVarFieldType($arrayData["VAR_FIELD_TYPE"]);
+                        $fielTypeId = self::$varTypesValues[$arrayData["VAR_FIELD_TYPE"]];
+                        $variable->setVarFieldTypeId($fielTypeId);
                     }
                     if (isset($arrayData["VAR_FIELD_SIZE"])) {
                         $variable->setVarFieldSize($arrayData["VAR_FIELD_SIZE"]);
@@ -292,7 +290,7 @@ class Variable
             $arrayVariables = array();
             while ($aRow = $rsCriteria->getRow()) {
                 $VAR_ACCEPTED_VALUES = G::json_decode($aRow['VAR_ACCEPTED_VALUES'], true);
-                if (count($VAR_ACCEPTED_VALUES)) {
+                if (!empty($VAR_ACCEPTED_VALUES)) {
                     $encodeAcceptedValues = preg_replace_callback("/\\\\u([a-f0-9]{4})/", function ($m) {
                         return iconv('UCS-4LE', 'UTF-8', pack('V', hexdec('U' . $m[1])));
                     }, G::json_encode($VAR_ACCEPTED_VALUES));
@@ -333,64 +331,67 @@ class Variable
      */
     public function getVariables($processUid)
     {
-        try {
-            //Verify data
-            Validator::proUid($processUid, '$prj_uid');
-
-            //Get data
-            $criteria = new \Criteria("workflow");
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_UID);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::PRJ_UID);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_NAME);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_FIELD_TYPE);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_FIELD_SIZE);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_LABEL);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_DBCONNECTION);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_SQL);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_NULL);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_DEFAULT);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::VAR_ACCEPTED_VALUES);
-            $criteria->addSelectColumn(\ProcessVariablesPeer::INP_DOC_UID);
-            $criteria->addSelectColumn(\DbSourcePeer::DBS_SERVER);
-            $criteria->addSelectColumn(\DbSourcePeer::DBS_PORT);
-            $criteria->addSelectColumn(\DbSourcePeer::DBS_DATABASE_NAME);
-            $criteria->addSelectColumn(\DbSourcePeer::DBS_TYPE);
-            $criteria->add(\ProcessVariablesPeer::PRJ_UID, $processUid, \Criteria::EQUAL);
-            $criteria->addJoin(\ProcessVariablesPeer::VAR_DBCONNECTION, \DbSourcePeer::DBS_UID . " AND " . \DbSourcePeer::PRO_UID . " = '" . $processUid . "'", \Criteria::LEFT_JOIN);
-            $rsCriteria = \ProcessVariablesPeer::doSelectRS($criteria);
-            $rsCriteria->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
-            $rsCriteria->next();
-            $arrayVariables = array();
-            while ($aRow = $rsCriteria->getRow()) {
-                $VAR_ACCEPTED_VALUES = G::json_decode($aRow['VAR_ACCEPTED_VALUES'], true);
-                if (count($VAR_ACCEPTED_VALUES)) {
-                    $encodeAcceptedValues = preg_replace_callback("/\\\\u([a-f0-9]{4})/", function ($m) {
-                        return iconv('UCS-4LE', 'UTF-8', pack('V', hexdec($m[1])));
-                    }, G::json_encode($VAR_ACCEPTED_VALUES));
-                } else {
-                    $encodeAcceptedValues = $aRow['VAR_ACCEPTED_VALUES'];
-                }
-
-                $arrayVariables[] = array('var_uid' => $aRow['VAR_UID'],
-                    'prj_uid' => $aRow['PRJ_UID'],
-                    'var_name' => $aRow['VAR_NAME'],
-                    'var_field_type' => $aRow['VAR_FIELD_TYPE'],
-                    'var_field_size' => (int)$aRow['VAR_FIELD_SIZE'],
-                    'var_label' => $aRow['VAR_LABEL'],
-                    'var_dbconnection' => $aRow['VAR_DBCONNECTION'] === 'none' ? 'workflow' : $aRow['VAR_DBCONNECTION'],
-                    'var_dbconnection_label' => $aRow['DBS_SERVER'] !== null ? '[' . $aRow['DBS_SERVER'] . ':' . $aRow['DBS_PORT'] . '] ' . $aRow['DBS_TYPE'] . ': ' . $aRow['DBS_DATABASE_NAME'] : 'PM Database',
-                    'var_sql' => $aRow['VAR_SQL'],
-                    'var_null' => (int)$aRow['VAR_NULL'],
-                    'var_default' => $aRow['VAR_DEFAULT'],
-                    'var_accepted_values' => $encodeAcceptedValues,
-                    'inp_doc_uid' => $aRow['INP_DOC_UID']);
-                $rsCriteria->next();
+        //Verify data
+        $proId = Validator::proUid($processUid, '$prj_uid');
+        $variables = ProcessVariables::getVariables($proId);
+        $arrayVariables = [];
+        foreach ($variables as $var) {
+            $varAcceptedValues = G::json_decode($var['VAR_ACCEPTED_VALUES'], true);
+            if (count($varAcceptedValues)) {
+                $encodeAcceptedValues = preg_replace_callback("/\\\\u([a-f0-9]{4})/", function ($m) {
+                    return iconv('UCS-4LE', 'UTF-8', pack('V', hexdec($m[1])));
+                }, G::json_encode($varAcceptedValues));
+            } else {
+                $encodeAcceptedValues = $var['VAR_ACCEPTED_VALUES'];
             }
-            //Return
-            return $arrayVariables;
-        } catch (Exception $e) {
-            throw $e;
+            $dbconnectionLabel = !is_null($var['DBS_SERVER']) ?
+            '[' . $var['DBS_SERVER'] . ':' . $var['DBS_PORT'] . '] ' . $var['DBS_TYPE'] . ': ' . $var['DBS_DATABASE_NAME'] : 'PM Database';
+            $arrayVariables[] = [
+                'var_uid' => $var['VAR_UID'],
+                'prj_uid' => $var['PRJ_UID'],
+                'var_name' => $var['VAR_NAME'],
+                'var_field_type' => $var['VAR_FIELD_TYPE'],
+                'var_field_size' => (int)$var['VAR_FIELD_SIZE'],
+                'var_label' => $var['VAR_LABEL'],
+                'var_dbconnection' => $var['VAR_DBCONNECTION'] === 'none' ? 'workflow' : $var['VAR_DBCONNECTION'],
+                'var_dbconnection_label' => !is_null($var['DBS_SERVER']) ?
+                    '[' . $var['DBS_SERVER'] . ':' . $var['DBS_PORT'] . '] ' . $var['DBS_TYPE'] . ': ' . $var['DBS_DATABASE_NAME'] : 'PM Database',
+                'var_sql' => $var['VAR_SQL'],
+                'var_null' => (int)$var['VAR_NULL'],
+                'var_default' => $var['VAR_DEFAULT'],
+                'var_accepted_values' => $encodeAcceptedValues,
+                'inp_doc_uid' => $var['INP_DOC_UID']
+            ];
         }
+
+        return $arrayVariables;
+    }
+
+     /**
+     * Get data of Variables related to the specific type
+     *
+     * @param string $processUid Unique id of Process
+     * @param int $typeVarId
+     * @param int $start
+     * @param int $limit
+     * @param string $search
+     * @param string $prefix
+     *
+     * @return array, return an array with varaibles filter by type
+     */
+    public function getVariablesByType($processUid, $typeVarId = 0, $start = null, $limit = null, $search = null, $prefix = null)
+    {
+        //Verify data
+        $proId = Validator::proUid($processUid, '$prj_uid');
+        $variables = ProcessVariables::getVariablesByType($proId, $typeVarId, $start, $limit, $search);
+        $arrayVariables = [];
+        foreach ($variables as $var) {
+            $arrayVariables[] = [
+                'value' => is_null($prefix) ? $var['VAR_NAME'] : $prefix . $var['VAR_NAME'],
+            ];
+        }
+
+        return $arrayVariables;
     }
 
     /**
@@ -764,7 +765,9 @@ class Variable
             $start = isset($params["start"]) ? $params["start"] : 0;
             $limit = isset($params["limit"]) ? $params["limit"] : 10;
             $appUid = empty($params["app_uid"]) ? null : $params["app_uid"];
-            $delIndex = (int)isset($params["del_index"]) ? $params["del_index"] : 0;
+            $delIndex = (int) isset($params["del_index"]) ? $params["del_index"] : 0;
+            $gridName = isset($params['grid_name']) ? $params['grid_name'] : null;
+
             unset($params["dyn_uid"]);
             unset($params["field_id"]);
             unset($params["app_uid"]);
@@ -773,6 +776,7 @@ class Variable
             unset($params["query"]);
             unset($params["start"]);
             unset($params["limit"]);
+            unset($params["grid_name"]);
 
             //Get appData and system variables
             $paramsAndGlobal = $params;
@@ -797,7 +801,11 @@ class Variable
             //Get control from dynaform.
             //The parameters: queryFilter, queryStart, queryLimit, are only necessary
             //for the suggest control, the rest of the controls are ignored.
-            $field = $pmDynaform->searchField($dynUid, $fieldId, $proUid);
+            $parameters = [$dynUid, $fieldId, $proUid];
+            if (!empty($gridName)) {
+                $parameters[] = ['gridName' => $gridName];
+            }
+            $field = $pmDynaform->searchField(...$parameters);
             $field->queryField = true;
             $field->queryInputData = $params;
             $field->queryFilter = $filter;

@@ -1,6 +1,7 @@
 <?php
 
 use ProcessMaker\BusinessModel\EmailEvent;
+use ProcessMaker\BusinessModel\Variable as BmVariable;
 use ProcessMaker\Core\System;
 
 class Processes
@@ -1863,8 +1864,21 @@ class Processes
                 $criteria = new Criteria(ProcessVariablesPeer::DATABASE_NAME);
                 $criteria->add(ProcessVariablesPeer::VAR_UID, $row['VAR_UID']);
                 $criteria->add(ProcessVariablesPeer::PRJ_UID, $row['PRJ_UID']);
+                // Load the PRO_ID
+                $process = new Process();
+                if ($process->processExists($row['PRJ_UID'])) {
+                    $processRow = $process->load($row['PRJ_UID']);
+                    $row['PRO_ID'] = $processRow['PRO_ID'];
+                    if (!empty($row['PRO_ID'])) {
+                        $criteria->add(ProcessVariablesPeer::PRO_ID, $row['PRO_ID']);
+                    }
+                }
                 $criteria->add(ProcessVariablesPeer::VAR_NAME, $row['VAR_NAME']);
                 $criteria->add(ProcessVariablesPeer::VAR_FIELD_TYPE, $row['VAR_FIELD_TYPE']);
+                if (empty($row['VAR_FIELD_TYPE_ID'])) {
+                    $row['VAR_FIELD_TYPE_ID'] = BmVariable::$varTypesValues[$row["VAR_FIELD_TYPE"]];
+                }
+                $criteria->add(ProcessVariablesPeer::VAR_FIELD_TYPE_ID, $row['VAR_FIELD_TYPE_ID']);
                 $criteria->add(ProcessVariablesPeer::VAR_FIELD_SIZE, $row['VAR_FIELD_SIZE']);
                 $criteria->add(ProcessVariablesPeer::VAR_LABEL, $row['VAR_LABEL']);
                 $criteria->add(ProcessVariablesPeer::VAR_DBCONNECTION, $row['VAR_DBCONNECTION']);
@@ -3403,24 +3417,26 @@ class Processes
     /**
      * Get DB Connections Rows for a Process
      *
-     * @param array $sProUid
-     * @return array $aConnections
+     * @param string $proUid
+     * @return array $connections
      */
-    public function getDBConnectionsRows($sProUid)
+    public function getDBConnectionsRows($proUid)
     {
         try {
-            $aConnections = array();
-            $oCriteria = new Criteria('workflow');
-            $oCriteria->add(DbSourcePeer::PRO_UID, $sProUid);
-            $oDataset = DbSourcePeer::doSelectRS($oCriteria);
-            $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-            $oDataset->next();
-            while ($aRow = $oDataset->getRow()) {
-                $oConnection = new DbSource();
-                $aConnections[] = $oConnection->Load($aRow['DBS_UID'], $aRow['PRO_UID']);
-                $oDataset->next();
+            $connections = [];
+            $criteria = new Criteria('workflow');
+            $criteria->add(DbSourcePeer::PRO_UID, $proUid);
+            $dataset = DbSourcePeer::doSelectRS($criteria);
+            $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
+            $dataset->next();
+            while ($row = $dataset->getRow()) {
+                $connection = new DbSource();
+                $infoConnection = $connection->Load($row['DBS_UID'], $row['PRO_UID']);
+                unset($infoConnection['DBS_ID']);
+                $connections[] = $infoConnection;
+                $dataset->next();
             }
-            return $aConnections;
+            return $connections;
         } catch (Exception $oError) {
             throw $oError;
         }
@@ -3609,6 +3625,8 @@ class Processes
             $oDataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
             $oDataset->next();
             while ($aRow = $oDataset->getRow()) {
+                unset($aRow['VAR_ID']);
+                unset($aRow['PRO_ID']);
                 $aVars[] = $aRow;
                 $oDataset->next();
             }

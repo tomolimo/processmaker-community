@@ -77,7 +77,7 @@ class AppMessageMapBuilder
 
         $tMap->addColumn('APP_MSG_TYPE_ID', 'AppMsgTypeId', 'int', CreoleTypes::TINYINT, false, null);
 
-        $tMap->addColumn('APP_MSG_SUBJECT', 'AppMsgSubject', 'string', CreoleTypes::VARCHAR, true, 150);
+        $tMap->addColumn('APP_MSG_SUBJECT', 'AppMsgSubject', 'string', CreoleTypes::VARCHAR, true, 998);
 
         $tMap->addColumn('APP_MSG_FROM', 'AppMsgFrom', 'string', CreoleTypes::VARCHAR, true, 100);
 

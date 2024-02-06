@@ -1,5 +1,5 @@
 <?php
-namespace TYPO3\ClassAliasLoader\Tests\Unit;
+namespace TYPO3\ClassAliasLoader\Test\Unit;
 
 /*
  * This file is part of the class alias loader package.
@@ -16,7 +16,7 @@ use TYPO3\ClassAliasLoader\ClassAliasLoader;
 /**
  * Test case for ClassAliasLoader
  */
-class ClassAliasLoaderTest extends \PHPUnit_Framework_TestCase
+class ClassAliasLoaderTest extends BaseTestCase
 {
     /**
      * @var ClassAliasLoader
@@ -30,7 +30,7 @@ class ClassAliasLoaderTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->composerClassLoaderMock = $this->getMock('Composer\\Autoload\\ClassLoader');
+        $this->composerClassLoaderMock = $this->getMockBuilder('Composer\\Autoload\\ClassLoader')->getMock();
         $this->subject = new ClassAliasLoader($this->composerClassLoaderMock);
     }
 
@@ -42,29 +42,10 @@ class ClassAliasLoaderTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
-    public function callingAnUnknownMethodWillBeProxiedToComposerClassLoader()
-    {
-        $this->composerClassLoaderMock->expects($this->once())->method('getUseIncludePath');
-        $this->subject->getUseIncludePath();
-    }
-
-    /**
-     * @test
-     */
     public function registeringTheAliasLoaderUnregistersComposerClassLoader()
     {
         $this->composerClassLoaderMock->expects($this->once())->method('unregister');
         $this->subject->register();
-    }
-
-    /**
-     * @test
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionCode 1422631610
-     */
-    public function callingAnUnknownMethodThatDoesNotExistInComposerClassLoaderThrowsException()
-    {
-        $this->subject->fooBar();
     }
 
     /**
@@ -366,7 +347,6 @@ class ClassAliasLoaderTest extends \PHPUnit_Framework_TestCase
         eval('class ' . $testClassName . ' {}');
         class_alias($testClassName, $testAlias1);
 
-
         $this->subject->loadClassWithAlias($testClassName);
 
         $this->assertTrue(class_exists($testAlias2, false), 'Second alias is not loaded');
@@ -403,5 +383,4 @@ class ClassAliasLoaderTest extends \PHPUnit_Framework_TestCase
         $this->composerClassLoaderMock->expects($this->once())->method('loadClass');
         $this->assertNull($this->subject->loadClassWithAlias($testClassName));
     }
-
 }

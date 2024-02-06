@@ -52,7 +52,6 @@ $config = PmSystem::getSystemConfiguration();
 $filter = new InputFilter();
 $config['display_errors'] = $filter->validateInput($config['display_errors']);
 $config['error_reporting'] = $filter->validateInput($config['error_reporting']);
-$config['memory_limit'] = $filter->validateInput($config['memory_limit']);
 $config['wsdl_cache'] = $filter->validateInput($config['wsdl_cache'], 'int');
 $config['time_zone'] = $filter->validateInput($config['time_zone']);
 // Do not change any of these settings directly, use env.ini instead
@@ -60,7 +59,6 @@ ini_set('display_errors', $filter->validateInput($config['display_errors']));
 ini_set('error_reporting', $filter->validateInput($config['error_reporting']));
 ini_set('short_open_tag', 'On');
 ini_set('default_charset', "UTF-8");
-ini_set('memory_limit', $filter->validateInput($config['memory_limit']));
 ini_set('soap.wsdl_cache_enabled', $config['wsdl_cache']);
 ini_set('date.timezone',
     (isset($_SESSION['__SYSTEM_UTC_TIME_ZONE__']) && $_SESSION['__SYSTEM_UTC_TIME_ZONE__']) ? 'UTC' : $config['time_zone']); //Set Time Zone

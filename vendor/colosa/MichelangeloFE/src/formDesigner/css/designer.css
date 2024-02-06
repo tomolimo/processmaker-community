@@ -727,3 +727,7 @@ ul.CodeMirror-hints {
     float: left;
     position: relative;
 }
+
+.datetime-gadget-class {
+    position: absolute;
+}

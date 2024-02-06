@@ -488,6 +488,13 @@ class Propel
                      * @Description: this was added for the additional database connections *
                      ***********************************************************************/
                     DbConnections::loadAdditionalConnections();
+                    //Method "DbConnections::loadAdditionalConnections()" does not work 
+                    //well in a multi-threaded environment, its restructuring is quite 
+                    //expensive and should be done in another improvement. Forcing the 
+                    //load ensures that additional connections are obtained.
+                    if (empty(self::$configuration['datasources'][$name])) {
+                        DbConnections::loadAdditionalConnections(true);
+                    }
                     $dsn = isset(self::$configuration['datasources'][$name]['connection']) ? self::$configuration['datasources'][$name]['connection'] : null;
                 } else {
                     throw new PropelException("No connection params set for " . $name);

@@ -1,8 +1,12 @@
 <?php
 namespace ProcessMaker\Services\Api\Project;
 
-use \ProcessMaker\Services\Api;
-use \Luracast\Restler\RestException;
+use Exception;
+use G;
+use Luracast\Restler\RestException;
+use ProcessMaker\BusinessModel\Variable as BmVariable;
+use ProcessMaker\Services\Api;
+
 /**
  * Project\Variable Api Controller
  *
@@ -24,6 +28,43 @@ class Variable extends Api
 
             return $response;
         } catch (\Exception $e) {
+            throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
+        }
+    }
+
+    /**
+     * Get variables by type
+     * 
+     * @url GET /:prj_uid/process-variables/:typeVariable/paged
+     *
+     * @param string $prj_uid {@min 32}{@max 32}
+     * @param string $typeVariable {@from path}
+     * @param int $start {@from path}
+     * @param int $limit {@from path}
+     * @param string $search {@from path}
+     */
+    public function doGetVariablesByType($prj_uid, $typeVariable, $start = null, $limit = null, $search = null)
+    {
+        try {
+            $variable = new BmVariable();
+            $typesAccepted = $variable::$varTypesValues;
+            if (!empty($typesAccepted[$typeVariable])) {
+                $typeVatId = $typesAccepted[$typeVariable];
+            } else {
+                throw new Exception(G::LoadTranslation("ID_INVALID_VALUE_ONLY_ACCEPTS_VALUES", ['$typeVariable', implode(',', $variable->getVariableTypes())]));
+            }
+            // Review if the word has the prefix
+            $count = preg_match_all('/\@(?:([\@\%\#\?\$\=\&Qq\!])|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*(?:[\\\\][\w\W])?)*)\))((?:\s*\[[\'"]?\w+[\'"]?\])+|\-\>([a-zA-Z\_]\w*))?/', $search, $match, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE);
+            // Check if the search has some prefix
+            $prefix = '';
+            if ($count) {
+                $prefix = substr($search,0,2);
+                $search = substr($search,2);
+            }
+            $response = $variable->getVariablesByType($prj_uid, $typeVatId, $start, $limit, $search, $prefix);
+
+            return $response;
+        } catch (Exception $e) {
             throw (new RestException(Api::STAT_APP_EXCEPTION, $e->getMessage()));
         }
     }

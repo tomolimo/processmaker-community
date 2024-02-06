@@ -10,6 +10,7 @@ return array(
     '25072dd6e2470089de65ae7bf11d3109' => $vendorDir . '/symfony/polyfill-php72/bootstrap.php',
     'f598d06aa772fa33d905e87be6398fb1' => $vendorDir . '/symfony/polyfill-intl-idn/bootstrap.php',
     '320cde22f66dd4f5d3fd621d3e88b98f' => $vendorDir . '/symfony/polyfill-ctype/bootstrap.php',
+    'a4a119a56e50fbb293281d9a48007e0e' => $vendorDir . '/symfony/polyfill-php80/bootstrap.php',
     '0d59ee240a4cd96ddbb4ff164fccea4d' => $vendorDir . '/symfony/polyfill-php73/bootstrap.php',
     '7b11c4dc42b3b3023073cb14e519683c' => $vendorDir . '/ralouphie/getallheaders/src/getallheaders.php',
     'c964ee0ededf28c96ebd9db5099ef910' => $vendorDir . '/guzzlehttp/promises/src/functions_include.php',
@@ -38,4 +39,5 @@ return array(
     '4d91dd78b19c48ca08f9722f053de1a3' => $baseDir . '/workflow/engine/classes/class.pmFunctions.php',
     'a7e627efa6c9d1116d0855cb05b9ae90' => $baseDir . '/workflow/engine/src/ProcessMaker/Util/helpers.php',
     '11b9e75510633a4e766ad43713ca8c86' => $baseDir . '/framework/src/Maveriks/Extension/Restler/UploadFormat.php',
+    'e6622eae49c4d01754781bb5a678b971' => $vendorDir . '/typo3/alias-loader-include.php',
 );

@@ -15,7 +15,6 @@ if (!isset($_SESSION['USER_LOGGED'])) {
 
 $filter = new InputFilter();
 $_REQUEST = $filter->xssFilterHard($_REQUEST);
-$_POST = $filter->xssFilterHard($_POST);
 
 if (isset($_REQUEST['action']) && $_REQUEST['action'] == "verifySession") {
     if (!isset($_SESSION['USER_LOGGED'])) {
@@ -568,6 +567,14 @@ class Ajax
                 // Review if the case was cancelled, true if the case was cancelled
                 $result->status = ($response->status_code == 0) ? true : false;
                 $result->msg = $response->message;
+                // Register in cases notes
+                if (!empty($_POST['NOTE_REASON'])) {
+                    $appNotes = new AppNotes();
+                    $noteContent = addslashes($_POST['NOTE_REASON']);
+                    $appNotes->postNewNote(
+                        $appUid, $usrUid, $noteContent, $_POST['NOTIFY_CANCEL']
+                    );
+                }
             } else {
                 $result->status = false;
                 $result->msg = G::LoadTranslation("ID_CASE_USER_INVALID_CANCEL_CASE", [$usrUid]);
@@ -662,12 +669,11 @@ class Ajax
             $result->msg = G::LoadTranslation('ID_REASSIGNMENT_SUCCESS', SYS_LANG, $data);
 
             // Save the note reassign reason
-            if (isset($_POST['NOTE_REASON']) && $_POST['NOTE_REASON'] !== '') {
-                require_once("classes/model/AppNotes.php");
-                $appNotes = new AppNotes();
+            if (!empty($_POST['NOTE_REASON'])) {
                 $noteContent = addslashes($_POST['NOTE_REASON']);
                 $notifyReassign = $_POST['NOTIFY_REASSIGN'] === 'true' ? true: false;
-                $appNotes->postNewNote($_SESSION['APPLICATION'], $_SESSION['USER_LOGGED'], $noteContent, $notifyReassign);
+                $cases = new BmCases();
+                $response = $cases->addNote($_SESSION['APPLICATION'], $_SESSION['USER_LOGGED'], $noteContent, $notifyReassign);
             }
         } catch (Exception $e) {
             $result->status = 1;

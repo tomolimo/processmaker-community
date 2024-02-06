@@ -424,28 +424,6 @@ class ObjectPermission extends BaseObjectPermission
     public function objectPermissionByReassignCases($appUid, $proUid, $tasUid = '')
     {
         $result = [];
-        /*----------------------------------********---------------------------------*/
-        $criteria = new Criteria('workflow');
-        $criteria->addSelectColumn(ApplicationPeer::APP_UID);
-        $criteria->add(ApplicationPeer::APP_UID, $appUid, Criteria::EQUAL);
-        $criteria->add(ApplicationPeer::PRO_UID, $proUid, Criteria::EQUAL);
-        $criteria->add(ApplicationPeer::APP_STATUS, 'TO_DO', Criteria::EQUAL);
-
-        //Review if the target task is OPEN
-        if (!empty($tasUid)) {
-            $criteria->addJoin(AppDelegationPeer::APP_NUMBER, ApplicationPeer::APP_NUMBER, Criteria::LEFT_JOIN);
-            $criteria->add(AppDelegationPeer::TAS_UID, $tasUid, Criteria::EQUAL);
-            $criteria->add(AppDelegationPeer::DEL_THREAD_STATUS, 'OPEN', Criteria::EQUAL);
-        }
-
-        $dataset = ApplicationPeer::doSelectRS($criteria);
-        $dataset->setFetchmode(ResultSet::FETCHMODE_ASSOC);
-        $dataset->next();
-        if ($row = $dataset->getRow()) {
-            $result[] = $row['APP_UID'];
-        }
-
-        /*----------------------------------********---------------------------------*/
         return $result;
     }
 

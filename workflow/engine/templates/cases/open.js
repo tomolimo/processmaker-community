@@ -509,7 +509,7 @@ Ext.onReady(function(){
             iconCls: 'button_menu_ext ICON_RETURN',
             tooltip: {
                 title:_('ID_RETURN_ADVANCED_SEARCH'),
-                text: _('ID_SHOW_RETURN_ADVANCED_SEARCH') 
+                text: _('ID_SHOW_RETURN_ADVANCED_SEARCH')
             },
             toggleHandler: function (btn, pressed) {
                 //Force to redirect to advanced search list from any side
@@ -1073,7 +1073,7 @@ Ext.onReady(function(){
                               params: {
                                   action: 'cancelCase',
                                   NOTE_REASON: noteReasonTxt,
-                                  NOTIFY_PAUSE: notifyReasonVal
+                                  NOTIFY_CANCEL: notifyReasonVal
                               },
                               success: function (result, request) {
                                   try {
@@ -1082,6 +1082,8 @@ Ext.onReady(function(){
                                           if (!isBrowserIE()) {
                                               // The case was cancelled
                                               parent.notify('', _("ID_CASE_CANCELLED", stringReplace("\\: ", "", _APP_NUM)));
+                                              parent.updateCasesTree();
+                                              parent.highlightCasesTree();
                                           }
                                       } else {
                                           if (!isBrowserIE()) {
@@ -1089,7 +1091,6 @@ Ext.onReady(function(){
                                               parent.notify('', data.msg);
                                           }
                                       }
-                                      parent.updateCasesTree();
                                   } catch (e) {
                                       if (isBrowserIE()) {
                                           Ext.MessageBox.alert(_('ID_FAILED'), _('ID_SOMETHING_WRONG'));
@@ -1362,6 +1363,7 @@ Ext.onReady(function(){
               try {
                 parent.notify('', data.msg);
                 parent.updateCasesTree();
+                parent.highlightCasesTree();
               }
               catch (e) {
               }
@@ -1562,6 +1564,7 @@ Ext.onReady(function(){
                     try {
                       parent.notify('PAUSE CASE', req.result.msg);
                       parent.updateCasesTree();
+                      parent.highlightCasesTree();
                     }catch (e) {
                     }
                     location.href = urlToRedirectAfterPause;
@@ -1601,6 +1604,7 @@ Ext.onReady(function(){
             try {
               parent.PMExt.notify(_('ID_UNPAUSE_ACTION'), data.msg);
               parent.updateCasesTree();
+              parent.highlightCasesTree();
             }
             catch (e) {
             }
@@ -1655,6 +1659,7 @@ Ext.onReady(function(){
 					try {
 					   parent.PMExt.notify(_('ID_DELETE_ACTION'), data.msg);
 					   parent.updateCasesTree();
+					   parent.highlightCasesTree();
 					}
 					catch (e) {
 					}

@@ -2750,11 +2750,6 @@ class G
         if (!array_key_exists("channels", $imageInfo)) {
             $imageInfo["channels"] = 3;
         }
-        $memoryNeeded = Round(($imageInfo[0] * $imageInfo[1] * $imageInfo['bits'] * $imageInfo['channels'] + Pow(2, 16)) * 1.95) / (1024 * 1024);
-        if ($memoryNeeded < 80) {
-            $memoryNeeded = 80;
-        }
-        ini_set('memory_limit', intval($memoryNeeded) . 'M');
 
         $functions = array(IMAGETYPE_GIF => array('imagecreatefromgif', 'imagegif'
             ), IMAGETYPE_JPEG => array('imagecreatefromjpeg', 'imagejpeg'), IMAGETYPE_PNG => array('imagecreatefrompng', 'imagepng'));

@@ -44,6 +44,7 @@
 namespace PDepend\Source\AST;
 
 use PDepend\Source\Builder\BuilderContext;
+use PDepend\Source\Tokenizer\Token;
 use PDepend\Util\Cache\CacheDriver;
 
 /**
@@ -58,28 +59,28 @@ abstract class AbstractASTType extends AbstractASTArtifact
     /**
      * The internal used cache instance.
      *
-     * @var \PDepend\Util\Cache\CacheDriver
+     * @var \PDepend\Util\Cache\CacheDriver|null
      */
     protected $cache = null;
 
     /**
      * The currently used builder context.
      *
-     * @var \PDepend\Source\Builder\BuilderContext
+     * @var \PDepend\Source\Builder\BuilderContext|null
      */
     protected $context = null;
 
     /**
      * The parent namespace for this class.
      *
-     * @var \PDepend\Source\AST\ASTNamespace
+     * @var \PDepend\Source\AST\ASTNamespace|null
      */
     private $namespace = null;
 
     /**
      * An <b>array</b> with all constants defined in this class or interface.
      *
-     * @var array<string, mixed>
+     * @var array<string, mixed>|null
      */
     protected $constants = null;
 
@@ -103,7 +104,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
      * Name of the parent namespace for this class or interface instance. Or
      * <b>NULL</b> when no namespace was specified.
      *
-     * @var string
+     * @var string|null
      */
     protected $namespaceName = null;
 
@@ -117,7 +118,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
     /**
      * Temporary property that only holds methods during the parsing process.
      *
-     * @var   \PDepend\Source\AST\ASTMethod[]
+     * @var   ASTMethod[]|null
      * @since 1.0.2
      */
     protected $methods = array();
@@ -273,7 +274,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
     /**
      * Returns all {@link \PDepend\Source\AST\ASTMethod} objects in this type.
      *
-     * @return \PDepend\Source\AST\ASTMethod[]
+     * @return ASTArtifactList<ASTMethod>
      */
     public function getMethods()
     {
@@ -296,8 +297,8 @@ abstract class AbstractASTType extends AbstractASTArtifact
     /**
      * Adds the given method to this type.
      *
-     * @param  \PDepend\Source\AST\ASTMethod $method
-     * @return \PDepend\Source\AST\ASTMethod
+     * @param ASTMethod $method
+     * @return ASTMethod
      */
     public function addMethod(ASTMethod $method)
     {
@@ -312,7 +313,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
      * Returns an array with {@link \PDepend\Source\AST\ASTMethod} objects
      * that are imported through traits.
      *
-     * @return \PDepend\Source\AST\ASTMethod[]
+     * @return ASTMethod[]
      * @since  1.0.0
      */
     protected function getTraitMethods()
@@ -324,6 +325,14 @@ abstract class AbstractASTType extends AbstractASTArtifact
         );
 
         foreach ($uses as $use) {
+            $priorMethods = array();
+            $precedences = $use->findChildrenOfType('PDepend\\Source\\AST\\ASTTraitAdaptationPrecedence');
+
+            /** @var ASTTraitAdaptationPrecedence $precedence */
+            foreach ($precedences as $precedence) {
+                $priorMethods[strtolower($precedence->getImage())] = true;
+            }
+            /** @var ASTMethod $method */
             foreach ($use->getAllMethods() as $method) {
                 foreach ($uses as $use2) {
                     if ($use2->hasExcludeFor($method)) {
@@ -333,7 +342,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
 
                 $name = strtolower($method->getName());
 
-                if (false === isset($methods[$name])) {
+                if (!isset($methods[$name]) || isset($priorMethods[$name])) {
                     $methods[$name] = $method;
                     continue;
                 }
@@ -350,6 +359,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
                 throw new ASTTraitMethodCollisionException($method, $this);
             }
         }
+
         return $methods;
     }
 
@@ -371,9 +381,13 @@ abstract class AbstractASTType extends AbstractASTArtifact
      * @param \PDepend\Source\Tokenizer\Token[] $tokens
      * @return void
      */
-    public function setTokens(array $tokens)
+    public function setTokens(array $tokens, Token $startToken = null)
     {
-        $this->startLine = reset($tokens)->startLine;
+        if (!$startToken) {
+            $startToken = reset($tokens);
+        }
+
+        $this->startLine = $startToken->startLine;
         $this->endLine   = end($tokens)->endLine;
 
         $this->cache
@@ -450,7 +464,7 @@ abstract class AbstractASTType extends AbstractASTArtifact
     /**
      * Returns a list of all methods provided by this type or one of its parents.
      *
-     * @return \PDepend\Source\AST\ASTMethod[]
+     * @return ASTMethod[]
      */
     abstract public function getAllMethods();
 

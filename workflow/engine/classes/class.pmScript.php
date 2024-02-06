@@ -2,9 +2,14 @@
 
 use ProcessMaker\Plugins\PluginRegistry;
 
-spl_autoload_register(function($sClassName) {
-    if (!empty(config("system.workspace"))) {
-        $sPath = PATH_DB . config("system.workspace") . PATH_SEP . 'classes' . PATH_SEP;
+/**
+ * The helper 'config()' is loaded via 'spl_autoload_register()' in unit testing. 
+ * The helper is pulled out to avoid an infinite loop.
+ */
+$workspace = config("system.workspace", null);
+spl_autoload_register(function($sClassName) use($workspace) {
+    if (!empty($workspace)) {
+        $sPath = PATH_DB . $workspace . PATH_SEP . 'classes' . PATH_SEP;
         if (file_exists($sPath . $sClassName . '.php')) {
             require_once $sPath . $sClassName . '.php';
         }

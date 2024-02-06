@@ -206,6 +206,7 @@ class DbConnections
             });
             foreach ($externalDbs as $externalDb) {
                 $conf['datasources'][$externalDb->DBS_UID] = [];
+                $laravelConfig = [];
                 $flagTns = ($externalDb->DBS_TYPE == "oracle" && $externalDb->DBS_CONNECTION_TYPE == "TNS")? 1 : 0;
                 // Build the appropriate items to add to our Propel configuration
                 // Let's grab the decrypted password
@@ -225,22 +226,31 @@ class DbConnections
                     // Not TNS, build a standard configuration
                     $dbsPort = ($externalDb->DBS_PORT == '') ? ('') : (':' . $externalDb->DBS_PORT);
                     $encoding = (trim($externalDb->DBS_ENCODE) == '') ? '' : '?encoding=' . $externalDb->DBS_ENCODE;
-                    if (strpos($externalDb->DBS_SERVER, "\\") && $externalDb->DBS_TYPE == 'mssql') {
-                        // This is a microsoft SQL server which is using a netbios connection string
-                        $conf['datasources'][$externalDb->DBS_UID]['connection'] = $externalDb->DBS_TYPE . '://'
-                            . $externalDb->DBS_USERNAME . ':' . $passw . '@' . $externalDb->DBS_SERVER . '/'
-                            . $externalDb->DBS_DATABASE_NAME . $encoding;
-                    } else {
-                        $conf['datasources'][$externalDb->DBS_UID]['connection'] = $externalDb->DBS_TYPE . '://'
-                            . $externalDb->DBS_USERNAME . ':' . $passw . '@' . $externalDb->DBS_SERVER . $dbsPort . '/'
-                            . $externalDb->DBS_DATABASE_NAME . $encoding;
-                    }
+
+                    $conf['datasources'][$externalDb->DBS_UID]['connection'] = $externalDb->DBS_TYPE . '://'
+                        . $externalDb->DBS_USERNAME . ':' . $passw . '@' . $externalDb->DBS_SERVER . $dbsPort . '/'
+                        . $externalDb->DBS_DATABASE_NAME . $encoding;
+
+                    $laravelConfig = [
+                        'driver' => $externalDb->DBS_TYPE === 'mssql' ? 'sqlsrv' : $externalDb->DBS_TYPE, // MSSQL driver is not supported anymore, only SQLSRV
+                        'host' => $externalDb->DBS_SERVER,
+                        'port' => $externalDb->DBS_PORT == '' ? null : $externalDb->DBS_PORT,
+                        'database' => $externalDb->DBS_DATABASE_NAME,
+                        'username' => $externalDb->DBS_USERNAME,
+                        'password' => $passw,
+                        'charset' => trim($externalDb->DBS_ENCODE) == '' ? null : trim($externalDb->DBS_ENCODE),
+                        'options' => [PDO::ATTR_STRINGIFY_FETCHES => true] // For keep the old behaviour, all values are transformed to strings
+                    ];
                 } else {
                     // Is oracle and TNS, let's provide a TNS based DSN
                     $conf["datasources"][$externalDb->DBS_UID]["connection"] = $externalDb->DBS_TYPE . "://"
                         . $externalDb->DBS_USERNAME . ":" . $passw . "@" . $externalDb->DBS_TNS;
                 }
                 $conf['datasources'][$externalDb->DBS_UID]['adapter'] = $externalDb->DBS_TYPE;
+                // Load the config for the external database into laravel
+                config([
+                    'database.connections.' . $externalDb->DBS_UID => $laravelConfig
+                ]);
             }
             Propel::initConfiguration($conf);
             $lastProcessId = $_SESSION['PROCESS'];

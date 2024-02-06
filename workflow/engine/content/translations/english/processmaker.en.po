@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: ProcessMaker (Branch 3.4.0)\n"
+"Project-Id-Version: ProcessMaker (Branch 3.5.0)\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2019-08-08 16:51:51\n"
+"PO-Revision-Date: 2020-07-17 10:31:00\n"
 "Last-Translator: \n"
 "Language-Team: Colosa Developers Team <developers@colosa.com>\n"
 "MIME-Version: 1.0\n"
@@ -1994,6 +1994,12 @@ msgid "Add field"
 msgstr "Add field"
 
 # TRANSLATION
+# LABEL/ID_ADD_FILE
+#: LABEL/ID_ADD_FILE
+msgid "Add file"
+msgstr "Add file"
+
+# TRANSLATION
 # LABEL/ID_ADD_HORIZONTAL_LINE
 #: LABEL/ID_ADD_HORIZONTAL_LINE
 msgid "Add horizontal line"
@@ -2574,6 +2580,18 @@ msgstr "Attach"
 #: LABEL/ID_ATTACHED_DB
 msgid "Attached"
 msgstr "Attached"
+
+# TRANSLATION
+# LABEL/ID_ATTACH_FILE
+#: LABEL/ID_ATTACH_FILE
+msgid "Attach file"
+msgstr "Attach file"
+
+# TRANSLATION
+# LABEL/ID_ATTACHED_FILES
+#: LABEL/ID_ATTACHED_FILES
+msgid "Attached files"
+msgstr "Attached files"
 
 # TRANSLATION
 # LABEL/ID_ATTRIBUTES
@@ -7100,8 +7118,8 @@ msgstr "Delete data..."
 # TRANSLATION
 # LABEL/ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE
 #: LABEL/ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE
-msgid "[LABEL/ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE] Do you want to delete the Email Server?"
-msgstr "Do you want to delete the Email Server?"
+msgid "[LABEL/ID_EMAIL_SERVER_DELETE_WARNING_MESSAGE] Are you sure you want to delete this Email Server? the components that were using it will now use the default email server."
+msgstr "Are you sure you want to delete this Email Server? the components that were using it will now use the default email server."
 
 # TRANSLATION
 # LABEL/ID_EMAIL_SERVER_DOES_NOT_EXIST
@@ -10804,6 +10822,12 @@ msgstr "Login Settings"
 #: LABEL/ID_LOGIN_TITLE
 msgid "Please enter your credentials below"
 msgstr "Please enter your credentials below"
+
+# TRANSLATION
+# LABEL/ID_LOGIN_TO_SEE_OUTPUTDOCS
+#: LABEL/ID_LOGIN_TO_SEE_OUTPUTDOCS
+msgid "You must be logged to see the documents"
+msgstr "You must be logged to see the documents"
 
 # TRANSLATION
 # LABEL/ID_LOGIN_WITH_FACEBOOK
@@ -21698,8 +21722,8 @@ msgstr "LDAP is optional"
 # TRANSLATION
 # LABEL/ID_PROCESSMAKER_REQUIREMENTS_MEMORYLIMIT
 #: LABEL/ID_PROCESSMAKER_REQUIREMENTS_MEMORYLIMIT
-msgid "Memory Limit >= 80MB"
-msgstr "Memory Limit >= 80MB"
+msgid "Memory Limit >= 256MB"
+msgstr "Memory Limit >= 256MB"
 
 # TRANSLATION
 # LABEL/ID_PROCESSMAKER_REQUIREMENTS_MSSQL
@@ -22554,10 +22578,16 @@ msgid "You clicked Ctrl + F5"
 msgstr "You clicked Ctrl + F5"
 
 # TRANSLATION
+# LABEL/ID_REFRESH_TIME_SCOPE
+#: LABEL/ID_REFRESH_TIME_SCOPE
+msgid "Only applied for counters in the home view folder list"
+msgstr "Only applied for counters in the home view folder list"
+
+# TRANSLATION
 # LABEL/ID_REFRESH_TIME_SECONDS
 #: LABEL/ID_REFRESH_TIME_SECONDS
-msgid "Refresh Time (seconds)"
-msgstr "Refresh Time (seconds)"
+msgid "Counters Refresh Time (seconds)"
+msgstr "Counters Refresh Time (seconds)"
 
 # TRANSLATION
 # LABEL/ID_REFRESH_VIEW
@@ -25284,6 +25314,12 @@ msgid "The default configuration was not defined"
 msgstr "The default configuration was not defined"
 
 # TRANSLATION
+# LABEL/ID_THE_FILE_COULDNT_BE_UPLOADED
+#: LABEL/ID_THE_FILE_COULDNT_BE_UPLOADED
+msgid "The file couldn’t be uploaded please review the allowed files or contact your System Administrator."
+msgstr "The file couldn’t be uploaded please review the allowed files or contact your System Administrator."
+
+# TRANSLATION
 # LABEL/ID_THE_FILE_SIZE_IS_BIGGER_THAN_THE_MAXIMUM_ALLOWED
 #: LABEL/ID_THE_FILE_SIZE_IS_BIGGER_THAN_THE_MAXIMUM_ALLOWED
 msgid "The file size is bigger than the maximum allowed, the maximum size allowed is {0} Mbytes."
@@ -25318,6 +25354,12 @@ msgstr "The PHP files execution was disabled please contact the system administr
 #: LABEL/ID_THE_REASON_REASSIGN_USER_EMPTY
 msgid "Please complete the reassign reason."
 msgstr "Please complete the reassign reason."
+
+# TRANSLATION
+# LABEL/ID_THE_REPORT_TABLE_IS_REGENERATING_PLEASE_COME_BACK_IN_A_FEW_MINUTES
+#: LABEL/ID_THE_REPORT_TABLE_IS_REGENERATING_PLEASE_COME_BACK_IN_A_FEW_MINUTES
+msgid "The report table is regenerating please come back in a few minutes."
+msgstr "The report table is regenerating please come back in a few minutes."
 
 # TRANSLATION
 # LABEL/ID_THE_UPLOAD_OF_PHP_FILES_WAS_DISABLED
@@ -25372,6 +25414,18 @@ msgstr "Error: Thread status does not exist for the application {0}."
 #: LABEL/ID_THU
 msgid "Thu"
 msgstr "Thu"
+
+# TRANSLATION
+# LABEL/ID_TIMER_EVENT
+#: LABEL/ID_TIMER_EVENT
+msgid "Timer event"
+msgstr "Timer event"
+
+# TRANSLATION
+# LABEL/ID_TIMER_EVENT_DESC
+#: LABEL/ID_TIMER_EVENT_DESC
+msgid "Executes timer start and intermediate timer events"
+msgstr "Executes timer start and intermediate timer events"
 
 # TRANSLATION
 # LABEL/ID_TIMER_EVENT_ALREADY_REGISTERED
@@ -27684,6 +27738,12 @@ msgid "[LABEL/ID_YES_VALUE] Yes"
 msgstr "Yes"
 
 # TRANSLATION
+# LABEL/ID_YOUR_FILE_HAS_EXCEEDED
+#: LABEL/ID_YOUR_FILE_HAS_EXCEEDED
+msgid "Your file has exceeded the file maximum size that is {0}."
+msgstr "Your file has exceeded the file maximum size that is {0}."
+
+# TRANSLATION
 # LABEL/ID_YOUR_IMAGE_HAS_BEEN_SUCCESSFULLY
 #: LABEL/ID_YOUR_IMAGE_HAS_BEEN_SUCCESSFULLY
 msgid "Your image has been successfully uploaded"
@@ -27736,6 +27796,12 @@ msgstr "You do not select any user to import"
 #: LABEL/ID_YOU_HAVE_ERROR
 msgid "you have an error"
 msgstr "you have an error"
+
+# TRANSLATION
+# LABEL/ID_YOU_UPLOADED_AN_UNSUPPORTED_FILE_EXTENSION
+#: LABEL/ID_YOU_UPLOADED_AN_UNSUPPORTED_FILE_EXTENSION
+msgid "You uploaded an unsupported file extension, please review the permitted files uploaded in the wiki of ProcessMaker for the cases notes."
+msgstr "You uploaded an unsupported file extension, please review the permitted files uploaded in the wiki of ProcessMaker for the cases notes."
 
 # TRANSLATION
 # LABEL/ID_ZIP_CODE
@@ -51525,3 +51591,350 @@ msgstr "Cancel"
 msgid "[dynaforms/fields/yesno.xml?PME_ACCEPT] Save"
 msgstr "Save"
 
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER
+#: LABEL/ID_TASK_SCHEDULER
+msgid "Task Scheduler"
+msgstr "Task Scheduler"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CASE_ACTIONS
+#: LABEL/ID_TASK_SCHEDULER_CASE_ACTIONS
+msgid "Case actions"
+msgstr "Case actions"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PLUGINS
+#: LABEL/ID_TASK_SCHEDULER_PLUGINS
+msgid "Plugins"
+msgstr "Plugins"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_SYNC
+#: LABEL/ID_TASK_SCHEDULER_PM_SYNC
+msgid "ProcessMaker sync"
+msgstr "ProcessMaker sync"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_EMAILS_NOTIFICATIONS
+#: LABEL/ID_TASK_SCHEDULER_EMAILS_NOTIFICATIONS
+msgid "Emails and notifications"
+msgstr "Emails and notifications"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_ACTION_EMAIL
+#: LABEL/ID_TASK_SCHEDULER_ACTION_EMAIL
+msgid "Action by Email Response"
+msgstr "Action by Email Response"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_ACTION_EMAIL_DESC
+#: LABEL/ID_TASK_SCHEDULER_ACTION_EMAIL_DESC
+msgid "Action by email response account email revision"
+msgstr "Action by email response account email revision"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_SEND_NOT
+#: LABEL/ID_TASK_SCHEDULER_SEND_NOT
+msgid "Send notifications"
+msgstr "Send notifications"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_SEND_NOT_DESC
+#: LABEL/ID_TASK_SCHEDULER_SEND_NOT_DESC
+msgid "ProcessMaker mobile notifications"
+msgstr "ProcessMaker mobile notifications"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_LDAP
+#: LABEL/ID_TASK_SCHEDULER_LDAP
+msgid "ProcessMaker LDAP cron"
+msgstr "ProcessMaker LDAP cron"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_LDAP_DESC
+#: LABEL/ID_TASK_SCHEDULER_LDAP_DESC
+msgid "Synchronize advance LDAP attributes from their settings"
+msgstr "Synchronize advance LDAP attributes from their settings"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CLEAN_SELF
+#: LABEL/ID_TASK_SCHEDULER_CLEAN_SELF
+msgid "Clean self service tables"
+msgstr "Clean self service tables"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CLEAN_SELF_DESC
+#: LABEL/ID_TASK_SCHEDULER_CLEAN_SELF_DESC
+msgid "Clean unused records for Self-Service Value-Based feature. It is a maintenance command"
+msgstr "Clean unused records for Self-Service Value-Based feature. It is a maintenance command"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_MESSAGE_EVENTS
+#: LABEL/ID_TASK_SCHEDULER_MESSAGE_EVENTS
+msgid "Message events"
+msgstr "Message events"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_MESSAGE_EVENTS_DESC
+#: LABEL/ID_TASK_SCHEDULER_MESSAGE_EVENTS_DESC
+msgid "Intermediate and end email event"
+msgstr "Intermediate and end email event"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_UNASSIGNED
+#: LABEL/ID_TASK_SCHEDULER_UNASSIGNED
+msgid "Unassigned case"
+msgstr "Unassigned case"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_UNASSIGNED_DESC
+#: LABEL/ID_TASK_SCHEDULER_UNASSIGNED_DESC
+msgid "Run the trigger for self-service cases that have a configured timeout setting"
+msgstr "Run the trigger for self-service cases that have a configured timeout setting"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CALCULATE_ELAPSED
+#: LABEL/ID_TASK_SCHEDULER_CALCULATE_ELAPSED
+msgid "Calculated the elapsed time"
+msgstr "Calculated the elapsed time"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CALCULATE_ELAPSED_DESC
+#: LABEL/ID_TASK_SCHEDULER_CALCULATE_ELAPSED_DESC
+msgid "Calculates the elapsed time according to the configured calendar of all open tasks in active cases"
+msgstr "Calculates the elapsed time according to the configured calendar of all open tasks in active cases"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_PLUGINS
+#: LABEL/ID_TASK_SCHEDULER_PM_PLUGINS
+msgid "ProcessMaker plugins"
+msgstr "ProcessMaker plugins"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_PLUGINS_DESC
+#: LABEL/ID_TASK_SCHEDULER_PM_PLUGINS_DESC
+msgid "Custom plugins execution"
+msgstr "Custom plugins execution"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CASE_EMAILS
+#: LABEL/ID_TASK_SCHEDULER_CASE_EMAILS
+msgid "Case Emails"
+msgstr "Case Emails"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CASE_EMAILS_DESC
+#: LABEL/ID_TASK_SCHEDULER_CASE_EMAILS_DESC
+msgid "Task, triggers, and actions by email notifications"
+msgstr "Task, triggers, and actions by email notifications"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_UNPAUSE
+#: LABEL/ID_TASK_SCHEDULER_UNPAUSE
+msgid "Unpause cases"
+msgstr "Unpause cases"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_UNPAUSE_DESC
+#: LABEL/ID_TASK_SCHEDULER_UNPAUSE_DESC
+msgid "Unpauses any case whose pause time has expired"
+msgstr "Unpauses any case whose pause time has expired"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_SCHEDULER
+#: LABEL/ID_TASK_SCHEDULER_PM_SCHEDULER
+msgid "Unpauses any case whose pause time has expired"
+msgstr "Unpauses any case whose pause time has expired"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_EVENTS 
+#: LABEL/ID_TASK_SCHEDULER_PM_EVENTS
+msgid "ProcessMaker events"
+msgstr "ProcessMaker events"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_PM_SCHEDULER
+#: LABEL/ID_TASK_SCHEDULER_PM_SCHEDULER
+msgid "ProcessMaker scheduler"
+msgstr "ProcessMaker scheduler"
+
+# TRANSLATION
+# LABEL/ID_YEARS
+#: LABEL/ID_YEARS
+msgid "Years"
+msgstr "Years"
+
+# TRANSLATION
+# LABEL/ID_MONTHS
+#: LABEL/ID_MONTHS
+msgid "Months"
+msgstr "Months"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_SEND_NOTIFICATIONS
+#: LABEL/ID_TASK_SCHEDULER_SEND_NOTIFICATIONS
+msgid "Actions by email response account email revision"
+msgstr "Actions by email response account email revision"
+
+# TRANSLATION
+# LABEL/ID_WEEK
+#: LABEL/ID_WEEK
+msgid "Week"
+msgstr "Week"
+
+# TRANSLATION
+# LABEL/ID_WEEKS
+#: LABEL/ID_WEEKS
+msgid "Weeks"
+msgstr "Weeks"
+
+# TRANSLATION
+# LABEL/ID_EVERY_MINUTE
+#: LABEL/ID_EVERY_MINUTE
+msgid "Every minute"
+msgstr "Every minute"
+
+# TRANSLATION
+# LABEL/ID_EVERY_FIVE_MINUTES
+#: LABEL/ID_EVERY_FIVE_MINUTES
+msgid "Every five minutes"
+msgstr "Every five minutes"
+
+# TRANSLATION
+# LABEL/ID_EVERY_TEN_MINUTES
+#: LABEL/ID_EVERY_TEN_MINUTES
+msgid "Every ten minutes"
+msgstr "Every ten minutes"
+
+# TRANSLATION
+# LABEL/ID_EVERY_FIFTEEN_MINUTES
+#: LABEL/ID_EVERY_FIFTEEN_MINUTES
+msgid "Every fifteen minutes"
+msgstr "Every fifteen minutes"
+
+# TRANSLATION
+# LABEL/ID_EVERY_THIRTY_MINUTES
+#: LABEL/ID_EVERY_THIRTY_MINUTES
+msgid "Every thirty minutes"
+msgstr "Every thirty minutes"
+
+# TRANSLATION
+# LABEL/ID_HOURLY
+#: LABEL/ID_HOURLY
+msgid "Hourly"
+msgstr "Hourly"
+
+# TRANSLATION
+# LABEL/ID_HOURLY_AT
+#: LABEL/ID_HOURLY_AT
+msgid "Hourly at"
+msgstr "Hourly at"
+
+# TRANSLATION
+# LABEL/ID_AT_TILL
+#: LABEL/ID_AT_TILL
+msgid "at ${0} Till ${1}"
+msgstr "at ${0} Till ${1}"
+
+# TRANSLATION
+# LABEL/ID_TIME_IN
+#: LABEL/ID_TIME_IN
+msgid "time in ${0}"
+msgstr "time in ${0}"
+
+# TRANSLATION
+# LABEL/ID_EVERY
+#: LABEL/ID_EVERY
+msgid "every ${0} ${1}"
+msgstr "every ${0} ${1}"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_REPORTING
+#: LABEL/ID_TASK_SCHEDULER_REPORTING
+msgid "Reporting"
+msgstr "Reporting"
+
+# TRANSLATION
+# LABEL/ID_EVERY_HOUR
+#: LABEL/ID_EVERY_HOUR
+msgid "Every hour"
+msgstr "Every hour"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_REPORT_USERS
+#: LABEL/ID_TASK_SCHEDULER_REPORT_USERS
+msgid "KPI Report by user"
+msgstr "KPI Report by user"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_REPORT_USERS_DESC
+#: LABEL/ID_TASK_SCHEDULER_REPORT_USERS_DESC
+msgid "Recalculate KPI's information by user"
+msgstr "Recalculate KPI's information by user"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_REPORT_PROCESS
+#: LABEL/ID_TASK_SCHEDULER_REPORT_PROCESS
+msgid "KPI Report by process"
+msgstr "KPI Report by process"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_REPORT_PROCESS_DESC
+#: LABEL/ID_TASK_SCHEDULER_REPORT_PROCESS_DESC
+msgid "Recalculate KPI's information by process"
+msgstr "Recalculate KPI's information by process"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CALCULATE_APP
+#: LABEL/ID_TASK_SCHEDULER_CALCULATE_APP
+msgid "KPI Calculate app"
+msgstr "KPI Calculate app"
+
+# TRANSLATION
+# LABEL/ID_TASK_SCHEDULER_CALCULATE_APP_DESC
+#: LABEL/ID_TASK_SCHEDULER_CALCULATE_APP_DESC
+msgid "Recalculate main KPI board information"
+msgstr "Recalculate main KPI board information"
+
+# TRANSLATION
+# LABEL/ID_CUSTOM_SCHEDULE_SETTINGS
+#: LABEL/ID_CUSTOM_SCHEDULE_SETTINGS
+msgid "Custom schedule settings"
+msgstr "Custom schedule settings"
+
+# TRANSLATION
+# LABEL/ID_CHOOSE_TIME
+#: LABEL/ID_CHOOSE_TIME
+msgid "Choose a time"
+msgstr "Choose a time"
+
+# TRANSLATION
+# LABEL/ID_STARTING_TIME
+#: LABEL/ID_STARTING_TIME
+msgid "Starting time"
+msgstr "Starting time"
+
+# TRANSLATION
+# LABEL/ID_ENDING_TIME
+#: LABEL/ID_ENDING_TIME
+msgid "Ending time"
+msgstr "Ending time"
+
+# TRANSLATION
+# LABEL/ID_REPEAT_EVERY
+#: LABEL/ID_REPEAT_EVERY
+msgid "Repeat every"
+msgstr "Repeat every"
+
+# TRANSLATION
+# LABEL/ID_REPEAT_ON
+#: LABEL/ID_REPEAT_ON
+msgid "Repeat on"
+msgstr "Repeat on"
+
+# TRANSLATION
+# LABEL/ID_CUSTOM_SETTINGS
+#: LABEL/ID_CUSTOM_SETTINGS
+msgid "Custom settings"
+msgstr "Custom settings"

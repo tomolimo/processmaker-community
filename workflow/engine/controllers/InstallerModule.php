@@ -1173,7 +1173,6 @@ class InstallerModule extends Controller
     {
         $filter = new InputFilter();
         ini_set('max_execution_time', '0');
-        ini_set('memory_limit', '256M');
 
         $serv = 'http://';
         if (isset($_SERVER['HTTPS']) && !empty(trim($_SERVER['HTTPS']))) {

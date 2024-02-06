@@ -28,6 +28,12 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     protected static $peer;
 
     /**
+     * The value for the var_id field.
+     * @var        int
+     */
+    protected $var_id;
+
+    /**
      * The value for the var_uid field.
      * @var        string
      */
@@ -40,6 +46,12 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     protected $prj_uid;
 
     /**
+     * The value for the pro_id field.
+     * @var        int
+     */
+    protected $pro_id = 0;
+
+    /**
      * The value for the var_name field.
      * @var        string
      */
@@ -50,6 +62,12 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
      * @var        string
      */
     protected $var_field_type = '';
+
+    /**
+     * The value for the var_field_type_id field.
+     * @var        int
+     */
+    protected $var_field_type_id = 0;
 
     /**
      * The value for the var_field_size field.
@@ -114,6 +132,17 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     protected $alreadyInValidation = false;
 
     /**
+     * Get the [var_id] column value.
+     * 
+     * @return     int
+     */
+    public function getVarId()
+    {
+
+        return $this->var_id;
+    }
+
+    /**
      * Get the [var_uid] column value.
      * 
      * @return     string
@@ -136,6 +165,17 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     }
 
     /**
+     * Get the [pro_id] column value.
+     * 
+     * @return     int
+     */
+    public function getProId()
+    {
+
+        return $this->pro_id;
+    }
+
+    /**
      * Get the [var_name] column value.
      * 
      * @return     string
@@ -155,6 +195,17 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
 
         return $this->var_field_type;
+    }
+
+    /**
+     * Get the [var_field_type_id] column value.
+     * 
+     * @return     int
+     */
+    public function getVarFieldTypeId()
+    {
+
+        return $this->var_field_type_id;
     }
 
     /**
@@ -246,6 +297,28 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     }
 
     /**
+     * Set the value of [var_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setVarId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->var_id !== $v) {
+            $this->var_id = $v;
+            $this->modifiedColumns[] = ProcessVariablesPeer::VAR_ID;
+        }
+
+    } // setVarId()
+
+    /**
      * Set the value of [var_uid] column.
      * 
      * @param      string $v new value
@@ -290,6 +363,28 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     } // setPrjUid()
 
     /**
+     * Set the value of [pro_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setProId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->pro_id !== $v || $v === 0) {
+            $this->pro_id = $v;
+            $this->modifiedColumns[] = ProcessVariablesPeer::PRO_ID;
+        }
+
+    } // setProId()
+
+    /**
      * Set the value of [var_name] column.
      * 
      * @param      string $v new value
@@ -332,6 +427,28 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
         }
 
     } // setVarFieldType()
+
+    /**
+     * Set the value of [var_field_type_id] column.
+     * 
+     * @param      int $v new value
+     * @return     void
+     */
+    public function setVarFieldTypeId($v)
+    {
+
+        // Since the native PHP type for this column is integer,
+        // we will cast the input value to an int (if it is not).
+        if ($v !== null && !is_int($v) && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->var_field_type_id !== $v || $v === 0) {
+            $this->var_field_type_id = $v;
+            $this->modifiedColumns[] = ProcessVariablesPeer::VAR_FIELD_TYPE_ID;
+        }
+
+    } // setVarFieldTypeId()
 
     /**
      * Set the value of [var_field_size] column.
@@ -526,36 +643,42 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
         try {
 
-            $this->var_uid = $rs->getString($startcol + 0);
+            $this->var_id = $rs->getInt($startcol + 0);
 
-            $this->prj_uid = $rs->getString($startcol + 1);
+            $this->var_uid = $rs->getString($startcol + 1);
 
-            $this->var_name = $rs->getString($startcol + 2);
+            $this->prj_uid = $rs->getString($startcol + 2);
 
-            $this->var_field_type = $rs->getString($startcol + 3);
+            $this->pro_id = $rs->getInt($startcol + 3);
 
-            $this->var_field_size = $rs->getInt($startcol + 4);
+            $this->var_name = $rs->getString($startcol + 4);
 
-            $this->var_label = $rs->getString($startcol + 5);
+            $this->var_field_type = $rs->getString($startcol + 5);
 
-            $this->var_dbconnection = $rs->getString($startcol + 6);
+            $this->var_field_type_id = $rs->getInt($startcol + 6);
 
-            $this->var_sql = $rs->getString($startcol + 7);
+            $this->var_field_size = $rs->getInt($startcol + 7);
 
-            $this->var_null = $rs->getInt($startcol + 8);
+            $this->var_label = $rs->getString($startcol + 8);
 
-            $this->var_default = $rs->getString($startcol + 9);
+            $this->var_dbconnection = $rs->getString($startcol + 9);
 
-            $this->var_accepted_values = $rs->getString($startcol + 10);
+            $this->var_sql = $rs->getString($startcol + 10);
 
-            $this->inp_doc_uid = $rs->getString($startcol + 11);
+            $this->var_null = $rs->getInt($startcol + 11);
+
+            $this->var_default = $rs->getString($startcol + 12);
+
+            $this->var_accepted_values = $rs->getString($startcol + 13);
+
+            $this->inp_doc_uid = $rs->getString($startcol + 14);
 
             $this->resetModified();
 
             $this->setNew(false);
 
             // FIXME - using NUM_COLUMNS may be clearer.
-            return $startcol + 12; // 12 = ProcessVariablesPeer::NUM_COLUMNS - ProcessVariablesPeer::NUM_LAZY_LOAD_COLUMNS).
+            return $startcol + 15; // 15 = ProcessVariablesPeer::NUM_COLUMNS - ProcessVariablesPeer::NUM_LAZY_LOAD_COLUMNS).
 
         } catch (Exception $e) {
             throw new PropelException("Error populating ProcessVariables object", $e);
@@ -760,39 +883,48 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
         switch($pos) {
             case 0:
-                return $this->getVarUid();
+                return $this->getVarId();
                 break;
             case 1:
-                return $this->getPrjUid();
+                return $this->getVarUid();
                 break;
             case 2:
-                return $this->getVarName();
+                return $this->getPrjUid();
                 break;
             case 3:
-                return $this->getVarFieldType();
+                return $this->getProId();
                 break;
             case 4:
-                return $this->getVarFieldSize();
+                return $this->getVarName();
                 break;
             case 5:
-                return $this->getVarLabel();
+                return $this->getVarFieldType();
                 break;
             case 6:
-                return $this->getVarDbconnection();
+                return $this->getVarFieldTypeId();
                 break;
             case 7:
-                return $this->getVarSql();
+                return $this->getVarFieldSize();
                 break;
             case 8:
-                return $this->getVarNull();
+                return $this->getVarLabel();
                 break;
             case 9:
-                return $this->getVarDefault();
+                return $this->getVarDbconnection();
                 break;
             case 10:
-                return $this->getVarAcceptedValues();
+                return $this->getVarSql();
                 break;
             case 11:
+                return $this->getVarNull();
+                break;
+            case 12:
+                return $this->getVarDefault();
+                break;
+            case 13:
+                return $this->getVarAcceptedValues();
+                break;
+            case 14:
                 return $this->getInpDocUid();
                 break;
             default:
@@ -815,18 +947,21 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
         $keys = ProcessVariablesPeer::getFieldNames($keyType);
         $result = array(
-            $keys[0] => $this->getVarUid(),
-            $keys[1] => $this->getPrjUid(),
-            $keys[2] => $this->getVarName(),
-            $keys[3] => $this->getVarFieldType(),
-            $keys[4] => $this->getVarFieldSize(),
-            $keys[5] => $this->getVarLabel(),
-            $keys[6] => $this->getVarDbconnection(),
-            $keys[7] => $this->getVarSql(),
-            $keys[8] => $this->getVarNull(),
-            $keys[9] => $this->getVarDefault(),
-            $keys[10] => $this->getVarAcceptedValues(),
-            $keys[11] => $this->getInpDocUid(),
+            $keys[0] => $this->getVarId(),
+            $keys[1] => $this->getVarUid(),
+            $keys[2] => $this->getPrjUid(),
+            $keys[3] => $this->getProId(),
+            $keys[4] => $this->getVarName(),
+            $keys[5] => $this->getVarFieldType(),
+            $keys[6] => $this->getVarFieldTypeId(),
+            $keys[7] => $this->getVarFieldSize(),
+            $keys[8] => $this->getVarLabel(),
+            $keys[9] => $this->getVarDbconnection(),
+            $keys[10] => $this->getVarSql(),
+            $keys[11] => $this->getVarNull(),
+            $keys[12] => $this->getVarDefault(),
+            $keys[13] => $this->getVarAcceptedValues(),
+            $keys[14] => $this->getInpDocUid(),
         );
         return $result;
     }
@@ -859,39 +994,48 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
         switch($pos) {
             case 0:
-                $this->setVarUid($value);
+                $this->setVarId($value);
                 break;
             case 1:
-                $this->setPrjUid($value);
+                $this->setVarUid($value);
                 break;
             case 2:
-                $this->setVarName($value);
+                $this->setPrjUid($value);
                 break;
             case 3:
-                $this->setVarFieldType($value);
+                $this->setProId($value);
                 break;
             case 4:
-                $this->setVarFieldSize($value);
+                $this->setVarName($value);
                 break;
             case 5:
-                $this->setVarLabel($value);
+                $this->setVarFieldType($value);
                 break;
             case 6:
-                $this->setVarDbconnection($value);
+                $this->setVarFieldTypeId($value);
                 break;
             case 7:
-                $this->setVarSql($value);
+                $this->setVarFieldSize($value);
                 break;
             case 8:
-                $this->setVarNull($value);
+                $this->setVarLabel($value);
                 break;
             case 9:
-                $this->setVarDefault($value);
+                $this->setVarDbconnection($value);
                 break;
             case 10:
-                $this->setVarAcceptedValues($value);
+                $this->setVarSql($value);
                 break;
             case 11:
+                $this->setVarNull($value);
+                break;
+            case 12:
+                $this->setVarDefault($value);
+                break;
+            case 13:
+                $this->setVarAcceptedValues($value);
+                break;
+            case 14:
                 $this->setInpDocUid($value);
                 break;
         } // switch()
@@ -918,51 +1062,63 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
         $keys = ProcessVariablesPeer::getFieldNames($keyType);
 
         if (array_key_exists($keys[0], $arr)) {
-            $this->setVarUid($arr[$keys[0]]);
+            $this->setVarId($arr[$keys[0]]);
         }
 
         if (array_key_exists($keys[1], $arr)) {
-            $this->setPrjUid($arr[$keys[1]]);
+            $this->setVarUid($arr[$keys[1]]);
         }
 
         if (array_key_exists($keys[2], $arr)) {
-            $this->setVarName($arr[$keys[2]]);
+            $this->setPrjUid($arr[$keys[2]]);
         }
 
         if (array_key_exists($keys[3], $arr)) {
-            $this->setVarFieldType($arr[$keys[3]]);
+            $this->setProId($arr[$keys[3]]);
         }
 
         if (array_key_exists($keys[4], $arr)) {
-            $this->setVarFieldSize($arr[$keys[4]]);
+            $this->setVarName($arr[$keys[4]]);
         }
 
         if (array_key_exists($keys[5], $arr)) {
-            $this->setVarLabel($arr[$keys[5]]);
+            $this->setVarFieldType($arr[$keys[5]]);
         }
 
         if (array_key_exists($keys[6], $arr)) {
-            $this->setVarDbconnection($arr[$keys[6]]);
+            $this->setVarFieldTypeId($arr[$keys[6]]);
         }
 
         if (array_key_exists($keys[7], $arr)) {
-            $this->setVarSql($arr[$keys[7]]);
+            $this->setVarFieldSize($arr[$keys[7]]);
         }
 
         if (array_key_exists($keys[8], $arr)) {
-            $this->setVarNull($arr[$keys[8]]);
+            $this->setVarLabel($arr[$keys[8]]);
         }
 
         if (array_key_exists($keys[9], $arr)) {
-            $this->setVarDefault($arr[$keys[9]]);
+            $this->setVarDbconnection($arr[$keys[9]]);
         }
 
         if (array_key_exists($keys[10], $arr)) {
-            $this->setVarAcceptedValues($arr[$keys[10]]);
+            $this->setVarSql($arr[$keys[10]]);
         }
 
         if (array_key_exists($keys[11], $arr)) {
-            $this->setInpDocUid($arr[$keys[11]]);
+            $this->setVarNull($arr[$keys[11]]);
+        }
+
+        if (array_key_exists($keys[12], $arr)) {
+            $this->setVarDefault($arr[$keys[12]]);
+        }
+
+        if (array_key_exists($keys[13], $arr)) {
+            $this->setVarAcceptedValues($arr[$keys[13]]);
+        }
+
+        if (array_key_exists($keys[14], $arr)) {
+            $this->setInpDocUid($arr[$keys[14]]);
         }
 
     }
@@ -976,6 +1132,10 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     {
         $criteria = new Criteria(ProcessVariablesPeer::DATABASE_NAME);
 
+        if ($this->isColumnModified(ProcessVariablesPeer::VAR_ID)) {
+            $criteria->add(ProcessVariablesPeer::VAR_ID, $this->var_id);
+        }
+
         if ($this->isColumnModified(ProcessVariablesPeer::VAR_UID)) {
             $criteria->add(ProcessVariablesPeer::VAR_UID, $this->var_uid);
         }
@@ -984,12 +1144,20 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
             $criteria->add(ProcessVariablesPeer::PRJ_UID, $this->prj_uid);
         }
 
+        if ($this->isColumnModified(ProcessVariablesPeer::PRO_ID)) {
+            $criteria->add(ProcessVariablesPeer::PRO_ID, $this->pro_id);
+        }
+
         if ($this->isColumnModified(ProcessVariablesPeer::VAR_NAME)) {
             $criteria->add(ProcessVariablesPeer::VAR_NAME, $this->var_name);
         }
 
         if ($this->isColumnModified(ProcessVariablesPeer::VAR_FIELD_TYPE)) {
             $criteria->add(ProcessVariablesPeer::VAR_FIELD_TYPE, $this->var_field_type);
+        }
+
+        if ($this->isColumnModified(ProcessVariablesPeer::VAR_FIELD_TYPE_ID)) {
+            $criteria->add(ProcessVariablesPeer::VAR_FIELD_TYPE_ID, $this->var_field_type_id);
         }
 
         if ($this->isColumnModified(ProcessVariablesPeer::VAR_FIELD_SIZE)) {
@@ -1078,11 +1246,17 @@ abstract class BaseProcessVariables extends BaseObject implements Persistent
     public function copyInto($copyObj, $deepCopy = false)
     {
 
+        $copyObj->setVarId($this->var_id);
+
         $copyObj->setPrjUid($this->prj_uid);
+
+        $copyObj->setProId($this->pro_id);
 
         $copyObj->setVarName($this->var_name);
 
         $copyObj->setVarFieldType($this->var_field_type);
+
+        $copyObj->setVarFieldTypeId($this->var_field_type_id);
 
         $copyObj->setVarFieldSize($this->var_field_size);
 

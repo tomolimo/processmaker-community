@@ -230,6 +230,7 @@
         <column name="APP_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="DEL_INDEX" type="INTEGER" required="true" default="0"/>
         <column name="DOC_UID" type="VARCHAR" size="32" required="true" default=""/>
+        <column name="DOC_ID" type="INTEGER" required="false" default="0"/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="APP_DOC_TYPE" type="VARCHAR" size="32" required="true" default=""/>
         <column name="APP_DOC_CREATE_DATE" type="TIMESTAMP" required="true"/>
@@ -284,7 +285,7 @@
             <rule name="required" message="User UID is required."/>
         </validator>
         <validator column="APP_DOC_TYPE">
-            <rule name="validValues" value="INPUT|OUTPUT|ATTACHED" message="Please select a valid document type."/>
+            <rule name="validValues" value="INPUT|OUTPUT|ATTACHED|CASE_NOTE" message="Please select a valid document type."/>
             <rule name="required" message="Application Document Type is required."/>
         </validator>
         <validator column="APP_DOC_CREATE_DATE">
@@ -360,7 +361,7 @@
         <column name="DEL_INDEX" type="INTEGER" required="true" default="0"/>
         <column name="APP_MSG_TYPE" type="VARCHAR" size="100" required="true" default=""/>
         <column name="APP_MSG_TYPE_ID" type="TINYINT" required="false" default="0"/>
-        <column name="APP_MSG_SUBJECT" type="VARCHAR" size="150" required="true" default=""/>
+        <column name="APP_MSG_SUBJECT" type="VARCHAR" size="998" required="true" default=""/>
         <column name="APP_MSG_FROM" type="VARCHAR" size="100" required="true" default=""/>
         <column name="APP_MSG_TO" type="LONGVARCHAR" required="true"/>
         <column name="APP_MSG_BODY" type="LONGVARCHAR" required="true"/>
@@ -1974,7 +1975,7 @@
             <index-column name="SES_UID"/>
         </index>
     </table>
-    <table name="DB_SOURCE">
+    <table name="DB_SOURCE" idMethod="native">
         <vendor type="mysql">
             <parameter name="Name" value="DB_SOURCE"/>
             <parameter name="Engine" value="InnoDB"/>
@@ -1995,8 +1996,10 @@
             <parameter name="Create_options" value=""/>
             <parameter name="Comment" value="DB_SOURCE"/>
         </vendor>
+        <column name="DBS_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="DBS_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default=""/>
         <column name="PRO_UID" type="VARCHAR" size="32" required="true" primaryKey="true" default="0"/>
+        <column name="PRO_ID" type="INTEGER" required="false" default="0"/>
         <column name="DBS_TYPE" type="VARCHAR" size="8" required="true" default="0"/>
         <column name="DBS_SERVER" type="VARCHAR" size="100" required="true" default="0"/>
         <column name="DBS_DATABASE_NAME" type="VARCHAR" size="100" required="true" default="0"/>
@@ -2006,6 +2009,9 @@
         <column name="DBS_ENCODE" type="VARCHAR" size="32" default=""/>
         <column name="DBS_CONNECTION_TYPE" type="VARCHAR" size="32" default="NORMAL"/>
         <column name="DBS_TNS" type="VARCHAR" size="256" default=""/>
+        <unique name="DBS_ID">
+            <unique-column name="DBS_ID"/>
+        </unique>
         <index name="indexDBSource">
             <index-column name="PRO_UID"/>
             <vendor type="mysql">
@@ -2022,6 +2028,9 @@
                 <parameter name="Index_type" value="BTREE"/>
                 <parameter name="Comment" value=""/>
             </vendor>
+        </index>
+        <index name="INDEX_PRO_ID">
+            <index-column name="PRO_ID"/>
         </index>
     </table>
     <table name="STEP_SUPERVISOR">
@@ -3279,7 +3288,7 @@
             <unique-column name="CATEGORY_ID"/>
         </unique>
     </table>
-    <table name="APP_NOTES">
+    <table name="APP_NOTES" idMethod="native">
         <vendor type="mysql">
             <parameter name="Name" value="APP_NOTES"/>
             <parameter name="Engine" value="InnoDB"/>
@@ -3300,6 +3309,7 @@
             <parameter name="Create_options" value=""/>
             <parameter name="Comment" value="Application Notes"/>
         </vendor>
+        <column name="NOTE_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="APP_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="USR_UID" type="VARCHAR" size="32" required="true" default=""/>
         <column name="NOTE_DATE" type="TIMESTAMP" required="true"/>
@@ -3310,6 +3320,9 @@
         <column name="NOTE_AFFECTED_OBJ1" type="VARCHAR" size="32" default=""/>
         <column name="NOTE_AFFECTED_OBJ2" type="VARCHAR" size="32" required="true" default=""/>
         <column name="NOTE_RECIPIENTS" type="LONGVARCHAR"/>
+        <unique name="NOTE_ID">
+            <unique-column name="NOTE_ID"/>
+        </unique>
         <index name="indexAppNotesDate">
             <index-column name="APP_UID"/>
             <index-column name="NOTE_DATE"/>
@@ -4250,11 +4263,14 @@
         </index>
     </table>
 
-    <table name="PROCESS_VARIABLES">
+    <table name="PROCESS_VARIABLES" idMethod="native">
+        <column name="VAR_ID" type="INTEGER" required="true" autoIncrement="true" unique="true"/>
         <column name="VAR_UID" type="VARCHAR" size="32" required="true" primaryKey="true"/>
         <column name="PRJ_UID" type="VARCHAR" size="32" required="true"/>
+        <column name="PRO_ID" type="INTEGER" required="false" default="0"/>
         <column name="VAR_NAME" type="VARCHAR" size="255" default=""/>
         <column name="VAR_FIELD_TYPE" type="VARCHAR" size="32" default=""/>
+        <column name="VAR_FIELD_TYPE_ID" type="INTEGER" default="0"/>
         <column name="VAR_FIELD_SIZE" type="INTEGER"/>
         <column name="VAR_LABEL" type="VARCHAR" size="255" default=""/>
         <column name="VAR_DBCONNECTION" type="VARCHAR" size="32"/>
@@ -4263,6 +4279,9 @@
         <column name="VAR_DEFAULT" type="VARCHAR" size="32" default=""/>
         <column name="VAR_ACCEPTED_VALUES" type="LONGVARCHAR"/>
         <column name="INP_DOC_UID" type="VARCHAR" size="32" default=""/>
+        <unique name="VAR_ID">
+            <unique-column name="VAR_ID"/>
+        </unique>
         <index name="indexPrjUidVarName">
             <index-column name="PRJ_UID"/>
             <index-column name="VAR_NAME"/>
@@ -4272,6 +4291,9 @@
                 <parameter name="Key_name" value="indexPrjUidVarName"/>
                 <parameter name="Seq_in_index" value="1"/>
             </vendor>
+        </index>
+        <index name="INDEX_PRO_ID">
+            <index-column name="PRO_ID"/>
         </index>
     </table>
 
@@ -6007,5 +6029,28 @@
         <column name="payload" type="LONGVARCHAR" required="true"/>
         <column name="exception" type="LONGVARCHAR" required="true"/>
         <column name="failed_at" type="TIMESTAMP" required="true"/>
+    </table>
+    <table name="SCHEDULER" idMethod="native">
+        <vendor type="mysql">
+            <parameter name="Engine" value="InnoDB"/>
+            <parameter name="Collation" value="utf8"/>
+        </vendor>
+        <column name="id" type="BIGINT" size="20" required="true" autoIncrement="true" primaryKey="true"/>
+        <column name="title" type="VARCHAR"  size="255" required="false"/>
+        <column name="startingTime" type="VARCHAR"  size="100" required="false"/>
+        <column name="endingTime" type="VARCHAR"  size="100" required="false"/>
+        <column name="everyOn" type="VARCHAR"  size="255" required="false"/>
+        <column name="interval" type="VARCHAR"  size="10" required="false"/>
+        <column name="description" type="VARCHAR"  size="255" required="false"/>
+        <column name="expression" type="VARCHAR"  size="255" required="false"/>
+        <column name="default_value" type="LONGVARCHAR" required="false"/>
+        <column name="body" type="VARCHAR"  size="255" required="false"/>
+        <column name="type" type="VARCHAR"  size="255" required="false"/>
+        <column name="category" type="VARCHAR"  size="255" required="false"/>
+        <column name="system" type="TINYINT"  size="3" required="false"/>
+        <column name="timezone" type="VARCHAR"  size="255" required="false"/>
+        <column name="enable" type="TINYINT"  size="3" required="false"/>
+        <column name="creation_date" type="TIMESTAMP" required="false"/>
+        <column name="last_update" type="TIMESTAMP" required="false"/>
     </table>
 </database>

@@ -63,7 +63,9 @@ class AppNotesMapBuilder
         $tMap = $this->dbMap->addTable('APP_NOTES');
         $tMap->setPhpName('AppNotes');
 
-        $tMap->setUseIdGenerator(false);
+        $tMap->setUseIdGenerator(true);
+
+        $tMap->addColumn('NOTE_ID', 'NoteId', 'int', CreoleTypes::INTEGER, true, null);
 
         $tMap->addColumn('APP_UID', 'AppUid', 'string', CreoleTypes::VARCHAR, true, 32);
 

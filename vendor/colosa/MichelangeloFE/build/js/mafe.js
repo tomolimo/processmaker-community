@@ -37521,10 +37521,17 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.properties.setDisabled(disabled);
     };
     FormItem.prototype.setVariable = function (variable) {
-        var that = this, b;
+        var that = this,
+            b,
+            label;
         that.variable = variable;
+        label = this.defaultLabel(variable);
+        that.properties.set("label", label);
         that.properties.set("var_uid", variable.var_uid);
         b = that.properties.set("variable", variable.var_name);
+        if (b.node) {
+            that.properties.label.node.value = label;
+        }
         if (b.node)
             b.node.textContent = variable.var_name;
         b = that.properties.set("dataType", variable.var_field_type);
@@ -37647,6 +37654,43 @@ FormDesigner.leftPad = function (string, length, fill) {
         } else {
             this.deprecatedIcon.hide();
         }
+    };
+
+    /**
+     * Get a default label from a variable
+     * @param {object} variable
+     * @returns {string}
+     */
+    FormItem.prototype.defaultLabel = function (variable) {
+        var name = variable.var_name,
+            stringAux,
+            flagUpper = true,
+            i = 1;
+        name = name.replace(/_/g, " ");
+        if (name === name.toUpperCase()) {
+            name = name.toLowerCase();
+        }
+        stringAux = name.charAt(0).toUpperCase();
+        while (i < name.length) {
+            if (name.charAt(i) !== " ") {
+                if (name.charAt(i) !== name.charAt(i).toUpperCase()) {
+                    stringAux += name.charAt(i);
+                    flagUpper = true;
+                } else {
+                    if (flagUpper) {
+                        stringAux += " " + name.charAt(i);
+                    } else {
+                        stringAux +=  name.charAt(i).toLowerCase();
+                    }
+                    flagUpper = false;
+                }
+            } else {
+                i += 1;    
+                stringAux += " " + name.charAt(i).toUpperCase();
+            }
+            i += 1;
+        }
+        return stringAux;
     };
     FormDesigner.extendNamespace('FormDesigner.main.FormItem', FormItem);
 }());
@@ -37780,7 +37824,12 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.data = {label: "data".translate(), value: [], type: "hidden"};
         this.dataType = {label: "variable data type".translate(), value: "", type: "label"};
         this.value = {label: "value".translate(), value: "", type: "text"};
-        this.defaultValue = {label: "default value".translate(), value: "", type: "text"};
+        this.defaultValue = {
+            label: "default value".translate(),
+            value: "",
+            type: "text",
+            helpButton: "Allows setting a default value manually<br>or variables permitted using prefixes @@, @=, @#".translate()
+        };
         this.textTransform = {
             label: "text transform to".translate(), value: "none", type: "select", items: [
                 {value: "none", label: "none".translate()},
@@ -37897,6 +37946,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         };
         this.dbConnection = {label: "", value: "workflow", type: "hidden"};
         this.sql = {label: "sql".translate(), value: "", type: "labelbutton", labelButton: "..."};
+        this.memoryCache = {label: "Memory cache".translate(), value: false, type: "checkbox"};
         this.dataVariable = {
             label: "data variable".translate(),
             value: "",
@@ -37940,7 +37990,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             label: "min date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Allows date selection after this date<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Allows date selection after this date<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -37948,7 +37998,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             label: "max date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Allows date selection before this date<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Allows date selection before this date<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -37999,7 +38049,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             label: "default date".translate(),
             value: "",
             type: "datepicker",
-            helpButton: "Set the date picker to this date by default<br>(in YYYY-MM-DD HH:MM:SS format)".translate(),
+            helpButton: "Set the date picker to this date by default<br>(in YYYY-MM-DD HH:MM:SS format)<br>Variables permitted @@, @=<br>(must use the same date format for dependencies)".translate(),
             clearButton: "clear".translate(),
             regExp: /^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])$|^(@@|@#|@%|@=|@\?|@\$)[a-zA-Z]+[0-9a-zA-Z_]*$|^$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3])$|^[1-9][0-9][0-9][0-9]-(0[1-9]|1[0-2])-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])$/
         };
@@ -38172,7 +38222,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "textTransform",
                 "validate", "validateMessage", "maxLength", "formula", "mode", "operation", "dbConnection",
-                "dbConnectionLabel", "sql"];
+                "dbConnectionLabel", "sql", "memoryCache"];
             if (this.owner instanceof FormDesigner.main.FormItem) {
                 this.operation.type = "hidden";
             }
@@ -38185,7 +38235,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.textarea) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "validate",
-                "validateMessage", "mode", "dbConnection", "dbConnectionLabel", "sql", "rows"];
+                "validateMessage", "mode", "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "rows"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
                 this.tabIndex.type = "hidden";
@@ -38195,7 +38245,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.dropdown) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
                 this.tabIndex.type = "hidden";
@@ -38206,6 +38256,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "options"];
             this.defaultValue.type = "checkbox";
+            this.defaultValue.helpButton = "";
             if (this.owner instanceof FormDesigner.main.FormItem) {
                 this.options.type = "hidden";
             }
@@ -38223,12 +38274,12 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.checkgroup) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
-                "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.radio) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "hint", "ariaLabel", "ariaLabel", "ariaLabelVisible", "required", "requiredFieldErrorMessage", "mode", "datasource", "dbConnection",
-                "dbConnectionLabel", "sql", "dataVariable", "options"];
+                "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options"];
         }
         if (type === FormDesigner.main.TypesControl.datetime) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
@@ -38249,7 +38300,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         if (type === FormDesigner.main.TypesControl.suggest) {
             this.pf = ["type", "variable", "var_uid", "dataType", "protectedValue", "id", "name", "label", "tabIndex",
                 "defaultValue", "placeholder", "hint", "ariaLabel", "required", "requiredFieldErrorMessage", "mode", "datasource",
-                "dbConnection", "dbConnectionLabel", "sql", "dataVariable", "options", "delay", "resultsLimit",
+                "dbConnection", "dbConnectionLabel", "sql", "memoryCache", "dataVariable", "options", "delay", "resultsLimit",
                 "forceSelection"];
             if (this.owner instanceof FormDesigner.main.GridItem) {
                 this.pf.push("columnWidth");
@@ -39376,8 +39427,11 @@ FormDesigner.leftPad = function (string, length, fill) {
     };
     Designer.prototype.hide = function () {
         var a = document.body.childNodes;
-        for (var i = 0; i < a.length; i++)
-            $(a[i]).show();
+        for (var i = 0; i < a.length; i++) {
+            if (!($(a[i]).hasClass("ui-datepicker") || $(a[i]).hasClass("ui-autocomplete"))) {
+                $(a[i]).show();
+            }
+        }
         $(this.container).remove();
         this._disposeAuxForm();
         $(".loader").hide();
@@ -41144,6 +41198,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         this.table.append(this.tbody);
         this.body = $("<div></div>");
         this.body.append(this.table);
+        this.cache = {};
     };
     ListProperties.prototype.addItem = function (propertiesGot, property, properties) {
         var input,
@@ -41257,16 +41312,16 @@ FormDesigner.leftPad = function (string, length, fill) {
                 input = $("<input type='text' style='" + width.replace("100%", "50%") + "' id='" + id + "'/><select style='" + width.replace("100%", "50%") + "'></select>");
                 $(input[0]).val(propertiesGot[property].value.text);
                 $(input[0]).on("keyup", function () {
-                    properties.set(property, {text: this.value, select: $(input[1]).val()});
+                    properties.set(property, { text: this.value, select: $(input[1]).val() });
                 });
                 $(input[0]).attr("placeholder", propertiesGot[property].placeholder ? propertiesGot[property].placeholder : "");
                 for (i = 0; i < propertiesGot[property].items.length; i++)
                     $(input[1]).append("<option value='" + propertiesGot[property].items[i].value + "'>" + propertiesGot[property].items[i].label + "</option>");
                 $(input[1]).val(propertiesGot[property].value.select);
                 $(input[1]).on("change", function () {
-                    properties.set(property, {text: $(input[0]).val(), select: this.value});
+                    properties.set(property, { text: $(input[0]).val(), select: this.value });
                 });
-                properties.setNode(property, {text: $(input[0]).val(), select: $(input[1]).val()});
+                properties.setNode(property, { text: $(input[0]).val(), select: $(input[1]).val() });
                 break;
         }
         if (propertiesGot[property].type !== "hidden") {
@@ -41286,7 +41341,7 @@ FormDesigner.leftPad = function (string, length, fill) {
                 button[0].title = propertiesGot[property].helpButton.translate();
                 button.tooltip({
                     tooltipClass: propertiesGot[property].helpButtonCss ? propertiesGot[property].helpButtonCss : null,
-                    position: {my: "left+15 center", at: "right center"},
+                    position: { my: "left+15 center", at: "right center" },
                     content: function () {
                         return $(this).prop('title');
                     },
@@ -41317,42 +41372,43 @@ FormDesigner.leftPad = function (string, length, fill) {
                 cellValue[0].style.paddingRight = n + "px";
             }
             if (propertiesGot[property].type === "datepicker") {
-                button = $("<img src='" + $.imgUrl + "fd-calendar.png' style='cursor:pointer;position:absolute;top:0;right:" + n + "px;' title='" + "datepicker".translate() + "'>");
-                button.on("click", function (e) {
-                    e.stopPropagation();
-                    if ($(e.target).data("disabled") === true)
-                        return;
-                    if ($(e.target).data("disabledTodayOption") === true)
-                        return;
-                    switch (property) {
-                        case "defaultDate":
-                            minDate = that.getDateByParam(cellValue, "minDate");
-                            maxDate = that.getDateByParam(cellValue, "maxDate");
-                            break;
-                        case "minDate":
-                            maxDate = that.getDateByParam(cellValue, "maxDate");
-                            break;
-                        case "maxDate":
-                            minDate = that.getDateByParam(cellValue, "minDate");
-                            break;
-                    }
-
-                    that.datepicker = that.dateComponentFactory(cellValue, {
-                        minDate: minDate,
-                        maxDate: maxDate,
-                        onSelect: function (dateText, inst) {
-                            properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
-                        },
-                        onClose: function (dateText, inst) {
-                            that.datepicker.datepicker("destroy");
-                            $("#ui-datepicker-div").remove();
+                // init jQuery datepicker
+                that.datepicker = that.dateComponentFactory(cellValue, {
+                    minDate: minDate,
+                    maxDate: maxDate,
+                    onSelect: function (dateText, inst) {
+                        properties.set(property, dateText, cellValue.find("input[type='text']")[0]);
+                    },
+                    onClose: function (dateText, inst) {
+                        $("#ui-datepicker-div").hide();
+                    },
+                    beforeShow: function () {
+                        var params = null;
+                        switch (property) {
+                            case "maxDate":
+                                params = {
+                                    minDate: that.getDateByParam(cellValue, "minDate")
+                                }
+                                break;
+                            case "minDate":
+                                params = {
+                                    maxDate: that.getDateByParam(cellValue, "maxDate")
+                                }
+                                break;
+                            case "defaultDate":
+                                params = {
+                                    maxDate: that.getDateByParam(cellValue, "maxDate"),
+                                    minDate: that.getDateByParam(cellValue, "minDate")
+                                }
+                                break;
                         }
-                    });
-                    cellValue.find(".ui-datepicker-trigger").hide();
+                        return params;
+                    }
                 });
-                cellValue.append(button);
                 n = n + 16;
                 cellValue[0].style.paddingRight = n + "px";
+                // init jQuery autocomplete
+                this.autoCopleteFactory(cellValue, "datetime");
             }
             if (propertiesGot[property].type === "datepicker" && propertiesGot[property].todayOption) {
                 cellValue.append("<span style='text-decoration:underline;'><input type='checkbox'/>" + propertiesGot[property].todayOption + "</span>");
@@ -41373,7 +41429,7 @@ FormDesigner.leftPad = function (string, length, fill) {
         scope.find("span,img").each(function (i, e) {
             $(e).data("disabled", disabled);
         });
-        if (!propertiesGot[property].disabled && property === "requiredFieldErrorMessage"){
+        if (!propertiesGot[property].disabled && property === "requiredFieldErrorMessage") {
             scope.find("textarea").prop("disabled", !propertiesGot["required"].value);
         }
         if (!propertiesGot[property].disabled && propertiesGot.type.value === 'multipleFile' &&
@@ -41389,6 +41445,58 @@ FormDesigner.leftPad = function (string, length, fill) {
                 $(e).data("disabledTodayOption", propertiesGot[property].disabledTodayOption);
             });
         }
+        if (property === "defaultValue") {
+            // init jQuery autocomplete
+            var dataTypeMap = {
+                text: "string",
+                textarea: "string",
+                dropdown: "string",
+                checkbox: "boolean",
+                checkgroup: "array",
+                radio: "string",
+                suggest: "string",
+                hidden: "string"
+            };
+            this.autoCopleteFactory(cellValue, dataTypeMap[propertiesGot["type"].value] || "string");
+        }
+    };
+    ListProperties.prototype.autoCopleteFactory = function (cellValue, type) {
+        var that = this;
+        // implement autocomple widget
+        cellValue.find("input[type='text']").autocomplete({
+            minLength: 2,
+            source: function (request, response) {
+                var term = request.term,
+                    cachekey = type + "-" + request.term,
+                    regExg = /[@][@#=]+[a-zA-Z]?/;
+
+                // To validate prefix @@ @# @=
+                if (!regExg.test(term)) {
+                    return;
+                }
+                cellValue.find("input[type='text']").datepicker('hide');
+                if (cachekey in that.cache) {
+                    response(that.cache[cachekey]);
+                    return;
+                }
+                // add a new rule to validate
+                term = term.substring(1) !== "@" ? term[0] + encodeURIComponent(term.substring(1)) : term;
+                $.ajax({
+                    url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE + "/project/" + PMDesigner.project.id + "/process-variables/" + type + "/paged/?search=" + term,
+                    processData: false,
+                    success: function (json) {
+                        that.cache[cachekey] = json;
+                        response(json);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        console.error(errorThrown);
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Bearer " + PMDesigner.project.keys.access_token);
+                    }
+                });
+            }
+        });
     };
     ListProperties.prototype.load = function (properties) {
         var that = this, property;
@@ -41408,42 +41516,47 @@ FormDesigner.leftPad = function (string, length, fill) {
      */
     ListProperties.prototype.dateComponentFactory = function (control, options) {
         var defaults = {
-                showOtherMonths: true,
-                selectOtherMonths: true,
-                dateFormat: "yy-mm-dd",
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "-100:+100",
-                minDate: '',
-                maxDate: '',
-                onSelect: function() {},
-                onClose: function() {}
-            },
+            showOtherMonths: true,
+            selectOtherMonths: true,
+            dateFormat: "yy-mm-dd",
+            changeMonth: true,
+            changeYear: true,
+            yearRange: "-100:+100",
+            minDate: '',
+            maxDate: '',
+            onSelect: function () { },
+            onClose: function () { },
+            beforeShow: function () { }
+        },
             datePicker;
         $.extend(true, defaults, options);
         // append the date picker to the control component
-            datePicker = control
-                .find("input[type='text']")
-                .datepicker({
-                    showOtherMonths: defaults.showOtherMonths,
-                    selectOtherMonths: defaults.selectOtherMonths,
-                    dateFormat: defaults.dateFormat,
-                    showOn: defaults.showOn,
-                    changeMonth: defaults.changeMonth,
-                    changeYear: defaults.changeYear,
-                    yearRange: defaults.yearRange,
-                    minDate: defaults.minDate,
-                    maxDate: defaults.maxDate,
-                    onSelect: defaults.onSelect,
-                    onClose: defaults.onClose
-          });
-        datePicker.datepicker("show");
+        datePicker = control
+            .find("input[type='text']")
+            .datepicker({
+                buttonImage: $.imgUrl + "fd-calendar.png",
+                buttonImageOnly: true,
+                constrainInput: false,
+                buttonText: "Select date",
+                showOn: "button",
+                showOtherMonths: defaults.showOtherMonths,
+                selectOtherMonths: defaults.selectOtherMonths,
+                dateFormat: defaults.dateFormat,
+                changeMonth: defaults.changeMonth,
+                changeYear: defaults.changeYear,
+                yearRange: defaults.yearRange,
+                minDate: defaults.minDate,
+                maxDate: defaults.maxDate,
+                onSelect: defaults.onSelect,
+                onClose: defaults.onClose,
+                beforeShow: defaults.beforeShow
+            }).next(".ui-datepicker-trigger").addClass("datetime-gadget-class");
         return datePicker;
     };
     /**
      * Gets the date according to the passed param
      */
-    ListProperties.prototype.getDateByParam = function(control, param) {
+    ListProperties.prototype.getDateByParam = function (control, param) {
         var varRegex = /\@(?:([\@\%\#\?\$\=\&Qq\!])([a-zA-Z\_]\w*)|([a-zA-Z\_][\w\-\>\:]*)\(((?:[^\\\\\)]*(?:[\\\\][\w\W])?)*)\))((?:\s*\[['"]?\w+['"]?\])+|\-\>([a-zA-Z\_]\w*))?/,
             value = '';
         if (control && param) {

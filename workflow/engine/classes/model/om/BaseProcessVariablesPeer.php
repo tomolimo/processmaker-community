@@ -25,11 +25,14 @@ abstract class BaseProcessVariablesPeer
     const CLASS_DEFAULT = 'classes.model.ProcessVariables';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 12;
+    const NUM_COLUMNS = 15;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
 
+
+    /** the column name for the VAR_ID field */
+    const VAR_ID = 'PROCESS_VARIABLES.VAR_ID';
 
     /** the column name for the VAR_UID field */
     const VAR_UID = 'PROCESS_VARIABLES.VAR_UID';
@@ -37,11 +40,17 @@ abstract class BaseProcessVariablesPeer
     /** the column name for the PRJ_UID field */
     const PRJ_UID = 'PROCESS_VARIABLES.PRJ_UID';
 
+    /** the column name for the PRO_ID field */
+    const PRO_ID = 'PROCESS_VARIABLES.PRO_ID';
+
     /** the column name for the VAR_NAME field */
     const VAR_NAME = 'PROCESS_VARIABLES.VAR_NAME';
 
     /** the column name for the VAR_FIELD_TYPE field */
     const VAR_FIELD_TYPE = 'PROCESS_VARIABLES.VAR_FIELD_TYPE';
+
+    /** the column name for the VAR_FIELD_TYPE_ID field */
+    const VAR_FIELD_TYPE_ID = 'PROCESS_VARIABLES.VAR_FIELD_TYPE_ID';
 
     /** the column name for the VAR_FIELD_SIZE field */
     const VAR_FIELD_SIZE = 'PROCESS_VARIABLES.VAR_FIELD_SIZE';
@@ -78,10 +87,10 @@ abstract class BaseProcessVariablesPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('VarUid', 'PrjUid', 'VarName', 'VarFieldType', 'VarFieldSize', 'VarLabel', 'VarDbconnection', 'VarSql', 'VarNull', 'VarDefault', 'VarAcceptedValues', 'InpDocUid', ),
-        BasePeer::TYPE_COLNAME => array (ProcessVariablesPeer::VAR_UID, ProcessVariablesPeer::PRJ_UID, ProcessVariablesPeer::VAR_NAME, ProcessVariablesPeer::VAR_FIELD_TYPE, ProcessVariablesPeer::VAR_FIELD_SIZE, ProcessVariablesPeer::VAR_LABEL, ProcessVariablesPeer::VAR_DBCONNECTION, ProcessVariablesPeer::VAR_SQL, ProcessVariablesPeer::VAR_NULL, ProcessVariablesPeer::VAR_DEFAULT, ProcessVariablesPeer::VAR_ACCEPTED_VALUES, ProcessVariablesPeer::INP_DOC_UID, ),
-        BasePeer::TYPE_FIELDNAME => array ('VAR_UID', 'PRJ_UID', 'VAR_NAME', 'VAR_FIELD_TYPE', 'VAR_FIELD_SIZE', 'VAR_LABEL', 'VAR_DBCONNECTION', 'VAR_SQL', 'VAR_NULL', 'VAR_DEFAULT', 'VAR_ACCEPTED_VALUES', 'INP_DOC_UID', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, )
+        BasePeer::TYPE_PHPNAME => array ('VarId', 'VarUid', 'PrjUid', 'ProId', 'VarName', 'VarFieldType', 'VarFieldTypeId', 'VarFieldSize', 'VarLabel', 'VarDbconnection', 'VarSql', 'VarNull', 'VarDefault', 'VarAcceptedValues', 'InpDocUid', ),
+        BasePeer::TYPE_COLNAME => array (ProcessVariablesPeer::VAR_ID, ProcessVariablesPeer::VAR_UID, ProcessVariablesPeer::PRJ_UID, ProcessVariablesPeer::PRO_ID, ProcessVariablesPeer::VAR_NAME, ProcessVariablesPeer::VAR_FIELD_TYPE, ProcessVariablesPeer::VAR_FIELD_TYPE_ID, ProcessVariablesPeer::VAR_FIELD_SIZE, ProcessVariablesPeer::VAR_LABEL, ProcessVariablesPeer::VAR_DBCONNECTION, ProcessVariablesPeer::VAR_SQL, ProcessVariablesPeer::VAR_NULL, ProcessVariablesPeer::VAR_DEFAULT, ProcessVariablesPeer::VAR_ACCEPTED_VALUES, ProcessVariablesPeer::INP_DOC_UID, ),
+        BasePeer::TYPE_FIELDNAME => array ('VAR_ID', 'VAR_UID', 'PRJ_UID', 'PRO_ID', 'VAR_NAME', 'VAR_FIELD_TYPE', 'VAR_FIELD_TYPE_ID', 'VAR_FIELD_SIZE', 'VAR_LABEL', 'VAR_DBCONNECTION', 'VAR_SQL', 'VAR_NULL', 'VAR_DEFAULT', 'VAR_ACCEPTED_VALUES', 'INP_DOC_UID', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, )
     );
 
     /**
@@ -91,10 +100,10 @@ abstract class BaseProcessVariablesPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('VarUid' => 0, 'PrjUid' => 1, 'VarName' => 2, 'VarFieldType' => 3, 'VarFieldSize' => 4, 'VarLabel' => 5, 'VarDbconnection' => 6, 'VarSql' => 7, 'VarNull' => 8, 'VarDefault' => 9, 'VarAcceptedValues' => 10, 'InpDocUid' => 11, ),
-        BasePeer::TYPE_COLNAME => array (ProcessVariablesPeer::VAR_UID => 0, ProcessVariablesPeer::PRJ_UID => 1, ProcessVariablesPeer::VAR_NAME => 2, ProcessVariablesPeer::VAR_FIELD_TYPE => 3, ProcessVariablesPeer::VAR_FIELD_SIZE => 4, ProcessVariablesPeer::VAR_LABEL => 5, ProcessVariablesPeer::VAR_DBCONNECTION => 6, ProcessVariablesPeer::VAR_SQL => 7, ProcessVariablesPeer::VAR_NULL => 8, ProcessVariablesPeer::VAR_DEFAULT => 9, ProcessVariablesPeer::VAR_ACCEPTED_VALUES => 10, ProcessVariablesPeer::INP_DOC_UID => 11, ),
-        BasePeer::TYPE_FIELDNAME => array ('VAR_UID' => 0, 'PRJ_UID' => 1, 'VAR_NAME' => 2, 'VAR_FIELD_TYPE' => 3, 'VAR_FIELD_SIZE' => 4, 'VAR_LABEL' => 5, 'VAR_DBCONNECTION' => 6, 'VAR_SQL' => 7, 'VAR_NULL' => 8, 'VAR_DEFAULT' => 9, 'VAR_ACCEPTED_VALUES' => 10, 'INP_DOC_UID' => 11, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, )
+        BasePeer::TYPE_PHPNAME => array ('VarId' => 0, 'VarUid' => 1, 'PrjUid' => 2, 'ProId' => 3, 'VarName' => 4, 'VarFieldType' => 5, 'VarFieldTypeId' => 6, 'VarFieldSize' => 7, 'VarLabel' => 8, 'VarDbconnection' => 9, 'VarSql' => 10, 'VarNull' => 11, 'VarDefault' => 12, 'VarAcceptedValues' => 13, 'InpDocUid' => 14, ),
+        BasePeer::TYPE_COLNAME => array (ProcessVariablesPeer::VAR_ID => 0, ProcessVariablesPeer::VAR_UID => 1, ProcessVariablesPeer::PRJ_UID => 2, ProcessVariablesPeer::PRO_ID => 3, ProcessVariablesPeer::VAR_NAME => 4, ProcessVariablesPeer::VAR_FIELD_TYPE => 5, ProcessVariablesPeer::VAR_FIELD_TYPE_ID => 6, ProcessVariablesPeer::VAR_FIELD_SIZE => 7, ProcessVariablesPeer::VAR_LABEL => 8, ProcessVariablesPeer::VAR_DBCONNECTION => 9, ProcessVariablesPeer::VAR_SQL => 10, ProcessVariablesPeer::VAR_NULL => 11, ProcessVariablesPeer::VAR_DEFAULT => 12, ProcessVariablesPeer::VAR_ACCEPTED_VALUES => 13, ProcessVariablesPeer::INP_DOC_UID => 14, ),
+        BasePeer::TYPE_FIELDNAME => array ('VAR_ID' => 0, 'VAR_UID' => 1, 'PRJ_UID' => 2, 'PRO_ID' => 3, 'VAR_NAME' => 4, 'VAR_FIELD_TYPE' => 5, 'VAR_FIELD_TYPE_ID' => 6, 'VAR_FIELD_SIZE' => 7, 'VAR_LABEL' => 8, 'VAR_DBCONNECTION' => 9, 'VAR_SQL' => 10, 'VAR_NULL' => 11, 'VAR_DEFAULT' => 12, 'VAR_ACCEPTED_VALUES' => 13, 'INP_DOC_UID' => 14, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, )
     );
 
     /**
@@ -195,13 +204,19 @@ abstract class BaseProcessVariablesPeer
     public static function addSelectColumns(Criteria $criteria)
     {
 
+        $criteria->addSelectColumn(ProcessVariablesPeer::VAR_ID);
+
         $criteria->addSelectColumn(ProcessVariablesPeer::VAR_UID);
 
         $criteria->addSelectColumn(ProcessVariablesPeer::PRJ_UID);
 
+        $criteria->addSelectColumn(ProcessVariablesPeer::PRO_ID);
+
         $criteria->addSelectColumn(ProcessVariablesPeer::VAR_NAME);
 
         $criteria->addSelectColumn(ProcessVariablesPeer::VAR_FIELD_TYPE);
+
+        $criteria->addSelectColumn(ProcessVariablesPeer::VAR_FIELD_TYPE_ID);
 
         $criteria->addSelectColumn(ProcessVariablesPeer::VAR_FIELD_SIZE);
 

@@ -1,8 +1,8 @@
 <?php
 
+use App\Jobs\GenerateReportTable;
 use Illuminate\Support\Facades\DB;
-use ProcessMaker\Core\MultiProcOpen;
-use ProcessMaker\Commands\PopulateTableReport;
+use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Model\Application;
 
 /**
@@ -205,6 +205,9 @@ class ReportTables
      */
     public function populateTable($tableName, $connectionShortName = 'report', $type = 'NORMAL', $fields = [], $proUid = '', $grid = '')
     {
+        $config = System::getSystemConfiguration();
+        $reportTableBatchRegeneration = $config['report_table_batch_regeneration'];
+
         $tableName = $this->sPrefix . $tableName;
         //we have to do the propel connection
         $database = $this->chooseDB($connectionShortName);
@@ -222,7 +225,7 @@ class ReportTables
             $applications = Application::getByProUid($proUid);
             $i = 1;
             $queryValues = "";
-            $numberRecords = 1000;
+            $numberRecords = $reportTableBatchRegeneration;
             $n = count($applications);
             foreach ($applications as $application) {
                 $appData = $case->unserializeData($application->APP_DATA);
@@ -262,11 +265,12 @@ class ReportTables
                         $queryValues = rtrim($queryValues, ",");
                         $query = $headQuery . $queryValues;
                         $queryValues = "";
-                        $workspace = config("system.workspace");
-                        $processesManager = new MultiProcOpen();
-                        $processesManager->chunk(1, 1, function($size, $start, $limit) use ($query, $workspace) {
-                            return new PopulateTableReport($workspace, $query);
-                        });
+
+                        //add to queue
+                        $closure = function() use($query) {
+                            DB::insert($query);
+                        };
+                        JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
                     }
                 } else {
                     if (isset($appData[$grid])) {
@@ -304,11 +308,12 @@ class ReportTables
                             $queryValues = rtrim($queryValues, ",");
                             $query = $headQuery . $queryValues;
                             $queryValues = "";
-                            $workspace = config("system.workspace");
-                            $processesManager = new MultiProcOpen();
-                            $processesManager->chunk(1, 1, function($size, $start, $limit) use ($query, $workspace) {
-                                return new PopulateTableReport($workspace, $query);
-                            });
+
+                            //add to queue
+                            $closure = function() use($query) {
+                                DB::insert($query);
+                            };
+                            JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
                         }
                     }
                 }

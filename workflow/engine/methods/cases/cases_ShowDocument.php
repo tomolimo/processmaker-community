@@ -44,7 +44,12 @@ if (empty($_GET['v'])) {
 //Check if the user can be download the input Document
 //Send the parameter v = Version
 //Send the parameter a = Case UID
-if ($RBAC->userCanAccess('PM_FOLDERS_ALL') != 1 && defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0) {
+$isGuestUser = false;
+if (!empty($_SESSION['GUEST_USER']) && $_SESSION['GUEST_USER'] === RBAC::GUEST_USER_UID) {
+    $isGuestUser = true;
+}
+$access = $RBAC->userCanAccess('PM_FOLDERS_ALL') != 1 && defined('DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION') && DISABLE_DOWNLOAD_DOCUMENTS_SESSION_VALIDATION == 0;
+if ($access && $isGuestUser === false) {
     if (!$oAppDocument->canDownloadInput($_SESSION['USER_LOGGED'], $_GET['a'], $docVersion)) {
         G::header('Location: /errors/error403.php?url=' . urlencode($_SERVER['REQUEST_URI']));
         die();

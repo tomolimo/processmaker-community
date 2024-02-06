@@ -5548,6 +5548,10 @@ table.dataTable thead th, table.dataTable thead td {
   background-position: -85px -48px;
 }
 
+.ui-tooltip {
+  overflow-wrap: break-word;
+}
+
 
 .mafe-designer-assigment-button {
   background-color: #d7d9dd;
@@ -7601,3 +7605,6 @@ ul.CodeMirror-hints {
     position: relative;
 }
 
+.datetime-gadget-class {
+    position: absolute;
+}

@@ -216,13 +216,24 @@ Ext.onReady(function() {
       maskRe: /^\d*$/,
       enableKeyEvents: true,
       
-      minValue: 90,
+      minValue: 30,
       maxValue: 14400,
 
       listeners: {
           keyup: function (txt, e)
           {
               changeSettings(6);
+          },
+          render : function(c)
+          {
+              new Ext.ToolTip({
+                  target : c.getEl(),
+                  listeners: {
+                      'show': function (t) {
+                          t.update(_("ID_REFRESH_TIME_SCOPE"));
+                      }
+                  }
+              });
           }
       }
   });

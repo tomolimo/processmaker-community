@@ -5,6 +5,7 @@
 */
 
 use ProcessMaker\Model\Application as ModelApplication;
+use ProcessMaker\Model\SubApplication as ModelSubApplication;
 
 class Derivation
 {
@@ -859,7 +860,7 @@ class Derivation
             define( 'TASK_FINISH_TASK', - 2 );
         }
 
-        $this->case = new cases();
+        $this->case = new Cases();
 
         //Get data for this DEL_INDEX current
         $appFields = $this->case->loadCase( $currentDelegation['APP_UID'], $currentDelegation['DEL_INDEX'] );
@@ -1134,7 +1135,6 @@ class Derivation
                 $this->verifyIsCaseChild($currentDelegation["APP_UID"], $currentDelegation["DEL_INDEX"]);
             }
             $flagUpdateCase = true;
-
         }
 
         //The variable $iNewDelIndex will be true if we created a new index the variable
@@ -1175,7 +1175,7 @@ class Derivation
      * @param array $appFields
      * @param array $aSP
      *
-     * @return integer $iNewDelIndex
+     * @return integer
      * @throws /Exception
      */
     function doDerivation ($currentDelegation, $nextDel, $appFields, $aSP = null)
@@ -1309,84 +1309,10 @@ class Derivation
 
         //if there are SubProcess to create
         if (isset($aSP)) {
-            //Check if is SelfService the task in the SubProcess
-            $isSelfService = (empty($aSP['USR_UID'])) ? true : false;
+            // Create case in the subprocess
+            $subProcessFields = $this->subProcessCreation($aSP, $appFields, $currentDelegation, $iNewDelIndex, $iAppThreadIndex);
 
-            //Create the new case in the sub-process
-            //Set the initial date to null the time its created
-            $aNewCase = $this->case->startCase( $aSP['TAS_UID'], $aSP['USR_UID'], true, $appFields, $isSelfService);
-
-            //Load the TAS_UID related to the SubProcess
-            $taskNextDel = TaskPeer::retrieveByPK($aSP["TAS_UID"]); //Sub-Process
-
-            //Copy case variables to sub-process case
-            $aFields = unserialize( $aSP['SP_VARIABLES_OUT'] );
-            $aNewFields = array ();
-            $aOldFields = $this->case->loadCase( $aNewCase['APPLICATION'] );
-
-            foreach ($aFields as $sOriginField => $sTargetField) {
-                $sOriginField = trim($sOriginField, " @#%?$=&");
-                $sTargetField = trim($sTargetField, " @#%?$=&");
-
-                $aNewFields[$sTargetField] = isset( $appFields['APP_DATA'][$sOriginField] ) ? $appFields['APP_DATA'][$sOriginField] : '';
-
-                if (array_key_exists($sOriginField . '_label', $appFields['APP_DATA'])) {
-                    $aNewFields[$sTargetField . '_label'] = $appFields['APP_DATA'][$sOriginField . '_label'];
-                }
-            }
-
-            //We will to update the new case
-            $aOldFields['APP_DATA'] = array_merge( $aOldFields['APP_DATA'], $aNewFields );
-            $aOldFields['APP_STATUS'] = 'TO_DO';
-            $this->case->updateCase(
-                $aNewCase['APPLICATION'],
-                $aOldFields
-            );
-
-            //Create a registry in SUB_APPLICATION table
-            $aSubApplication = array (
-                'APP_UID' => $aNewCase['APPLICATION'],
-                'APP_PARENT' => $currentDelegation['APP_UID'],
-                'DEL_INDEX_PARENT' => $iNewDelIndex,
-                'DEL_THREAD_PARENT' => $iAppThreadIndex,
-                'SA_STATUS' => 'ACTIVE',
-                'SA_VALUES_OUT' => serialize($aNewFields),
-                'SA_INIT_DATE' => date('Y-m-d H:i:s')
-            );
-            if ($aSP['SP_SYNCHRONOUS'] == 0) {
-                $aSubApplication['SA_STATUS'] = 'FINISHED';
-                $aSubApplication['SA_FINISH_DATE'] = $aSubApplication['SA_INIT_DATE'];
-            }
-            $oSubApplication = new SubApplication();
-            $oSubApplication->create( $aSubApplication );
-
-            //Update the AppDelegation to execute the update trigger
-            $AppDelegation = AppDelegationPeer::retrieveByPK( $aNewCase['APPLICATION'], $aNewCase['INDEX'] );
-            $AppDelegation->save();
-
-            //Create record in table APP_ASSIGN_SELF_SERVICE_VALUE
-            if ($taskNextDel->getTasAssignType() == "SELF_SERVICE" && trim($taskNextDel->getTasGroupVariable()) != "") {
-                $nextTaskGroupVariable = trim($taskNextDel->getTasGroupVariable(), " @#");
-
-                if (isset($aOldFields["APP_DATA"][$nextTaskGroupVariable])) {
-                    $dataVariable = $aOldFields["APP_DATA"][$nextTaskGroupVariable];
-                    $dataVariable = (is_array($dataVariable))? $dataVariable : trim($dataVariable);
-
-                    if (!empty($dataVariable)) {
-                        $appAssignSelfServiceValue = new AppAssignSelfServiceValue();
-
-                        $appAssignSelfServiceValue->create($aNewCase["APPLICATION"], $aNewCase["INDEX"], array("PRO_UID" => $aNewCase["PROCESS"], "TAS_UID" => $aSP["TAS_UID"], "GRP_UID" => ""), $dataVariable);
-                    }
-                }
-            }
-
-            //We will to send the notifications
-            $sendNotificationsMobile = $this->sendNotificationsMobile($aOldFields, $aSP, $aNewCase['INDEX']);
-            $nextTaskData = $taskNextDel->toArray(BasePeer::TYPE_FIELDNAME);
-            $nextTaskData['USR_UID'] = $aSP['USR_UID'];
-            $sendNotifications = $this->notifyAssignedUser($appFields, $nextTaskData, $aNewCase['INDEX']);
-
-            //If is ASYNCHRONOUS we will to route the case master
+            // If is ASYNCHRONOUS we will to route the case master
             if ($aSP['SP_SYNCHRONOUS'] == 0) {
                 $this->case->setDelInitDate( $currentDelegation['APP_UID'], $iNewDelIndex );
                 $aDeriveTasks = $this->prepareInformation(
@@ -1427,9 +1353,9 @@ class Derivation
                         if ($openThreads == 0) {
                             $this->derivate($currentDelegation2, $nextDelegations2);
                         } else {
-                            $oSubApplication = new SubApplication();
-                            $aSubApplication['SA_STATUS'] = 'ACTIVE';
-                            $oSubApplication->update($aSubApplication);
+                            $subApplication = new SubApplication();
+                            $subProcessFields['SA_STATUS'] = 'ACTIVE';
+                            $subApplication->update($subProcessFields);
                         }
                     }
                 }
@@ -1445,6 +1371,104 @@ class Derivation
             $this->notifyAssignedUser($appFields, $nextTaskData, $iNewDelIndex);
         }
         return $iNewDelIndex;
+    }
+
+    /**
+     * Create the sub-process
+     * 
+     * @param array $subProcessInfo
+     * @param array $appFields
+     * @param array $currentDelegation
+     * @param int $delIndex
+     * @param int $threadIndex
+     * 
+     * @return array
+     */
+    protected function subProcessCreation(array $subProcessInfo, array $appFields, array $currentDelegation, $delIndex, $threadIndex)
+    {
+        // Check if is SelfService the task in the SubProcess
+        $isSelfService = empty($subProcessInfo['USR_UID']) ? true : false;
+
+        // Create the new case in the sub-process
+        // Set the initial date to null the time its created
+        // The DelThreadStatus will create with CLOSED value for avoid to open the case without all the execution
+        $newCase = $this->case->startCase($subProcessInfo['TAS_UID'], $subProcessInfo['USR_UID'], true, $appFields, $isSelfService);
+
+        // Load the TAS_UID related to the SubProcess
+        $taskNextDel = TaskPeer::retrieveByPK($subProcessInfo["TAS_UID"]); //Sub-Process
+
+        // Copy case variables to sub-process case
+        $fields = unserialize($subProcessInfo['SP_VARIABLES_OUT']);
+        $newFields = [];
+        $oldFields = $this->case->loadCase($newCase['APPLICATION']);
+
+        foreach ($fields as $originField => $targetField) {
+            $originField = trim($originField, " @#%?$=&");
+            $targetField = trim($targetField, " @#%?$=&");
+            $newFields[$targetField] = isset($appFields['APP_DATA'][$originField]) ? $appFields['APP_DATA'][$originField] : '';
+
+            if (array_key_exists($originField . '_label', $appFields['APP_DATA'])) {
+                $newFields[$targetField . '_label'] = $appFields['APP_DATA'][$originField . '_label'];
+            }
+        }
+
+        // We will to update the new case
+        $oldFields['APP_DATA'] = array_merge($oldFields['APP_DATA'], $newFields);
+        $oldFields['APP_STATUS'] = 'TO_DO';
+        $this->case->updateCase(
+            $newCase['APPLICATION'],
+            $oldFields
+        );
+
+        // Create a registry in SUB_APPLICATION table
+        $attributes = [
+            'APP_UID' => $newCase['APPLICATION'],
+            'APP_PARENT' => $currentDelegation['APP_UID'],
+            'DEL_INDEX_PARENT' => $delIndex,
+            'DEL_THREAD_PARENT' => $threadIndex,
+            'SA_STATUS' => 'ACTIVE',
+            'SA_VALUES_OUT' => serialize($newFields),
+            'SA_INIT_DATE' => date('Y-m-d H:i:s')
+        ];
+        if ($subProcessInfo['SP_SYNCHRONOUS'] == 0) {
+            $attributes['SA_STATUS'] = 'FINISHED';
+            $attributes['SA_FINISH_DATE'] = $attributes['SA_INIT_DATE'];
+        }
+        $subprocess = ModelSubApplication::create($attributes);
+
+        // Update the AppDelegation to execute the update trigger
+        // Update the DelThreadStatus, the thread is ready for continue
+        $appDelegation = AppDelegationPeer::retrieveByPK($newCase['APPLICATION'], $newCase['INDEX']);
+        $appDelegation->setDelThreadStatus('OPEN');
+        $appDelegation->save();
+
+        // Create record in table APP_ASSIGN_SELF_SERVICE_VALUE
+        $tasGroupVariable = $taskNextDel->getTasGroupVariable();
+        if ($taskNextDel->getTasAssignType() == "SELF_SERVICE" && !empty(trim($tasGroupVariable))) {
+            $nextTaskGroupVariable = trim($tasGroupVariable, " @#");
+
+            if (isset($oldFields["APP_DATA"][$nextTaskGroupVariable])) {
+                $dataVariable = $oldFields["APP_DATA"][$nextTaskGroupVariable];
+                $dataVariable = (is_array($dataVariable))? $dataVariable : trim($dataVariable);
+
+                if (!empty($dataVariable)) {
+                    $appAssignSelfServiceValue = new AppAssignSelfServiceValue();
+                    $appAssignSelfServiceValue->create(
+                        $newCase["APPLICATION"],
+                        $newCase["INDEX"],
+                        ["PRO_UID" => $newCase["PROCESS"], "TAS_UID" => $subProcessInfo["TAS_UID"], "GRP_UID" => ""],
+                        $dataVariable
+                    );
+                }
+            }
+        }
+        // We will to send the notifications
+        $sendNotificationsMobile = $this->sendNotificationsMobile($oldFields, $subProcessInfo, $newCase['INDEX']);
+        $nextTaskData = $taskNextDel->toArray(BasePeer::TYPE_FIELDNAME);
+        $nextTaskData['USR_UID'] = $subProcessInfo['USR_UID'];
+        $sendNotifications = $this->notifyAssignedUser($appFields, $nextTaskData, $newCase['INDEX']);
+
+        return $attributes;
     }
 
     /**

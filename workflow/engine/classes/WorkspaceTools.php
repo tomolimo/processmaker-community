@@ -4208,6 +4208,57 @@ class WorkspaceTools
         $con->commit();
         CLI::logging("-> Populating APP_ASSIGN_SELF_SERVICE_VALUE.TAS_ID  Done \n");
 
+        // Populating PROCESS_VARIABLES.PRO_ID
+        CLI::logging("->   Populating PROCESS_VARIABLES.PRO_ID \n");
+        $con->begin();
+        $stmt = $con->createStatement();
+        $rs = $stmt->executeQuery("UPDATE PROCESS_VARIABLES AS PV
+                                   INNER JOIN (
+                                       SELECT PROCESS.PRO_UID, PROCESS.PRO_ID
+                                       FROM PROCESS
+                                   ) AS PRO
+                                   ON (PV.PRJ_UID = PRO.PRO_UID)
+                                   SET PV.PRO_ID = PRO.PRO_ID
+                                   WHERE PV.PRO_ID = 0");
+        $con->commit();
+        CLI::logging("-> Populating PROCESS_VARIABLES.PRO_ID  Done \n");
+
+        // Populating PROCESS_VARIABLES.VAR_FIELD_TYPE_ID
+        CLI::logging("->   Populating PROCESS_VARIABLES.VAR_FIELD_TYPE_ID \n");
+        $con->begin();
+        $stmt = $con->createStatement();
+        $rs = $stmt->executeQuery("UPDATE PROCESS_VARIABLES
+                                   SET VAR_FIELD_TYPE_ID = (case
+                                        when VAR_FIELD_TYPE = 'string' then 1
+                                        when VAR_FIELD_TYPE = 'integer' then 2
+                                        when VAR_FIELD_TYPE = 'float' then 3
+                                        when VAR_FIELD_TYPE = 'boolean' then 4
+                                        when VAR_FIELD_TYPE = 'datetime' then 5
+                                        when VAR_FIELD_TYPE = 'grid' then 6
+                                        when VAR_FIELD_TYPE = 'array' then 7
+                                        when VAR_FIELD_TYPE = 'file' then 8
+                                        when VAR_FIELD_TYPE = 'multiplefile' then 9
+                                        when VAR_FIELD_TYPE = 'object' then 10
+                                    end)
+                                   WHERE VAR_FIELD_TYPE_ID = 0");
+        $con->commit();
+        CLI::logging("-> Populating PROCESS_VARIABLES.VAR_FIELD_TYPE_ID Done \n");
+
+        // Populating DB_SOURCE.PRO_ID
+        CLI::logging("->   Populating DB_SOURCE.PRO_ID \n");
+        $con->begin();
+        $stmt = $con->createStatement();
+        $rs = $stmt->executeQuery("UPDATE DB_SOURCE AS DS
+                                   INNER JOIN (
+                                       SELECT PROCESS.PRO_UID, PROCESS.PRO_ID
+                                       FROM PROCESS
+                                   ) AS PRO
+                                   ON (DS.PRO_UID = PRO.PRO_UID)
+                                   SET DS.PRO_ID = PRO.PRO_ID
+                                   WHERE DS.PRO_ID = 0");
+        $con->commit();
+        CLI::logging("-> Populating DB_SOURCE.PRO_ID  Done \n");
+
         //Complete all migrations
         CLI::logging("-> Migrating And Populating Indexing for avoiding the use of table APP_CACHE_VIEW Done \n");
     }

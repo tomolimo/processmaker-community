@@ -1,4 +1,18 @@
 <?php
+
+/**
+ * appProxy.php
+ *
+ * Controller for return information about the cases notes and summary form
+ *
+ * @link https://wiki.processmaker.com/3.2/Case_Notes
+ * @link https://wiki.processmaker.com/3.2/Case_Summary
+*/
+
+use ProcessMaker\BusinessModel\Cases as BmCases;
+use ProcessMaker\Exception\CaseNoteUploadFile;
+use ProcessMaker\Model\AppNotes as Notes;
+use ProcessMaker\Model\Documents;
 use ProcessMaker\Util\DateTime;
 
 if (!isset($_SESSION['USER_LOGGED'])) {
@@ -86,11 +100,13 @@ class AppProxy extends HttpProxyController
         } else {
             $tasUid = $httpData->tas;
         }
+
+        // Get user logged
         $usrUid = $_SESSION['USER_LOGGED'];
 
+        // Review if the user has the permissions
         $respView = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, "VIEW", $delIndex);
         $respBlock = $case->getAllObjectsFrom($proUid, $appUid, $tasUid, $usrUid, "BLOCK", $delIndex);
-
         if ($respView['CASES_NOTES'] == 0 && $respBlock['CASES_NOTES'] == 0) {
             return [
                 'totalCount' => 0,
@@ -99,27 +115,33 @@ class AppProxy extends HttpProxyController
             ];
         }
 
-        $usrUid = isset($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : "";
-        $appNotes = new AppNotes();
-        $response = $appNotes->getNotesList($appUid, '', $httpData->start, $httpData->limit);
+        // Get the notes
+        $appNote = new Notes();
+        $total = $appNote->getTotal($appUid);
+        $response = $appNote->getNotes($appUid, $httpData->start, $httpData->limit);
         $response = AppNotes::applyHtmlentitiesInNotes($response);
 
+        // Prepare the response
+        $documents = new Documents();
         $iterator = 0;
-        foreach ($response['array']['notes'] as $value) {
-            $response ['array']['notes'][$iterator]['NOTE_DATE'] = DateTime::convertUtcToTimeZone($value['NOTE_DATE']);
+        foreach ($response['notes'] as $value) {
+            $response['notes'][$iterator]['NOTE_DATE'] = DateTime::convertUtcToTimeZone($value['NOTE_DATE']);
+            $response['notes'][$iterator]['attachments'] = $documents->getFiles($value['NOTE_ID']);
             $iterator++;
         }
+        // Get the total of cases notes by case
+        $response['totalCount'] = $total;
 
         require_once("classes/model/Application.php");
-        $oApplication = new Application();
-        $aApplication = $oApplication->Load($appUid);
-        $response['array']['appTitle'] = $aApplication['APP_TITLE'];
+        $application = new Application();
+        $appInfo = $application->Load($appUid);
+        $response['appTitle'] = $appInfo['APP_TITLE'];
 
-        return $response['array'];
+        return $response;
     }
 
     /**
-     * post Note Action
+     * Post a note
      *
      * @param string $httpData->appUid (optional, if it is not passed try use $_SESSION['APPLICATION'])
      * @return array containg the case notes
@@ -143,9 +165,15 @@ class AppProxy extends HttpProxyController
         $this->setSendResponse(false);
 
         //Add note case
-        $appNote = new AppNotes();
+        $cases = new BmCases();
         try {
-            $response = $appNote->addCaseNote($appUid, $usrUid, $noteContent, intval($httpData->swSendMail));
+            $sendMail = intval($httpData->swSendMail);
+            $response = $cases->addNote($appUid, $usrUid, $noteContent, $sendMail);
+        } catch (CaseNoteUploadFile $e) {
+            $response = new stdclass();
+            $response->success = 'success';
+            $response->message = $e->getMessage();
+            die(G::json_encode($response));
         } catch (Exception $error) {
             $response = new stdclass();
             $response->success  = 'success';

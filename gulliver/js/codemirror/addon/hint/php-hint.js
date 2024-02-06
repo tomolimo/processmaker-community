@@ -90,6 +90,10 @@
   var evaluateFunctionFunction = [evaluateFunction+"($gridName,$Expression)"];
   arrayFunctions[evaluateFunction] = evaluateFunctionFunction;
   
+  var PMFTotalCalculation = "PMFTotalCalculation";
+  var PMFTotalCalculationFunction = [PMFTotalCalculation + "($gridName, $field, 'function')"];
+  arrayFunctions[PMFTotalCalculation] = PMFTotalCalculationFunction;
+
   var PMFTaskCase = "PMFTaskCase";
   var PMFTaskCaseFunction = [PMFTaskCase+"($caseId)"];
   arrayFunctions[PMFTaskCase] = PMFTaskCaseFunction;
@@ -219,7 +223,7 @@
   arrayFunctions[PMFGetCaseNotes] = PMFGetCaseNotesFunction;
   
   var phpPMFunctions = [formatDate,getCurrentDate,getCurrentTime,literalDate,capitalize,lowerCase,upperCase,userInfo,executeQuery,orderGrid,
-  evaluateFunction,PMFTaskCase,PMFTaskList,PMFUserList,PMFGroupList,PMFRoleList,PMFCaseList,PMFProcessList,PMFSendVariables,PMFDerivateCase,
+  evaluateFunction, PMFTotalCalculation, PMFTaskCase,PMFTaskList,PMFUserList,PMFGroupList,PMFRoleList,PMFCaseList,PMFProcessList,PMFSendVariables,PMFDerivateCase,
   PMFNewCaseImpersonate,PMFNewCase,PMFPauseCase,PMFUnpauseCase,PMFAssignUserToGroup,PMFCreateUser,PMFUpdateUser,PMFInformationUser,        
   generateCode,setCaseTrackerCode,jumping,PMFRedirectToStep,pauseCase,PMFSendMessage,PMFgetLabelOption,PMFGenerateOutputDocument,   
   PMFGetUserEmailAddress,PMFGetNextAssignedUser,PMFDeleteCase,PMFCancelCase,PMFAddInputDocument,PMFAddCaseNote,PMFGetCaseNotes];

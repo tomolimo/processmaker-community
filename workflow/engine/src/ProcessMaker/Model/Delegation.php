@@ -482,13 +482,14 @@ class Delegation extends Model
     }
 
     /**
-     * Count the self-services cases by user
+     * Get the self-services query by user
      *
      * @param string $usrUid
+     * @param bool $count
      *
-     * @return integer
+     * @return \Illuminate\Database\Query\Builder | string
      */
-    public static function countSelfService($usrUid)
+    public static function getSelfServiceQuery($usrUid, $count = false)
     {
         // Set the 'usrUid' property to preserve
         Delegation::$usrUid = $usrUid;
@@ -538,6 +539,10 @@ class Delegation extends Model
             whereRaw($complexJoin);
         });
 
+        // Clean static properties
+        Delegation::$usrUid = '';
+        Delegation::$groups = [];
+
         // Get self services tasks related to the user
         $selfServiceTasks = TaskUser::getSelfServicePerUser($usrUid);
 
@@ -549,22 +554,68 @@ class Delegation extends Model
             $query2->noUserInThread();
 
             // Build the complex query that uses "UNION DISTINCT" clause
-            $unionQuery = sprintf('select count(*) as aggregate from ((%s) union distinct (%s)) self_service_cases',
-                toSqlWithBindings($query1),  toSqlWithBindings($query2));
+            $query = sprintf('select '  . ($count ? 'count(*) as aggregate' : 'APP_NUMBER') .
+                ' from ((%s) union distinct (%s)) self_service_cases', toSqlWithBindings($query1),  toSqlWithBindings($query2));
 
-            // Execute the query
-            $result = DB::selectOne($unionQuery);
-            $count = $result->aggregate;
+            return $query;
         } else {
-            // Execute the query
-            $count = $query1->count();
+            return $query1;
+        }
+    }
+
+    /**
+     * Get the self-services cases by user
+     *
+     * @param string $usrUid
+     *
+     * @return array
+     */
+    public static function getSelfService($usrUid)
+    {
+        // Initializing the variable to return
+        $data = [];
+
+        // Get the query
+        $query = self::getSelfServiceQuery($usrUid);
+
+        // Get data
+        if (!is_string($query)) {
+            $items = $query->get();
+            $items->each(function ($item) use (&$data) {
+                $data[] = get_object_vars($item);
+            });
+        } else {
+            $items = DB::select($query);
+            foreach ($items as $item) {
+                $data[] = get_object_vars($item);
+            }
         }
 
-        // Clean static properties
-        Delegation::$usrUid = '';
-        Delegation::$groups = [];
+        // Return data
+        return $data;
+    }
 
-        // Return value
+    /**
+     * Count the self-services cases by user
+     *
+     * @param string $usrUid
+     *
+     * @return integer
+     */
+    public static function countSelfService($usrUid)
+    {
+        // Get the query
+        $query = self::getSelfServiceQuery($usrUid, true);
+
+        // Get count value
+        if (!is_string($query)) {
+            $count = $query->count();
+        } else {
+            $result = DB::selectOne($query);
+            $count = $result->aggregate;
+        }
+
+        // Return data
         return $count;
     }
 

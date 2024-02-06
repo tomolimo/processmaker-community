@@ -1,8 +1,9 @@
 <?php
 
+use App\Jobs\GenerateReportTable;
 use Illuminate\Support\Facades\DB;
-use ProcessMaker\Commands\GenerateDataReport;
-use ProcessMaker\Core\MultiProcOpen;
+use ProcessMaker\Core\JobsManager;
+use ProcessMaker\Core\System;
 use ProcessMaker\Model\Application;
 use ProcessMaker\Model\Fields;
 
@@ -735,28 +736,23 @@ class AdditionalTables extends BaseAdditionalTables
         $workspace = config("system.workspace");
         $pathWorkspace = PATH_WORKSPACE;
         $n = Application::count();
-        $processesManager = new MultiProcOpen();
-        $processesManager->chunk($n, 1000, function($size, $start, $limit) use(
-                $workspace, 
-                $tableName, 
-                $type, 
-                $processUid, 
-                $gridKey, 
-                $addTabUid, 
-                $className, 
-                $pathWorkspace) {
-            return new GenerateDataReport(
-                    $workspace, 
-                    $tableName, 
-                    $type, 
-                    $processUid, 
-                    $gridKey, 
-                    $addTabUid, 
-                    $className, 
-                    $pathWorkspace, 
-                    $start, 
-                    $limit);
-        });
+
+        //batch process
+        $config = System::getSystemConfiguration();
+        $reportTableBatchRegeneration = $config['report_table_batch_regeneration'];
+
+        $size = $n;
+        $start = 0;
+        $limit = $reportTableBatchRegeneration;
+
+        for ($i = 1; $start < $size; $i++) {
+            $closure = function() use($workspace, $tableName, $type, $processUid, $gridKey, $addTabUid, $className, $pathWorkspace, $start, $limit) {
+                $workspaceTools = new WorkspaceTools($workspace);
+                $workspaceTools->generateDataReport($tableName, $type, $processUid, $gridKey, $addTabUid, $className, $pathWorkspace, $start, $limit);
+            };
+            JobsManager::getSingleton()->dispatch(GenerateReportTable::class, $closure);
+            $start = $i * $limit;
+        }
     }
 
     /**

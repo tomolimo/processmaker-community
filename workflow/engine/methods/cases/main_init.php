@@ -123,6 +123,7 @@ $oHeadPublisher->assign('urlProxy', $urlProxy); //sending the urlProxy to make
 $oHeadPublisher->assign("_nodeId", isset($confDefaultOption) ? $confDefaultOption : "PM_USERS"); //User menu permissions
 $oHeadPublisher->assign("FORMATS", $conf->getFormats());
 
+
 $_SESSION["current_ux"] = "NORMAL";
 
 G::RenderPage("publish", "extJs");

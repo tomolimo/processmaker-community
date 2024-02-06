@@ -246,7 +246,7 @@
   }
 
   .select2-container {
-    width: 98% !important;
+    width: 100% !important;
   }
 }
 @media all and (max-width: 550px) and (min-width: 300px) {
@@ -318,7 +318,7 @@
   }
 
   .select2-container {
-    width: 95% !important;
+    width: 100% !important;
   }
 }
 @media all and (max-width: 300px) {
@@ -390,7 +390,7 @@
   }
 
   .select2-container {
-    width: 93% !important;
+    width: 100% !important;
   }
 }
 @media print {
@@ -1508,6 +1508,10 @@ textarea {
 
 .pmdynaform-edit-datetime .pmdynaform-control-datetime {
   background: #ffffff;
+}
+
+.bootstrap-datetimepicker-widget table td span.disabled, .bootstrap-datetimepicker-widget table td span.disabled:hover {
+  overflow-y: hidden;
 }
 
 .pmdynaform-grid-thead-static {

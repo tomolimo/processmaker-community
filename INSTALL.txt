@@ -50,11 +50,10 @@ Internet Explorer 7 or later
 |* PHP Configuration *|
 -----------------------
 In the PHP configuration file (php.ini), set the following settings:
-  memory_limit = 120M
+  memory_limit = 256M
   file_uploads = On
   short_open_tag = On
-The memory_limit may be a minimum of 80MB, but it is recommended to set it to
-120MB. If planning on uploading large Input Documents and attached files, then
+If planning on uploading large Input Documents and attached files, then
 increase the max_post_size and upload_max_filesize to larger than the default
 2MB:
   max_post_size = 2M

@@ -25,7 +25,7 @@ abstract class BaseAppDocumentPeer
     const CLASS_DEFAULT = 'classes.model.AppDocument';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 21;
+    const NUM_COLUMNS = 22;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
@@ -54,6 +54,9 @@ abstract class BaseAppDocumentPeer
 
     /** the column name for the DOC_UID field */
     const DOC_UID = 'APP_DOCUMENT.DOC_UID';
+
+    /** the column name for the DOC_ID field */
+    const DOC_ID = 'APP_DOCUMENT.DOC_ID';
 
     /** the column name for the USR_UID field */
     const USR_UID = 'APP_DOCUMENT.USR_UID';
@@ -105,10 +108,10 @@ abstract class BaseAppDocumentPeer
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     private static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('AppDocUid', 'AppDocFilename', 'AppDocTitle', 'AppDocComment', 'DocVersion', 'AppUid', 'DelIndex', 'DocUid', 'UsrUid', 'AppDocType', 'AppDocCreateDate', 'AppDocIndex', 'FolderUid', 'AppDocPlugin', 'AppDocTags', 'AppDocStatus', 'AppDocStatusDate', 'AppDocFieldname', 'AppDocDriveDownload', 'SyncWithDrive', 'SyncPermissions', ),
-        BasePeer::TYPE_COLNAME => array (AppDocumentPeer::APP_DOC_UID, AppDocumentPeer::APP_DOC_FILENAME, AppDocumentPeer::APP_DOC_TITLE, AppDocumentPeer::APP_DOC_COMMENT, AppDocumentPeer::DOC_VERSION, AppDocumentPeer::APP_UID, AppDocumentPeer::DEL_INDEX, AppDocumentPeer::DOC_UID, AppDocumentPeer::USR_UID, AppDocumentPeer::APP_DOC_TYPE, AppDocumentPeer::APP_DOC_CREATE_DATE, AppDocumentPeer::APP_DOC_INDEX, AppDocumentPeer::FOLDER_UID, AppDocumentPeer::APP_DOC_PLUGIN, AppDocumentPeer::APP_DOC_TAGS, AppDocumentPeer::APP_DOC_STATUS, AppDocumentPeer::APP_DOC_STATUS_DATE, AppDocumentPeer::APP_DOC_FIELDNAME, AppDocumentPeer::APP_DOC_DRIVE_DOWNLOAD, AppDocumentPeer::SYNC_WITH_DRIVE, AppDocumentPeer::SYNC_PERMISSIONS, ),
-        BasePeer::TYPE_FIELDNAME => array ('APP_DOC_UID', 'APP_DOC_FILENAME', 'APP_DOC_TITLE', 'APP_DOC_COMMENT', 'DOC_VERSION', 'APP_UID', 'DEL_INDEX', 'DOC_UID', 'USR_UID', 'APP_DOC_TYPE', 'APP_DOC_CREATE_DATE', 'APP_DOC_INDEX', 'FOLDER_UID', 'APP_DOC_PLUGIN', 'APP_DOC_TAGS', 'APP_DOC_STATUS', 'APP_DOC_STATUS_DATE', 'APP_DOC_FIELDNAME', 'APP_DOC_DRIVE_DOWNLOAD', 'SYNC_WITH_DRIVE', 'SYNC_PERMISSIONS', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, )
+        BasePeer::TYPE_PHPNAME => array ('AppDocUid', 'AppDocFilename', 'AppDocTitle', 'AppDocComment', 'DocVersion', 'AppUid', 'DelIndex', 'DocUid', 'DocId', 'UsrUid', 'AppDocType', 'AppDocCreateDate', 'AppDocIndex', 'FolderUid', 'AppDocPlugin', 'AppDocTags', 'AppDocStatus', 'AppDocStatusDate', 'AppDocFieldname', 'AppDocDriveDownload', 'SyncWithDrive', 'SyncPermissions', ),
+        BasePeer::TYPE_COLNAME => array (AppDocumentPeer::APP_DOC_UID, AppDocumentPeer::APP_DOC_FILENAME, AppDocumentPeer::APP_DOC_TITLE, AppDocumentPeer::APP_DOC_COMMENT, AppDocumentPeer::DOC_VERSION, AppDocumentPeer::APP_UID, AppDocumentPeer::DEL_INDEX, AppDocumentPeer::DOC_UID, AppDocumentPeer::DOC_ID, AppDocumentPeer::USR_UID, AppDocumentPeer::APP_DOC_TYPE, AppDocumentPeer::APP_DOC_CREATE_DATE, AppDocumentPeer::APP_DOC_INDEX, AppDocumentPeer::FOLDER_UID, AppDocumentPeer::APP_DOC_PLUGIN, AppDocumentPeer::APP_DOC_TAGS, AppDocumentPeer::APP_DOC_STATUS, AppDocumentPeer::APP_DOC_STATUS_DATE, AppDocumentPeer::APP_DOC_FIELDNAME, AppDocumentPeer::APP_DOC_DRIVE_DOWNLOAD, AppDocumentPeer::SYNC_WITH_DRIVE, AppDocumentPeer::SYNC_PERMISSIONS, ),
+        BasePeer::TYPE_FIELDNAME => array ('APP_DOC_UID', 'APP_DOC_FILENAME', 'APP_DOC_TITLE', 'APP_DOC_COMMENT', 'DOC_VERSION', 'APP_UID', 'DEL_INDEX', 'DOC_UID', 'DOC_ID', 'USR_UID', 'APP_DOC_TYPE', 'APP_DOC_CREATE_DATE', 'APP_DOC_INDEX', 'FOLDER_UID', 'APP_DOC_PLUGIN', 'APP_DOC_TAGS', 'APP_DOC_STATUS', 'APP_DOC_STATUS_DATE', 'APP_DOC_FIELDNAME', 'APP_DOC_DRIVE_DOWNLOAD', 'SYNC_WITH_DRIVE', 'SYNC_PERMISSIONS', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, )
     );
 
     /**
@@ -118,10 +121,10 @@ abstract class BaseAppDocumentPeer
      * e.g. self::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     private static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('AppDocUid' => 0, 'AppDocFilename' => 1, 'AppDocTitle' => 2, 'AppDocComment' => 3, 'DocVersion' => 4, 'AppUid' => 5, 'DelIndex' => 6, 'DocUid' => 7, 'UsrUid' => 8, 'AppDocType' => 9, 'AppDocCreateDate' => 10, 'AppDocIndex' => 11, 'FolderUid' => 12, 'AppDocPlugin' => 13, 'AppDocTags' => 14, 'AppDocStatus' => 15, 'AppDocStatusDate' => 16, 'AppDocFieldname' => 17, 'AppDocDriveDownload' => 18, 'SyncWithDrive' => 19, 'SyncPermissions' => 20, ),
-        BasePeer::TYPE_COLNAME => array (AppDocumentPeer::APP_DOC_UID => 0, AppDocumentPeer::APP_DOC_FILENAME => 1, AppDocumentPeer::APP_DOC_TITLE => 2, AppDocumentPeer::APP_DOC_COMMENT => 3, AppDocumentPeer::DOC_VERSION => 4, AppDocumentPeer::APP_UID => 5, AppDocumentPeer::DEL_INDEX => 6, AppDocumentPeer::DOC_UID => 7, AppDocumentPeer::USR_UID => 8, AppDocumentPeer::APP_DOC_TYPE => 9, AppDocumentPeer::APP_DOC_CREATE_DATE => 10, AppDocumentPeer::APP_DOC_INDEX => 11, AppDocumentPeer::FOLDER_UID => 12, AppDocumentPeer::APP_DOC_PLUGIN => 13, AppDocumentPeer::APP_DOC_TAGS => 14, AppDocumentPeer::APP_DOC_STATUS => 15, AppDocumentPeer::APP_DOC_STATUS_DATE => 16, AppDocumentPeer::APP_DOC_FIELDNAME => 17, AppDocumentPeer::APP_DOC_DRIVE_DOWNLOAD => 18, AppDocumentPeer::SYNC_WITH_DRIVE => 19, AppDocumentPeer::SYNC_PERMISSIONS => 20, ),
-        BasePeer::TYPE_FIELDNAME => array ('APP_DOC_UID' => 0, 'APP_DOC_FILENAME' => 1, 'APP_DOC_TITLE' => 2, 'APP_DOC_COMMENT' => 3, 'DOC_VERSION' => 4, 'APP_UID' => 5, 'DEL_INDEX' => 6, 'DOC_UID' => 7, 'USR_UID' => 8, 'APP_DOC_TYPE' => 9, 'APP_DOC_CREATE_DATE' => 10, 'APP_DOC_INDEX' => 11, 'FOLDER_UID' => 12, 'APP_DOC_PLUGIN' => 13, 'APP_DOC_TAGS' => 14, 'APP_DOC_STATUS' => 15, 'APP_DOC_STATUS_DATE' => 16, 'APP_DOC_FIELDNAME' => 17, 'APP_DOC_DRIVE_DOWNLOAD' => 18, 'SYNC_WITH_DRIVE' => 19, 'SYNC_PERMISSIONS' => 20, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, )
+        BasePeer::TYPE_PHPNAME => array ('AppDocUid' => 0, 'AppDocFilename' => 1, 'AppDocTitle' => 2, 'AppDocComment' => 3, 'DocVersion' => 4, 'AppUid' => 5, 'DelIndex' => 6, 'DocUid' => 7, 'DocId' => 8, 'UsrUid' => 9, 'AppDocType' => 10, 'AppDocCreateDate' => 11, 'AppDocIndex' => 12, 'FolderUid' => 13, 'AppDocPlugin' => 14, 'AppDocTags' => 15, 'AppDocStatus' => 16, 'AppDocStatusDate' => 17, 'AppDocFieldname' => 18, 'AppDocDriveDownload' => 19, 'SyncWithDrive' => 20, 'SyncPermissions' => 21, ),
+        BasePeer::TYPE_COLNAME => array (AppDocumentPeer::APP_DOC_UID => 0, AppDocumentPeer::APP_DOC_FILENAME => 1, AppDocumentPeer::APP_DOC_TITLE => 2, AppDocumentPeer::APP_DOC_COMMENT => 3, AppDocumentPeer::DOC_VERSION => 4, AppDocumentPeer::APP_UID => 5, AppDocumentPeer::DEL_INDEX => 6, AppDocumentPeer::DOC_UID => 7, AppDocumentPeer::DOC_ID => 8, AppDocumentPeer::USR_UID => 9, AppDocumentPeer::APP_DOC_TYPE => 10, AppDocumentPeer::APP_DOC_CREATE_DATE => 11, AppDocumentPeer::APP_DOC_INDEX => 12, AppDocumentPeer::FOLDER_UID => 13, AppDocumentPeer::APP_DOC_PLUGIN => 14, AppDocumentPeer::APP_DOC_TAGS => 15, AppDocumentPeer::APP_DOC_STATUS => 16, AppDocumentPeer::APP_DOC_STATUS_DATE => 17, AppDocumentPeer::APP_DOC_FIELDNAME => 18, AppDocumentPeer::APP_DOC_DRIVE_DOWNLOAD => 19, AppDocumentPeer::SYNC_WITH_DRIVE => 20, AppDocumentPeer::SYNC_PERMISSIONS => 21, ),
+        BasePeer::TYPE_FIELDNAME => array ('APP_DOC_UID' => 0, 'APP_DOC_FILENAME' => 1, 'APP_DOC_TITLE' => 2, 'APP_DOC_COMMENT' => 3, 'DOC_VERSION' => 4, 'APP_UID' => 5, 'DEL_INDEX' => 6, 'DOC_UID' => 7, 'DOC_ID' => 8, 'USR_UID' => 9, 'APP_DOC_TYPE' => 10, 'APP_DOC_CREATE_DATE' => 11, 'APP_DOC_INDEX' => 12, 'FOLDER_UID' => 13, 'APP_DOC_PLUGIN' => 14, 'APP_DOC_TAGS' => 15, 'APP_DOC_STATUS' => 16, 'APP_DOC_STATUS_DATE' => 17, 'APP_DOC_FIELDNAME' => 18, 'APP_DOC_DRIVE_DOWNLOAD' => 19, 'SYNC_WITH_DRIVE' => 20, 'SYNC_PERMISSIONS' => 21, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, )
     );
 
     /**
@@ -237,6 +240,8 @@ abstract class BaseAppDocumentPeer
         $criteria->addSelectColumn(AppDocumentPeer::DEL_INDEX);
 
         $criteria->addSelectColumn(AppDocumentPeer::DOC_UID);
+
+        $criteria->addSelectColumn(AppDocumentPeer::DOC_ID);
 
         $criteria->addSelectColumn(AppDocumentPeer::USR_UID);
 

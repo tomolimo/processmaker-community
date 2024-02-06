@@ -1868,3 +1868,11 @@ white-space:normal;
   clear: both;
   height: 50px;
 }
+.nav_list li a {
+  padding: 2px 2px 2px 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100px;
+  white-space: nowrap;
+  display: inline-block;
+}
