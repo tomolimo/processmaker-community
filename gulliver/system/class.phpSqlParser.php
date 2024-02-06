@@ -876,8 +876,6 @@ EOREGEX;
                     }
                     break;
             }
-
-            $shouldItContinue = false;
             switch ($upper) {
                 case 'AS':
                     $token_count ++;
@@ -888,7 +886,6 @@ EOREGEX;
                         ++ $n;
                     }
 
-                    $shouldItContinue = true;
                     break;
                 case 'INDEX':
                     if ($token_category == 'CREATE') {
@@ -910,12 +907,10 @@ EOREGEX;
                 case 'OUTER':
                     # $expression .= $token;
                     $token_count ++;
-                    $shouldItContinue = true;
                     break;
                 case 'FOR':
                     $token_count ++;
                     $skip_next = true;
-                    $shouldItContinue = true;
                     break;
                 case 'LEFT':
                 case 'RIGHT':
@@ -971,7 +966,6 @@ EOREGEX;
                     break;
                 default:
                     if ($token === false || empty( $token ) || $token === "") {
-                        $shouldItContinue = true;
                         break;
                     }
 
@@ -984,9 +978,6 @@ EOREGEX;
                     }
                     $token_count ++;
                     break;
-            }
-            if ($shouldItContinue === true) {
-                continue;
             }
             ++ $i;
         }

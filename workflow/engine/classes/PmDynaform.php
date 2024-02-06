@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use PhpMyAdmin\SqlParser\Parser;
 use ProcessMaker\Core\System;
 use ProcessMaker\BusinessModel\DynaForm\SuggestTrait;
@@ -79,7 +80,7 @@ class PmDynaform
     public function __construct($fields = [])
     {
         $this->sysSys = (!empty(config("system.workspace"))) ? config("system.workspace") : "Undefined";
-        $this->context = \Bootstrap::getDefaultContextLog();
+        $this->context = Bootstrap::context();
         $this->dataSources = array("database", "dataVariable");
         $this->pathRTLCss = '/lib/pmdynaform/build/css/PMDynaform-rtl.css';
         $this->serverConf = ServerConf::getSingleton();
@@ -939,18 +940,16 @@ class PmDynaform
 
                 $this->context["action"] = "execute-sql" . $type;
                 $this->context["sql"] = $sql;
-                \Bootstrap::registerMonolog("sqlExecution", 200, "Sql Execution", $this->context, $this->sysSys, "processmaker.log");
+                $message = 'Sql Execution';
+                Log::channel(':sqlExecution')->info($message, Bootstrap::context($this->context));
             }
         } catch (Exception $e) {
             $this->context["action"] = "execute-sql" . $type;
             $this->context["exception"] = (array) $e;
             $this->lastQueryError = $e;
-            \Bootstrap::registerMonolog("sqlExecution",
-                                            400,
-                                            "Sql Execution",
-                                            $this->basicExceptionData($e, $sql),
-                                            $this->sysSys,
-                                            "processmaker.log");
+            $message = 'Sql Execution';
+            $context = $this->basicExceptionData($e, $sql);
+            Log::channel(':sqlExecution')->error($message, Bootstrap::context($context));
         }
         return $data;
     }
@@ -2396,14 +2395,13 @@ class PmDynaform
             $jsonData = G::json_encode($json);
 
             //Log
-            \Bootstrap::registerMonolog(
-                'RenderDynaForm',
-                400,
-                'JSON encoded string error ' . $jsonLastError . ': ' . $jsonLastErrorMsg,
-                ['token' => $token, 'projectUid' => $this->record['PRO_UID'], 'dynaFormUid' => $this->record['DYN_UID']],
-                config("system.workspace"),
-                'processmaker.log'
-            );
+            $message = 'JSON encoded string error ' . $jsonLastError . ': ' . $jsonLastErrorMsg;
+            $context = [
+                'token' => $token,
+                'projectUid' => $this->record['PRO_UID'],
+                'dynaFormUid' => $this->record['DYN_UID']
+            ];
+            Log::channel(':RenderDynaForm')->error($message, Bootstrap::context($context));
         }
 
         //Return

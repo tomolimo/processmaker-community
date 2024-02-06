@@ -1,5 +1,7 @@
 <?php
 
+use ProcessMaker\Model\User;
+
 if (!isset($_SESSION['USER_LOGGED'])) {
     $responseObject = new stdclass();
     $responseObject->error = G::LoadTranslation('ID_LOGIN_AGAIN');
@@ -156,6 +158,12 @@ try {
                 $record["PREVIOUS_USR_USERNAME"] = $record["DEL_PREVIOUS_USR_USERNAME"];
                 $record["PREVIOUS_USR_FIRSTNAME"] = $record["DEL_PREVIOUS_USR_FIRSTNAME"];
                 $record["PREVIOUS_USR_LASTNAME"] = $record["DEL_PREVIOUS_USR_LASTNAME"];
+            } elseif (!empty($record["USR_ID"])) {
+                $user = User::where("USR_ID", $record["USR_ID"])->first();
+                $record["PREVIOUS_USR_UID"] = $record["DEL_PREVIOUS_USR_UID"] = $user->USR_UID;
+                $record["PREVIOUS_USR_USERNAME"] = $record["DEL_PREVIOUS_USR_USERNAME"] = $user->USR_USERNAME;
+                $record["PREVIOUS_USR_FIRSTNAME"] = $record["DEL_PREVIOUS_USR_FIRSTNAME"] = $user->USR_FIRSTNAME;
+                $record["PREVIOUS_USR_LASTNAME"] = $record["DEL_PREVIOUS_USR_LASTNAME"] = $user->USR_LASTNAME;
             }
 
             if (isset($record["DEL_DUE_DATE"])) {
@@ -175,10 +183,16 @@ try {
 
             if (isset($record['DEL_CURRENT_TAS_TITLE']) && $record['DEL_CURRENT_TAS_TITLE'] != '') {
                 $record['APP_TAS_TITLE'] = $record['DEL_CURRENT_TAS_TITLE'];
+            } elseif (!empty($record["TAS_TITLE"]) && empty($record["APP_TAS_TITLE"])) {
+                $record["APP_TAS_TITLE"] = $record["TAS_TITLE"];
             }
 
             if (isset($record["APP_STATUS"])) {
                 $record["APP_STATUS_LABEL"] = G::LoadTranslation("ID_" . $record["APP_STATUS"]);
+            }
+
+            if (!empty($record["PRO_TITLE"]) && empty($record["APP_PRO_TITLE"])) {
+                $record["APP_PRO_TITLE"] = $record["PRO_TITLE"];
             }
 
             return $record;

@@ -1,19 +1,19 @@
 <?php
 namespace ProcessMaker\Services\Api;
 
+use Exception;
 use Luracast\Restler\RestException;
-use ProcessMaker\Project\Bpmn;
-use ProcessMaker\Services\Api;
-use \ProcessMaker\Project\Adapter;
-use \ProcessMaker\Util;
-use \ProcessMaker\Util\DateTime;
-use \ProcessMaker\BusinessModel\Validator;
 use \ProcessMaker\BusinessModel\Migrator\GranularExporter;
 use \ProcessMaker\BusinessModel\Migrator\ExportObjects;
-use \ProcessMaker\Util\IO\HttpStream;
-use \ProcessMaker\Util\Common;
+use \ProcessMaker\BusinessModel\Validator;
+use \ProcessMaker\Project\Adapter;
 use ProcessMaker\Project\Adapter\BpmnWorkflow;
-use Exception;
+use ProcessMaker\Project\Bpmn;
+use ProcessMaker\Services\Api;
+use \ProcessMaker\Util\Common;
+use \ProcessMaker\Util\DateTime;
+use \ProcessMaker\Util\IO\HttpStream;
+use RbacUsers;
 
 /**
  * @package Services\Api\ProcessMaker
@@ -295,6 +295,14 @@ class Project extends Api
             $process->setArrayFieldNameForException(array("processUid" => "prj_uid"));
 
             $response = $process->getProcess($prj_uid);
+
+            $rbacUser = new RbacUsers();
+            $res = $rbacUser->load($response['pro_create_user']);
+            if (!empty($res)) {
+                $response['pro_create_username'] = $res['USR_USERNAME'];
+                $response['pro_create_firstname'] = $res['USR_FIRSTNAME'];
+                $response['pro_create_lastname'] = $res['USR_LASTNAME'];
+            }
 
             return DateTime::convertUtcToIso8601($response, $this->arrayFieldIso8601);
 

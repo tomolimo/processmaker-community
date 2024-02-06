@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Helpers\Workspace;
+use App\Log\LogManager;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+
     /**
      * Register any application services.
      *
@@ -13,7 +17,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        App::bind('workspace', function() {
+            return new Workspace();
+        });
+
+        $this->app->singleton('log', function ($app) {
+            return new LogManager($app);
+        });
     }
 
     /**

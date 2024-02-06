@@ -2,6 +2,7 @@
 
 use App\Jobs\GenerateReportTable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Model\Application;
 
@@ -614,14 +615,12 @@ class ReportTables
                             try {
                                 $rs = $stmt->executeQuery($sQuery);
                             } catch (Exception $e) {
-                                Bootstrap::registerMonolog(
-                                    'sqlExecution',
-                                    400,
-                                    'Sql Execution',
-                                    ['sql' => $sQuery, 'error' => $e->getMessage()],
-                                    config("system.workspace"),
-                                    'processmaker.log'
-                                );
+                                $message = 'Sql Execution';
+                                $context = [
+                                    'sql' => $sQuery, 
+                                    'error' => $e->getMessage()
+                                ];
+                                Log::channel(':sqlExecution')->error($message, Bootstrap::context($context));
                             }
                         }
                     } else {
@@ -666,14 +665,12 @@ class ReportTables
                         try {
                             $rs = $stmt->executeQuery($sQuery);
                         } catch (Exception $e) {
-                            Bootstrap::registerMonolog(
-                                'sqlExecution',
-                                400,
-                                'Sql Execution',
-                                ['sql' => $sQuery, 'error' => $e->getMessage()],
-                                config("system.workspace"),
-                                'processmaker.log'
-                            );
+                            $message = 'Sql Execution';
+                            $context = [
+                                'sql' => $sQuery,
+                                'error' => $e->getMessage()
+                            ];
+                            Log::channel(':sqlExecution')->error($message, Bootstrap::context($context));
                         }
                     }
                 } else {

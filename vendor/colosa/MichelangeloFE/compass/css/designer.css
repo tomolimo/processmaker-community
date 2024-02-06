@@ -2475,6 +2475,23 @@ a.mafe-button-img-properties .pmui-button-label {
   cursor: pointer;
 }
 
+.navBar nav ul li b {
+  display: inline-block;
+  color: #fff;
+  line-height: 31px;
+  text-align: center;
+  text-decoration: none;
+  background-color: transparent;
+  height: 29px;
+  padding: 0 10px;
+  -webkit-transition: all .4s;
+  -moz-transition: all .4s;
+  -ms-transition: all .4s;
+  -o-transition: all .4s;
+  transition: all .4s;
+  cursor: pointer;
+}
+
 .navBar nav ul li input {
   height: 31px;
   width: 58px;

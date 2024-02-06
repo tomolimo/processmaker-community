@@ -105,7 +105,7 @@ PMAction.prototype.setTooltip = function (message) {
     if (typeof message === "string") {
         this.tooltip = message;
         jQuery(this.selector).attr("title", "");
-        jQuery(this.selector).tooltip({content: that.tooltip, tooltipClass: "mafe-action-tooltip"});
+        jQuery(this.selector).tooltip({ content: that.tooltip, tooltipClass: "mafe-action-tooltip" });
     }
     return this;
 };
@@ -130,8 +130,10 @@ PMAction.prototype.addEventListener = function () {
                 throw new Error('After action '.translate() + e.message);
             }
         });
+        if (this.label.text !== "") {
+            jQuery(this.label.selector).text(this.label.text);
+        }
 
-        jQuery(this.label.selector).text(this.label.text);
         this.eventsDefined = true;
     }
     return this;

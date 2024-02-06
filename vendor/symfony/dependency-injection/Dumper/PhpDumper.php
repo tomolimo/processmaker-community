@@ -222,7 +222,7 @@ class PhpDumper extends Dumper
                     $regex = preg_quote(\DIRECTORY_SEPARATOR.$dir[$i], '#').$regex;
                 } while (0 < --$i);
 
-                $this->targetDirRegex = '#'.preg_quote($dir[0], '#').$regex.'#';
+                $this->targetDirRegex = '#(^|file://|[:;, \|\r\n])'.preg_quote($dir[0], '#').$regex.'#';
             }
         }
 
@@ -309,7 +309,7 @@ EOF;
             $this->asFiles = false;
 
             if ($this->preload && null !== $autoloadFile = $this->getAutoloadFile()) {
-                $autoloadFile = substr($this->export($autoloadFile), 2, -1);
+                $autoloadFile = trim($this->export($autoloadFile), '()\\');
 
                 $code[$options['class'].'.preload.php'] = <<<EOF
 <?php
@@ -318,6 +318,10 @@ EOF;
 // You can reference it in the "opcache.preload" php.ini setting on PHP >= 7.4 when preloading is desired
 
 use Symfony\Component\DependencyInjection\Dumper\Preloader;
+
+if (in_array(PHP_SAPI, ['cli', 'phpdbg'], true)) {
+    return;
+}
 
 require $autoloadFile;
 require __DIR__.'/Container{$hash}/{$options['class']}.php';
@@ -878,6 +882,10 @@ EOF;
         }
 
         if ('service_container' === $targetId || isset($this->referenceVariables[$targetId])) {
+            return '';
+        }
+
+        if ($this->container->hasDefinition($targetId) && ($def = $this->container->getDefinition($targetId)) && !$def->isShared()) {
             return '';
         }
 
@@ -2005,12 +2013,21 @@ EOF;
      */
     private function export($value)
     {
-        if (null !== $this->targetDirRegex && \is_string($value) && preg_match($this->targetDirRegex, $value, $matches, PREG_OFFSET_CAPTURE)) {
-            $prefix = $matches[0][1] ? $this->doExport(substr($value, 0, $matches[0][1]), true).'.' : '';
+        if (null !== $this->targetDirRegex && \is_string($value) && preg_match($this->targetDirRegex, $value, $matches, \PREG_OFFSET_CAPTURE)) {
             $suffix = $matches[0][1] + \strlen($matches[0][0]);
-            $suffix = isset($value[$suffix]) ? '.'.$this->doExport(substr($value, $suffix), true) : '';
+            $matches[0][1] += \strlen($matches[1][0]);
+            $prefix = $matches[0][1] ? $this->doExport(substr($value, 0, $matches[0][1]), true).'.' : '';
+
+            if ('\\' === \DIRECTORY_SEPARATOR && isset($value[$suffix])) {
+                $cookie = '\\'.random_int(100000, \PHP_INT_MAX);
+                $suffix = '.'.$this->doExport(str_replace('\\', $cookie, substr($value, $suffix)), true);
+                $suffix = str_replace('\\'.$cookie, "'.\\DIRECTORY_SEPARATOR.'", $suffix);
+            } else {
+                $suffix = isset($value[$suffix]) ? '.'.$this->doExport(substr($value, $suffix), true) : '';
+            }
+
             $dirname = $this->asFiles ? '$this->containerDir' : '__DIR__';
-            $offset = 1 + $this->targetDirMaxMatches - \count($matches);
+            $offset = 2 + $this->targetDirMaxMatches - \count($matches);
 
             if (0 < $offset) {
                 $dirname = sprintf('\dirname(__DIR__, %d)', $offset + (int) $this->asFiles);
@@ -2067,9 +2084,7 @@ EOF;
 
     private function getAutoloadFile(): ?string
     {
-        if (null === $this->targetDirRegex) {
-            return null;
-        }
+        $file = null;
 
         foreach (spl_autoload_functions() as $autoloader) {
             if (!\is_array($autoloader)) {
@@ -2088,14 +2103,14 @@ EOF;
                 if (0 === strpos($class, 'ComposerAutoloaderInit') && $class::getLoader() === $autoloader[0]) {
                     $file = \dirname((new \ReflectionClass($class))->getFileName(), 2).'/autoload.php';
 
-                    if (preg_match($this->targetDirRegex.'A', $file)) {
+                    if (null !== $this->targetDirRegex && preg_match($this->targetDirRegex.'A', $file)) {
                         return $file;
                     }
                 }
             }
         }
 
-        return null;
+        return $file;
     }
 
     private function getClasses(Definition $definition): array

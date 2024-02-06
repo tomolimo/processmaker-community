@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\SqlParser\Tests\Parser;
@@ -33,6 +34,7 @@ class AlterStatementTest extends TestCase
             ['parser/parseAlterErr'],
             ['parser/parseAlterErr2'],
             ['parser/parseAlterErr3'],
+            ['parser/parseAlterWithInvisible'],
         ];
     }
 }

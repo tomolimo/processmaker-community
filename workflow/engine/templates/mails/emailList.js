@@ -54,6 +54,9 @@ Ext.onReady(function(){
                 data = PMExt.emailConst.numberColumn.defaultValue;
             }
         }
+        if (metadata.id === 'APP_MSG_TO' || metadata.id === 'APP_MSG_ERROR') {
+            return Ext.util.Format.htmlEncode(data);
+        }
         var new_text = metadata.style.split(';');
         var style = '';
         for (var i = 0; i < new_text.length -1 ; i++) {

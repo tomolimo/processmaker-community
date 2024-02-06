@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
+use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 use ProcessMaker\BusinessModel\Task as BusinessModelTask;
 use ProcessMaker\BusinessModel\User as BusinessModelUser;
 use ProcessMaker\BusinessModel\WebEntryEvent;
@@ -565,7 +567,7 @@ class Cases
                 }
             }
             return $fields;
-        } catch (exception $e) {
+        } catch (Exception $e) {
             throw ($e);
         }
     }
@@ -1081,7 +1083,12 @@ class Cases
                     $oDerivation->verifyIsCaseChild($sAppUid);
                 }
             } catch (Exception $e) {
-                Bootstrap::registerMonolog('DeleteCases', 200, 'Error in sub-process when trying to route a child case related to the case', ['application_uid' => $sAppUid, 'error' => $e->getMessage()], config("system.workspace"), 'processmaker.log');
+                $message = 'Error in sub-process when trying to route a child case related to the case';
+                $context = [
+                    'application_uid' => $sAppUid,
+                    'error' => $e->getMessage()
+                ];
+                Log::channel(':DeleteCases')->info($message, Bootstrap::context($context));
             }
 
             //Delete the registries in the table SUB_APPLICATION
@@ -1115,12 +1122,13 @@ class Cases
                 }
             }
 
-            /** ProcessMaker log*/
-            $context = Bootstrap::getDefaultContextLog();
-            $context['appUid'] = $appUidCopy;
-            $context['request'] = $nameFiles;
-            Bootstrap::registerMonolog('DeleteCases', 200, 'Delete Case', $context);
-
+            /** ProcessMaker log */
+            $message = 'Delete Case';
+            $context = [
+                'appUid' => $appUidCopy,
+                'request' => $nameFiles
+            ];
+            Log::channel(':DeleteCases')->info($message, Bootstrap::context($context));
             return $result;
         } catch (exception $e) {
             throw ($e);
@@ -2163,7 +2171,8 @@ class Cases
         }
 
         //Log
-        $data = [
+        $message = 'Create case';
+        $context = $data = [
             "appUid" => $sAppUid,
             "usrUid" => $sUsrUid,
             "tasUid" => $sTasUid,
@@ -2172,8 +2181,7 @@ class Cases
             "delIndex" => $iDelIndex,
             "appInitDate" => $Fields['APP_INIT_DATE']
         ];
-        Bootstrap::registerMonolog('CreateCase', 200, "Create case", $data, config("system.workspace"), 'processmaker.log');
-
+        Log::channel(':CreateCase')->info($message, Bootstrap::context($context));
         //call plugin
         if (class_exists('folderData')) {
             $folderData = new folderData($sProUid, $proFields['PRO_TITLE'], $sAppUid, $newValues['APP_TITLE'], $sUsrUid);
@@ -5325,17 +5333,19 @@ class Cases
                     $from = $fromName . (($fromMail != '') ? ' <' . $fromMail . '>' : '');
                     //If the configuration was not configured correctly
                     if (empty($fromMail)) {
-                        $dataLog = \Bootstrap::getDefaultContextLog();
-                        $dataLog['appUid'] = $arrayData['APPLICATION'];
-                        $dataLog['usrUid'] = $arrayData['USER_LOGGED'];
-                        $dataLog['appNumber'] = $arrayData['APP_NUMBER'];
-                        $dataLog['tasUid'] = $arrayData['TASK'];
-                        $dataLog['proUid'] = $aTaskInfo['PRO_UID'];
-                        $dataLog['appMessageStatus'] = 'pending';
-                        $dataLog['subject'] = $sSubject;
-                        $dataLog['from'] = $from;
-                        $dataLog['action'] = G::LoadTranslation('ID_EMAIL_SERVER_FROM_MAIL_EMPTY');
-                        Bootstrap::registerMonolog('EmailServer', 300, 'Email server', $dataLog, $dataLog['workspace'], 'processmaker.log');
+                        $message = 'Email server';
+                        $context = [
+                            'appUid' => $arrayData['APPLICATION'],
+                            'usrUid' => $arrayData['USER_LOGGED'],
+                            'appNumber' => $arrayData['APP_NUMBER'],
+                            'tasUid' => $arrayData['TASK'],
+                            'proUid' => $aTaskInfo['PRO_UID'],
+                            'appMessageStatus' => 'pending',
+                            'subject' => $sSubject,
+                            'from' => $from,
+                            'action' => G::LoadTranslation('ID_EMAIL_SERVER_FROM_MAIL_EMPTY')
+                        ];
+                        Log::channel(':EmailServer')->warning($message, Bootstrap::context($context));
                     }
                 }
                 $dataLastEmail['msgError'] = $msgError;
@@ -5406,17 +5416,19 @@ class Cases
                     $from = $fromName . (($fromMail != '') ? ' <' . $fromMail . '>' : '');
                     //If the configuration was not configured correctly
                     if (empty($fromMail)) {
-                        $dataLog = \Bootstrap::getDefaultContextLog();
-                        $dataLog['appUid'] = $arrayData['APPLICATION'];
-                        $dataLog['usrUid'] = $arrayData['USER_LOGGED'];
-                        $dataLog['appNumber'] = $arrayData['APP_NUMBER'];
-                        $dataLog['tasUid'] = $arrayData['TASK'];
-                        $dataLog['proUid'] = $aTaskInfo['PRO_UID'];
-                        $dataLog['appMessageStatus'] = 'pending';
-                        $dataLog['subject'] = $sSubject;
-                        $dataLog['from'] = $from;
-                        $dataLog['action'] = G::LoadTranslation('ID_EMAIL_SERVER_FROM_MAIL_EMPTY');
-                        Bootstrap::registerMonolog('EmailServer', 300, 'Email server', $dataLog, $dataLog['workspace'], 'processmaker.log');
+                        $message = 'Email server';
+                        $context = [
+                            'appUid' => $arrayData['APPLICATION'],
+                            'usrUid' => $arrayData['USER_LOGGED'],
+                            'appNumber' => $arrayData['APP_NUMBER'],
+                            'tasUid' => $arrayData['TASK'],
+                            'proUid' => $aTaskInfo['PRO_UID'],
+                            'appMessageStatus' => 'pending',
+                            'subject' => $sSubject,
+                            'from' => $from,
+                            'action' => G::LoadTranslation('ID_EMAIL_SERVER_FROM_MAIL_EMPTY')
+                        ];
+                        Log::channel(':EmailServer')->warning($message, Bootstrap::context($context));
                     }
                 }
                 $dataLastEmail['msgError'] = $msgError;
@@ -5660,7 +5672,6 @@ class Cases
                     }
 
                     $arrayAux1 = $tasks->getUsersOfTask($taskUid, 1);
-
                     foreach ($arrayAux1 as $arrayUser) {
                         $arrayTaskUser[] = $arrayUser['USR_UID'];
                     }
@@ -5683,7 +5694,7 @@ class Cases
                         if ($to == '') {
                             $to = $toAux;
                         } else {
-                            $cc .= (($cc != '') ? ',' : '') . $toAux;
+                            $to .= ',' . $toAux;
                         }
                     }
                 }
@@ -5704,7 +5715,7 @@ class Cases
                             $to = $toAux;
                             $sw = 0;
                         } else {
-                            $cc = $cc . (($cc != null) ? "," : null) . $toAux;
+                            $to .= ',' . $toAux;
                         }
                     }
                     $arrayResp ['to'] = $to;
@@ -5729,7 +5740,7 @@ class Cases
                             $to = $toAux;
                             $sw = 0;
                         } else {
-                            $cc = $cc . (($cc != null) ? "," : null) . $toAux;
+                            $to .= ',' . $toAux;
                         }
                     }
                     $arrayResp ['to'] = $to;
@@ -5880,7 +5891,7 @@ class Cases
                 switch ($opType) {
                     case 'ANY':
                         //For dynaforms
-                        $listDynaform = $objectPermission->objectPermissionByDynaform(
+                        $listDynaform = BusinessModelCases::dynaFormsByApplication(
                             $appUid,
                             $opTaskSource,
                             $opObjUid,
@@ -5937,7 +5948,7 @@ class Cases
                         $resultMessages = array_merge($resultMessages, $listMessage);
                         break;
                     case 'DYNAFORM':
-                        $listDynaform = $objectPermission->objectPermissionByDynaform(
+                        $listDynaform = BusinessModelCases::dynaFormsByApplication(
                             $appUid,
                             $opTaskSource,
                             $opObjUid,
@@ -7147,6 +7158,7 @@ class Cases
             $additionalTables = new AdditionalTables();
             $listTables = $additionalTables->getReportTables($applicationFields["PRO_UID"]);
             $pmTable = new PmTable();
+            $tableName = '';
             foreach ($listTables as $row) {
                 try {
                     $tableName = $row["ADD_TAB_NAME"];
@@ -7157,11 +7169,13 @@ class Cases
                     $criteria->add($pmTablePeer::APP_UID, $applicationUid);
                     $pmTablePeer::doDelete($criteria);
                 } catch (Exception $e) {
-                    $context = Bootstrap::getDefaultContextLog();
-                    $context['appUid'] = $applicationUid;
-                    $context['proUid'] = $applicationFields["PRO_UID"];
-                    $context['reportTable'] = $tableName;
-                    Bootstrap::registerMonolog('DeleteCases', 400, $e->getMessage(), $context);
+                    $message = $e->getMessage();
+                    $context = [
+                        'appUid' => $applicationUid,
+                        'proUid' => $applicationFields["PRO_UID"],
+                        'reportTable' => $tableName
+                    ];
+                    Log::channel(':DeleteCases')->error($message, Bootstrap::context($context));
                 }
             }
         }

@@ -254,7 +254,7 @@ class ListCanceled extends BaseListCanceled implements ListInterface
             $criteria->addSelectColumn(ProcessPeer::PRO_CATEGORY);
             $aConditions   = array();
             $aConditions[] = array(ListCanceledPeer::PRO_UID, ProcessPeer::PRO_UID);
-            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . $category . "'");
+            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . G::realEscapeString($category) . "'");
             $criteria->addJoinMC($aConditions, Criteria::INNER_JOIN);
         }
 

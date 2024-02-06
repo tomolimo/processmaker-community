@@ -460,6 +460,15 @@
 				name ="form[<%-name%>_label]"
 				<%}%>
 				>
+				<input type="hidden" value="<%-data['value']%>"
+					<% if  ( group === "grid") { %>
+						id = "form<%-id%>"
+						name ="form<%-name%>"
+					<%} else{%>
+						id = "form[<%-id%>]"
+						name ="form[<%-name%>]"
+					<%}%>
+				>
 				<% if (group === "form") { %>
 				<%if (hint !== "" && hint !== null){%>
 				<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%-hint%>"></span>
@@ -510,7 +519,7 @@
 						aria-label="<%-ariaLabel%>"
 					<%}%>
 					>
-					<%if(therePlaceholder){%>
+					<%if(therePlaceholder && placeholderOption){%>
 						<option disabled id="placeholder-option" value=<%-placeholderOption["value"]%> ><%-placeholderOption["label"]%></option>
 					<%}%>
 					<% for(var i=0; i<options.length; i+=1) { %>
@@ -808,6 +817,73 @@
 	</div>
 </script>
 
+<script type="text/template" id="tpl-label-extension">
+	<div id="<%-id%>" name="field-<%-name%>" class="<%-namespace%>-field-<%-originalType%> <%if (group === 'form'){%> form-group col-sm-<%-colSpan%> col-md-<%-colSpan%> col-lg-<%-colSpan%> <%}%> <%-namespace%>-<%-mode%>-<%-type%> pmdynaform-field">
+		<% if(group === "form") {%>
+			<div class="col-sm-<%-colSpanLabel%> col-md-<%-colSpanLabel%> col-lg-<%-colSpanLabel%>">
+				<label class="control-label pmdynaform-label">
+					<span class="textlabel"
+					<%if(ariaLabel !== ""){%>
+						aria-label="<%-ariaLabel%>"
+					<%}%>
+					><%=label %></span>
+					<%if(required){%>
+					<span class="pmdynaform-field-required">*</span>
+					<%}%>
+				</label>
+			</div>
+		<%} else if((group !== "form") && (layout === "form")){%>
+		<label class="hidden-lg hidden-md hidden-sm visible-xs control-label pmdynaform-label col-xs-<%-colSpanLabel%>">
+			<span class="textlabel"><%=label %></span>
+		</label>
+		<%}%>
+		<div <%if (group === 'form'){ %>
+		class="col-sm-<%-colSpanControl%> col-md-<%-colSpanControl%> col-lg-<%-colSpanControl%> pmdynaform-field-control"
+		<%} else if (layout === "form"){ %>
+		class="col-xs-<%-colSpanControl%> col-sm-12 col-md-12 col-lg-12"
+		<%} else if (layout === "responsive") {%>
+		class="col-xs-12 col-sm-12 col-md-12 col-lg-12"
+		<%}%>>
+		<div class="pmdynaform-label-options form-control">
+			<span title="<%-data['label']%>"
+			class = "label-<%-type%>"
+			><%-data['label']%></span>
+
+            <% if (originalType === "checkgroup") {
+            _.each(data['value'], function (item, index) { %>
+                <input type="hidden" value="<%-item%>" name="form[<%-name%>][]" id="form[<%-id%>][<%-index%>]"/>
+            <% });
+            } else {
+            %>
+                <input class="value-hidden" type="hidden" value="<%-data['value']%>"
+                <% if  ( group === "grid") { %>
+                id = "form<%-id%>"
+                name ="form<%-name%>"
+                <%} else{%>
+                id = "form[<%-id%>]"
+                name ="form[<%-name%>]"
+                <%}%>
+                >
+            <% } %>
+			<input class="label-hidden" type="hidden" value="<%-data['label']%>"
+			<% if  ( group === "grid") { %>
+			id = "form<%-id%>_label"
+			name ="form<%-name%>_label"
+			<%} else{%>
+			id = "form[<%-id%>_label]"
+			name ="form[<%-name%>_label]"
+			<%}%>
+			>
+		</div>
+		<% if (group === "form") { %>
+		<%if (hint !== "" && hint !== null){%>
+		<span class="glyphicon glyphicon-info-sign" data-toggle="tooltip" data-container="body" data-placement="bottom" title="<%=hint%>"></span>
+		<%}%>
+		<% } %>
+	</div>
+	</div>
+</script>
+
 <script type="text/template" id="tpl-hidden">
 	<div id="<%-id%>" class="<%-namespace%>-field-<%-type%> pmdynaform-field">
 		<input
@@ -969,7 +1045,7 @@
 is called to PMDynaform.view.Dropdown method "_setOptions()"
 -->
 <script type='text/template' id='tpl-dropdown-options'>
-	<%if(therePlaceholder){%>
+	<%if(therePlaceholder && placeholderOption){%>
 	<option disabled id="placeholder-option" value=<%-placeholderOption["value"]%> ><%-placeholderOption["label"]%></option>
 	<%}%>
 	<% for(var i=0; i<options.length; i+=1) { %>

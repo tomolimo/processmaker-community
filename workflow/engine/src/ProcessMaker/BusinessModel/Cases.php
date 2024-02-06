@@ -31,9 +31,10 @@ use Exception;
 use G;
 use Groups;
 use GroupUserPeer;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InputDocument;
 use InvalidIndexSearchTextException;
-use ListParticipatedLast;
 use PmDynaform;
 use PmTable;
 use ProcessMaker\BusinessModel\ProcessSupervisor as BmProcessSupervisor;
@@ -3311,7 +3312,9 @@ class Cases
                         }
                         $arrayApplicationData['APP_DATA'][$key] = G::json_encode($files);
                     } catch (Exception $e) {
-                        Bootstrap::registerMonolog('DeleteFile', 400, $e->getMessage(), $value, config("system.workspace"), 'processmaker.log');
+                        $message = $e->getMessage();
+                        $context = $value;
+                        Log::channel(':DeleteFile')->error($message, Bootstrap::context($context));
                     }
                 }
                 $flagDelete = true;
@@ -3783,17 +3786,22 @@ class Cases
      * @param string $varName
      * @param mixed $inpDocUid
      * @param string $appDocUid
+     * @param int $delegationIndex
      *
      * @return array
      * @throws Exception
      */
-    public function uploadFiles($userUid, $appUid, $varName, $inpDocUid = -1, $appDocUid = null)
+    public function uploadFiles($userUid, $appUid, $varName, $inpDocUid = -1, $appDocUid = null, $delegationIndex = null)
     {
         $response = [];
         if (isset($_FILES["form"]["name"]) && count($_FILES["form"]["name"]) > 0) {
             // Get the delIndex related to the case
             $cases = new ClassesCases();
-            $delIndex = $cases->getCurrentDelegation($appUid, $userUid);
+            if (!empty($delegationIndex)) {
+                $delIndex = $delegationIndex;
+            } else {
+                $delIndex = $cases->getCurrentDelegation($appUid, $userUid);
+            }
             // Get information about the user
             $user = new ModelUsers();
             $userCreator = $user->loadDetailed($userUid)['USR_FULLNAME'];
@@ -4059,8 +4067,12 @@ class Cases
                     ->status(415)
                     ->message(G::LoadTranslation('ID_UPLOAD_INVALID_DOC_TYPE_FILE', [$inpDocTypeFile]))
                     ->log(function ($rule) {
-                        Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(),
-                            $rule->getData()->filename);
+                        $message = $rule->getMessage();
+                        $context = [
+                            'filename' => $rule->getData()->filename,
+                            'url' => $_SERVER["REQUEST_URI"] ?? ''
+                        ];
+                        Log::channel(':phpUpload')->notice($message, Bootstrap::context($context));
                     });
                 // Rule: maximum file size
                 $validator->addRule()
@@ -4079,8 +4091,12 @@ class Cases
                     ->message(G::LoadTranslation("ID_UPLOAD_INVALID_DOC_MAX_FILESIZE",
                         [$inpDocMaxFileSize . $inpDocMaxFileSizeUnit]))
                     ->log(function ($rule) {
-                        Bootstrap::registerMonologPhpUploadExecution('phpUpload', 250, $rule->getMessage(),
-                            $rule->getData()->filename);
+                        $message = $rule->getMessage();
+                        $context = [
+                            'filename' => $rule->getData()->filename,
+                            'url' => $_SERVER["REQUEST_URI"] ?? ''
+                        ];
+                        Log::channel(':phpUpload')->notice($message, Bootstrap::context($context));
                     });
                 $validator->validate();
                 // We will to review if the validator has some error
@@ -4091,5 +4107,172 @@ class Cases
         }
 
         return true;
+    }
+
+    /**
+     * Get the cases related to the self services timeout that needs to execute the trigger related
+     *
+     * @return array
+     * @throws Exception
+    */
+    public static function executeSelfServiceTimeout()
+    {
+        try {
+            $casesSelfService = ListUnassigned::selfServiceTimeout();
+            $casesExecuted = [];
+            foreach ($casesSelfService as $row) {
+                $appUid = $row["APP_UID"];
+                $appNumber = $row["APP_NUMBER"];
+                $delIndex = $row["DEL_INDEX"];
+                $delegateDate = $row["DEL_DELEGATE_DATE"];
+                $proUid = $row["PRO_UID"];
+                $taskUid = $row["TAS_UID"];
+                $taskSelfServiceTime = intval($row["TAS_SELFSERVICE_TIME"]);
+                $taskSelfServiceTimeUnit = $row["TAS_SELFSERVICE_TIME_UNIT"];
+                $triggerUid = $row["TAS_SELFSERVICE_TRIGGER_UID"];
+
+                /*----------------------------------********---------------------------------*/
+                $typeOfExecution = $row["TAS_SELFSERVICE_EXECUTION"];
+                $flagExecuteOnce = true;
+                // This option will be executed just once, can check if was executed before
+                if ($typeOfExecution == 'ONCE') {
+                    $appTimeout = new AppTimeoutAction();
+                    $appTimeout->setCaseUid($appUid);
+                    $appTimeout->setIndex($delIndex);
+                    $caseExecuted = $appTimeout->cases();
+                    $flagExecuteOnce = !empty($caseExecuted) ? false : true;
+                }
+                /*----------------------------------********---------------------------------*/
+
+                // Add the time in the corresponding unit to the delegation date
+                $delegateDate = calculateDate($delegateDate, $taskSelfServiceTimeUnit, $taskSelfServiceTime);
+
+                // Define the current time
+                $datetime = new DateTime('now');
+                $currentDate = $datetime->format('Y-m-d H:i:s');
+
+                // Check if the triggers to be executed
+                if ($currentDate >= $delegateDate && $flagExecuteOnce) {
+                    // Review if the session process is defined
+                    $sessProcess = null;
+                    $sessProcessSw = false;
+                    if (isset($_SESSION["PROCESS"])) {
+                        $sessProcess = $_SESSION["PROCESS"];
+                        $sessProcessSw = true;
+                    }
+                    // Load case data
+                    $case = new ClassesCases();
+                    $appFields = $case->loadCase($appUid);
+                    $appFields["APP_DATA"]["APPLICATION"] = $appUid;
+                    // Set the process defined in the case related
+                    $_SESSION["PROCESS"] = $appFields["PRO_UID"];
+
+                    // Get the trigger related and execute
+                    $triggersList = [];
+                    if (!empty($triggerUid)) {
+                        $trigger = new Triggers();
+                        $trigger->setTrigger($triggerUid);
+                        $triggersList = $trigger->triggers();
+                    }
+
+                    // If the trigger exist, let's to execute
+                    if (!empty($triggersList)) {
+                        // Execute the trigger defined in the self service timeout
+                        $fieldsCase['APP_DATA'] = $case->executeTriggerFromList(
+                            $triggersList,
+                            $appFields['APP_DATA'],
+                            'SELF_SERVICE_TIMEOUT',
+                            '',
+                            '',
+                            '',
+                            false
+                        );
+
+                        // Update the case
+                        $case->updateCase($appUid, $fieldsCase);
+
+                        /*----------------------------------********---------------------------------*/
+                        if ($typeOfExecution == 'ONCE') {
+                            // Saving the case`s data if the 'Execution' is set in ONCE.
+                            $appTimeoutActionExecuted = new AppTimeoutActionExecuted();
+                            $dataSelf = [];
+                            $dataSelf["APP_UID"] = $appUid;
+                            $dataSelf["DEL_INDEX"] = $delIndex;
+                            $dataSelf["EXECUTION_DATE"] = time();
+                            $appTimeoutActionExecuted->create($dataSelf);
+                        }
+                        /*----------------------------------********---------------------------------*/
+
+                        array_push($casesExecuted, $appNumber); // Register the cases executed
+
+                        // Logging this action
+                        $context = [
+                            'appUid' => $appUid,
+                            'appNumber' => $appNumber,
+                            'triUid' => $triggerUid,
+                            'proUid' => $proUid,
+                            'tasUid' => $taskUid,
+                            'selfServiceTime' => $taskSelfServiceTime,
+                            'selfServiceTimeUnit' => $taskSelfServiceTimeUnit,
+                        ];
+                        Log::channel(':TriggerExecution')->info('Timeout trigger execution', Bootstrap::context($context));
+                    }
+
+                    unset($_SESSION["PROCESS"]);
+
+                    if ($sessProcessSw) {
+                        $_SESSION["PROCESS"] = $sessProcess;
+                    }
+                }
+            }
+
+            return $casesExecuted;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Get DynaForms Uids assigned as steps in the related process by application Uid
+     *
+     * @param string $appUid
+     * @param int $sourceTask
+     * @param string $dynUid
+     * @param string $caseStatus
+     * @return array
+     */
+    public static function dynaFormsByApplication($appUid, $sourceTask = 0, $dynUid = '', $caseStatus = '')
+    {
+        // Select distinct DYN_UID
+        $query = ModelApplication::query()->select('STEP.STEP_UID_OBJ AS DYN_UID')->distinct();
+
+        // Join with STEP table
+        $query->join('STEP', function ($join)  {
+            $join->on('APPLICATION.PRO_UID', '=', 'STEP.PRO_UID');
+            $join->on('STEP.STEP_TYPE_OBJ', '=', DB::raw("'DYNAFORM'"));
+        });
+
+        // Filter by application Uid
+        $query->where('APPLICATION.APP_UID', '=', $appUid);
+
+        // Filter by source task
+        if ($caseStatus != 'COMPLETED' && $sourceTask != '' && (int)$sourceTask != 0) {
+            $query->where('STEP.TAS_UID', '=', $sourceTask);
+        }
+
+        // Filter by DynaForm Uid
+        if ($dynUid != '' && $dynUid != '0') {
+            $query->where('STEP.STEP_UID_OBJ', '=', $dynUid);
+        }
+
+        // Get results
+        $dynaForms = [];
+        $items = $query->get();
+        $items->each(function ($item) use (&$dynaForms) {
+            $dynaForms[] = $item->DYN_UID;
+        });
+
+        // Return results
+        return $dynaForms;
     }
 }

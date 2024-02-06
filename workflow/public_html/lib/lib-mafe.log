@@ -1,30 +1,30 @@
-[8 weeks ago] 8f7a7423  translate <fabio>
-[8 weeks ago] e3dd3b95  PMCORE-1829:default-vaule property does not have hint <fabio>
-[8 weeks ago] 24c0137d  PMCORE-1828:Hint to max-date property of date-time control was not update <fabio>
-[9 weeks ago] 45574666  (origin/bugfix/PMCORE-1776) PMCORE-1776 <Henry Jordan>
-[9 weeks ago] 0b76dd90  (origin/bugfix/PMCORE-1745_B) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
-[9 weeks ago] 50aee6d9  (origin/bugfix/PMCORE-1745) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
-[3 months ago] 970aedbb  PMCORE-1712:PMFTotalCalculation trigger Wizard help letters get out of the box <Fabio Guachalla>
-[3 months ago] e624023a  (origin/bugfix/PMCORE-1688) PMCORE-1688 Review the composer from the release/3.5.0 <Roly Rudy Gutierrez Pinto>
-[3 months ago] 6fd2b782  PMCORE-1682:Rollback PMCORE-506 (Permit same ID Name on Grids) <Fabio Guachalla>
-[3 months ago] 9acb89a9  (origin/bugfix/PMCORE-1654) PMCORE-1654: The auto-completion with variable type @# doesn't work <Rodrigo Quelca>
-[3 months ago] 5e68d789  (origin/feature/PMCORE-503) Code Review <Fabio Guachalla>
-[3 months ago] 5299df09  (origin/feature/PMCORE-1517) Dependent fields memory cache storage <Rodrigo Quelca>
-[3 months ago] f3d79866  (origin/feature/PMCORE-1546) PMCORE-1546: The autocomplete is not working for defaultValue if a field is into a grid. <Rodrigo Quelca>
-[3 months ago] 74a0c640  Revert "Merged in feature/PMCORE-1462 (pull request #1876)" <Rodrigo Quelca>
-[4 months ago] c12fd6ba  PMCORE-506:Processmaker dynaform designer should allow same ID or Name between grids Grids <fabio>
-[4 months ago] e11cdb50  PMCORE-1494:form designer the autocomplete list must filter by field type. <fabio>
-[4 months ago] a6780b8d  (origin/feature/PMCORE-1493) PMCORE-1493: after the form designer was closed the data picker and auto complete was showed <Rodrigo Quelca Sirpa>
-[4 months ago] 655a7342  PMCORE-1462:Intermediate Timer Events properties Variables <fabio>
-[4 months ago] 5a6405b1  (origin/feature/PMCORE-1400) PMCORE-1400: Code auto-completion functionality dynaform designer <Rodrigo Quelca>
-[4 months ago] 98626615  PMCORE-1424:Variables setting intermedial events <fabio>
-[4 months ago] c5039f36  PMCORE-505:The default name for labels for al pmdynaform fields <fabio>
-[5 months ago] e14bc1d6  (origin/bugfix/PMCORE-959) PMCORE-959 <Andrea Adamczyk>
-[6 months ago] de7176a2  (origin/bugfix/PMCORE-1268) PMCORE-1268 <Andrea Adamczyk>
-[7 months ago] 4c4cc59e  (origin/bugfix/PMCORE-525) PMCORE-525 Two different labels for the same action (Promotion Manager export) <Roly Rudy Gutierrez Pinto>
-[8 months ago] 791fdb14  (origin/bugfix/PMCORE-502-A) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
-[8 months ago] fab3e34c  (origin/bugfix/PMCORE-502) PMCORE-502 Update the composer and solving some warnings <Roly Rudy Gutierrez Pinto>
-[8 months ago] 14ce3849  PMC-1528:PROD-1251 >> The Datetime control inside a grid control has its "Aria Label" property <Fabio Guachalla>
-[9 months ago] ac07cf43  (origin/bugfix/PMC-1529) PMC-1529: aria label visible option in checkbox on a grid <Rodrigo Quelca>
-[9 months ago] 6ca0e153  (origin/bugfix/PMC-1527) PMC-1527: PROD-1251 >> The Datetime control inside a grid control has its "Tab Index" property <Rodrigo Quelca>
-[9 months ago] a3659026  (origin/feature/PMC-1463) PMC-1463: Dynaform Designer - Accessibility Improvements Stage 1 <Rodrigo Quelca>
+[8 weeks ago] a9ede644  (origin/bugfix/PMCORE-2311-C) PMCORE-2311-C <Andrea Adamczyk>
+[9 weeks ago] 734f5c8f  (origin/bugfix/PMCORE-2311-B) PMCORE-2311-B <Andrea Adamczyk>
+[9 weeks ago] e1b2fc4e  (origin/bugfix/PMCORE-2136-C) PMCORE-2136-C <Henry Jordan>
+[9 weeks ago] 0e0de9d8  (origin/bugfix/PMCORE-2311-A) PMCORE-2311-A <Andrea Adamczyk>
+[9 weeks ago] d6c268a9  (origin/bugfix/PMCORE-2136-B) PMCORE-2136-B <Henry Jordan>
+[9 weeks ago] db51b322  (origin/bugfix/PMCORE-2136-A) PMCORE-2136-A <Henry Jordan>
+[9 weeks ago] 18b5e64f  PMCORE-2311 <Andrea Adamczyk>
+[2 months ago] a1283ec8  (origin/bugfix/PMCORE-2278) PMCORE-2278 <Henry Jordan>
+[3 months ago] 440c12da  (origin/bugfix/PMCORE-2136) PMCORE-2136 <Henry Jordan>
+[3 months ago] 2bf373db  (origin/bugfix/PMCORE-561) PMCORE-561 <Andrea Adamczyk>
+[3 months ago] 9af801bc  (origin/bugfix/PMCORE-2040) PMCORE-2040 <Henry Jordan>
+[3 months ago] 4568d802  (origin/bugfix/PMCORE-2044) PMCORE-2044 <Henry Jordan>
+[3 months ago] 9166e496  (origin/feature/PMCORE-2095) Fix CR observations by Rodrigo <Julio Cesar Laura Avendaño>
+[3 months ago] 1f85f34e  (origin/bugfix/PMCORE-694) PMCORE-694 <Henry Jordan>
+[3 months ago] a5ffc5de  (origin/bugfix/PMCORE-2128) PMCORE-2128 <Julio Cesar Laura Avendaño>
+[3 months ago] 7ddb25d1  Fix PM observations <Julio Cesar Laura Avendaño>
+[3 months ago] 009637ed  PMCORE-2099 <Julio Cesar Laura Avendaño>
+[3 months ago] 41259199  PMCORE-2096 <Julio Cesar Laura Avendaño>
+[4 months ago] 5b3dce87  Fix PM observations <Julio Cesar Laura Avendaño>
+[4 months ago] 7f2dcb73  (origin/bugfix/PMCORE-2099) PMCORE-2099 <Julio Cesar Laura Avendaño>
+[4 months ago] c0cb7a81  (origin/bugfix/PMCORE-2096) PMCORE-2096 <Julio Cesar Laura Avendaño>
+[4 months ago] c09985a7  (origin/feature/PMCORE-2112) PMCORE-2112: Add Fixed Location Property to geomap mobile control <Rodrigo Quelca>
+[5 months ago] 8f7a7423  translate <fabio>
+[5 months ago] e3dd3b95  PMCORE-1829:default-vaule property does not have hint <fabio>
+[5 months ago] 24c0137d  PMCORE-1828:Hint to max-date property of date-time control was not update <fabio>
+[5 months ago] 45574666  (origin/bugfix/PMCORE-1776) PMCORE-1776 <Henry Jordan>
+[5 months ago] 0b76dd90  (origin/bugfix/PMCORE-1745_B) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
+[5 months ago] 50aee6d9  (origin/bugfix/PMCORE-1745) PMCORE-1745: ABE - Email response >> the default email account is empty for the "receiver account" option <Rodrigo Quelca>
+[6 months ago] 970aedbb  PMCORE-1712:PMFTotalCalculation trigger Wizard help letters get out of the box <Fabio Guachalla>
+[6 months ago] e624023a  (origin/bugfix/PMCORE-1688) PMCORE-1688 Review the composer from the release/3.5.0 <Roly Rudy Gutierrez Pinto>

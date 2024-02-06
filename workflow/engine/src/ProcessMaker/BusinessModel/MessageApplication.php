@@ -1,5 +1,9 @@
 <?php
+
 namespace ProcessMaker\BusinessModel;
+
+use Bootstrap;
+use Illuminate\Support\Facades\Log;
 
 class MessageApplication
 {
@@ -446,12 +450,9 @@ class MessageApplication
                                         ,'evnUid'   => $value['EVN_UID']
                                         ,'evnName'  => $value['EVN_NAME']
                                     );
-                                    $this->syslog(
-                                        200
-                                        ,"Case #$appNumber created"
-                                        ,'CREATED-NEW-CASE'
-                                        ,$aInfo
-                                    );
+                                    $message = "Case #$appNumber created";
+                                    $context = $aInfo;
+                                    Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
 
                                     $result = $ws->derivateCase($messageEventDefinitionUserUid, $applicationUid, 1);
                                     $arrayResult = \G::json_decode(\G::json_encode($result), true);
@@ -469,12 +470,9 @@ class MessageApplication
                                             ,'evnUid'   => $value['EVN_UID']
                                             ,'evnName'  => $value['EVN_NAME']
                                         );
-                                        $this->syslog(
-                                            200
-                                            ,"Case #$appNumber routed"
-                                            ,'ROUTED-NEW-CASE'
-                                            ,$aInfo
-                                        );
+                                        $message = "Case #$appNumber routed";
+                                        $context = $aInfo;
+                                        Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
                                     } else {
                                         $aInfo = array(
                                             'ip'       => \G::getIpAddress()
@@ -488,12 +486,9 @@ class MessageApplication
                                             ,'evnUid'   => $value['EVN_UID']
                                             ,'evnName'  => $value['EVN_NAME']
                                         );
-                                        $this->syslog(
-                                            500
-                                            ,"Failed case #$appNumber. " . $arrayResult["message"]
-                                            ,'ROUTED-NEW-CASE'
-                                            ,$aInfo
-                                        );
+                                        $message = "Failed case #$appNumber. " . $arrayResult["message"];
+                                        $context = $aInfo;
+                                        Log::channel(':MessageEventCron')->critical($message, Bootstrap::context($context));
                                     }
 
                                     $flagCatched = true;
@@ -511,12 +506,9 @@ class MessageApplication
                                         ,'evnUid'   => $value['EVN_UID']
                                         ,'evnName'  => $value['EVN_NAME']
                                     );
-                                    $this->syslog(
-                                        500
-                                        ,"Failed case #$appNumber. " . $arrayResult["message"]
-                                        ,'CREATED-NEW-CASE'
-                                        ,$aInfo
-                                    );
+                                    $message = "Failed case #$appNumber. " . $arrayResult["message"];
+                                    $context = $aInfo;
+                                    Log::channel(':MessageEventCron')->critical($message, Bootstrap::context($context));
                                 }
                             }
                             break;
@@ -567,12 +559,9 @@ class MessageApplication
                                             ,'evnUid'   => $value['EVN_UID']
                                             ,'evnName'  => $value['EVN_NAME']
                                         );
-                                        $this->syslog(
-                                            200
-                                            ,"Case #$appNumber routed "
-                                            ,'ROUTED-NEW-CASE'
-                                            ,$aInfo
-                                        );
+                                        $message = "Case #$appNumber routed ";
+                                        $context = $aInfo;
+                                        Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
                                     } else {
                                         $aInfo = array(
                                             'ip'       => \G::getIpAddress()
@@ -587,12 +576,9 @@ class MessageApplication
                                             ,'evnUid'   => $value['EVN_UID']
                                             ,'evnName'  => $value['EVN_NAME']
                                         );
-                                        $this->syslog(
-                                        500
-                                        ,"Failed case #$appNumber. " . $arrayResult["message"]
-                                        ,'ROUTED-NEW-CASE'
-                                        ,$aInfo
-                                    );
+                                        $message = "Failed case #$appNumber. " . $arrayResult["message"];
+                                        $context = $aInfo;
+                                        Log::channel(':MessageEventCron')->critical($message, Bootstrap::context($context));
                                     }
 
                                     $flagCatched = true;
@@ -626,26 +612,15 @@ class MessageApplication
             $common->frontEndShow("TEXT", "Total cases started: " . $counterStartMessageEvent);
             $common->frontEndShow("TEXT", "Total cases continued: " . $counterIntermediateCatchMessageEvent);
             $common->frontEndShow("TEXT", "Total Message-Events pending: " . ($totalMessageEvent - ($counterStartMessageEvent + $counterIntermediateCatchMessageEvent)));
-            $this->syslog(
-                200
-                ,'Total Message-Events unread '. $totalMessageEvent
-                ,'RESUME'//Action
-            );
-            $this->syslog(
-                200
-                ,'Total cases started '. $counterStartMessageEvent
-                ,'RESUME'//Action
-            );
-            $this->syslog(
-                200
-                ,'Total cases continued '. $counterIntermediateCatchMessageEvent
-                ,'RESUME'//Action
-            );
-            $this->syslog(
-                200
-                ,'Total Message-Events pending '. ($totalMessageEvent - ($counterStartMessageEvent + $counterIntermediateCatchMessageEvent))
-                ,'RESUME'//Action
-            );
+            $context = [];
+            $message = 'Total Message-Events unread ' . $totalMessageEvent;
+            Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
+            $message = 'Total cases started ' . $counterStartMessageEvent;
+            Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
+            $message = 'Total cases continued ' . $counterIntermediateCatchMessageEvent;
+            Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
+            $message = 'Total Message-Events pending ' . ($totalMessageEvent - ($counterStartMessageEvent + $counterIntermediateCatchMessageEvent));
+            Log::channel(':MessageEventCron')->info($message, Bootstrap::context($context));
 
             $common->frontEndShow("END");
         } catch (\Exception $e) {
@@ -653,39 +628,4 @@ class MessageApplication
         }
     }
 
-    /**
-     * The Syslog register the information in Monolog Class
-     *
-     * @param int $level DEBUG=100 INFO=200 NOTICE=250 WARNING=300 ERROR=400 CRITICAL=500
-     * @param string $message
-     * @param string $ipClient for Context information
-     * @param string $action for Context information
-     * @param string $timeZone for Context information
-     * @param string $workspace for Context information
-     * @param string $usrUid for Context information
-     * @param string $proUid for Context information
-     * @param string $tasUid for Context information
-     * @param string $appUid for Context information
-     * @param string $delIndex for Context information
-     * @param string $stepUid for Context information
-     * @param string $triUid for Context information
-     * @param string $outDocUid for Context information
-     * @param string $inpDocUid for Context information
-     * @param string $url for Context information
-     *
-     * return void
-     */
-    private function syslog(
-        $level,
-        $message,
-        $action='',
-        $aContext = array()
-    )
-    {
-        try {
-            \Bootstrap::registerMonolog('MessageEventCron', $level, $message, $aContext, config("system.workspace"), 'processmaker.log');
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
 }

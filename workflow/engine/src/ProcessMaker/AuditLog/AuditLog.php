@@ -6,6 +6,7 @@ use Bootstrap;
 use Configurations;
 use Exception;
 use G;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 use Symfony\Component\Finder\Finder;
 
@@ -273,7 +274,7 @@ class AuditLog
             foreach ($lines as $line) {
                 if ($start <= $count && count($result) < $limit) {
                     /**
-                     * processmaker/gulliver/system/class.monologProvider.php
+                     * \App\Logging\CustomizeFormatter
                      * "<%level%> %datetime% %channel% %level_name%: %message% %context% %extra%\n"
                      */
                     $data = $this->lineToObject($line, '/([A-Z][a-z][a-z]\s{1,2}\d{1,2}\s\d{2}[:]\d{2}[:]\d{2})\s([\w][\w\d\.@-]*)\s(.*)$/');
@@ -286,30 +287,6 @@ class AuditLog
         }
 
         return [$count, $result];
-    }
-
-    /**
-     * Register an action for Audit Log.
-     * 
-     * @param string $action
-     * @param string $value
-     */
-    public function register($action, $value = '')
-    {
-        $context = Bootstrap::getDefaultContextLog();
-        $context['usrUid'] = $this->userLogged;
-        $context['usrName'] = $this->userFullname;
-        $context['action'] = $action;
-        $context['description'] = $value;
-        Bootstrap::registerMonolog(
-            $action,
-            200,
-            $action,
-            $context,
-            $context['workspace'],
-            'audit.log',
-            self::READ_LOGGING_LEVEL
-        );
     }
 
     /**

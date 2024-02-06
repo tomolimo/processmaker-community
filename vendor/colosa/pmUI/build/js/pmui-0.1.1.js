@@ -1293,6 +1293,31 @@ if (typeof exports !== "undefined") {
                 return returnValue;
             },
             /**
+             * Bubble sort function in array
+             * @param {*} compFunction 
+             * @return {Array}
+             */
+            bubbleSort: function (compFunction) {
+                var inputArr = elements,
+                    i,
+                    tmp,
+                    len = inputArr.length,
+                    swapped;
+                do {
+                    swapped = false;
+                    for (i = 0; i < len; i++) {
+                        if (inputArr[i] && inputArr[i + 1] && compFunction(inputArr[i], inputArr[i + 1])) {
+                            tmp = inputArr[i];
+                            inputArr[i] = inputArr[i + 1];
+                            inputArr[i + 1] = tmp;
+                            swapped = true;
+                        }
+                    }
+                } while (swapped);
+                elements = inputArr;
+                return elements;
+            },
+            /**
              * Returns the list as an array
              * @return {Array}
              */

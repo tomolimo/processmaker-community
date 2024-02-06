@@ -28,6 +28,7 @@
 //
 // License: LGPL, see LICENSE
 ////////////////////////////////////////////////////
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\Cases as BusinessModelCases;
 use ProcessMaker\Core\System;
 use ProcessMaker\Plugins\PluginRegistry;
@@ -242,9 +243,6 @@ function literalDate ($date, $lang = 'en')
  */
 function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter = array())
 {
-    $sysSys = (!empty(config("system.workspace")))? config("system.workspace") : "Undefined";
-    $aContext = \Bootstrap::getDefaultContextLog();
-
     // This means the DBConnectionUID is not loaded yet, so we'll force DbConnections::loadAdditionalConnections
     if (is_null(config('database.connections.' . $DBConnectionUID . '.driver'))) {
         // Force to load the external connections
@@ -318,33 +316,32 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
 
         // Check to see if we're not running oracle, which is usually a safe default
         if (config('database.connections.' . $DBConnectionUID . '.driver') != 'oracle') {
-            switch (true) {
-                case preg_match( "/^(SELECT|EXECUTE|EXEC|SHOW|DESCRIBE|EXPLAIN|BEGIN)\s/i", $statement ):
-                    $result = $con->select( $SqlStatement );
-
-                    // Convert to 1 index key array of array results
-                    $result = collect($result)->map(function($x) { return (array)$x; })->toArray();
-                    array_unshift($result, []);
-                    unset($result[0]);
-
-                    $con->commit();
-                    break;
-                case preg_match( "/^INSERT\s/i", $statement ):
-                    $result = $con->insert( $SqlStatement );
-                    $con->commit();
-                    break;
-                case preg_match( "/^REPLACE\s/i", $statement ):
-                    $result = $con->update( $SqlStatement );
-                    $con->commit();
-                    break;
-                case preg_match( "/^UPDATE\s/i", $statement ):
-                    $result = $con->update( $SqlStatement );
-                    $con->commit();
-                    break;
-                case preg_match( "/^DELETE\s/i", $statement ):
-                    $result = $con->delete( $SqlStatement );
-                    $con->commit();
-                    break;
+            try {
+                switch (true) {
+                    case preg_match( "/^(SELECT|EXECUTE|EXEC|SHOW|DESCRIBE|EXPLAIN|BEGIN)\s/i", $statement ):
+                        $result = $con->select( $SqlStatement );
+                        // Convert to 1 index key array of array results
+                        $result = collect($result)->map(function($x) { return (array)$x; })->toArray();
+                        array_unshift($result, []);
+                        unset($result[0]);
+                        break;
+                    case preg_match( "/^INSERT\s/i", $statement ):
+                        $result = $con->insert( $SqlStatement );
+                        break;
+                    case preg_match( "/^REPLACE\s/i", $statement ):
+                        $result = $con->update( $SqlStatement );
+                        break;
+                    case preg_match( "/^UPDATE\s/i", $statement ):
+                        $result = $con->update( $SqlStatement );
+                        break;
+                    case preg_match( "/^DELETE\s/i", $statement ):
+                        $result = $con->delete( $SqlStatement );
+                        break;
+                }
+                $con->commit();
+            } catch (Exception $e) {
+                $con->rollback();
+                throw new SQLException($e->getMessage());
             }
         } else {
             $dataEncode = $con->getDSN();
@@ -356,17 +353,21 @@ function executeQuery ($SqlStatement, $DBConnectionUID = 'workflow', $aParameter
             }
         }
         //Logger
-        $aContext['action'] = 'execute-query';
-        $aContext['sql'] = $SqlStatement;
-        \Bootstrap::registerMonolog('sqlExecution', 200, 'Sql Execution', $aContext, $sysSys, 'processmaker.log');
-
+        $message = 'Sql Execution';
+        $context = [
+            'action' => 'execute-query',
+            'sql' => $SqlStatement
+        ];
+        Log::channel(':sqlExecution')->info($message, Bootstrap::context($context));
         return $result;
     } catch (SQLException $sqle) {
         //Logger
-        $aContext['action'] = 'execute-query';
-        $aContext['SQLExceptionMessage'] = $sqle->getMessage();
-        \Bootstrap::registerMonolog('sqlExecution', 400, 'Sql Execution', $aContext, $sysSys, 'processmaker.log');
-
+        $message = 'Sql Execution';
+        $context = [
+            'action' => 'execute-query',
+            'SQLExceptionMessage' => $sqle->getMessage()
+        ];
+        Log::channel(':sqlExecution')->error($message, Bootstrap::context($context));
         $con->rollback();
         throw $sqle;
     }

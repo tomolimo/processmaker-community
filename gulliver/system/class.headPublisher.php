@@ -26,6 +26,7 @@
  */
 
 use ProcessMaker\Plugins\PluginRegistry;
+use ProcessMaker\Core\System;
 
 /**
  * Class headPublisher
@@ -350,9 +351,6 @@ class headPublisher
         // enabled for particular use
         $head .= $this->getExtJsLibraries();
 
-        // $head .= "  <script type='text/javascript' src='/js/ext/draw2d.js'></script>\n";
-        // $head .= "  <script type=\"text/javascript\" src=\"" . G::browserCacheFilesUrl("/js/ext/translation." . SYS_LANG . ".js") . "\"></script>\n";
-
         if (!isset($this->extJsSkin) || $this->extJsSkin == '') {
             $this->extJsSkin = 'xtheme-gray';
             //$this->extJsSkin = 'gtheme';
@@ -364,6 +362,15 @@ class headPublisher
         if ($oServerConf->isRtl(SYS_LANG)) {
             $head = $head . "  <script type=\"text/javascript\" src=\"" . G::browserCacheFilesUrl("/js/ext/extjs_rtl.js") . "\"></script>\n";
         }
+
+        // Get the value defined in the ext_ajax_timeout
+        if (defined('EXT_AJAX_TIMEOUT')) {
+            $extAjaxTimeout = EXT_AJAX_TIMEOUT;
+        } else {
+            $config = System::getSystemConfiguration();
+            $extAjaxTimeout = $config['ext_ajax_timeout'];
+        }
+        $head .= '<script>ext_ajax_timeout = ' . $extAjaxTimeout . ';</script>';
 
         return $head;
     }

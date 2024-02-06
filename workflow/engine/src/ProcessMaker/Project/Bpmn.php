@@ -1,4 +1,5 @@
 <?php
+
 namespace ProcessMaker\Project;
 
 use BasePeer;
@@ -29,6 +30,7 @@ use BpmnProcessPeer as ProcessPeer;
 use Criteria as Criteria;
 use Exception;
 use G;
+use Illuminate\Support\Facades\Log;
 use ResultSet as ResultSet;
 use ProcessMaker\Util\Common;
 use ProcessMaker\Exception\ProjectNotFound;
@@ -278,13 +280,9 @@ class Bpmn extends Handler
         }
         $me = new self();
         $me->setContextLog($response);
-        $me->syslog(
-            'DoBulkDelete',
-            200,
-            'Do bulk delete',
-            $me->getContextLog()
-        );
-
+        $message = 'Do bulk delete';
+        $context = $me->getContextLog();
+        Log::channel(':DoBulkDelete')->info($message, Bootstrap::context($context));
         return $response;
     }
 
@@ -1676,28 +1674,4 @@ class Bpmn extends Handler
         }
     }
 
-    /**
-     * Logging information related to project
-     * When the user doDeleteBulk
-     *
-     * @param string $channel
-     * @param string $level
-     * @param string $message
-     * @param array $context
-     *
-     * @return void
-     * @throws Exception
-     */
-    private function syslog(
-        $channel,
-        $level,
-        $message,
-        $context = array()
-    ) {
-        try {
-            Bootstrap::registerMonolog($channel, $level, $message, $context, $context['workspace'], 'processmaker.log');
-        } catch (Exception $e) {
-            throw $e;
-        }
-    }
 }

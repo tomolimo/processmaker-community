@@ -296,6 +296,16 @@ function importSkin ()
         // Delete Temporal
         @unlink(PATH_CUSTOM_SKINS . '.tmp' . PATH_SEP . $filename);
 
+        // Copy TTF files to application main path for fonts, only if exists the folder "fonts" in the skin tarball
+        if (file_exists(PATH_CUSTOM_SKINS . $skinName . PATH_SEP . 'fonts')) {
+            foreach (glob(PATH_CUSTOM_SKINS . $skinName . PATH_SEP . 'fonts' . PATH_SEP . '*.ttf') as $ttfFile) {
+                $basename = pathinfo($ttfFile, PATHINFO_BASENAME);
+                if (!file_exists(PATH_DATA . 'fonts' . PATH_SEP . $basename)) {
+                    copy($ttfFile, PATH_DATA . 'fonts' . PATH_SEP . $basename);
+                }
+            }
+        }
+
         $response['success'] = true;
         $response['message'] = G::LoadTranslation('ID_SKIN_SUCCESSFUL_IMPORTED');
         G::auditLog("ImportSkin", "Skin Name: " . $skinName);

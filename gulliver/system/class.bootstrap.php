@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 use ProcessMaker\Util\DateTime;
 
@@ -2667,87 +2668,33 @@ class Bootstrap
     }
 
     /**
-     * Stores a message in the log file, if the file size exceeds
-     *
-     * @param string $channel The logging channel
-     * @param int $level The logging level
-     * @param string $message The log message
-     * @param array $context The log context
-     * @param string $workspace @todo we need to remove this parameter this is not necessary
-     * @param string $file name file
-     * @param boolean $readLoggingLevel
-     *
-     * @return void
-     */
-    public static function registerMonolog(
-        $channel,
-        $level,
-        $message,
-        $context,
-        $workspace = '',
-        $file = 'processmaker.log',
-        $readLoggingLevel = true
-    )
-    {
-        $registerLogger = MonologProvider::getSingleton($channel, $file, $readLoggingLevel);
-        $registerLogger->addLog($level, $message, $context);
-    }
-
-    /**
-     * Get the default information from the context
-     *
+     * Returns an array containing the values of the current execution context.
+     * 
+     * @global object $RBAC
+     * @param array $extraParams
      * @return array
-     *      
-     * @see AdditionalTables->populateReportTable
-     * @see AppAssignSelfServiceValueGroup->createRow
-     * @see Bootstrap->registerMonologPhpUploadExecution()
-     * @see Cases->loadDataSendEmail()
-     * @see Cases->removeCase()
-     * @see Cases->reportTableDeleteRecord()
-     * @see Derivation->derivate
-     * @see G->logTriggerExecution()
-     * @see LdapAdvanced->VerifyLogin
-     * @see ldapadvancedClassCron->executeCron
-     * @see PmDynaform->__construct
-     * @see pmTablesProxy->genDataReport
-     * @see Processes->createFiles
-     * @see ProcessMaker\AuditLog\AuditLog->register
-     * @see ProcessMaker\Util\ParseSoapVariableName->buildVariableName
-     * @see RBAC->checkAutomaticRegister()
-     * @see workflow/engine/classes/class.pmFunctions.php::executeQuery
-
-     * @link https://wiki.processmaker.com/3.3/Actions_by_Email
-     * @link https://wiki.processmaker.com/3.2/ProcessMaker_Functions
-     * @link https://wiki.processmaker.com/3.1/Report_Tables
-     * @link https://wiki.processmaker.com/3.2/Cases/Running_Cases
-     * @link https://wiki.processmaker.com/3.3/login
-     * @link https://wiki.processmaker.com/3.2/Executing_cron.php
-     * @link https://wiki.processmaker.com/3.2/HTML5_Responsive_DynaForm_Designer
-     * @link https://wiki.processmaker.com/3.2/Audit_Log
-     * @link https://wiki.processmaker.com/3.0/ProcessMaker_WSDL_Web_Services
      */
-    public static function getDefaultContextLog()
+    public static function context(array $extraParams = []): array
     {
-        $info = [
+        $context = [
             'ip' => G::getIpAddress(),
-            'workspace' => !empty(config('system.workspace')) ? config('system.workspace') : 'Undefined Workspace',
+            'workspace' => config('system.workspace', 'Undefined Workspace'),
             'timeZone' => DateTime::convertUtcToTimeZone(date('Y-m-d H:m:s')),
             'usrUid' => G::LoadTranslation('UID_UNDEFINED_USER')
         ];
+        $context = array_merge($context, $extraParams);
 
+        //get session user
         global $RBAC;
         if (!empty($RBAC) && !empty($RBAC->aUserInfo['USER_INFO']) && !empty($RBAC->aUserInfo['USER_INFO']['USR_UID'])) {
-            $info['usrUid'] = $RBAC->aUserInfo['USER_INFO']['USR_UID'];
-            return $info;
+            $context['usrUid'] = $RBAC->aUserInfo['USER_INFO']['USR_UID'];
+            return $context;
         }
-
-        //if default session exists
         if (!empty($_SESSION['USER_LOGGED'])) {
-            $info['usrUid'] = $_SESSION['USER_LOGGED'];
-            return $info;
+            $context['usrUid'] = $_SESSION['USER_LOGGED'];
+            return $context;
         }
-
-        return $info;
+        return $context;
     }
 
     /**
@@ -2764,27 +2711,6 @@ class Bootstrap
     }
 
     /**
-     * Record the action of executing a php file or attempting to upload a php
-     * file in server.
-     * @param type $channel
-     * @param type $level
-     * @param type $message
-     * @param type $fileName
-     */
-    public static function registerMonologPhpUploadExecution($channel, $level, $message, $fileName)
-    {
-        $context = \Bootstrap::getDefaultContextLog();
-        $context['action'] = $channel;
-        $context['filename'] = $fileName;
-        if (defined("SYS_CURRENT_URI") && defined("SYS_CURRENT_PARMS")) {
-            $context['url'] = SYS_CURRENT_URI . '?' . SYS_CURRENT_PARMS;
-        }
-        $context['usrUid'] = isset($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : '';
-        $sysSys = !empty(config("system.workspace")) ? config("system.workspace") : "Undefined";
-        \Bootstrap::registerMonolog($channel, $level, $message, $context, $sysSys, 'processmaker.log');
-    }
-
-    /*
      * Set the constant to related the Workspaces
      *
      * @param string $workspace
@@ -2804,5 +2730,68 @@ class Bootstrap
             define('PATH_WORKSPACE', PATH_DATA_SITE);
         }
         set_include_path(get_include_path() . PATH_SEPARATOR . PATH_DATA_SITE);
+    }
+
+    /**
+     * @deprecated since version 3.5.3
+     */
+    public static function registerMonolog(
+        $channel,
+        $level,
+        $message,
+        $context,
+        $workspace = '',
+        $file = 'processmaker.log',
+        $readLoggingLevel = true
+    )
+    {
+        $level = intval($level);
+        $context = is_array($context) ? $context : [];
+        switch ($level) {
+            case 100:
+                Log::channel(':' . $channel)->debug($message, Bootstrap::context($context));
+                break;
+            default://200
+                Log::channel(':' . $channel)->info($message, Bootstrap::context($context));
+                break;
+            case 250:
+                Log::channel(':' . $channel)->notice($message, Bootstrap::context($context));
+                break;
+            case 300:
+                Log::channel(':' . $channel)->warning($message, Bootstrap::context($context));
+                break;
+            case 400:
+                Log::channel(':' . $channel)->error($message, Bootstrap::context($context));
+                break;
+            case 500:
+                Log::channel(':' . $channel)->critical($message, Bootstrap::context($context));
+                break;
+            case 550:
+                Log::channel(':' . $channel)->alert($message, Bootstrap::context($context));
+                break;
+            case 600:
+                Log::channel(':' . $channel)->emergency($message, Bootstrap::context($context));
+                break;
+        }
+    }
+
+    /**
+     * @deprecated since version 3.5.3
+     */
+    public static function getDefaultContextLog()
+    {
+        return self::context();
+    }
+
+    /**
+     * @deprecated since version 3.5.3
+     */
+    public static function registerMonologPhpUploadExecution($channel, $level, $message, $fileName)
+    {
+        $context = [
+            'filename' => $fileName,
+            'url' => $_SERVER["REQUEST_URI"] ?? ''
+        ];
+        self::registerMonolog($channel, $level, $message, $context);
     }
 }

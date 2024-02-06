@@ -39,10 +39,10 @@ export default {
           Authorization: `Bearer ` + window.credentials.accessToken
         }
       })
-      .then(response => {
+      .then((response) => {
         let sches = [],
           times = [];
-        _.forEach(response.data, task => {
+        _.forEach(response.data, (task) => {
           let cronExpression = new xCron();
           task.settings = _.extend({}, cronExpression.toSettings(task));
           task.title = window.TRANSLATIONS[task.title] || task.title;
@@ -52,7 +52,7 @@ export default {
           sches.push(task);
         });
 
-        _.forEach(window.timezoneArray, task => {
+        _.forEach(window.timezoneArray, (task) => {
           times.push({
             value: task,
             text: task
@@ -63,7 +63,7 @@ export default {
         this.timeZone = times;
       })
       .catch(function(error) {
-        if (error && error.message) {
+        if (error && error.message && error.code !== "ECONNABORTED" ) {
           that.$bvToast.toast(error.message || "", {
             title: "",
             variant: "danger",
@@ -107,7 +107,9 @@ export default {
           text: window.TRANSLATIONS["ID_EVERY_THIRTY_MINUTES"],
           value: "*/30 *"
         },
-        { text: window.TRANSLATIONS["ID_EVERY_HOUR"], value: "0 */1" }
+        { text: window.TRANSLATIONS["ID_EVERY_HOUR"], value: "0 */1" },
+        { text: window.TRANSLATIONS["ID_ONCE_PER_DAY"], value: "oncePerDay" },
+        { text: window.TRANSLATIONS["ID_TWICE_PER_DAY"], value: "twicePerDay" }
       ],
       selected: []
     };
@@ -116,7 +118,7 @@ export default {
     /**
      * Show the modal from grid vue
      */
-    modalShow: function(row) {
+    modalShow: function (row) {
       this.$refs["modal"].row = row;
       this.$refs["modal"].show();
       this.$refs["modal"].changeRepeatUnit(row.settings.everyOn);
@@ -125,7 +127,7 @@ export default {
     /**
      * Update properties in row
      */
-    updateSettings: function(task) {
+    updateSettings: function (task) {
       let index = -1;
       for (let i = 0; i < this.dataScheduler.length; i += 1) {
         if (this.dataScheduler[i].id == task.id) {

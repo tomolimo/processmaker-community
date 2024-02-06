@@ -12,68 +12,122 @@
       <b-form @submit.stop.prevent="submit">
         <b-row>
           <b-col>
-            <label for="timepicker-placeholder">{{TRANSLATIONS.ID_PERIODICITY}}</label>
+            <label for="timepicker-placeholder">{{
+              TRANSLATIONS.ID_PERIODICITY
+            }}</label>
             <b-form-select
-              v-model="row.settings.periodicity"
+              v-model="row.settings.periodicity.value"
               :placeholder="TRANSLATIONS.ID_CHOOSE_TIME"
               :options="optionsPeriodicity"
+              @input="enableValidation(row)"
             ></b-form-select>
           </b-col>
           <b-col>
             <label for="timepicker-placeholder">
-              <span style="color:white">*</span>
+              <span style="color: white">*</span>
             </label>
-            <b-form-input
-              v-if="row.settings.periodicity == ''"
-              type="number"
-              v-model="row.settings.periodicityUnit"
-              min="0"
-              max="23"
-            ></b-form-input>
+            <BTimeMixin
+              v-if="
+                row.settings.periodicity.value == 'twicePerDay' ||
+                row.settings.periodicity.value == 'oncePerDay'
+              "
+              :placeholder="TRANSLATIONS.ID_CHOOSE_TIME"
+              local="en"
+              reset-button
+              reset-value="00:00:00"
+              v-model="row.settings.periodicity.oncePerDay"
+              ref="oncePerDay"
+            ></BTimeMixin>
+          </b-col>
+          <b-col>
+            <label for="timepicker-placeholder">
+              <span style="color: white">*</span>
+            </label>
+            <BTimeMixin
+              v-if="row.settings.periodicity.value == 'twicePerDay'"
+              :placeholder="TRANSLATIONS.ID_CHOOSE_TIME"
+              local="en"
+              reset-button
+              reset-value="00:00:00"
+              v-model="row.settings.periodicity.twicePerDay"
+              ref="twicePerDay"
+            ></BTimeMixin>
+            <b-form-invalid-feedback
+              id="endingTime-feedback"
+            ></b-form-invalid-feedback>
           </b-col>
         </b-row>
         <b-row class="row-padding">
           <b-col>
-            <label for="timepicker-placeholder">{{TRANSLATIONS.ID_STARTING_TIME}}</label>
+            <label for="timepicker-placeholder">{{
+              TRANSLATIONS.ID_STARTING_TIME
+            }}</label>
             <b-form-timepicker
               :placeholder="TRANSLATIONS.ID_CHOOSE_TIME"
               local="en"
               reset-button
               v-model="row.settings.startingTime"
+              :disabled="
+                row.settings.periodicity.value === 'twicePerDay' ||
+                row.settings.periodicity.value === 'oncePerDay'
+              "
               @input="enableValidation(row)"
               :state="validateState('startingTime')"
               aria-describedby="startingTime-feedback"
             ></b-form-timepicker>
-            <b-form-invalid-feedback id="startingTime-feedback"></b-form-invalid-feedback>
+            <b-form-invalid-feedback
+              id="startingTime-feedback"
+            ></b-form-invalid-feedback>
           </b-col>
           <b-col>
-            <label for="timepicker-placeholder">{{TRANSLATIONS.ID_ENDING_TIME}}</label>
+            <label for="timepicker-placeholder">{{
+              TRANSLATIONS.ID_ENDING_TIME
+            }}</label>
             <b-form-timepicker
               :placeholder="TRANSLATIONS.ID_CHOOSE_TIME"
               local="en"
               reset-button
+              :disabled="
+                row.settings.periodicity.value === 'twicePerDay' ||
+                row.settings.periodicity.value === 'oncePerDay'
+              "
               v-model="row.settings.endingTime"
               @input="enableValidation(row)"
               :state="validateState('endingTime')"
               aria-describedby="endingTime-feedback"
             ></b-form-timepicker>
-            <b-form-invalid-feedback id="endingTime-feedback"></b-form-invalid-feedback>
+            <b-form-invalid-feedback
+              id="endingTime-feedback"
+            ></b-form-invalid-feedback>
           </b-col>
           <b-col>
-            <label for="timepicker-placeholder">{{TRANSLATIONS.ID_TIME_ZONE}}</label>
+            <label for="timepicker-placeholder">{{
+              TRANSLATIONS.ID_TIME_ZONE
+            }}</label>
             <b-form-select
               :options="timeZone"
               v-model="row.settings.timezone"
-              :disabled="!(row.settings.startingTime || row.settings.endingTime) "
+              :disabled="
+                !(
+                  row.settings.startingTime ||
+                  row.settings.endingTime ||
+                  row.settings.periodicity.value === 'twicePerDay' ||
+                  row.settings.periodicity.value === 'oncePerDay'
+                )
+              "
               :state="validateState('timezone')"
               aria-describedby="timezone-feedback"
             ></b-form-select>
-            <b-form-invalid-feedback id="timezone-feedback"></b-form-invalid-feedback>
+            <b-form-invalid-feedback
+              id="timezone-feedback"
+            ></b-form-invalid-feedback>
           </b-col>
         </b-row>
         <b-row class="row-padding">
           <b-col cols="8">
-            <label for="timepicker-placeholder">{{TRANSLATIONS.ID_REPEAT_EVERY}}</label>
+            <label for="timepicker-placeholder">{{
+              TRANSLATIONS.ID_REPEAT_EVERY
+            }}</label>
             <b-row>
               <b-col>
                 <b-form-input
@@ -97,7 +151,7 @@
         <b-row class="row-padding" v-if="row.settings.everyOn != 'd'">
           <b-col>
             <label for="timepicker-placeholder">
-              {{TRANSLATIONS.ID_REPEAT_ON}}
+              {{ TRANSLATIONS.ID_REPEAT_ON }}
               <span class="invalid">*</span>
             </label>
             <div>
@@ -114,16 +168,24 @@
               ></b-form-checkbox-group>
               <div
                 class="invalid"
-                v-if="$v.row && $v.row.settings && $v.row.settings.repeatOn.$error"
+                v-if="
+                  $v.row && $v.row.settings && $v.row.settings.repeatOn.$error
+                "
                 id="repeatOn-feedback"
-              >{{TRANSLATIONS.ID_REQUIRED_FIELD}}</div>
+              >
+                {{ TRANSLATIONS.ID_REQUIRED_FIELD }}
+              </div>
             </div>
           </b-col>
         </b-row>
         <div class="row-padding">
-          <b-button type="submit" class="float-right b-button b-success">{{TRANSLATIONS.ID_SAVE}}</b-button>
+          <b-button type="submit" class="float-right b-button b-success">{{
+            TRANSLATIONS.ID_SAVE
+          }}</b-button>
           <span class="float-right w-box40" />
-          <b-button class="float-right b-button b-danger" @click="hide">{{TRANSLATIONS.ID_CANCEL}}</b-button>
+          <b-button class="float-right b-button b-danger" @click="hide">{{
+            TRANSLATIONS.ID_CANCEL
+          }}</b-button>
         </div>
       </b-form>
     </b-modal>
@@ -135,6 +197,8 @@ import axios from "axios";
 import { xCron } from "../xCron";
 import _ from "lodash";
 import { validationMixin } from "vuelidate";
+
+import BTimeMixin from "./BTimeExtend/BTimeMixin";
 import { required } from "vuelidate/lib/validators";
 
 export default {
@@ -146,13 +210,20 @@ export default {
     optionsRepeatEvery: Array,
     optionsPeriodicity: Array
   },
+  components: {
+    BTimeMixin
+  },
   mixins: [validationMixin],
   data() {
     return {
       TRANSLATIONS: window.TRANSLATIONS,
       row: {
         settings: {
-          periodicity: "",
+          periodicity: {
+            unit: null,
+            oncePerDay: "00:00:00",
+            twicePerDay: "00:00:00"
+          },
           startingTime: "",
           endingTime: "",
           timeZone: "1",
@@ -185,6 +256,22 @@ export default {
           }
         }
       };
+    } else if (
+      this.row.settings.periodicity.value == "oncePerDay" ||
+      this.row.settings.periodicity.value == "twicePerDay"
+    ) {
+      return {
+        row: {
+          settings: {
+            repeatOn: {
+              required
+            },
+            timezone: {
+              required
+            }
+          }
+        }
+      };
     } else {
       return {
         row: {
@@ -197,23 +284,24 @@ export default {
       };
     }
   },
+  mounted() {},
   methods: {
     /**
      * Open the model settings
      */
-    clickSettings: function(row) {
+    clickSettings: function (row) {
       this.$root.$emit("modalShow", row);
     },
     /**
      * Show the modal
      */
-    show: function() {
+    show: function () {
       this.$refs["modal"].show();
     },
     /**
      * When change repeat unit property
      */
-    changeRepeatUnit: function(val) {
+    changeRepeatUnit: function (val) {
       if (val.toString() == "1") {
         this.optionsRepeatEvery = this.$parent.optionsRepeatSingle;
       } else {
@@ -223,7 +311,7 @@ export default {
     /**
      * When change the repeat Options property
      */
-    changeRepeatOption: function(val) {
+    changeRepeatOption: function (val) {
       if (val.toString() == "d") {
         this.row.settings.repeatOn = [0, 1, 2, 3, 4, 5, 6];
       }
@@ -231,18 +319,31 @@ export default {
     /**
      * Validate: starting time, ending time, time zone
      */
-    enableValidation: function(row) {
+    enableValidation: function (row) {
+      if (
+        row.settings.periodicity.value === "oncePerDay" ||
+        row.settings.periodicity.value === "twicePerDay"
+      ) {
+        row.settings.startingTime = "";
+        row.settings.endingTime = "";
+      }
+
       if (!row.timezone && !row.settings.timezone) {
         row.settings.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       }
-      if (row.settings.startingTime == "" && row.settings.endingTime == "") {
+      if (
+        row.settings.startingTime == "" &&
+        row.settings.endingTime == "" &&
+        row.settings.periodicity.value != "oncePerDay" &&
+        row.settings.periodicity.value != "twicePerDay"
+      ) {
         row.settings.timezone = null;
       }
     },
     /**
      * Save the record in task scheduler
      */
-    save: function() {
+    save: function () {
       let cronExp = new xCron(),
         exp;
       //format repeatOn property
@@ -267,7 +368,7 @@ export default {
     /**
      * Submit the form
      */
-    submit: function() {
+    submit: function () {
       this.$v.row.settings.$touch();
       if (this.$v.row.settings.$anyError) {
         return;
@@ -277,13 +378,13 @@ export default {
     /**
      * Hide modal
      */
-    hide: function() {
+    hide: function () {
       this.$refs["modal"].hide();
     },
     /**
      * Capture event when hide the modal
      */
-    eventHideModal: function() {
+    eventHideModal: function () {
       let cronExpression = new xCron(),
         t = _.extend({}, this.row);
       t.settings = _.extend({}, cronExpression.toSettings(t));
@@ -303,7 +404,7 @@ export default {
      * Format the property repeatOn
      */
     formatRepeatOn(repeatOn) {
-      let res = _.sortBy(repeatOn, num => {
+      let res = _.sortBy(repeatOn, (num) => {
         return num;
       });
       return res;

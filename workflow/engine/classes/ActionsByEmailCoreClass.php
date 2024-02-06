@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\EmailServer;
 use ProcessMaker\Core\System;
 use ProcessMaker\Services\Api\Project\Variable;
@@ -565,11 +566,11 @@ class ActionsByEmailCoreClass extends PMPlugin
             if (empty($data->DEL_INDEX)) {
                 throw new Exception('The parameter $data->DEL_INDEX is null or empty.');
             } elseif ($data->DEL_INDEX === 1) {
-                // Processmaker log
-                $context = Bootstrap::getDefaultContextLog();
-                $context['delIndex'] = $data->DEL_INDEX;
-                Bootstrap::registerMonolog('ActionByEmail', 250, 'Actions by email does not work in the initial task', $context);
-
+                $message = 'Actions by email does not work in the initial task';
+                $context = [
+                    'delIndex' => $data->DEL_INDEX
+                ];
+                Log::channel(':ActionByEmail')->notice($message, Bootstrap::context($context));
                 return;
             } else {
                 $this->setIndex($data->DEL_INDEX);

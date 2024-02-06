@@ -399,6 +399,10 @@
         <index name="INDEX_APP_MSG_STATUS_ID">
             <index-column name="APP_MSG_STATUS_ID"/>
         </index>
+        <index name="indexAppUidSendDate">
+            <index-column name="APP_UID"/>
+            <index-column name="APP_MSG_SEND_DATE"/>
+        </index>
     </table>
     <table name="APP_OWNER">
         <vendor type="mysql">

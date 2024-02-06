@@ -1,7 +1,10 @@
 <?php
 
 namespace ProcessMaker\Util;
+
+use Bootstrap;
 use G;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Constructs the name of the variable starting from a string representing the
@@ -21,11 +24,12 @@ class ParseSoapVariableName
     public function buildVariableName(&$field, $name, $value)
     {
         if (!$this->isValidVariableName($name)) {
-            $context = \Bootstrap::getDefaultContextLog();
-            $context['action'] = 'soap2';
-            $context['exception'] = 'Invalid param: '.G::json_encode($name);
-            \Bootstrap::registerMonolog('soap2', 400, 'NewCase', $context, $context['workspace'], 'processmaker.log');
-
+            $message = 'NewCase';
+            $context = [
+                'action' => 'soap2',
+                'exception' => 'Invalid param: '.G::json_encode($name)
+            ];
+            Log::channel(':soap2')->error($message, Bootstrap::context($context));
             return;
         }
 

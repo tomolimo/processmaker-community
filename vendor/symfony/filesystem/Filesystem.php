@@ -48,7 +48,7 @@ class Filesystem
         $this->mkdir(\dirname($targetFile));
 
         $doCopy = true;
-        if (!$overwriteNewerFiles && null === parse_url($originFile, PHP_URL_HOST) && is_file($targetFile)) {
+        if (!$overwriteNewerFiles && null === parse_url($originFile, \PHP_URL_HOST) && is_file($targetFile)) {
             $doCopy = filemtime($originFile) > filemtime($targetFile);
         }
 
@@ -119,7 +119,7 @@ class Filesystem
      */
     public function exists($files)
     {
-        $maxPathLength = PHP_MAXPATHLEN - 2;
+        $maxPathLength = \PHP_MAXPATHLEN - 2;
 
         foreach ($this->toIterable($files) as $file) {
             if (\strlen($file) > $maxPathLength) {
@@ -199,7 +199,7 @@ class Filesystem
     public function chmod($files, $mode, $umask = 0000, $recursive = false)
     {
         foreach ($this->toIterable($files) as $file) {
-            if (true !== @chmod($file, $mode & ~$umask)) {
+            if ((\PHP_VERSION_ID < 80000 || \is_int($mode)) && true !== @chmod($file, $mode & ~$umask)) {
                 throw new IOException(sprintf('Failed to chmod file "%s".', $file), 0, null, $file);
             }
             if ($recursive && is_dir($file) && !is_link($file)) {
@@ -298,7 +298,7 @@ class Filesystem
      */
     private function isReadable(string $filename): bool
     {
-        $maxPathLength = PHP_MAXPATHLEN - 2;
+        $maxPathLength = \PHP_MAXPATHLEN - 2;
 
         if (\strlen($filename) > $maxPathLength) {
             throw new IOException(sprintf('Could not check if file is readable because path length exceeds %d characters.', $maxPathLength), 0, null, $filename);
@@ -594,16 +594,16 @@ class Filesystem
     public function isAbsolutePath($file)
     {
         if (null === $file) {
-            @trigger_error(sprintf('Calling "%s()" with a null in the $file argument is deprecated since Symfony 4.4.', __METHOD__), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Calling "%s()" with a null in the $file argument is deprecated since Symfony 4.4.', __METHOD__), \E_USER_DEPRECATED);
         }
 
-        return strspn($file, '/\\', 0, 1)
+        return '' !== (string) $file && (strspn($file, '/\\', 0, 1)
             || (\strlen($file) > 3 && ctype_alpha($file[0])
                 && ':' === $file[1]
                 && strspn($file, '/\\', 2, 1)
             )
-            || null !== parse_url($file, PHP_URL_SCHEME)
-        ;
+            || null !== parse_url($file, \PHP_URL_SCHEME)
+        );
     }
 
     /**
@@ -669,7 +669,7 @@ class Filesystem
     public function dumpFile($filename, $content)
     {
         if (\is_array($content)) {
-            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), \E_USER_DEPRECATED);
         }
 
         $dir = \dirname($filename);
@@ -706,7 +706,7 @@ class Filesystem
     public function appendToFile($filename, $content)
     {
         if (\is_array($content)) {
-            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), E_USER_DEPRECATED);
+            @trigger_error(sprintf('Calling "%s()" with an array in the $content argument is deprecated since Symfony 4.3.', __METHOD__), \E_USER_DEPRECATED);
         }
 
         $dir = \dirname($filename);
@@ -719,7 +719,7 @@ class Filesystem
             throw new IOException(sprintf('Unable to write to the "%s" directory.', $dir), 0, null, $dir);
         }
 
-        if (false === @file_put_contents($filename, $content, FILE_APPEND)) {
+        if (false === @file_put_contents($filename, $content, \FILE_APPEND)) {
             throw new IOException(sprintf('Failed to write file "%s".', $filename), 0, null, $filename);
         }
     }

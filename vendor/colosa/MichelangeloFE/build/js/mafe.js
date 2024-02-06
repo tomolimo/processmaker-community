@@ -17208,6 +17208,7 @@ PMShape.prototype.refreshChildrenPositions = function (onCommand, delta) {
     for (i = 0; i < children.getSize(); i += 1) {
         child = children.get(i);
         child.setPosition(child.getX(), child.getY());
+        child.refreshConnections(false, true);
         if (onCommand) {
             child.refreshAllMovedConnections(false, delta);
         }
@@ -18745,7 +18746,7 @@ PMConnectionDropBehavior.prototype.onDragEnter = function (customShape) {
             }
         } else {
             shapeRelative = customShape.canvas.dragConnectHandlers.get(0).relativeShape;
-            if (shapeRelative.id !== customShape.id) {
+            if (shapeRelative && customShape && shapeRelative.id !== customShape.id) {
                 if (ui.helper && ui.helper.hasClass("dragConnectHandler")) {
                     for (i = 0; i < 10; i += 1) {
                         connectHandler = customShape.canvas.dropConnectHandlers.get(i);
@@ -18778,205 +18779,11 @@ PMConnectionDropBehavior.prototype.onDragEnter = function (customShape) {
 PMConnectionDropBehavior.prototype.onDrop = function (shape) {
     var that = this;
     return function (e, ui) {
-        return false;
-        var canvas = shape.getCanvas(),
-            id = ui.draggable.attr('id'),
-            x,
-            y,
-            currLeft,
-            currTop,
-            startPoint,
-            sourceShape,
-            sourcePort,
-            endPort,
-            endPortXCoord,
-            endPortYCoord,
-            connection,
-            currentConnection = canvas.currentConnection,
-            srcPort,
-            dstPort,
-            port,
-            prop,
-            command,
-            aux;
-        shape.entered = false;
-        if (!shape.drop.dropStartHook(shape, e, ui)) {
-            return false;
-        }
-        if (shape.getConnectionType() === "none") {
-            return true;
-        }
-
-        if (currentConnection) {
-            srcPort = currentConnection.srcPort;
-            dstPort = currentConnection.destPort;
-            if (srcPort.id === id) {
-                port = srcPort;
-            } else if (dstPort.id === id) {
-                port = dstPort;
-            } else {
-                port = null;
-            }
-        }
-        if (ui.helper && ui.helper.attr('id') === "drag-helper") {
-            //if its the helper then we need to create two ports and draw a
-            // connection
-            //we get the points and the corresponding shapes involved
-            startPoint = shape.canvas.connectionSegment.startPoint;
-            sourceShape = shape.canvas.connectionSegment.pointsTo;
-            //determine the points where the helper was created
-            if (sourceShape.parent && sourceShape.parent.id === shape.id) {
-                return true;
-            }
-            sourceShape.setPosition(sourceShape.oldX, sourceShape.oldY);
-            startPoint.x = startPoint.portX;
-            startPoint.y = startPoint.portY;
-            //create the ports
-            sourcePort = new PMUI.draw.Port({
-                width: 10,
-                height: 10
-            });
-            endPort = new PMUI.draw.Port({
-                width: 10,
-                height: 10
-            });
-
-            //determine the position where the helper was dropped
-            endPortXCoord = ui.offset.left - shape.canvas.getX() -
-                shape.getAbsoluteX() + shape.canvas.getLeftScroll();
-            endPortYCoord = ui.offset.top - shape.canvas.getY() -
-                shape.getAbsoluteY() + shape.canvas.getTopScroll();
-            // add ports to the corresponding shapes
-            // addPort() determines the position of the ports
-            sourceShape.addPort(sourcePort, startPoint.x, startPoint.y);
-            shape.addPort(endPort, endPortXCoord, endPortYCoord,
-                false, sourcePort);
-
-            //add ports to the canvas array for regularShapes
-            //shape.canvas.regularShapes.insert(sourcePort).insert(endPort);
-            //create the connection
-            connection = new PMFlow({
-                srcPort: sourcePort,
-                destPort: endPort,
-                segmentColor: new PMUI.util.Color(0, 0, 0),
-                name: "",
-                canvas: shape.canvas,
-                segmentStyle: shape.connectionType.segmentStyle,
-                flo_type: shape.connectionType.type
-            });
-
-            connection.setSrcDecorator(new PMUI.draw.ConnectionDecorator({
-                width: 1,
-                height: 1,
-                canvas: canvas,
-                decoratorPrefix: (typeof shape.connectionType.srcDecorator !== 'undefined'
-                && shape.connectionType.srcDecorator !== null) ?
-                    shape.connectionType.srcDecorator : "mafe-decorator",
-                decoratorType: "source",
-                parent: connection
-            }));
-
-            connection.setDestDecorator(new PMUI.draw.ConnectionDecorator({
-                width: 1,
-                height: 1,
-                canvas: canvas,
-                decoratorPrefix: (typeof shape.connectionType.destDecorator !== 'undefined'
-                && shape.connectionType.destDecorator !== null) ?
-                    shape.connectionType.destDecorator : "mafe-decorator",
-                decoratorType: "target",
-                style: {
-                    cssClasses: [
-                        "mafe-connection-decoration-target"
-                    ]
-                },
-                parent: connection
-            }));
-            connection.canvas.commandStack.add(new PMUI.command.CommandConnect(connection));
-
-            //connect the two ports
-            connection.connect();
-            connection.setSegmentMoveHandlers();
-
-            //add the connection to the canvas, that means insert its html to
-            // the DOM and adding it to the connections array
-            canvas.addConnection(connection);
-
-            // Filling PMFlow fields
-            connection.setTargetShape(endPort.parent);
-            connection.setOriginShape(sourcePort.parent);
-            connection.savePoints();
-
-            // now that the connection was drawn try to create the intersections
-            connection.checkAndCreateIntersectionsWithAll();
-
-            //attaching port listeners
-            sourcePort.attachListeners(sourcePort);
-            endPort.attachListeners(endPort);
-
-            // finally trigger createEvent
-            canvas.triggerCreateEvent(connection, []);
-        } else if (port) {
-            connection = port.getConnection();
-            if (connection.srcPort.getID() === port.getID()) {
-                prop = PMConnectionDropBehavior.prototype.validate(
-                    shape,
-                    connection.destPort.getParent()
-                );
-            } else {
-                prop = PMConnectionDropBehavior.prototype.validate(
-                    connection.srcPort.getParent(),
-                    shape
-                );
-            }
-
-            if (prop) {
-                port.setOldParent(port.getParent());
-                port.setOldX(port.getX());
-                port.setOldY(port.getY());
-
-                x = ui.position.left;
-                y = ui.position.top;
-                port.setPosition(x, y);
-                shape.dragging = false;
-                if (shape.getID() !== port.parent.getID()) {
-                    port.parent.removePort(port);
-                    currLeft = ui.offset.left - canvas.getX() -
-                        shape.absoluteX + shape.canvas.getLeftScroll();
-                    currTop = ui.offset.top - canvas.getY() - shape.absoluteY +
-                        shape.canvas.getTopScroll();
-                    shape.addPort(port, currLeft, currTop, true);
-                    canvas.regularShapes.insert(port);
-                } else {
-                    shape.definePortPosition(port, port.getPoint(true));
-                }
-
-                // LOGIC: when portChangeEvent is triggered it gathers the state
-                // of the connection but since at this point there's only a segment
-                // let's paint the connection, gather the state and then disconnect
-                // it (the connection is later repainted on, I don't know how)
-                aux = {
-                    before: {
-                        condition: connection.flo_condition,
-                        type: connection.flo_type,
-                        segmentStyle: connection.segmentStyle,
-                        srcDecorator: connection.srcDecorator.getDecoratorPrefix(),
-                        destDecorator: connection.destDecorator.getDecoratorPrefix()
-                    },
-                    after: {
-                        type: prop.type,
-                        segmentStyle: prop.connection,
-                        srcDecorator: prop.srcDecorator,
-                        destDecorator: prop.destDecorator
-                    }
-                };
-                connection.connect();
-                canvas.triggerPortChangeEvent(port);
-                command = new PMCommandReconnect(port, aux);
-                canvas.commandStack.add(command);
-                canvas.hideDropConnectHandlers();
-
-            } else {
-                return false;
+        var customShape,
+            id = ui.draggable.attr('id');
+        if (shape.getType() === "PMParticipant" && !(customShape = shape.canvas.shapeFactory(id))) {
+            if (customShape = shape.canvas.customShapes.find('id', id)) {
+                customShape.dropOnParticipant = true;
             }
         }
         return false;
@@ -19008,7 +18815,7 @@ PMCustomShapeDragBehavior.prototype.attachDragBehavior = function (customShape) 
         drag: this.onDrag(customShape, true),
         stop: this.onDragEnd(customShape, true)
     };
-    $customShape.draggable({'cursor': "move"});
+    $customShape.draggable({ 'cursor': "move" });
     $customShape.draggable(dragOptions);
 };
 /**
@@ -19092,10 +18899,10 @@ PMCustomShapeDragBehavior.prototype.onDragProcedure = function (customShape, roo
         customShape.previousYDragPosition = customShape.y;
 
         for (i = 0; i < customShape.canvas.currentSelection.getSize(); i += 1) {
-             sibling = customShape.canvas.currentSelection.get(i);
-             if (sibling.id !== customShape.id) {
+            sibling = customShape.canvas.currentSelection.get(i);
+            if (sibling.id !== customShape.id) {
                 sibling.setPosition(sibling.x + diffX, sibling.y + diffY);
-             }
+            }
         }
     } else {
         customShape.setPosition(customShape.x, customShape.y);
@@ -19224,19 +19031,19 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
         customShape.canvas.isDragging = false;
 
         // validate lasso limits
-        if (canvas.lassoLimits.x.shape && canvas.lassoLimits.x.shape.getX() < 0) {
+        if (canvas.lassoEnabled && canvas.lassoLimits.x.shape && canvas.lassoLimits.x.shape.getX() < 0) {
             diffX -= canvas.lassoLimits.x.shape.getX();
         }
-        if (canvas.lassoLimits.y.shape && canvas.lassoLimits.y.shape.getY() < 0) {
+        if (canvas.lassoEnabled && canvas.lassoLimits.y.shape && canvas.lassoLimits.y.shape.getY() < 0) {
             diffY -= canvas.lassoLimits.y.shape.getY();
         }
 
         for (i = 0; i < customShape.canvas.currentSelection.getSize();
-             i += 1) {
+            i += 1) {
             sibling = customShape.canvas.currentSelection.get(i);
             // if dragging with lasso is rebasing the limit
             if (diffX > 0 || diffY > 0) {
-                sibling.setPosition(sibling.getX() + diffX,  sibling.getY() + diffY);
+                sibling.setPosition(sibling.getX() + diffX, sibling.getY() + diffY);
             }
             for (j = 0; j < sibling.children.getSize(); j += 1) {
                 child = sibling.children.get(j);
@@ -19255,7 +19062,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
     // connections
     if (root) {
         for (i = 0; i < customShape.canvas.currentSelection.getSize();
-             i += 1) {
+            i += 1) {
             sibling = customShape.canvas.currentSelection.get(i);
             for (j = 0; j < sibling.ports.getSize(); j += 1) {
                 // for each port update its absolute position and repaint
@@ -19266,7 +19073,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
                 port.setPosition(port.x, port.y);
 
                 if (customShape.canvas.sharedConnections.
-                        find('id', connection.getID())) {
+                    find('id', connection.getID())) {
                     // move the segments of this connections
                     if (connection.srcPort.parent.getID() ===
                         sibling.getID()) {
@@ -19304,7 +19111,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
 
             port.setPosition(port.x, port.y);
             if (customShape.canvas.sharedConnections.
-                    find('id', connection.getID())) {
+                find('id', connection.getID())) {
                 // to avoid moving the connection twice
                 // (two times per shape), move it only if the shape
                 // holds the sourcePort
@@ -19341,13 +19148,14 @@ PMCustomShapeDragBehavior.prototype.onDragEnd = function (customShape) {
         customShape.canvas.verticalSnapper.hide();
         customShape.canvas.horizontalSnapper.hide();
         if (!customShape.changedContainer) {
-            if (customShape.parent.getType() === 'PMLane') {
+            if (customShape.parent.getType() === 'PMLane' && !customShape.dropOnParticipant) {
                 command = new PMCommandMoveInLane(customShape.canvas.currentSelection);
             } else {
                 command = new PMUI.command.CommandMove(customShape.canvas.currentSelection);
             }
             command.execute();
             customShape.canvas.commandStack.add(command);
+            customShape.dropOnParticipant = false;
         }
         customShape.changedContainer = false;
         // decrease the zIndex of the oldParent of customShape
@@ -26835,6 +26643,8 @@ var PMTiny = function (options) {
     this.processID = null;
     this.domainURL = null;
     this.baseURL = null;
+    this.contentCss = null;
+    this.themeAdvancedFonts = null;
     PMTiny.prototype.init.call(this, options);
 };
 
@@ -26860,7 +26670,9 @@ PMTiny.prototype.init = function (options) {
         skinVariant: "silver",
         processID: null,
         domainURL: "/sys" + WORKSPACE + "/" + LANG + "/" + SKIN + "/",
-        baseURL: "/js/tinymce/jscripts/tiny_mce"
+        baseURL: "/js/tinymce/jscripts/tiny_mce",
+        contentCss: "",
+        themeAdvancedFonts: "Andale Mono=andale mono,times;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;Comic Sans MS=comic sans ms,sans-serif;Courier New=courier new,courier;Georgia=georgia,palatino;Helvetica=helvetica;Impact=impact,chicago;Symbol=symbol;Tahoma=tahoma,arial,helvetica,sans-serif;Terminal=terminal,monaco;Times New Roman=times new roman,times;Trebuchet MS=trebuchet ms,geneva;Verdana=verdana,geneva;Webdings=webdings;Wingdings=wingdings,zapf dingbats;"
     };
 
     jQuery.extend(true, defaults, options);
@@ -26880,7 +26692,9 @@ PMTiny.prototype.init = function (options) {
         .setDomainURL(defaults.domainURL)
         .setBaseURL(defaults.baseURL)
         .setHeightTiny(defaults.heightTiny)
-        .setWidthTiny(defaults.widthTiny);
+        .setWidthTiny(defaults.widthTiny)
+        .setContentCss(defaults.contentCss)
+        .setThemeAdvancedFonts(defaults.themeAdvancedFonts);
 };
 
 PMTiny.prototype.setTheme = function (theme) {
@@ -26947,6 +26761,26 @@ PMTiny.prototype.setHeightTiny = function (heightTiny) {
     this.heightTiny = heightTiny;
     return this;
 };
+/**
+ * Set CSS used in the content editor
+ *
+ * @param string contentCss
+ * @returns {PMTiny}
+ */
+PMTiny.prototype.setContentCss = function (contentCss) {
+    this.contentCss = contentCss;
+    return this;
+};
+/**
+ * Set fonts list for the advanced theme
+ *
+ * @param string themeAdvancedFonts
+ * @returns {PMTiny}
+ */
+PMTiny.prototype.setThemeAdvancedFonts = function (themeAdvancedFonts) {
+    this.themeAdvancedFonts = themeAdvancedFonts;
+    return this;
+};
 
 
 PMTiny.prototype.setParameterTiny = function () {
@@ -26970,6 +26804,8 @@ PMTiny.prototype.setParameterTiny = function () {
         relative_urls: false,
         remove_script_host: false,
         convert_urls: this.convert_urls,
+        content_css: this.contentCss,
+        theme_advanced_fonts: this.themeAdvancedFonts,
         oninit: function () {
             tinyMCE.activeEditor.processID = PMDesigner.project.id;
             tinyMCE.activeEditor.domainURL = domainURL;
@@ -27076,7 +26912,9 @@ PMTinyField.prototype.init = function (settings) {
         skinVariant: "silver",
         processID: null,
         domainURL: "/sys" + WORKSPACE + "/" + LANG + "/" + SKIN + "/",
-        baseURL: "/js/tinymce/jscripts/tiny_mce"
+        baseURL: "/js/tinymce/jscripts/tiny_mce",
+        contentCss: "",
+        themeAdvancedFonts: "Andale Mono=andale mono,times;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;Comic Sans MS=comic sans ms,sans-serif;Courier New=courier new,courier;Georgia=georgia,palatino;Helvetica=helvetica;Impact=impact,chicago;Symbol=symbol;Tahoma=tahoma,arial,helvetica,sans-serif;Terminal=terminal,monaco;Times New Roman=times new roman,times;Trebuchet MS=trebuchet ms,geneva;Verdana=verdana,geneva;Webdings=webdings;Wingdings=wingdings,zapf dingbats;"
     };
 
     jQuery.extend(true, defaults, settings);
@@ -27097,6 +26935,8 @@ PMTinyField.prototype.init = function (settings) {
         .setBaseURL(defaults.baseURL)
         .setHeightTiny(defaults.heightTiny)
         .setWidthTiny(defaults.widthTiny)
+        .setContentCss(defaults.contentCss)
+        .setThemeAdvancedFonts(defaults.themeAdvancedFonts)
         .hideLabel(true);
 };
 
@@ -27163,6 +27003,26 @@ PMTinyField.prototype.setWidthTiny = function (widthTiny) {
 };
 PMTinyField.prototype.setHeightTiny = function (heightTiny) {
     this.controls[0].setHeightTiny(heightTiny);
+    return this;
+};
+/**
+ * Set CSS used in the content editor
+ *
+ * @param string contentCss
+ * @returns {PMTinyField}
+ */
+PMTinyField.prototype.setContentCss = function (contentCss) {
+    this.controls[0].setContentCss(contentCss);
+    return this;
+};
+/**
+ * Set fonts list for the advanced theme
+ *
+ * @param string themeAdvancedFonts
+ * @returns {PMTinyField}
+ */
+PMTinyField.prototype.setThemeAdvancedFonts = function (themeAdvancedFonts) {
+    this.controls[0].setThemeAdvancedFonts(themeAdvancedFonts);
     return this;
 };
 PMTinyField.prototype.hideLabel = function (value) {
@@ -28399,7 +28259,7 @@ PMAction.prototype.setTooltip = function (message) {
     if (typeof message === "string") {
         this.tooltip = message;
         jQuery(this.selector).attr("title", "");
-        jQuery(this.selector).tooltip({content: that.tooltip, tooltipClass: "mafe-action-tooltip"});
+        jQuery(this.selector).tooltip({ content: that.tooltip, tooltipClass: "mafe-action-tooltip" });
     }
     return this;
 };
@@ -28424,8 +28284,10 @@ PMAction.prototype.addEventListener = function () {
                 throw new Error('After action '.translate() + e.message);
             }
         });
+        if (this.label.text !== "") {
+            jQuery(this.label.selector).text(this.label.text);
+        }
 
-        jQuery(this.label.selector).text(this.label.text);
         this.eventsDefined = true;
     }
     return this;
@@ -31538,7 +31400,7 @@ PMPool.prototype.updateOnRemoveLane = function (lane) {
             nextLane.style.removeProperties(['border-top', 'border-left']);
         }
         if (i > 0) {
-            newY += this.bpmnLanes.get(i - 1).getHeight();
+            newY = this.getNewPositionY(i);
         }
         nextLane.setPosition(lane.getX(), newY);
         nextLane.setRelPosition(nextLane.getRelPosition() - 1);
@@ -31551,6 +31413,23 @@ PMPool.prototype.updateOnRemoveLane = function (lane) {
 
     return this;
 };
+
+/**
++ * Get the new position in Y axis for a lane
++ * @param index
++ * @returns {integer}
++ */
+PMPool.prototype.getNewPositionY = function (index) {
+    var i,
+        nextLane,
+        newY = 0;
+    for (i = 0; i < index; i += 1) {
+        nextLane = this.bpmnLanes.get(i);
+        newY += this.bpmnLanes.get(i).getHeight();
+    }
+    return newY;
+};
+
 /**
  * Updates all bpmn child lanes when resize event has been finished
  */
@@ -32617,16 +32496,15 @@ PMLane.prototype.stringify = function () {
 
 PMLane.prototype.createBpmn = function (type) {
     var bpmnLaneset;
-    if (!this.businessObject.elem) {
-        if (!this.parent.businessObject.elem) {
-            this.parent.createBusinesObject();
-        }
-        bpmnLaneset = this.createLaneset();
-        this.createWithBpmn('bpmn:Lane', 'businessObject');
-        this.updateBounds(this.businessObject.di);
-        this.updateSemanticParent(this.businessObject, {elem: bpmnLaneset});
-        this.updateDiParent(this.businessObject.di, this.parent.parent.businessObject.di);
+    if (!this.parent.businessObject.elem) {
+        this.parent.createBusinesObject();
     }
+    bpmnLaneset = this.createLaneset();
+    this.createWithBpmn('bpmn:Lane', 'businessObject');
+    this.updateBounds(this.businessObject.di);
+    this.updateSemanticParent(this.businessObject, { elem: bpmnLaneset });
+    this.updateDiParent(this.businessObject.di, this.parent.parent.businessObject.di);
+
 };
 
 PMLane.prototype.createLaneset = function () {
@@ -33623,6 +33501,9 @@ PMCommandDelete.prototype.undo = function () {
         shapeBefore = null;
         // add to the canvas array of regularShapes and customShapes
         shape.canvas.addToList(shape);
+        shape.getChildren().asArray().forEach(function (e) {
+            shape.canvas.addToList(e);
+        });
         // add to the children of the parent
         shape.parent.getChildren().insert(shape);
         shape.showOrHideResizeHandlers(false);
@@ -33645,7 +33526,7 @@ PMCommandDelete.prototype.undo = function () {
             }
             shape.setRelPosition(this.beforeRelPositions[shape.getID()]);
             shape.parent.bpmnLanes.insert(shape);
-            shape.parent.bpmnLanes.sort(shape.parent.comparisonFunction);
+            shape.parent.bpmnLanes.bubbleSort(shape.parent.comparisonFunction);
             shape.parent.updateAllLaneDimension();
         }
         if (shape.getType() === 'PMPool') {
@@ -33656,7 +33537,9 @@ PMCommandDelete.prototype.undo = function () {
                 shape.updateAllLaneDimension();
             }
         }
-        shape.corona.hide();
+        if(shape.corona){
+            shape.corona.hide();
+        }
     }
     // reconnect using the stack of commandConnect
     for (i = this.stackCommandConnect.length - 1; i >= 0; i -= 1) {
@@ -33672,6 +33555,7 @@ PMCommandDelete.prototype.undo = function () {
     }
     return this;
 };
+
 /**
  * Executes the command (a.k.a redo)
  * @chainable
@@ -36111,6 +35995,7 @@ var SuggestField = function (settings) {
     this.containerList = null;
     this.width = settings.width || "auto";
     this.messageRequired = null;
+    this.messageRequiredExtended = null;
     this.searchLoad = null;
     this.helper = settings.helper || null;
     this.html = null;
@@ -36290,6 +36175,7 @@ SuggestField.prototype.atachListener = function () {
         value = this.value;
         if (value) {
             that.hideMessageRequired();
+            that.hideMessageRequiredExtended();
             that.containerList.css({
                 top: $(e.target).position().top + 18,
                 "margin-left": $(e.target).position().left - 10
@@ -36517,9 +36403,32 @@ SuggestField.prototype.showMessageRequired = function () {
     }
 };
 
+/**
+  * Prepare the message for the required suggested field
+ */
+SuggestField.prototype.showMessageRequiredExtended = function () {
+    if (this.messageRequiredExtended === null) {
+        var messageRequiredExtended = $('<span class="pmui-field-message" style="display: block; margin-left: 35.2%;"><span class="pmui pmui-textlabel" style="left: 0px; top: 0px; width:auto; height: auto; position: relative; z-index: auto;">' + "This field is required.".translate() + '</span></span>');
+        this.messageRequiredExtended = messageRequiredExtended;
+        this.html.find('ul').after(messageRequiredExtended);
+    } else {
+        this.messageRequiredExtended.show();
+    }
+    this.html.find("input").css({ border: "1px solid white", "border-radius": "2px", outline: "1px solid #ecc3c2" });
+};
+
 SuggestField.prototype.hideMessageRequired = function () {
     if (this.messageRequired != null) {
         this.messageRequired.hide();
+    }
+};
+
+/**
+ * Hide the message required extended when it is no longer needed
+ */
+SuggestField.prototype.hideMessageRequiredExtended = function () {
+    if (this.messageRequiredExtended != null) {
+        this.messageRequiredExtended.hide();
     }
 };
 
@@ -36528,6 +36437,24 @@ SuggestField.prototype.isValid = function () {
         return false
     }
     return true;
+};
+
+/**
+ * Set the style for the input field
+ * 
+ * @param {string} border 
+ * @param {string} borderRadius 
+ * @param {string} color 
+ * @param {string} outline 
+ */
+SuggestField.prototype.repaint = function (border, borderRadius, color, outline) {
+    var that = this;
+    that.html.find("input").css({
+        border: border,
+        "border-radius": borderRadius,
+        color: color,
+        outline: outline
+    });
 };
 var CreateShapeHelper = function (options) {
     this.html = null;
@@ -38130,6 +38057,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             accepts: "string or jQuery object".translate()
         };
         this.keepOpen = {label: "keep open".translate(), value: false, type: "hidden"};
+        this.fixedLocation = {label: "Fixed location".translate(), value: false, type: "checkbox"};
 
         //custom properties
         if (this.owner instanceof FormDesigner.main.GridItem) {
@@ -38325,7 +38253,7 @@ FormDesigner.leftPad = function (string, length, fill) {
             this.pf = ["type"];
         }
         if (type === FormDesigner.main.TypesControl.geomap) {
-            this.pf = ["type", "variable", "var_uid", "protectedValue", "id", "name", "label", "hint"];
+            this.pf = ["type", "variable", "var_uid", "protectedValue", "id", "name", "label", "hint", "fixedLocation"];
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.qrcode) {

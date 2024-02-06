@@ -2,6 +2,7 @@
 
 namespace ProcessMaker\Model;
 
+use DateTime;
 use G;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -71,7 +72,7 @@ class Delegation extends Model
      */
     public function scopeIsThreadOpen($query)
     {
-        return $query->where('DEL_THREAD_STATUS', '=', 'OPEN');
+        return $query->where('APP_DELEGATION.DEL_THREAD_STATUS', '=', 'OPEN');
     }
 
     /**
@@ -82,7 +83,7 @@ class Delegation extends Model
      */
     public function scopeNoUserInThread($query)
     {
-        return $query->where('USR_ID', '=', 0);
+        return $query->where('APP_DELEGATION.USR_ID', '=', 0);
     }
 
     /**
@@ -486,10 +487,17 @@ class Delegation extends Model
      *
      * @param string $usrUid
      * @param bool $count
+     * @param array $selectedColumns
+     * @param string $categoryUid
+     * @param string $processUid
+     * @param string $textToSearch
+     * @param string $sort
+     * @param string $dir
      *
      * @return \Illuminate\Database\Query\Builder | string
      */
-    public static function getSelfServiceQuery($usrUid, $count = false)
+    public static function getSelfServiceQuery($usrUid, $count = false, $selectedColumns = ['APP_DELEGATION.APP_NUMBER', 'APP_DELEGATION.DEL_INDEX'],
+        $categoryUid = null, $processUid = null, $textToSearch = null, $sort = null, $dir = null)
     {
         // Set the 'usrUid' property to preserve
         Delegation::$usrUid = $usrUid;
@@ -506,10 +514,23 @@ class Delegation extends Model
         // Set the 'groups' property to preserve
         Delegation::$groups = $groups;
 
-        // Start the first query
-        $query1 = Delegation::query()->select(['APP_NUMBER', 'DEL_INDEX']);
+        // Add an extra column with alias if is needed to join with the previous delegation
+        if (array_search('APP_DELEGATION.DEL_PREVIOUS', $selectedColumns) !== false) {
+            $selectedColumns[] = 'ADP.USR_ID';
+        }
 
-        // Add the join clause
+        // Start the first query
+        $query1 = Delegation::query()->select($selectedColumns);
+
+        // Add join clause with the previous APP_DELEGATION record if required
+        if (array_search('APP_DELEGATION.DEL_PREVIOUS', $selectedColumns) !== false) {
+            $query1->join('APP_DELEGATION AS ADP', function ($join)  {
+                $join->on('APP_DELEGATION.APP_NUMBER', '=', 'ADP.APP_NUMBER');
+                $join->on('APP_DELEGATION.DEL_PREVIOUS', '=', 'ADP.DEL_INDEX');
+            });
+        }
+
+        // Add the join clause with TASK table
         $query1->join('TASK', function ($join) {
             // Build partial plain query for a complex Join, because Eloquent doesn't support this type of Join
             $complexJoin = "
@@ -539,6 +560,33 @@ class Delegation extends Model
             whereRaw($complexJoin);
         });
 
+        // Add join clause with APPLICATION table if required
+        if (array_search('APPLICATION.APP_TITLE', $selectedColumns) !== false || !empty($textToSearch) || $sort == 'APP_TITLE') {
+            $query1->join('APPLICATION', function ($join) {
+                $join->on('APP_DELEGATION.APP_NUMBER', '=', 'APPLICATION.APP_NUMBER');
+            });
+        }
+
+        // Add join clause with PROCESS table if required
+        if (array_search('PROCESS.PRO_TITLE', $selectedColumns) !== false || !empty($categoryUid) || !empty($processUid) || !empty($textToSearch) || $sort == 'PRO_TITLE') {
+            $query1->join('PROCESS', function ($join) use ($categoryUid, $processUid) {
+                $join->on('APP_DELEGATION.PRO_ID', '=', 'PROCESS.PRO_ID');
+                if (!empty($categoryUid)) {
+                    $join->where('PROCESS.PRO_CATEGORY', $categoryUid);
+                }
+                if (!empty($processUid)) {
+                    $join->where('PROCESS.PRO_UID', $processUid);
+                }
+            });
+        }
+
+        // Build where clause for the text to search
+        if (!empty($textToSearch)) {
+            $query1->where('APPLICATION.APP_TITLE', 'LIKE', "%$textToSearch%")
+                ->orWhere('TASK.TAS_TITLE', 'LIKE', "%$textToSearch%")
+                ->orWhere('PROCESS.PRO_TITLE', 'LIKE', "%$textToSearch%");
+        }
+
         // Clean static properties
         Delegation::$usrUid = '';
         Delegation::$groups = [];
@@ -548,17 +596,63 @@ class Delegation extends Model
 
         if (!empty($selfServiceTasks)) {
             // Start the second query
-            $query2 = Delegation::query()->select(['APP_NUMBER', 'DEL_INDEX']);
+            $query2 = Delegation::query()->select($selectedColumns);
             $query2->tasksIn($selfServiceTasks);
             $query2->isThreadOpen();
             $query2->noUserInThread();
 
+            // Add join clause with the previous APP_DELEGATION record if required
+            if (array_search('APP_DELEGATION.DEL_PREVIOUS', $selectedColumns) !== false) {
+                $query2->join('APP_DELEGATION AS ADP', function ($join)  {
+                    $join->on('APP_DELEGATION.APP_NUMBER', '=', 'ADP.APP_NUMBER');
+                    $join->on('APP_DELEGATION.DEL_PREVIOUS', '=', 'ADP.DEL_INDEX');
+                });
+            }
+
+            // Add the join clause with TASK table if required
+            if (array_search('TASK.TAS_TITLE', $selectedColumns) !== false || !empty($textToSearch) || $sort == 'TAS_TITLE') {
+                $query2->join('TASK', function ($join) {
+                    $join->on('APP_DELEGATION.TAS_ID', '=', 'TASK.TAS_ID');
+                });
+
+            }
+            // Add join clause with APPLICATION table if required
+            if (array_search('APPLICATION.APP_TITLE', $selectedColumns) !== false || !empty($textToSearch) || $sort == 'APP_TITLE') {
+                $query2->join('APPLICATION', function ($join) {
+                    $join->on('APP_DELEGATION.APP_NUMBER', '=', 'APPLICATION.APP_NUMBER');
+                });
+            }
+
+            // Add join clause with PROCESS table if required
+            if (array_search('PROCESS.PRO_TITLE', $selectedColumns) !== false || !empty($categoryUid) || !empty($processUid) || !empty($textToSearch) || $sort == 'PRO_TITLE') {
+                $query2->join('PROCESS', function ($join) use ($categoryUid, $processUid) {
+                    $join->on('APP_DELEGATION.PRO_ID', '=', 'PROCESS.PRO_ID');
+                    if (!empty($categoryUid)) {
+                        $join->where('PROCESS.PRO_CATEGORY', $categoryUid);
+                    }
+                    if (!empty($processUid)) {
+                        $join->where('PROCESS.PRO_UID', $processUid);
+                    }
+                });
+            }
+
+            // Build where clause for the text to search
+            if (!empty($textToSearch)) {
+                $query2->where('APPLICATION.APP_TITLE', 'LIKE', "%$textToSearch%")
+                    ->orWhere('TASK.TAS_TITLE', 'LIKE', "%$textToSearch%")
+                    ->orWhere('PROCESS.PRO_TITLE', 'LIKE', "%$textToSearch%");
+            }
+
             // Build the complex query that uses "UNION DISTINCT" clause
-            $query = sprintf('select '  . ($count ? 'count(*) as aggregate' : 'APP_NUMBER') .
-                ' from ((%s) union distinct (%s)) self_service_cases', toSqlWithBindings($query1),  toSqlWithBindings($query2));
+            $query = sprintf('select '  . ($count ? 'count(*) as aggregate' : '*') .
+                ' from ((%s) union distinct (%s)) self_service_cases' . (!empty($sort) && !empty($dir) ? ' ORDER BY %s %s' : ''),
+                toSqlWithBindings($query1), toSqlWithBindings($query2), $sort, $dir);
 
             return $query;
         } else {
+            if (!empty($sort) && !empty($dir)) {
+                $query1->orderBy($sort, $dir);
+            }
             return $query1;
         }
     }
@@ -567,24 +661,41 @@ class Delegation extends Model
      * Get the self-services cases by user
      *
      * @param string $usrUid
-     *
+     * @param array $selectedColumns
+     * @param string $categoryUid
+     * @param string $processUid
+     * @param string $textToSearch
+     * @param string $sort
+     * @param string $dir
+     * @param int $offset
+     * @param int $limit
      * @return array
      */
-    public static function getSelfService($usrUid)
+    public static function getSelfService($usrUid, $selectedColumns = ['APP_DELEGATION.APP_NUMBER', 'APP_DELEGATION.DEL_INDEX'],
+        $categoryUid = null, $processUid = null, $textToSearch = null, $sort = null, $dir = null, $offset = null, $limit = null)
     {
         // Initializing the variable to return
         $data = [];
 
         // Get the query
-        $query = self::getSelfServiceQuery($usrUid);
+        $query = self::getSelfServiceQuery($usrUid, false, $selectedColumns, $categoryUid, $processUid, $textToSearch, $sort, $dir);
 
         // Get data
         if (!is_string($query)) {
+            // Set offset and limit if were sent
+            if (!is_null($offset) && !is_null($limit)) {
+                $query->offset($offset);
+                $query->limit($limit);
+            }
             $items = $query->get();
             $items->each(function ($item) use (&$data) {
                 $data[] = get_object_vars($item);
             });
         } else {
+            // Set offset and limit if were sent
+            if (!is_null($offset) && !is_null($limit)) {
+                $query .= " LIMIT {$offset}, {$limit}";
+            }
             $items = DB::select($query);
             foreach ($items as $item) {
                 $data[] = get_object_vars($item);
@@ -599,13 +710,17 @@ class Delegation extends Model
      * Count the self-services cases by user
      *
      * @param string $usrUid
+     * @param string $categoryUid
+     * @param string $processUid
+     * @param string $textToSearch
      *
      * @return integer
      */
-    public static function countSelfService($usrUid)
+    public static function countSelfService($usrUid, $categoryUid = null, $processUid = null, $textToSearch = null)
     {
         // Get the query
-        $query = self::getSelfServiceQuery($usrUid, true);
+        $query = self::getSelfServiceQuery($usrUid, true, ['APP_DELEGATION.APP_NUMBER', 'APP_DELEGATION.DEL_INDEX'],
+            $categoryUid, $processUid, $textToSearch);
 
         // Get count value
         if (!is_string($query)) {
@@ -686,5 +801,54 @@ class Delegation extends Model
         $query->limit(1);
 
         return ($query->count() > 0);
+    }
+
+    /**
+     * Return the thread related to the specific task-index
+     *
+     * @param string $appUid
+     * @param string $delIndex
+     * @param string $tasUid
+     * @param string $taskType
+     *
+     * @return array
+     */
+    public static function getDatesFromThread(string $appUid, string $delIndex, string $tasUid, string $taskType)
+    {
+        $query = Delegation::query()->select([
+            'DEL_INIT_DATE',
+            'DEL_DELEGATE_DATE',
+            'DEL_FINISH_DATE',
+            'DEL_RISK_DATE',
+            'DEL_TASK_DUE_DATE'
+        ]);
+        $query->where('APP_UID', $appUid);
+        $query->where('DEL_INDEX', $delIndex);
+        $query->where('TAS_UID', $tasUid);
+        $results = $query->get();
+
+        $thread = [];
+        $results->each(function ($item, $key) use (&$thread, $taskType) {
+            $thread = $item->toArray();
+            if (in_array($taskType, Task::$typesRunAutomatically)) {
+                $startDate = $thread['DEL_DELEGATE_DATE'];
+            } else {
+                $startDate = $thread['DEL_INIT_DATE'];
+            }
+            $endDate = $thread['DEL_FINISH_DATE'];
+            // Calculate the task-thread duration
+            if (!empty($startDate) && !empty($endDate)) {
+                $initDate = new DateTime($startDate);
+                $finishDate = new DateTime($endDate);
+                $diff = $initDate->diff($finishDate);
+                $format = ' %a ' . G::LoadTranslation('ID_DAY_DAYS');
+                $format .= ' %H '. G::LoadTranslation('ID_HOUR_ABBREVIATE');
+                $format .= ' %I '. G::LoadTranslation('ID_MINUTE_ABBREVIATE');
+                $format .= ' %S '. G::LoadTranslation('ID_SECOND_ABBREVIATE');
+                $thread['DEL_THREAD_DURATION'] = $diff->format($format);
+            }
+        });
+
+        return $thread;
     }
 }

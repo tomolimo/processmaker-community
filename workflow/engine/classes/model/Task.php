@@ -738,6 +738,9 @@ class Task extends BaseTask
         $calendarObj->assignCalendarTo($taskUid, $calendarUid, 'TASK');
     }
 
+    /**
+     * @deprecated Method deprecated in Release 3.5.x
+     */
     public function getDelegatedTaskData($TAS_UID, $APP_UID, $DEL_INDEX)
     {
         require_once ('classes/model/AppDelegation.php');

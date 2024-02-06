@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\SqlParser\Tests\Parser;
@@ -53,6 +54,7 @@ class CreateStatementTest extends TestCase
             ['parser/parseCreateView2'],
             ['parser/parseCreateViewWithoutQuotes'],
             ['parser/parseCreateViewWithQuotes'],
+            ['parser/parseCreateViewWithWrongSyntax'],
         ];
     }
 }

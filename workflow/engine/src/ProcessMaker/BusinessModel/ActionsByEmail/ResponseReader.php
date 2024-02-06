@@ -14,6 +14,7 @@ use EmailServerPeer;
 use Exception;
 use G;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use PhpImap\IncomingMail;
 use PhpImap\Mailbox;
 use PMLicensedFeatures;

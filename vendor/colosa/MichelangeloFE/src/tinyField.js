@@ -26,7 +26,9 @@ PMTinyField.prototype.init = function (settings) {
         skinVariant: "silver",
         processID: null,
         domainURL: "/sys" + WORKSPACE + "/" + LANG + "/" + SKIN + "/",
-        baseURL: "/js/tinymce/jscripts/tiny_mce"
+        baseURL: "/js/tinymce/jscripts/tiny_mce",
+        contentCss: "",
+        themeAdvancedFonts: "Andale Mono=andale mono,times;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;Comic Sans MS=comic sans ms,sans-serif;Courier New=courier new,courier;Georgia=georgia,palatino;Helvetica=helvetica;Impact=impact,chicago;Symbol=symbol;Tahoma=tahoma,arial,helvetica,sans-serif;Terminal=terminal,monaco;Times New Roman=times new roman,times;Trebuchet MS=trebuchet ms,geneva;Verdana=verdana,geneva;Webdings=webdings;Wingdings=wingdings,zapf dingbats;"
     };
 
     jQuery.extend(true, defaults, settings);
@@ -47,6 +49,8 @@ PMTinyField.prototype.init = function (settings) {
         .setBaseURL(defaults.baseURL)
         .setHeightTiny(defaults.heightTiny)
         .setWidthTiny(defaults.widthTiny)
+        .setContentCss(defaults.contentCss)
+        .setThemeAdvancedFonts(defaults.themeAdvancedFonts)
         .hideLabel(true);
 };
 
@@ -113,6 +117,26 @@ PMTinyField.prototype.setWidthTiny = function (widthTiny) {
 };
 PMTinyField.prototype.setHeightTiny = function (heightTiny) {
     this.controls[0].setHeightTiny(heightTiny);
+    return this;
+};
+/**
+ * Set CSS used in the content editor
+ *
+ * @param string contentCss
+ * @returns {PMTinyField}
+ */
+PMTinyField.prototype.setContentCss = function (contentCss) {
+    this.controls[0].setContentCss(contentCss);
+    return this;
+};
+/**
+ * Set fonts list for the advanced theme
+ *
+ * @param string themeAdvancedFonts
+ * @returns {PMTinyField}
+ */
+PMTinyField.prototype.setThemeAdvancedFonts = function (themeAdvancedFonts) {
+    this.controls[0].setThemeAdvancedFonts(themeAdvancedFonts);
     return this;
 };
 PMTinyField.prototype.hideLabel = function (value) {

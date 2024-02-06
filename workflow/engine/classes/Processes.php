@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\EmailEvent;
 use ProcessMaker\BusinessModel\Variable as BmVariable;
 use ProcessMaker\Core\System;
@@ -4491,7 +4492,8 @@ class Processes
                 try {
                     $result = $scriptTask->create($processUid, $record);
                 } catch (Exception $e) {
-                    Bootstrap::registerMonolog('DataError', 400, $e->getMessage(), $record, config("system.workspace"), 'processmaker.log');
+                    $message = $e->getMessage();
+                    Log::channel(':DataError')->error($message, Bootstrap::context($record));
                 }
             }
         } catch (Exception $e) {
@@ -5406,16 +5408,14 @@ class Processes
                         }
                         if ($bytesSaved != $fsContent) {
                             $channel = "writingMailTemplate";
-                            $context = \Bootstrap::getDefaultContextLog();
+                            $context = [];
                             $context['action'] = $channel;
                             if (defined("SYS_CURRENT_URI") && defined("SYS_CURRENT_PARMS")) {
                                 $context['url'] = SYS_CURRENT_URI . '?' . SYS_CURRENT_PARMS;
                             }
                             $context['usrUid'] = isset($_SESSION['USER_LOGGED']) ? $_SESSION['USER_LOGGED'] : '';
-                            $sysSys = !empty(config("system.workspace")) ? config("system.workspace") : "Undefined";
                             $message = 'The imported template has a number of byes different than the original template, please verify if the file \'' . $newFileName . '\' is correct.';
-                            $level = 400;
-                            Bootstrap::registerMonolog($channel, $level, $message, $context, $sysSys, 'processmaker.log');
+                            Log::channel(':' . $channel)->error($message, Bootstrap::context($context));
                         }
                     }
                 }

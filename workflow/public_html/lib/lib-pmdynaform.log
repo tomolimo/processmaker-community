@@ -1,30 +1,30 @@
-[9 days ago] 6ec753e0  (HEAD, origin/release/3.5.2) Merged in bugfix/PMCORE-559 (pull request #972) <Rodrigo Quelca>
-[13 days ago] 96ab5933  PMCORE-537:Bug with rows of the grid and multiple file <fabio>
-[2 weeks ago] 0cf32fc3  (origin/bugfix/PMCORE-2052) PMCORE-2052 <Henry Jordan>
-[3 weeks ago] 8db9a803  (origin/bugfix/PMCORE-2045) PMCORE-2045 <Henry Jordan>
-[3 weeks ago] 8dc912cc  (origin/bugfix/PMCORE-2004, origin/bigfix/PMCORE-2004) PMCORE-2004: IE 11>> Values of suggest control are lost in the second task <Rodrigo Quelca>
-[3 weeks ago] a03762cf  (origin/bugfix/PMCORE-1998) PMCORE-1998 <Henry Jordan>
-[3 weeks ago] 7eef0679  (origin/bugfix/PMCORE-2009) PMCORE-2009: IE 11 >> Date time control validation does not disappear, when it is corrected <Rodrigo Quelca>
-[3 weeks ago] 5c92fd62  (origin/bugfix/PMCORE-1112-A) PMCORE-1112-A <Henry Jordan>
-[3 weeks ago] 555883b5  (origin/bugfix/PMCORE-1837) PMCORE-1837 <Henry Jordan>
-[5 weeks ago] a79bc677  (origin/bugfix/PMCORE-1112) PMCORE-1112 <Henry Jordan>
-[5 weeks ago] 8c8d2ba7  (origin/bugfix/PMCORE-1607-B) update v2 <Henry Jordan>
-[5 weeks ago] 87a2a94b  update <Henry Jordan>
-[5 weeks ago] 09ae2de3  PMCORE-1607-B <Henry Jordan>
-[6 weeks ago] 6ccfe4bf  PMCORE-1607-B <Henry Jordan>
-[6 weeks ago] f8537160  (origin/bugfix/PMCORE-1953) PMCORE-1953 <Henry Jordan>
-[6 weeks ago] 9494a66a  (origin/bugfix/PMCORE-1942-B) PMCORE-1942-B <Henry Jordan>
-[6 weeks ago] 7b5993ec  (origin/bugfix/PMCORE-819) PMCORE-819: (Dynaform - Grid) 0025586: TextBox control doesn't display the value with a query with different 'Display mode' <Rodrigo Quelca>
-[6 weeks ago] fe881c0a  (origin/bugfix/PMCORE-1943) PMCORE-1943 <Henry Jordan>
-[6 weeks ago] cddf96fa  (origin/bugfix/PMCORE-1942) PMCORE-1942 <Henry Jordan>
-[6 weeks ago] dfb064b9  (origin/bugfix/PMCORE-1938) PMCORE-1938: First element cache is causing problems in the Text displayed on the Suggest control <Rodrigo Quelca>
-[6 weeks ago] c3610cb7  (origin/bugfix/PMCORE-1937) PMCORE-1937 "memory cache" property always works for the Suggest Control, although the control has that property uncheck <Rodrigo Quelca>
-[7 weeks ago] 48ea7c63  (origin/bugfix/PMCORE-1922-A) PMCORE-1922 <Henry Jordan>
-[7 weeks ago] e9494608  (origin/bugfix/PMCORE-1922) PMCORE-1922 <Henry Jordan>
-[7 weeks ago] 0478edf2  (origin/bugfix/PMCORE-1925) PMCORE-1925: Image control broken the getField helper when the getInfo helper is used <Rodrigo Quelca>
-[7 weeks ago] 8648e851  correction <fabio>
-[7 weeks ago] 3cbc356e  PMCORE-1629:setText function doesn't work inside a grid with date time control <fabio>
-[7 weeks ago] 26be4ccf  (origin/bugfix/PMCORE-1910) PMCORE-1910 <Henry Jordan>
-[7 weeks ago] b825e2b8  (origin/bugfix/PMCORE-1912) PMCORE-1912 <Henry Jordan>
-[7 weeks ago] 8456fe67  (origin/bugfix/PMCORE-1909) PMCORE-1909 <Henry Jordan>
-[8 weeks ago] a8e9c48d  (origin/bugfix/PMCORE-1777) PMCORE-1777 <Henry Jordan>
+[4 days ago] 66a14701  (HEAD, origin/release/3.5.7, origin/release/3.5.6) PMCORE-2526:Radio control does not update after use "setValue" helper to clean the control <fabio>
+[3 weeks ago] 71439824  PMCORE-2378: Error opening Dynaform after saving with saveForm () <Rodrigo Quelca>
+[3 weeks ago] 5ea6113a  PMCORE-2425: Dynaform - Grid Control - Delete button is not working as expected <Rodrigo Quelca>
+[3 weeks ago] fcd75b65  PMCORE-2462: Set empty value to Radio buttons is not working <Rodrigo Quelca>
+[9 weeks ago] 7237fd1a  PMCORE-1773:[20214 ] GetValue() method is returning the label instead of the Key for radio fields in Mobile. <fabio>
+[9 weeks ago] 731e77a1  (origin/bugfix/PMCORE-1341-A) PMCORE-1341-A <Henry Jordan>
+[10 weeks ago] 2073d30c  [20214 ] GetValue() method is returning the label instead of the Key for radio fields in Mobile. <fabio>
+[3 months ago] 18035a13  PMCORE-1773:[20214 ] GetValue() method is returning the label instead of the Key for radio fields in Mobile. <fabio>
+[3 months ago] b41c162e  (origin/bugfix/PMCORE-2161) PMCORE-2161: Wrong functionality of the dropdown controls in grid <Rodrigo Quelca>
+[3 months ago] aa024a7a  (origin/bugfix/PMCORE-1234) PMCORE-1234 <Henry Jordan>
+[3 months ago] 3728a520  (origin/bugfix/PMCORE-1751) PMCORE-1751 <Andrea Adamczyk>
+[3 months ago] c580864a  (origin/escapeSelector) escapeSelector methos was created <Rodrigo Quelca>
+[3 months ago] 7565b8cc  (origin/bugfix/PMCORE-2061) PMCORE-2061 <Henry Jordan>
+[4 months ago] c2246d87  (origin/feature/PMCORE-2114) PMCORE-2114: Javascript Helper functions for geomap control <Rodrigo Quelca>
+[4 months ago] 1966b2ef  (origin/bugfix/PMCORE-1961) PMCORE-1961 <Henry Jordan>
+[4 months ago] 4d3a8804  (origin/bugfix/PMCORE-759) PMCORE-759 <Henry Jordan>
+[4 months ago] 96ab5933  PMCORE-537:Bug with rows of the grid and multiple file <fabio>
+[4 months ago] 0cf32fc3  (origin/bugfix/PMCORE-2052) PMCORE-2052 <Henry Jordan>
+[4 months ago] 8db9a803  (origin/bugfix/PMCORE-2045) PMCORE-2045 <Henry Jordan>
+[4 months ago] 8dc912cc  (origin/bugfix/PMCORE-2004, origin/bigfix/PMCORE-2004) PMCORE-2004: IE 11>> Values of suggest control are lost in the second task <Rodrigo Quelca>
+[4 months ago] a03762cf  (origin/bugfix/PMCORE-1998) PMCORE-1998 <Henry Jordan>
+[4 months ago] 7eef0679  (origin/bugfix/PMCORE-2009) PMCORE-2009: IE 11 >> Date time control validation does not disappear, when it is corrected <Rodrigo Quelca>
+[4 months ago] 5c92fd62  (origin/bugfix/PMCORE-1112-A) PMCORE-1112-A <Henry Jordan>
+[4 months ago] 555883b5  (origin/bugfix/PMCORE-1837) PMCORE-1837 <Henry Jordan>
+[4 months ago] 570fa814  (origin/bugfix/PMCORE-559) PMCORE-559: [ZenDesk 11723] Date Time Control - Initial Selection Date Property when setting the format HH:mm is not displaying the time correctly <Rodrigo Quelca>
+[5 months ago] a79bc677  (origin/bugfix/PMCORE-1112) PMCORE-1112 <Henry Jordan>
+[5 months ago] 8c8d2ba7  (origin/bugfix/PMCORE-1607-B) update v2 <Henry Jordan>
+[5 months ago] 87a2a94b  update <Henry Jordan>
+[5 months ago] 09ae2de3  PMCORE-1607-B <Henry Jordan>
+[5 months ago] 6ccfe4bf  PMCORE-1607-B <Henry Jordan>

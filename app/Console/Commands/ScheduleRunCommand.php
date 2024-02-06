@@ -88,7 +88,7 @@ class ScheduleRunCommand extends BaseCommand
                         return $result;
                     }
                     return true;
-                });
+                })->onOneServer();
             }
         });
         parent::handle();

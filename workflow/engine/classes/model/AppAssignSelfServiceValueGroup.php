@@ -2,6 +2,8 @@
 
 require_once 'classes/model/om/BaseAppAssignSelfServiceValueGroup.php';
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Skeleton subclass for representing a row from the 'APP_ASSIGN_SELF_SERVICE_VALUE_GROUP' table.
  * You should add additional methods to this class to meet the
@@ -48,10 +50,12 @@ class AppAssignSelfServiceValueGroup extends BaseAppAssignSelfServiceValueGroup
     {
         $object = $this->getTypeUserOrGroup($id);
         if ($object->id === -1) {
-            $dataLog = Bootstrap::getDefaultContextLog();
-            $dataLog['ASSIGNEE_ID'] = $id;
-            $dataLog['ASSIGNEE_TYPE'] = $object->type;
-            Bootstrap::registerMonolog('AssignSelfServiceValue', 300, 'Invalid identifier value  for Assign Self Service Value', $dataLog, $dataLog['workspace'], 'processmaker.log');
+            $message = 'Invalid identifier value  for Assign Self Service Value';
+            $context = [
+                'ASSIGNEE_ID' => $id,
+                'ASSIGNEE_TYPE' => $object->type
+            ];
+            Log::channel(':AssignSelfServiceValue')->warning($message, Bootstrap::context($context));
         } else {
             $sql = "INSERT INTO "
                     . AppAssignSelfServiceValueGroupPeer::TABLE_NAME

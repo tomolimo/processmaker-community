@@ -2,6 +2,7 @@
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  *
@@ -234,6 +235,7 @@ class DataBaseMaintenance
      */
     public function dumpData($table)
     {
+        $sql = "";
         try {
             $this->outfile = $this->tmpDir . $table . '.dump';
 
@@ -248,10 +250,12 @@ class DataBaseMaintenance
 
             return true;
         } catch (QueryException $exception) {
-            $ws = (!empty(config('system.workspace'))) ? config('system.workspace') : 'Undefined Workspace';
-            Bootstrap::registerMonolog('MysqlCron', 400, $exception->getMessage(), ['sql' => $sql], $ws, 'processmaker.log');
-            $varRes = $exception->getMessage() . "\n";
-            G::outRes($varRes);
+            $message = $exception->getMessage();
+            $context = [
+                'sql' => $sql
+            ];
+            Log::channel(':MysqlCron')->error($message, Bootstrap::context($context));
+            G::outRes($message . "\n");
             return false;
         }
     }
@@ -265,18 +269,19 @@ class DataBaseMaintenance
      */
     public function restoreData($backupFile)
     {
+        $sql = "";
         try {
             $tableName = str_replace('.dump', '', basename($backupFile));
             $sql = "LOAD DATA INFILE '$backupFile' INTO TABLE $tableName FIELDS TERMINATED BY '\t|\t' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\t\t\r\r\n'";
-
             DB::connection($this->getConnect())->raw($sql);
-
             return true;
         } catch (QueryException $exception) {
-            $ws = (!empty(config("system.workspace"))) ? config("system.workspace") : "Wokspace Undefined";
-            Bootstrap::registerMonolog('MysqlCron', 400, $exception->getMessage(), ['sql' => $sql], $ws, 'processmaker.log');
-            $varRes = $exception->getMessage() . "\n";
-            G::outRes($varRes);
+            $message = $exception->getMessage();
+            $context = [
+                'sql' => $sql
+            ];
+            Log::channel(':MysqlCron')->error($message, Bootstrap::context($context));
+            G::outRes($message . "\n");
             return false;
         }
     }

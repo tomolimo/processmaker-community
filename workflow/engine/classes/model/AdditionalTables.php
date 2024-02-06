@@ -2,6 +2,7 @@
 
 use App\Jobs\GenerateReportTable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\JobsManager;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\Application;
@@ -396,6 +397,7 @@ class AdditionalTables extends BaseAdditionalTables
 
     public function getAllData($sUID, $start = null, $limit = null, $keyOrderUppercase = true, $filter = '', $appUid = false, $search = '')
     {
+        $conf = Bootstrap::getSystemConfiguration();
         $addTab = new AdditionalTables();
         $aData = $addTab->load($sUID, true);
         if (!isset($_SESSION['PROCESS'])) {
@@ -429,7 +431,17 @@ class AdditionalTables extends BaseAdditionalTables
             foreach ($aData['FIELDS'] as $aField) {
                 $field = '$oCriteria->addSelectColumn(' . $sClassPeerName . '::' . $aField['FLD_NAME'] . ');';
                 if (in_array($aField['FLD_TYPE'], $types)) {
-                    $field = '$oCriteria->addAsColumn("' . $aField['FLD_NAME'] . '", "round(" . ' . $sClassPeerName . '::' . $aField['FLD_NAME'] . ' . ", ' . ($aField['FLD_TYPE'] == 'DOUBLE' ? '8' : '2') . ')");';
+
+                    if ($aField['FLD_TYPE'] == 'DECIMAL' || $aField['FLD_TYPE'] == 'REAL') {
+                        $round = '", "" . ' . $sClassPeerName . '::' . $aField['FLD_NAME'] . ' . "");';
+
+                    } else {
+                        $double = $this->validateParameter($conf['report_table_double_number'], 1, 8, 4);
+                        $float = $this->validateParameter($conf['report_table_floating_number'], 1, 5, 4);
+                        $round = '", "round(" . ' . $sClassPeerName . '::' . $aField['FLD_NAME'] . ' . ", ' . ($aField['FLD_TYPE'] == 'DOUBLE' ? $double : $float) . ')");';
+                    }
+                    
+                    $field = '$oCriteria->addAsColumn("' . $aField['FLD_NAME'] . $round;
                 }
                 eval($field);
             }
@@ -538,6 +550,29 @@ class AdditionalTables extends BaseAdditionalTables
         }
 
         return array('rows' => $rows, 'count' => $count);
+    }
+
+    /**
+     * Validate report table double and float configuration values
+     * 
+     * @param int $number
+     * @param int $min
+     * @param int $max
+     * @param int $default
+     * 
+     * @return int
+     */
+    public function validateParameter($number, $min, $max, $default) {
+        if (!is_numeric($number)) {
+            $result = $default;
+        } elseif ($number > $max) {
+            $result = $max;
+        } elseif ($number < $min) {
+            $result = $min;
+        } else {
+            $result = $number;
+        }
+        return $result;
     }
 
     public function checkClassNotExist($sUID)
@@ -1033,10 +1068,9 @@ class AdditionalTables extends BaseAdditionalTables
                         if ($externalResultSet->next()) {
                             $stringCount = $externalResultSet->getInt(1);
                         }
-                    } catch (Exception $externalException) {
-                        $context = Bootstrap::getDefaultContextLog();
-                        $context = array_merge($context, $row);
-                        Bootstrap::registerMonolog("additional tables", 400, $externalException->getMessage(), $context);
+                    } catch (Exception $e) {
+                        $message = $e->getMessage();
+                        Log::channel(':additional tables')->error($message, Bootstrap::context($row));
                     }
                 }
             }

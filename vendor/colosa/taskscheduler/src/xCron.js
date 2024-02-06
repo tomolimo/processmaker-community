@@ -11,6 +11,7 @@ class xCron {
     /**
      * Convert settings from modal properties to API properties
      * @param {*} settings 
+     * @returns {Object}
      */
     toExpression(settings) {
         let response = {};
@@ -19,7 +20,7 @@ class xCron {
         //ending property
         response.endingTime = settings.endingTime == "" ? null : settings.endingTime;
         //expression property
-        response.expression = settings.periodicity != "" ? settings.periodicity + " * * " + settings.repeatOn.join(",") : "0 */" + settings.periodicityUnit + " * * " + +settings.repeatOn.join(",");
+        response.expression = this.formatExpression(settings);
         //timezone
         response.timezone = settings.timezone == "" ? null : settings.timezone;
         //Every on
@@ -33,9 +34,11 @@ class xCron {
     /**
      * Convert the settings from API to modal properties
      * @param {*} settings 
+     * @returns {Object}
      */
     toSettings(settings) {
-        let parse = settings.expression.split(/\s+/);
+        let per,
+            parse = settings.expression.split(/\s+/);
         this.minutes = parse[0];
         this.hours = parse[1];
         this.days = parse[2];
@@ -43,7 +46,8 @@ class xCron {
         this.dates = parse[4];
 
         //Periodicity property
-        this.settings.periodicity = this.minutes + " " + this.hours;
+        per = this.minutes + " " + this.hours;
+        this.settings.periodicity = this.formatPeriodicity(per);
         //Repeat On
         this.settings.repeatOn = this.dates == "*" ? ['0', '1', '2', '3', '4', '5', '6'] : this.dates.split(",");
         //Starting Time
@@ -65,10 +69,11 @@ class xCron {
     /**
      * Return the literal description from schedule time
      * @param {*} settings 
+     * @returns {String}
      */
     toDescription(settings) {
         let response = "";
-        switch (settings.periodicity) {
+        switch (settings.periodicity.value) {
             case "*/1 *":
                 response += window.TRANSLATIONS["ID_EVERY_MINUTE"];
                 break;
@@ -86,6 +91,12 @@ class xCron {
                 break;
             case "0 */1":
                 response += window.TRANSLATIONS["ID_EVERY_HOUR"];
+                break;
+            case "oncePerDay":
+                response += window.TRANSLATIONS["ID_ONCE_PER_DAY"] + " " + this.tConvert(settings.periodicity.oncePerDay);
+                break;
+            case "twicePerDay":
+                response += window.TRANSLATIONS["ID_TWICE_PER_DAY"] + " " + this.tConvert(settings.periodicity.oncePerDay) + " & " + this.tConvert(settings.periodicity.twicePerDay);
                 break;
         }
 
@@ -111,13 +122,15 @@ class xCron {
     /**
      * Convert time string {0-23} to AM/PM
      * @param {*} time 
+     * @returns {String}
      */
     tConvert(time) {
         // Check correct time format and split into components
         if (time.split(":").length == 3) {
             time = [time.split(":")[0], time.split(":")[1]].join(":");
         }
-        time = time.toString().match(/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
+
+        time = time.toString().match(/^([01]*\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
         if (time.length > 1) { // If time format correct
             time = time.slice(1);  // Remove full string match value
             time[5] = +time[0] < 12 ? 'AM' : 'PM'; // Set AM/PM
@@ -130,6 +143,7 @@ class xCron {
      * Return string , from interval property
      * @param {*} everyOn 
      * @param {*} interval 
+     * @returns {String}
      */
     intervalToDescription(everyOn, interval) {
         let res = "",
@@ -157,6 +171,7 @@ class xCron {
     /**
      * Return string, from repeatOn property
      * @param {*} repeatOn 
+     * @returns {String}
      */
     repeatOnToDescription(repeatOn) {
         let response = " on ",
@@ -179,6 +194,84 @@ class xCron {
             response = "";
         }
         return response;
+    }
+    /**
+     * Verify if the per string is "dailyAt" or "twiceDaily"
+     * @param {*} per 
+     * @returns {Boolean}
+     */
+    verifyPeriodicyIfDailyAt(per) {
+        let res = false;
+        switch (per) {
+            case "*/1 *":
+            case "*/5 *":
+            case "*/10 *":
+            case "*/15 *":
+            case "*/30 *":
+            case "0 */1":
+                break;
+            default:
+                res = true;
+                break;
+        }
+        return res;
+    }
+    /**
+     * Format the expression * * * * *
+     * @param {*} set 
+     * @returns {String}
+     */
+    formatExpression(set) {
+        let response = "* * * * * *";
+        if (set.periodicity.value == "oncePerDay") {
+            response = this.formatPeriodicityDailyAt(set.periodicity.oncePerDay) + " * * " + set.repeatOn.join(",");
+        } else if (set.periodicity.value == "twicePerDay") {
+            response = this.formatPeriodicityTwiceDaily(set.periodicity.oncePerDay, set.periodicity.twicePerDay) + " * * " + set.repeatOn.join(",");
+        } else {
+            response = set.periodicity.value + " * * " + set.repeatOn.join(",");
+        }
+        return response;
+    }
+    /**
+     * Format the string for "dailyAt" property
+     * @param {*} dailyAt 
+     * @returns {String}
+     */
+    formatPeriodicityDailyAt(dailyAt) {
+        return "0 " + dailyAt.split(":")[0];
+    }
+    /**
+     * Format the strings for "twiceDaily" property
+     * @param {*} dailyAt1 
+     * @param {*} dailyAt2 
+     * @returns {String}
+     */
+    formatPeriodicityTwiceDaily(dailyAt1, dailyAt2) {
+        return "0 " + parseInt(dailyAt1.split(":")[0]) + "," + parseInt(dailyAt2.split(":")[0]);
+    }
+    /**
+     * Return the periodciity object to UI
+     * @param {*} per 
+     * @returns {Object}
+     */
+    formatPeriodicity(per) {
+        let res = per,
+            oncePerDay = "00:00:00",
+            twicePerDay = "00:00:00",
+            parse = per.split(/\s+/);
+        if (this.verifyPeriodicyIfDailyAt(per)) {
+            res = "oncePerDay";
+            oncePerDay = parse[1].split(",")[0] + ":00:00";
+            if (parse[1] && parse[1].split(",").length > 1 && parse[0] == "0") {
+                res = "twicePerDay";
+                twicePerDay = parse[1].split(",")[1] + ":00:00";
+            }
+        }
+        return {
+            value: res,
+            oncePerDay,
+            twicePerDay
+        };
     }
 }
 

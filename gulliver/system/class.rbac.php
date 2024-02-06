@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Exception\RBACException;
 
 class RBAC
@@ -57,6 +58,7 @@ class RBAC
                 'ofToAssign' => ['PM_FACTORY'],
                 'usersGroup' => ['PM_FACTORY'],
                 'canDeleteUser' => ['PM_USERS'],
+                'privateProcesses' => ['PM_USERS'],
                 'deleteUser' => ['PM_USERS'],
                 'changeUserStatus' => ['PM_USERS'],
                 'availableGroups' => ['PM_USERS'],
@@ -917,10 +919,12 @@ class RBAC
                                 return $res;
                             }
                         } catch (Exception $e) {
-                            $context = Bootstrap::getDefaultContextLog();
-                            $context["action"] = "ldapSynchronize";
-                            $context["authSource"] = $row;
-                            Bootstrap::registerMonolog("ldapSynchronize", 400, $e->getMessage(), $context, $context["workspace"], "processmaker.log");
+                            $message = $e->getMessage();
+                            $context = [
+                                'action' => 'ldapSynchronize',
+                                'authSource' => $row
+                            ];
+                            Log::channel(':ldapSynchronize')->error($message, Bootstrap::context($context));
                         }
                     }
 
@@ -1155,12 +1159,14 @@ class RBAC
                 $dataCase['USR_STATUS'] = 1;
             }
         }
-
+        $currentUser = $this->userObj;
+        $this->userObj = new RbacUsers();
         $this->userObj->update($dataCase);
         if ($rolCode != '') {
             $this->removeRolesFromUser($dataCase['USR_UID']);
             $this->assignRoleToUser($dataCase['USR_UID'], $rolCode);
         }
+        $this->userObj = $currentUser;
     }
 
     /**

@@ -3,7 +3,6 @@
  * Jan 15th, 2011
  */
 
-Ext.Ajax.timeout = 300000;
 
 Ext.onReady(function(){
     var fieldNameWS,

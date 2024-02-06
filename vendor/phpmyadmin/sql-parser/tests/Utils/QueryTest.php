@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\SqlParser\Tests\Utils;
@@ -415,12 +416,24 @@ class QueryTest extends TestCase
                 ['`tbl`'],
             ],
             [
+                'INSERT INTO 0tbl(`id`, `name`) VALUES (1, "Name")',
+                ['`0tbl`'],
+            ],
+            [
                 'UPDATE tbl SET id = 0',
                 ['`tbl`'],
             ],
             [
+                'UPDATE 0tbl SET id = 0',
+                ['`0tbl`'],
+            ],
+            [
                 'DELETE FROM tbl WHERE id < 10',
                 ['`tbl`'],
+            ],
+            [
+                'DELETE FROM 0tbl WHERE id < 10',
+                ['`0tbl`'],
             ],
             [
                 'TRUNCATE tbl',
@@ -668,8 +681,7 @@ class QueryTest extends TestCase
     {
         $query = 'USE saki';
         $delimiter = null;
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertNull($statement);
         $this->assertEquals('USE saki', $query);
 
@@ -681,25 +693,20 @@ class QueryTest extends TestCase
             '/*!SELECT * FROM actor WHERE last_name = "abc"*/$$';
         $delimiter = null;
 
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertEquals('USE sakila;', $statement);
 
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertEquals('SELECT * FROM actor;', $statement);
 
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertEquals('DELIMITER $$', $statement);
         $this->assertEquals('$$', $delimiter);
 
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertEquals('UPDATE actor SET last_name = "abc"$$', $statement);
 
-        list($statement, $query, $delimiter) =
-            Query::getFirstStatement($query, $delimiter);
+        [$statement, $query, $delimiter] = Query::getFirstStatement($query, $delimiter);
         $this->assertEquals('SELECT * FROM actor WHERE last_name = "abc"$$', $statement);
     }
 }

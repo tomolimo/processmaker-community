@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Filesystem\Filesystem;
 use ProcessMaker\Core\System;
 
 class OutputDocument extends BaseOutputDocument
@@ -796,6 +797,9 @@ class OutputDocument extends BaseOutputDocument
      */
     public function generateTcpdf($outDocUid, $fields, $path, $filename, $content, $landscape = false, $properties = [])
     {
+        // Check and prepare the fonts path used by TCPDF library
+        self::checkTcPdfFontsPath();
+
         // Including the basic configuration for the TCPDF library
         require_once PATH_TRUNK . "vendor" . PATH_SEP . "tecnickcom" . PATH_SEP . "tcpdf" . PATH_SEP . "config" . PATH_SEP . "tcpdf_config.php";
 
@@ -924,13 +928,30 @@ class OutputDocument extends BaseOutputDocument
         // Enable the font sub-setting option
         $pdf->setFontSubsetting(true);
 
-        // Set unicode font if is required, we need to detect if is chinese, japanese, thai, etc.
+        // Set default unicode font if is required, we need to detect if is chinese, japanese, thai, etc.
         if (preg_match('/[\x{30FF}\x{3040}-\x{309F}\x{4E00}-\x{9FFF}\x{0E00}-\x{0E7F}]/u', $content, $matches)) {
             // The additional fonts should be in "shared/fonts" folder
-            $fileArialUniTTF = PATH_DATA . "fonts" . PATH_SEP . "arialuni.ttf";
+            $fileArialUniTTF = PATH_DATA . 'fonts' . PATH_SEP . 'arialuni.ttf';
             if (file_exists($fileArialUniTTF)) {
-                $font = TCPDF_FONTS::addTTFfont($fileArialUniTTF, 'TrueTypeUnicode');
-                $pdf->SetFont($font);
+                // Convert TTF file to the format required by TCPDF library
+                $tcPdfFileName = TCPDF_FONTS::addTTFfont($fileArialUniTTF, 'TrueTypeUnicode');
+
+                // Set the default unicode font for the document
+                $pdf->SetFont($tcPdfFileName);
+
+                // Register the font file if is not present in the JSON file
+                if (!self::existTcpdfFont('arialuni.ttf')) {
+                    // Add font "arialuni.ttf"
+                    $font = [
+                        'fileName' => 'arialuni.ttf',
+                        'tcPdfFileName' => $tcPdfFileName,
+                        'familyName' => $tcPdfFileName,
+                        'inTinyMce' => true,
+                        'friendlyName' => $tcPdfFileName,
+                        'properties' => ''
+                    ];
+                    self::addTcPdfFont($font);
+                }
             }
         }
 
@@ -1199,5 +1220,146 @@ class OutputDocument extends BaseOutputDocument
         } catch (Exception $oError) {
             throw ($oError);
         }
+    }
+
+    /**
+     * Check and prepare the fonts path used by TCPDF library
+     *
+     * @param string $folderName
+     */
+    public static function checkTcPdfFontsPath($folderName = 'tcpdf')
+    {
+        if (!defined('K_PATH_FONTS')) {
+            // Define the path of the fonts, "K_PATH_FONTS" is a constant used by "TCPDF" library
+            define('K_PATH_FONTS', PATH_DATA . 'fonts' . PATH_SEP . $folderName . PATH_SEP);
+        }
+
+        // Check if already exists the path, if not exist we need to prepare the same
+        if (!file_exists(K_PATH_FONTS)) {
+            // Instance Filesystem class
+            $filesystem = new Filesystem();
+
+            // Create the missing folder(s)
+            $filesystem->makeDirectory(K_PATH_FONTS, 0755, true, true);
+
+            // Copy files related to the fonts from vendors
+            $filesystem->copyDirectory(PATH_TRUNK . 'vendor' . PATH_SEP . 'tecnickcom' . PATH_SEP . 'tcpdf' . PATH_SEP . 'fonts' . PATH_SEP, K_PATH_FONTS);
+
+            // Copy files related to the fonts from core
+            $filesystem->copyDirectory(PATH_CORE . 'content' . PATH_SEP . 'tcPdfFonts' . PATH_SEP, K_PATH_FONTS);
+        }
+    }
+
+    /**
+     * Load the custom fonts list
+     *
+     * @return array
+     */
+    public static function loadTcPdfFontsList()
+    {
+        // Initialize variables
+        $jsonFilePath = K_PATH_FONTS . 'fonts.json';
+
+        // Load the custom fonts list
+        if (file_exists($jsonFilePath)) {
+            $fonts = json_decode(file_get_contents($jsonFilePath), true);
+        } else {
+            $fonts = [];
+        }
+
+        return $fonts;
+    }
+
+    /**
+     * Save the custom fonts list
+     *
+     * @param $fonts
+     */
+    public static function saveTcPdfFontsList($fonts)
+    {
+        // Initialize variables
+        $jsonFilePath = K_PATH_FONTS . 'fonts.json';
+
+        // Save the JSON file
+        file_put_contents($jsonFilePath, json_encode($fonts));
+    }
+
+    /**
+     * Check if a font file name exist in the fonts list
+     *
+     * @param string $fontFileName
+     * @return bool
+     */
+    public static function existTcpdfFont($fontFileName)
+    {
+        // Load the custom fonts list
+        $fonts = self::loadTcPdfFontsList();
+
+        // Exist?
+        return isset($fonts[$fontFileName]);
+    }
+
+    /**
+     * Add a custom font to be used by TCPDF library
+     *
+     * @param array $font
+     */
+    public static function addTcPdfFont($font)
+    {
+        // Load the custom fonts list
+        $fonts = self::loadTcPdfFontsList();
+
+        // Add the font
+        $fonts[$font['fileName']] = $font;
+
+        // Save the fonts list
+        self::saveTcPdfFontsList($fonts);
+
+        // Re-generate CSS file
+        self::generateCssFile();
+    }
+
+    /**
+     * Remove a custom font used in TCPDF library
+     *
+     * @param string $fileName
+     */
+    public static function removeTcPdfFont($fileName)
+    {
+        // Load the custom fonts list
+        $fonts = self::loadTcPdfFontsList();
+
+        // Add the font
+        unset($fonts[$fileName]);
+
+        // Save the fonts list
+        self::saveTcPdfFontsList($fonts);
+
+        // Re-generate CSS file
+        self::generateCssFile();
+    }
+
+    /**
+     * Generate CSS with the fonts definition to be used by TinyMCE editor
+     */
+    public static function generateCssFile()
+    {
+        // Initialize variables
+        $template = "@font-face {font-family: @familyName;src: url('/fonts/font.php?file=@fileName') format('truetype');@properties}\n";
+        $css = '';
+
+        // Load the custom fonts list
+        $fonts = self::loadTcPdfFontsList();
+
+        // Build the CSS content
+        foreach ($fonts as $font) {
+            if ($font['inTinyMce']) {
+                $css .= str_replace(['@familyName', '@fileName', '@properties'],
+                    [$font['familyName'], $font['fileName'], $font['properties']], $template);
+            }
+        }
+
+        // Save the CSS file
+        file_put_contents(K_PATH_FONTS . 'fonts.css', $css);
     }
 }

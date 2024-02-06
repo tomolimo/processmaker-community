@@ -219,23 +219,34 @@ Ext.onReady(function() {
       minValue: 30,
       maxValue: 14400,
 
-      listeners: {
-          keyup: function (txt, e)
-          {
-              changeSettings(6);
-          },
-          render : function(c)
-          {
-              new Ext.ToolTip({
-                  target : c.getEl(),
-                  listeners: {
-                      'show': function (t) {
-                          t.update(_("ID_REFRESH_TIME_SCOPE"));
-                      }
-                  }
-              });
+    listeners: {
+      keyup: function (txt, e) {
+        changeSettings(6);
+      },
+      invalid: function (c) {
+        var msg = this.getMessageHandler();
+        if (c && msg) {
+          c.tooltip.disable();
+          msg.mark(this, _("ID_REFRESH_TIME_SCOPE") + "\n" + c.activeError);
+        }
+      },
+      valid: function (c) {
+        if (c) {
+          c.tooltip.enable();
+          Ext.QuickTips.disable();
+        }
+      },
+      render: function (c) {
+        c.tooltip = new Ext.ToolTip({
+          target: c.getEl(),
+          listeners: {
+            'show': function (t) {
+              t.update(_("ID_REFRESH_TIME_SCOPE"));
+            }
           }
+        });
       }
+    }
   });
 
   fsNames = new Ext.form.FieldSet({

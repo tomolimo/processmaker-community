@@ -33,7 +33,7 @@
     "require": {
         "php": ">=7.1",
         "laravel/framework": "5.7.*",
-        "luracast/restler": "^3.0",
+        "luracast/restler": "3.0",
         "bshaffer/oauth2-server-php": "v1.0",
         "colosa/pmui": "release/3.5.0-dev",
         "colosa/michelangelofe": "release/3.5.0-dev",
@@ -61,7 +61,8 @@
         "tecnickcom/tcpdf": "6.3.*",
         "fzaninotto/faker": "^1.7",
         "predis/predis": "1.1.1",
-        "phpmyadmin/sql-parser": "^5.3"
+        "phpmyadmin/sql-parser": "^5.3",
+        "aws/aws-sdk-php": "~3.0"
     },
     "require-dev": {
         "guzzlehttp/guzzle": "^6.3",

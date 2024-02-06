@@ -295,7 +295,8 @@ var defaultNavbarPanelMenus = {
                     class: 'mafe-undo',
                     child: [
                         {
-                            element: 'a',
+                            element: 'b',
+                            class: 'mafe-action-undo',
                             child: [
                                 {
                                     element: 'span',
@@ -306,7 +307,7 @@ var defaultNavbarPanelMenus = {
                     ]
                 },
                 actions: {
-                    selector: ".mafe-button-undo",
+                    selector: ".mafe-action-undo",
                     tooltip: "Undo Action".translate(),
                     label: {
                         text: ''
@@ -327,7 +328,8 @@ var defaultNavbarPanelMenus = {
                     class: 'mafe-redo',
                     child: [
                         {
-                            element: 'a',
+                            element: 'b',
+                            class: 'mafe-action-redo',
                             child: [
                                 {
                                     element: 'span',
@@ -338,7 +340,7 @@ var defaultNavbarPanelMenus = {
                     ]
                 },
                 actions: {
-                    selector: ".mafe-button-redo",
+                    selector: ".mafe-action-redo",
                     tooltip: "Redo Action".translate(),
                     label: {
                         text: ''

@@ -24,7 +24,7 @@ PMCustomShapeDragBehavior.prototype.attachDragBehavior = function (customShape) 
         drag: this.onDrag(customShape, true),
         stop: this.onDragEnd(customShape, true)
     };
-    $customShape.draggable({'cursor': "move"});
+    $customShape.draggable({ 'cursor': "move" });
     $customShape.draggable(dragOptions);
 };
 /**
@@ -108,10 +108,10 @@ PMCustomShapeDragBehavior.prototype.onDragProcedure = function (customShape, roo
         customShape.previousYDragPosition = customShape.y;
 
         for (i = 0; i < customShape.canvas.currentSelection.getSize(); i += 1) {
-             sibling = customShape.canvas.currentSelection.get(i);
-             if (sibling.id !== customShape.id) {
+            sibling = customShape.canvas.currentSelection.get(i);
+            if (sibling.id !== customShape.id) {
                 sibling.setPosition(sibling.x + diffX, sibling.y + diffY);
-             }
+            }
         }
     } else {
         customShape.setPosition(customShape.x, customShape.y);
@@ -240,19 +240,19 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
         customShape.canvas.isDragging = false;
 
         // validate lasso limits
-        if (canvas.lassoLimits.x.shape && canvas.lassoLimits.x.shape.getX() < 0) {
+        if (canvas.lassoEnabled && canvas.lassoLimits.x.shape && canvas.lassoLimits.x.shape.getX() < 0) {
             diffX -= canvas.lassoLimits.x.shape.getX();
         }
-        if (canvas.lassoLimits.y.shape && canvas.lassoLimits.y.shape.getY() < 0) {
+        if (canvas.lassoEnabled && canvas.lassoLimits.y.shape && canvas.lassoLimits.y.shape.getY() < 0) {
             diffY -= canvas.lassoLimits.y.shape.getY();
         }
 
         for (i = 0; i < customShape.canvas.currentSelection.getSize();
-             i += 1) {
+            i += 1) {
             sibling = customShape.canvas.currentSelection.get(i);
             // if dragging with lasso is rebasing the limit
             if (diffX > 0 || diffY > 0) {
-                sibling.setPosition(sibling.getX() + diffX,  sibling.getY() + diffY);
+                sibling.setPosition(sibling.getX() + diffX, sibling.getY() + diffY);
             }
             for (j = 0; j < sibling.children.getSize(); j += 1) {
                 child = sibling.children.get(j);
@@ -271,7 +271,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
     // connections
     if (root) {
         for (i = 0; i < customShape.canvas.currentSelection.getSize();
-             i += 1) {
+            i += 1) {
             sibling = customShape.canvas.currentSelection.get(i);
             for (j = 0; j < sibling.ports.getSize(); j += 1) {
                 // for each port update its absolute position and repaint
@@ -282,7 +282,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
                 port.setPosition(port.x, port.y);
 
                 if (customShape.canvas.sharedConnections.
-                        find('id', connection.getID())) {
+                    find('id', connection.getID())) {
                     // move the segments of this connections
                     if (connection.srcPort.parent.getID() ===
                         sibling.getID()) {
@@ -320,7 +320,7 @@ PMCustomShapeDragBehavior.prototype.dragEndProcedure = function (customShape, ro
 
             port.setPosition(port.x, port.y);
             if (customShape.canvas.sharedConnections.
-                    find('id', connection.getID())) {
+                find('id', connection.getID())) {
                 // to avoid moving the connection twice
                 // (two times per shape), move it only if the shape
                 // holds the sourcePort
@@ -357,13 +357,14 @@ PMCustomShapeDragBehavior.prototype.onDragEnd = function (customShape) {
         customShape.canvas.verticalSnapper.hide();
         customShape.canvas.horizontalSnapper.hide();
         if (!customShape.changedContainer) {
-            if (customShape.parent.getType() === 'PMLane') {
+            if (customShape.parent.getType() === 'PMLane' && !customShape.dropOnParticipant) {
                 command = new PMCommandMoveInLane(customShape.canvas.currentSelection);
             } else {
                 command = new PMUI.command.CommandMove(customShape.canvas.currentSelection);
             }
             command.execute();
             customShape.canvas.commandStack.add(command);
+            customShape.dropOnParticipant = false;
         }
         customShape.changedContainer = false;
         // decrease the zIndex of the oldParent of customShape

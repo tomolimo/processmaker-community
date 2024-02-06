@@ -98,6 +98,7 @@ abstract class Importer
         //Verify data
         switch ($option) {
             case self::IMPORT_OPTION_CREATE_NEW:
+                $keepCreateDate = true;
                 if ($this->targetExists()) {
                     throw new \Exception(
                         \G::LoadTranslation(

@@ -13,6 +13,7 @@ var SuggestField = function (settings) {
     this.containerList = null;
     this.width = settings.width || "auto";
     this.messageRequired = null;
+    this.messageRequiredExtended = null;
     this.searchLoad = null;
     this.helper = settings.helper || null;
     this.html = null;
@@ -192,6 +193,7 @@ SuggestField.prototype.atachListener = function () {
         value = this.value;
         if (value) {
             that.hideMessageRequired();
+            that.hideMessageRequiredExtended();
             that.containerList.css({
                 top: $(e.target).position().top + 18,
                 "margin-left": $(e.target).position().left - 10
@@ -419,9 +421,32 @@ SuggestField.prototype.showMessageRequired = function () {
     }
 };
 
+/**
+  * Prepare the message for the required suggested field
+ */
+SuggestField.prototype.showMessageRequiredExtended = function () {
+    if (this.messageRequiredExtended === null) {
+        var messageRequiredExtended = $('<span class="pmui-field-message" style="display: block; margin-left: 35.2%;"><span class="pmui pmui-textlabel" style="left: 0px; top: 0px; width:auto; height: auto; position: relative; z-index: auto;">' + "This field is required.".translate() + '</span></span>');
+        this.messageRequiredExtended = messageRequiredExtended;
+        this.html.find('ul').after(messageRequiredExtended);
+    } else {
+        this.messageRequiredExtended.show();
+    }
+    this.html.find("input").css({ border: "1px solid white", "border-radius": "2px", outline: "1px solid #ecc3c2" });
+};
+
 SuggestField.prototype.hideMessageRequired = function () {
     if (this.messageRequired != null) {
         this.messageRequired.hide();
+    }
+};
+
+/**
+ * Hide the message required extended when it is no longer needed
+ */
+SuggestField.prototype.hideMessageRequiredExtended = function () {
+    if (this.messageRequiredExtended != null) {
+        this.messageRequiredExtended.hide();
     }
 };
 
@@ -430,4 +455,22 @@ SuggestField.prototype.isValid = function () {
         return false
     }
     return true;
+};
+
+/**
+ * Set the style for the input field
+ * 
+ * @param {string} border 
+ * @param {string} borderRadius 
+ * @param {string} color 
+ * @param {string} outline 
+ */
+SuggestField.prototype.repaint = function (border, borderRadius, color, outline) {
+    var that = this;
+    that.html.find("input").css({
+        border: border,
+        "border-radius": borderRadius,
+        color: color,
+        outline: outline
+    });
 };

@@ -1,13 +1,6 @@
 <?php
-/**
- * spoolRun - brief send email from the spool database, and see if we have all the addresses we send to.
- *
- * @author Ian K Armstrong <ika@[REMOVE_THESE_CAPITALS]openmail.cc>
- * @copyright Copyright (c) 2007, Ian K Armstrong
- * @license http://www.opensource.org/licenses/gpl-3.0.html GNU Public License
- * @link http://www.openmail.cc
- */
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 
 /**
@@ -336,6 +329,9 @@ class SpoolRun
     private function updateSpoolStatus()
     {
         $oAppMessage = AppMessagePeer::retrieveByPK($this->spoolId);
+        if (empty($oAppMessage)) {
+            return;
+        }
         if (is_array($this->fileData['attachments'])) {
             $attachment = implode(",", $this->fileData['attachments']);
             $oAppMessage->setappMsgAttach($attachment);
@@ -362,11 +358,13 @@ class SpoolRun
         $appMessage->setAppMsgSendDate(date('Y-m-d H:i:s'));
         $appMessage->save();
 
-        $context = Bootstrap::getDefaultContextLog();
-        $context["action"] = "Send email";
-        $context["appMsgUid"] = $this->getAppMsgUid();
-        $context["appUid"] = $this->getAppUid();
-        Bootstrap::registerMonolog("SendEmail", 400, $msgError, $context);
+        $message = $msgError;
+        $context = [
+            "action" => "Send email",
+            "appMsgUid" => $this->getAppMsgUid(),
+            "appUid" => $this->getAppUid()
+        ];
+        Log::channel(':SendEmail')->error($message, Bootstrap::context($context));
     }
 
     /**

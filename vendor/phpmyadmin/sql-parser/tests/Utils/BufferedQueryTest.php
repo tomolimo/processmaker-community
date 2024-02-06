@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\SqlParser\Tests\Utils;
@@ -42,7 +43,9 @@ class BufferedQueryTest extends TestCase
         // Feeding chunks and extracting queries.
         $i = 0;
         while ($i < $count) {
-            if ($stmt = $bq->extract()) {
+            $stmt = $bq->extract();
+
+            if ($stmt) {
                 $statements[] = $stmt;
             } else {
                 $bq->query .= $chunks[$i++];

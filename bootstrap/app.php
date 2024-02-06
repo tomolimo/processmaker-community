@@ -1,15 +1,5 @@
 <?php
 
-use Illuminate\Contracts\Console\Kernel as Kernel2;
-use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Contracts\Http\Kernel as Kernel4;
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Exceptions\Handler;
-use Illuminate\Foundation\Http\Kernel as Kernel3;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Handler\RotatingFileHandler;
-use ProcessMaker\Core\System;
-
 /*
 |--------------------------------------------------------------------------
 | Create The Application
@@ -21,7 +11,7 @@ use ProcessMaker\Core\System;
 |
 */
 
-$app = new Application(
+$app = new App\Foundation\Application(
     realpath(__DIR__ . '/../')
 );
 
@@ -37,21 +27,21 @@ $app = new Application(
 */
 
 $app->singleton(
-    Kernel4::class,
-    Kernel3::class
+    Illuminate\Contracts\Http\Kernel::class,
+    Illuminate\Foundation\Http\Kernel::class
 );
 
 $app->singleton(
-    Kernel2::class,
+    Illuminate\Contracts\Console\Kernel::class,
     App\Console\Kernel::class
 );
 
 $app->singleton(
-    ExceptionHandler::class,
-    Handler::class
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    Illuminate\Foundation\Exceptions\Handler::class
 );
 
-$app->useStoragePath(System::getPathsInstalled()->pathData);
+$app->useStoragePath(ProcessMaker\Core\System::getPathsInstalled()->pathData);
 
 /*
 |--------------------------------------------------------------------------

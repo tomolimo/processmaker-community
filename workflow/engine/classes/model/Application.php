@@ -199,7 +199,7 @@ class Application extends BaseApplication
 
                 return $aFields;
             } else {
-                throw (new Exception("The Application row '$AppUid' doesn't exist!"));
+                throw (new Exception(htmlentities("The Application row '$AppUid' doesn't exist!", ENT_QUOTES, "UTF-8")));
             }
         } catch (Exception $oError) {
             throw ($oError);

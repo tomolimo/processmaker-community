@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\AdditionalTables as AdditionalTablesModel;
 use ProcessMaker\Validation\ExceptionRestApi;
@@ -1221,11 +1222,13 @@ class pmTablesProxy extends HttpProxyController
                 $additionalTables->populateReportTable($table['ADD_TAB_NAME'], PmTable::resolveDbSource($table['DBS_UID']), $table['ADD_TAB_TYPE'], $table['PRO_UID'], $table['ADD_TAB_GRID'], $table['ADD_TAB_UID']);
                 $result->message = G::LoadTranslation("ID_THE_REPORT_TABLE_IS_REGENERATING_PLEASE_COME_BACK_IN_A_FEW_MINUTES");
             } catch (Exception $e) {
-                $context = Bootstrap::getDefaultContextLog();
-                $context['proUid'] = $table['PRO_UID'];
-                $context['tableName'] = $table['ADD_TAB_NAME'];
-                $context['message'] = $e->getMessage();
-                Bootstrap::registerMonolog('dataReport', 500, 'Generation of data report could not be completed', $context, $context['workspace'], 'processmaker.log');
+                $message = 'Generation of data report could not be completed';
+                $context = [
+                    'proUid' => $table['PRO_UID'],
+                    'tableName' => $table['ADD_TAB_NAME'],
+                    'message' => $e->getMessage()
+                ];
+                Log::channel(':dataReport')->critical($message, Bootstrap::context($context));
 
                 $result->message = 'Generation of data report could not be completed. Please check the processmaker.log for more details.';
                 $result->success = false;

@@ -79,7 +79,10 @@ class System
         'highlight_home_folder_scope' => 'unassigned', // For now only this list is supported
         'disable_advanced_search_case_title_fulltext' => 0,
         'pmftotalcalculation_floating_point_number' => 10,
-        'report_table_batch_regeneration' => 1000
+        'report_table_batch_regeneration' => 1000,
+        'report_table_floating_number' => 4,
+        'report_table_double_number' => 4,
+        'ext_ajax_timeout' => 600000
     ];
 
     /**

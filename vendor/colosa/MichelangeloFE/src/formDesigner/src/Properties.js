@@ -378,6 +378,7 @@
             accepts: "string or jQuery object".translate()
         };
         this.keepOpen = {label: "keep open".translate(), value: false, type: "hidden"};
+        this.fixedLocation = {label: "Fixed location".translate(), value: false, type: "checkbox"};
 
         //custom properties
         if (this.owner instanceof FormDesigner.main.GridItem) {
@@ -573,7 +574,7 @@
             this.pf = ["type"];
         }
         if (type === FormDesigner.main.TypesControl.geomap) {
-            this.pf = ["type", "variable", "var_uid", "protectedValue", "id", "name", "label", "hint"];
+            this.pf = ["type", "variable", "var_uid", "protectedValue", "id", "name", "label", "hint", "fixedLocation"];
             this.label.type = "text";
         }
         if (type === FormDesigner.main.TypesControl.qrcode) {

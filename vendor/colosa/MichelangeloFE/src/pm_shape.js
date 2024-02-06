@@ -1152,6 +1152,7 @@ PMShape.prototype.refreshChildrenPositions = function (onCommand, delta) {
     for (i = 0; i < children.getSize(); i += 1) {
         child = children.get(i);
         child.setPosition(child.getX(), child.getY());
+        child.refreshConnections(false, true);
         if (onCommand) {
             child.refreshAllMovedConnections(false, delta);
         }

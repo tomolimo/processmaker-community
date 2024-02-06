@@ -30,12 +30,12 @@ class TaskSchedulerBM
             "category" => "case_actions",
             "file" => "workflow/engine/bin/cron.php",
             "filew" => "workflow\\engine\bin\cron.php",
-            "startingTime" => "0:00",
-            "endingTime" => "0:30",
+            "startingTime" => null,
+            "endingTime" => null,
             "timezone" => "default",
             "everyOn" => "1",
             "interval" => "week",
-            "expression" => "0 */1 * * 0,1,2,3,4,5,6",
+            "expression" => "0 0 * * 0,1,2,3,4,5,6",
             "description" => 'ID_TASK_SCHEDULER_CALCULATE_ELAPSED_DESC'
         ],
         [
@@ -60,12 +60,12 @@ class TaskSchedulerBM
             "category" => "case_actions",
             "file" => "workflow/engine/bin/cron.php",
             "filew" => "workflow\\engine\bin\cron.php",
-            "startingTime" => "0:00",
-            "endingTime" => "0:30",
+            "startingTime" => null,
+            "endingTime" => null,
             "timezone" => "default",
             "everyOn" => "1",
             "interval" => "week",
-            "expression" => "0 */1 * * 0,1,2,3,4,5,6",
+            "expression" => "0 0 * * 0,1,2,3,4,5,6",
             "description" => 'ID_TASK_SCHEDULER_CLEAN_SELF_DESC'
         ],
         [
@@ -171,9 +171,9 @@ class TaskSchedulerBM
             $task->startingTime = $service["startingTime"];
             $task->endingTime = $service["endingTime"];
             if ($win) {
-                $task->body = 'php "' . PATH_TRUNK . $service["filew"] . '" ' . $service["service"] . ' +w' . config("system.workspace") . ' +force';
+                $task->body = 'php "' . PATH_TRUNK . $service["filew"] . '" ' . $service["service"] . ' +w' . config("system.workspace") . ' +force +async';
             } else {
-                $task->body = 'su -s /bin/sh -c "php ' . PATH_TRUNK . $service["file"] . " " . $service["service"] . ' +w' . config("system.workspace") . ' +force"';
+                $task->body = 'su -s /bin/sh -c "php ' . PATH_TRUNK . $service["file"] . " " . $service["service"] . ' +w' . config("system.workspace") . ' +force +async"';
             }
             $task->expression = $service["expression"];
             $task->type = "shell";

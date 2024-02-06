@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace PhpMyAdmin\SqlParser\Tests\Builder;
@@ -298,6 +299,18 @@ EOT
         $this->assertEquals(
             'CREATE OR REPLACE VIEW myView (vid, vfirstname) AS  ' .
             'SELECT id, first_name FROM employee WHERE id = 1 ',
+            $stmt->build()
+        );
+
+        // Assert the builder can build wrong syntax select expressions
+        $parser = new Parser(
+            'CREATE OR REPLACE VIEW myView (vid, vfirstname) AS ' .
+            'SELECT id, first_name, FROMzz employee WHERE id = 1'
+        );
+        $stmt = $parser->statements[0];
+        $this->assertEquals(
+            'CREATE OR REPLACE VIEW myView (vid, vfirstname) AS  ' .
+            'SELECT id, first_name, FROMzz employee WHERE id = 1 ',
             $stmt->build()
         );
     }

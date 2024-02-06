@@ -1,30 +1,30 @@
-[3 weeks ago] b218a1488  (origin/bugfix/PMCORE-1882) PMCORE-1882 Suggest Field doesn't show records when we use an alias in a Query <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 794c74423  (origin/bugfix/PMCORE-2062) PMCORE-2062 <Paula Quispe>
-[3 weeks ago] 8ae41e170  (origin/bugfix/PMCORE-1296) PMCORE-1296 <Andrea Adamczyk>
-[3 weeks ago] a3a1e53f6  (origin/bugfix/PMCORE-766) PMCORE-766 <Henry Jordan>
-[3 weeks ago] b588da7e2  (origin/bugfix/PMCORE-1455) PMCORE-1455 <Paula Quispe>
-[3 weeks ago] 12ed0176b  (origin/bugfix/PMCORE-1801) PMCORE-1801 <Julio Cesar Laura Avendaño>
-[3 weeks ago] 2fca85f2a  (origin/bugfix/PMCORE-2056) PMCORE-2056 My case note, it shows empty, when I enter data in the following way "<text ->" <Roly Rudy Gutierrez Pinto>
-[3 weeks ago] 21dc8f5b3  (origin/bugfix/PMCORE-940) PMCORE-940 <Julio Cesar Laura Avendaño>
-[3 weeks ago] 6e2743650  (origin/bugfix/PMCORE-1470) PMCORE-1470 Custom Port not included when using MSSQL instance name in the DB connection <Roly Rudy Gutierrez Pinto>
-[4 weeks ago] f640ad557  (origin/feature/PMCORE-2000) PMCORE-2000 <Julio Cesar Laura Avendaño>
-[5 weeks ago] b38530928  (origin/bugfix/PMCORE-659) PMCORE-659 <Andrea Adamczyk>
-[6 weeks ago] e7e99f1b3  (origin/bugfix/PMCORE-1952) PMCORE-1952 <Julio Cesar Laura Avendaño>
-[6 weeks ago] c4166b3e9  (origin/bugfix/PMCORE-1948) PMCORE-1948 <Paula Quispe>
-[6 weeks ago] e31c7b808  (origin/bugfix/PMCORE-533) PMCORE-533 <Paula Quispe>
-[6 weeks ago] 39697b734  (origin/release/3.5.0) Renaming connection 'report' to 'rp' <Julio Cesar Laura Avendaño>
-[7 weeks ago] 87d0f366c  (origin/bugfix/PMCORE-1930) PMCORE-1930 <Julio Cesar Laura Avendaño>
-[7 weeks ago] 7bd907b7c  (origin/bugfix/PMCORE-1789-B) PMCORE-1789 <Henry Jordan>
-[7 weeks ago] 51c2e0bf5  (origin/bugfix/PMCORE-1911) PMCORE-1911 <Henry Jordan>
-[7 weeks ago] f35c61023  (origin/bugfix/PMCORE-1868) PMCORE-1868 Error when derivate case with trigger which call a class from plugin <Roly Rudy Gutierrez Pinto>
-[7 weeks ago] f87ab9a6d  (origin/bugfix/PMCORE-1767-A) PMCORE-1767 <Paula Quispe>
-[7 weeks ago] 4a763e325  (origin/bugfix/PMCORE-1842) PMCORE-1842 Cases are not routed if there is a process that it has Report Table with external connections <Roly Rudy Gutierrez Pinto>
-[8 weeks ago] 5f3516ef5  (origin/bugfix/DRT-166) DRT-166 Create a method to generate the report using a queue job <Roly Rudy Gutierrez Pinto>
-[8 weeks ago] 051f8b5de  DRT-166 Create a method to generate the report using a queue job <Roly Rudy Gutierrez Pinto>
-[8 weeks ago] 5e602813f  (origin/bugfix/PMCORE-1813) PMCORE-1813 <Paula Quispe>
-[8 weeks ago] 99848b1e0  (origin/bugfix/PMCORE-1872) PMCORE-1872 <Paula Quispe>
-[8 weeks ago] 89f0a9d00  (origin/bugfix/PMCORE-1864) PMCORE-1864} <Henry Jordan>
-[8 weeks ago] 911daafe7  (origin/bugfix/PMCORE-1785) PMCORE-1785 <Paula Quispe>
-[8 weeks ago] 57f496997  (origin/bugfix/PMCORE-1817) PMCORE-1817 <Henry Jordan>
-[8 weeks ago] 4304b9df6  (origin/bugfix/PMCORE-1782) PMCORE-1782 Cannot import a PMTABLE. <Roly Rudy Gutierrez Pinto>
-[8 weeks ago] 2f08d82d9  (origin/bugfix/PMCORE-1841) PMCORE-1841 <Paula Quispe>
+[17 hours ago] 49a19d69a  (HEAD -> release/3.5.7, origin/release/3.5.7) PMCORE-2296 Suggested control, query with left join is not working <Roly Rudy Gutierrez Pinto>
+[18 hours ago] 16bb29695  (origin/bugfix/PMCORE-2551) PMCORE-2551 <Julio Cesar Laura Avendaño>
+[2 weeks ago] c3135802b  (origin/release/3.5.6) Solving conflicts in cherry-pick for PMCORE-2424 <Julio Cesar Laura Avendaño>
+[2 weeks ago] d157ba58c  PMCORE-2390 <Julio Cesar Laura Avendaño>
+[8 weeks ago] 8297cdd26  update default timezones <Henry Jordan>
+[8 weeks ago] 29c91bf5e  (origin/release/3.5.4) PMCORE-561-A <Andrea Adamczyk>
+[9 weeks ago] e952badcd  (origin/bugfix/PMCORE-561-A) PMCORE-561-A <Andrea Adamczyk>
+[9 weeks ago] f6fe0c152  (origin/bugfix/PMCORE-2324) PMCORE-2324 SQL Injection via 'Category' parameter in proxyNewCasesList endpoint <Roly Rudy Gutierrez Pinto>
+[9 weeks ago] 138504741  (origin/bugfix/PMCORE-2342) PMCORE-2342 <Paula Quispe>
+[9 weeks ago] 73487eedd  PMCORE-2325:Stored Cross-Site Scripting in cases email form <fabio>
+[9 weeks ago] 7558aa9a9  (origin/bugfix/PMCORE-2326) PMCORE-2326 <Henry Jordan>
+[9 weeks ago] f01aa054e  (origin/bugfix/PMCORE-2320) PMCORE-2320 <Julio Cesar Laura Avendaño>
+[10 weeks ago] 96b449dc2  (origin/bugfix/PMCORE-1884-A) PMCORE-1884 <Paula Quispe>
+[10 weeks ago] f6aac2d16  (origin/bugfix/PMCORE-2308) PMCORE-2308 <Andrea Adamczyk>
+[2 months ago] e592cbe06  PMCORE-2175 <Henry Jordan>
+[2 months ago] e3fc39e53  (origin/bugfix/PMCORE-2297) PMCORE-2297 The server response a 500 error by trying to login with SAML plugin <Roly Rudy Gutierrez Pinto>
+[2 months ago] d60bf88cd  (origin/bugfix/PMCORE-1207) PMCORE-1207 Generic message for wrong credentials and AD users <Roly Rudy Gutierrez Pinto>
+[2 months ago] 95058efa9  (origin/feature/PMCORE-2197) feature/PMCORE-2197 <Henry Jordan>
+[2 months ago] 8012f6e9e  (origin/bugfix/PMCORE-2267) PMCORE-2267 Unit test: Failed asserting that exception of type "Exception" is thrown. <Roly Rudy Gutierrez Pinto>
+[2 months ago] d007a1e16  (origin/bugfix/PMCORE-529) PMCORE-529 <Andrea Adamczyk>
+[2 months ago] eb2c4cb32  (origin/bugfix/PMCORE-1884) PMCORE-1884 <Paula Quispe>
+[3 months ago] 90ba93f07  (origin/bugfix/PMCORE-1451) PMCORE-1451 La validación de contraseñas también comprueba las políticas de las contraseñas de Active Directory. <Roly Rudy Gutierrez Pinto>
+[3 months ago] cd8930910  (origin/bugfix/PMCORE-2149) PMCORE-2149 <Paula Quispe>
+[3 months ago] 3d5d11987  (origin/feature/PMCORE-2199) PMCORE-2199 <Julio Cesar Laura Avendaño>
+[3 months ago] d748e45eb  (origin/bugfix/PMCORE-561) PMCORE-561 <Andrea Adamczyk>
+[3 months ago] 3db929c75  (origin/bugfix/PMCORE-737) PMCORE-737 <Paula Quispe>
+[3 months ago] 7d682da3f  (origin/bugfix/PMCORE-1751) PMCORE-1751 <Andrea Adamczyk>
+[3 months ago] a04673622  (origin/bugfix/PMCORE-530) PMCORE-530 <Andrea Adamczyk>
+[3 months ago] 60be91dc5  (origin/bugfix/PMCORE-2179) PMCORE-2179 <Julio Cesar Laura Avendaño>
+[3 months ago] 1241225d3  (origin/bugfix/PMCORE-2150) PMCORE-2150 PMFUpdateUser() function doesn't update due date to all users in RBAC_USERS <Roly Rudy Gutierrez Pinto>

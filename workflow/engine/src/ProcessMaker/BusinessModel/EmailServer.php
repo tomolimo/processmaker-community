@@ -1,4 +1,5 @@
 <?php
+
 namespace ProcessMaker\BusinessModel;
 
 use AppMessage;
@@ -6,6 +7,7 @@ use Bootstrap;
 use Exception;
 use G;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\Core\System;
 use ProcessMaker\Model\AbeConfiguration;
 use ProcessMaker\Model\EmailEvent;
@@ -856,12 +858,9 @@ class EmailServer
                         'setAsDefaultConfiguration' => $arrayData["MESS_DEFAULT"]
                     );
                     $this->setContextLog($info);
-                    $this->syslog(
-                        'CreateEmailServer',
-                        200,
-                        'New email server was created',
-                        $this->getContextLog()
-                    );
+                    $message = 'New email server was created';
+                    $context = $this->getContextLog();
+                    Log::channel(':CreateEmailServer')->info($message, Bootstrap::context($context));
                     return $this->getEmailServer($emailServerUid);
                 } else {
                     $msg = "";
@@ -1036,13 +1035,9 @@ class EmailServer
                         'setAsDefaultConfiguration' => $arrayData["MESS_DEFAULT"]
                     );
                     $this->setContextLog($info);
-                    $this->syslog(
-                        'UpdateEmailServer',
-                        200,
-                        'The email server was updated',
-                        $this->getContextLog()
-                    );
-
+                    $message = 'The email server was updated';
+                    $context = $this->getContextLog();
+                    Log::channel(':UpdateEmailServer')->info($message, Bootstrap::context($context));
                     return $arrayData;
                 } else {
                     $msg = "";
@@ -1105,12 +1100,9 @@ class EmailServer
                 'messUid' => $emailServerUid
             );
             $this->setContextLog($info);
-            $this->syslog(
-                'DeleteEmailServer',
-                200,
-                'The email server was deleted',
-                $this->getContextLog()
-            );
+            $message = 'The email server was deleted';
+            $context = $this->getContextLog();
+            Log::channel(':DeleteEmailServer')->info($message, Bootstrap::context($context));
         } catch (Exception $e) {
             throw $e;
         }
@@ -1417,32 +1409,6 @@ class EmailServer
         $rsCriteria->setFetchmode(\ResultSet::FETCHMODE_ASSOC);
         $rsCriteria->next();
         return $rsCriteria->getRow();
-    }
-
-    /**
-     * Logging information related to the email server
-     * When the user create, update, delete the email server
-     *
-     * @param string $channel
-     * @param string $level
-     * @param string $message
-     * @param array $context
-     *
-     * @return void
-     * @throws Exception
-     */
-    private function syslog(
-        $channel,
-        $level,
-        $message,
-        $context = array()
-    )
-    {
-        try {
-            Bootstrap::registerMonolog($channel, $level, $message, $context, $context['workspace'], 'processmaker.log');
-        } catch (Exception $e) {
-            throw $e;
-        }
     }
 
 }

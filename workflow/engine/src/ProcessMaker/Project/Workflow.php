@@ -1111,6 +1111,12 @@ class Workflow extends Handler
         }
     }
 
+    /**
+     * Create the workflow-files related to the process
+     *
+     * @param array $arrayFile
+     * @throws \Exception
+     */
     public function createDataFileByArrayFile(array $arrayFile)
     {
         try {
@@ -1135,6 +1141,8 @@ class Workflow extends Handler
 
                 foreach ($files as $file) {
                     $filename = $basePath . ((isset($file["file_path"]))? $file["file_path"] : $file["filepath"]);
+                    // If the file was created in WINDOWS we need to replace the "\\"
+                    $filename = str_replace("\\", "/", $filename);
                     $path = dirname($filename);
 
                     if (!is_dir($path)) {

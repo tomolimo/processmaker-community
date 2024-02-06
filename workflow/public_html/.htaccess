@@ -3,7 +3,7 @@
         Deny from all
 </FilesMatch>
 
-<FilesMatch "^(app|sysGeneric|gmail|sso|templateForm|lostSession|uninstall)\.php">
+<FilesMatch "^(app|sysGeneric|gmail|sso|templateForm|lostSession|uninstall|font|styles)\.php">
         Order Allow,Deny 
         Allow from All 
 </FilesMatch>

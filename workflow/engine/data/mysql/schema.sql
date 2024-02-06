@@ -179,7 +179,8 @@ CREATE TABLE `APP_MESSAGE`
 	KEY `INDEX_TAS_ID`(`TAS_ID`),
 	KEY `INDEX_APP_NUMBER`(`APP_NUMBER`),
 	KEY `INDEX_APP_MSG_TYPE_ID`(`APP_MSG_STATUS_ID`),
-	KEY `INDEX_APP_MSG_STATUS_ID`(`APP_MSG_STATUS_ID`)
+	KEY `INDEX_APP_MSG_STATUS_ID`(`APP_MSG_STATUS_ID`),
+	KEY `indexAppUidSendDate`(`APP_UID`, `APP_MSG_SEND_DATE`)
 )ENGINE=InnoDB  DEFAULT CHARSET='utf8' COMMENT='Messages in an Application';
 #-----------------------------------------------------------------------------
 #-- APP_OWNER

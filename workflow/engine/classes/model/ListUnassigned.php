@@ -2,6 +2,8 @@
 
 require_once 'classes/model/om/BaseListUnassigned.php';
 
+use ProcessMaker\Model\Delegation;
+
 
 /**
  * Skeleton subclass for representing a row from the 'LIST_UNASSIGNED' table.
@@ -207,7 +209,7 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
             $criteria->addSelectColumn(ProcessPeer::PRO_CATEGORY);
             $aConditions   = array();
             $aConditions[] = array(ListUnassignedPeer::PRO_UID, ProcessPeer::PRO_UID);
-            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . $category . "'");
+            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . G::realEscapeString($category) . "'");
             $criteria->addJoinMC($aConditions, Criteria::INNER_JOIN);
         }
 
@@ -232,19 +234,86 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
 
     /**
      * This function get the information in the corresponding cases list
-     * @param string $usr_uid, must be show cases related to this user
+     *
+     * @param string $usrUid, must be show cases related to this user
      * @param array $filters for apply in the result
      * @param callable $callbackRecord
      * @return array $data
-     * @throws PropelException
      */
-    public function loadList($usr_uid, $filters = array(), callable $callbackRecord = null)
+    public function loadList($usrUid, $filters = [], callable $callbackRecord = null)
     {
+        // Get criteria base and the additional columns
         $pmTable = new PmTable();
         $criteria = $pmTable->addPMFieldsToList('unassigned');
         $this->setAdditionalClassName($pmTable->tableClassName);
         $additionalColumns = $criteria->getSelectColumns();
 
+        // Check if exists the custom cases list configured for the unassigned list, if NOT exists we're using the new improved query
+        if (empty($additionalColumns)) {
+            // Initialize required parameters
+            $selectedColumns = [
+                // APP_DELEGATION table
+                'APP_DELEGATION.APP_NUMBER',
+                'APP_DELEGATION.DEL_INDEX',
+                'APP_DELEGATION.APP_UID',
+                'APP_DELEGATION.TAS_UID',
+                'APP_DELEGATION.PRO_UID',
+                'APP_DELEGATION.DEL_DELEGATE_DATE',
+                'APP_DELEGATION.DEL_TASK_DUE_DATE',
+                'APP_DELEGATION.DEL_PRIORITY',
+                'APP_DELEGATION.DEL_PREVIOUS',
+                // TASK table
+                'TASK.TAS_TITLE',
+                // APPLICATION table
+                'APPLICATION.APP_TITLE',
+                'APPLICATION.APP_UPDATE_DATE',
+                // PROCESS table
+                'PROCESS.PRO_TITLE'
+            ];
+            $sortMap = [
+                'APP_NUMBER' => 'APP_NUMBER',
+                'DEL_DUE_DATE' => 'DEL_TASK_DUE_DATE',
+                'DEL_DELEGATE_DATE' => 'DEL_DELEGATE_DATE',
+                'APP_TITLE' => 'APP_TITLE',
+                'APP_PRO_TITLE' => 'PRO_TITLE',
+                'APP_TAS_TITLE' => 'TAS_TITLE',
+                'DEL_PREVIOUS_USR_UID' => 'USR_ID'
+            ];
+            $categoryUid = $filters['category'] ?? null;
+            $processUid = $filters['process'] ?? null;
+            $textToSearch = $filters['search'] ?? null;
+            $sort = $sortMap[$filters['sort']] ?? null;
+            $dir = $filters['dir'] ?? null;
+            $offset = $filters['start'] ?? null;
+            $limit = $filters['limit'] ?? null;
+
+            // Get data
+            $data = Delegation::getSelfService($usrUid, $selectedColumns, $categoryUid, $processUid, $textToSearch, $sort, $dir, $offset, $limit);
+
+            // Transform and complete the data
+            foreach ($data as &$row) {
+                $row = is_null($callbackRecord) ? $row : $callbackRecord($row);
+            }
+        } else {
+            // Use the old Propel query that is compatible with the custom cases list
+            $data = $this->loadListWithAdditionalColumns($criteria, $usrUid, $filters, $additionalColumns, $callbackRecord);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get the data for unassigned list with the information of additional columns
+     *
+     * @param object $criteria
+     * @param string $usr_uid
+     * @param array $filters
+     * @param array $additionalColumns
+     * @param callable $callbackRecord
+     * @return array
+     */
+    private function loadListWithAdditionalColumns($criteria, $usr_uid, $filters, $additionalColumns, callable $callbackRecord)
+    {
         $criteria->addSelectColumn(ListUnassignedPeer::APP_UID);
         $criteria->addSelectColumn(ListUnassignedPeer::DEL_INDEX);
         $criteria->addSelectColumn(ListUnassignedPeer::TAS_UID);
@@ -460,17 +529,20 @@ class ListUnassigned extends BaseListUnassigned implements ListInterface
     /**
      * Returns the number of cases of a user
      *
-     * @param string $userUid
+     * @param string $usrUid
      * @param array $filters
      *
      * @return int $total
      */
-    public function getCountList($userUid, $filters = array())
+    public function getCountList($usrUid, $filters = [])
     {
-        $criteria = new Criteria('workflow');
-        $this->getCriteriaWhereSelfService($criteria, $userUid);
-        $total = ListUnassignedPeer::doCount($criteria);
-        return (int)$total;
+        // Initialize required parameters
+        $categoryUid = $filters['category'] ?? null;
+        $processUid = $filters['process'] ?? null;
+        $textToSearch = $filters['search'] ?? null;
+
+        // Get counter
+        return Delegation::countSelfService($usrUid, $categoryUid, $processUid, $textToSearch);
     }
 
     /**

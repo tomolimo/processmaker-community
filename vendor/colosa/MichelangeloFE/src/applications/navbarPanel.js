@@ -89,7 +89,7 @@ NavbarPanel.prototype.getNodeChild = function (nodeChild, nodePattern) {
         node.setAttribute("id", nodeChild.id);
     }
     if (nodeChild.element === 'a') {
-        node.setAttribute("href", "#");
+        node.setAttribute("href", "return;");
     }
     if (typeof(nodeChild.class) !== 'undefined') {
         node.setAttribute("class", nodeChild.class);

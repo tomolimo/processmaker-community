@@ -5865,7 +5865,8 @@ var defaultNavbarPanelMenus = {
                     class: 'mafe-undo',
                     child: [
                         {
-                            element: 'a',
+                            element: 'b',
+                            class: 'mafe-action-undo',
                             child: [
                                 {
                                     element: 'span',
@@ -5876,7 +5877,7 @@ var defaultNavbarPanelMenus = {
                     ]
                 },
                 actions: {
-                    selector: ".mafe-button-undo",
+                    selector: ".mafe-action-undo",
                     tooltip: "Undo Action".translate(),
                     label: {
                         text: ''
@@ -5897,7 +5898,8 @@ var defaultNavbarPanelMenus = {
                     class: 'mafe-redo',
                     child: [
                         {
-                            element: 'a',
+                            element: 'b',
+                            class: 'mafe-action-redo',
                             child: [
                                 {
                                     element: 'span',
@@ -5908,7 +5910,7 @@ var defaultNavbarPanelMenus = {
                     ]
                 },
                 actions: {
-                    selector: ".mafe-button-redo",
+                    selector: ".mafe-action-redo",
                     tooltip: "Redo Action".translate(),
                     label: {
                         text: ''
@@ -6064,7 +6066,7 @@ NavbarPanel.prototype.getNodeChild = function (nodeChild, nodePattern) {
         node.setAttribute("id", nodeChild.id);
     }
     if (nodeChild.element === 'a') {
-        node.setAttribute("href", "#");
+        node.setAttribute("href", "return;");
     }
     if (typeof(nodeChild.class) !== 'undefined') {
         node.setAttribute("class", nodeChild.class);
@@ -9910,6 +9912,8 @@ InputDocument.prototype.build = function () {
             themeAdvancedButtons1: "pmSimpleUploader,|,pmVariablePicker,|,bold,italic,underline,|,justifyleft,justifycenter,justifyright,justifyfull,|,fontselect,fontsizeselect,|,cut,copy,paste,|,bullist,numlist,|,outdent,indent,blockquote",
             themeAdvancedButtons2: "tablecontrols,|,undo,redo,|,link,unlink,image,|,forecolor,backcolor,styleprops,|,hr,removeformat,visualaid,|,sub,sup,|,ltr,rtl,|,code",
             popupCss: "/js/tinymce/jscripts/tiny_mce/themes/advanced/skins/default/dialogTinyBpmn.css",
+            contentCss: "/css/fonts.css,/fonts/styles.php",
+            themeAdvancedFonts: tcPdfFonts,
             skin: "o2k7",
             skin_variant: "silver"
         });
@@ -22788,6 +22792,7 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                 processUID,
                 textTitle,
                 textDescription,
+                processOwner,
                 dropCalendar,
                 dropProcessCat,
                 dropDynaform,
@@ -22813,6 +22818,9 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                 loadTriggers,
                 loadTypeProcess,
                 loadCategory,
+                notification,
+                notificationText = "Fields marked with an asterisk (%%ASTERISK%%) are required.".translate()
+                    .replace(/%%ASTERISK%%/g, '<span style="color: #e84c3d">*</span>'),
                 clickedClose;
 
             getValuesProperties = function () {
@@ -22947,11 +22955,12 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                         buttonType: "success",
                         handler: function () {
                             var dataForm;
-                            if (formEditProcess.isValid()) {
+                            if (formEditProcess.isValid() && processOwner.isValid()) {
                                 if ((navigator.userAgent.indexOf("MSIE") != -1) || (navigator.userAgent.indexOf("Trident") != -1)) {
                                     dataForm = getData2PMUI(formEditProcess.html);
                                 } else {
                                     dataForm = formEditProcess.getData();
+                                    dataForm.pro_process_owner = processOwner.get("value");
                                 }
                                 dataForm.pro_debug = checkDebug.controls[0].selected ? 1 : 0;
                                 dataForm.pro_show_message = checkHideCase.controls[0].selected ? 1 : 0;
@@ -22959,6 +22968,12 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                                 functionAssignmentUsers = function (xhr, response) {
                                 };
                                 saveProperties(dataForm);
+                            } else {
+                                if (!(processOwner.isValid()) && formEditProcess.isValid()) {
+                                    formEditProcess.addItem(notification);
+                                } else {
+                                    formEditProcess.removeItem(notification);
+                                }
                             }
                         }
                     }
@@ -22991,6 +23006,34 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                 controlsWidth: "500px",
                 rows: 150,
                 style: {cssClasses: ['mafe-textarea-resize']}
+            });
+
+            processOwner = new SuggestField({
+                id: 'processOwner',
+                name: 'pro_owner',
+                label: "Process Owner".translate(),
+                required: true,
+                width: 500,
+                placeholder: "suggest users".translate(),
+                separatingText: ["Users".translate()],
+                dynamicLoad: {
+                    data: [
+                        {
+                            key: "usr_uid",
+                            label: ["usr_firstname", "usr_lastname", "(", "usr_username", ")"]
+                        }
+                    ],
+                    keys: {
+                        url: HTTP_SERVER_HOSTNAME + "/api/1.0/" + WORKSPACE,
+                        accessToken: PMDesigner.project.tokens.access_token,
+                        endpoints: [
+                            {
+                                method: "GET",
+                                url: 'users'
+                            }
+                        ]
+                    }
+                }
             });
 
             dropCalendar = new PMUI.field.DropDownListField({
@@ -23212,6 +23255,14 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                 }
             });
 
+            notification = new PMUI.field.TextAnnotationField({
+                id: "requiredMessage",
+                name: "Message",
+                textType: PMUI.field.TextAnnotationField.TEXT_TYPES.HTML,
+                text: notificationText,
+                text_Align: "center"
+            });
+
             formEditProcess = new PMUI.form.Form({
                 id: 'formEditProcess',
                 fieldset: true,
@@ -23409,6 +23460,21 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
             loadProperties = function (response) {
                 propertiesWindow.addItem(formEditProcess);
                 propertiesWindow.open();
+                $(processOwner.createHTML()).insertBefore(dropCalendar.html);
+                processOwner.html.find("input").blur(function () {
+                    if (!(processOwner.isValid())) {
+                        processOwner.showMessageRequiredExtended();
+                    } else {
+                        processOwner.repaint("1px solid #adafb2", "2px", "", "1px solid white");
+                    }
+                });
+                processOwner.html.find("input").focusin(function () {
+                    if (processOwner.isValid()) {
+                        processOwner.repaint("1px solid #adafb2", "2px", "#000", "-webkit-focus-ring-color auto 1px");
+                    }
+                });
+                processOwner.containerLabel.css({ width: "35%" });
+                processOwner.repaint("1px solid #adafb2", "2px", "", "");
                 formEditProcess.getField("pro_type_process").hideColon();
                 formEditProcess.reset();
                 responseProperties = response;
@@ -23416,6 +23482,8 @@ PMDesigner.ProcessFilesManager.createFirst = function (processFileManagerOptionP
                 processUID.setReadOnly(true);
                 textTitle.setValue(response.pro_title);
                 textDescription.setValue(response.pro_description);
+                processOwner.set("value", response.pro_create_user);
+                processOwner.html.find("input").val(response.pro_create_firstname + " " + response.pro_create_lastname + " " + "(" + response.pro_create_username + ")");
                 dropDynaform.setValue(response.pro_summary_dynaform);
                 dropCaseCancelled.setValue(response.pro_tri_canceled);
                 dropCaseCreated.setValue(response.pro_tri_create);

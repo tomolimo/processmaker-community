@@ -8,6 +8,7 @@ use G;
 use Google_Client;
 use Google_Service_Gmail;
 use Google_Service_Gmail_Message;
+use Illuminate\Support\Facades\Log;
 use PHPMailerOAuth;
 use ProcessMaker\BusinessModel\EmailServer;
 use ProcessMaker\Core\System;
@@ -464,8 +465,6 @@ class GmailOAuth
      */
     public function saveIntoStandardLogs(string $status = "")
     {
-        $channel = "Test Email Servers Configuration";
-        $severity = 200; //INFO
         $message = "Email Server test has been sent";
         $context = [
             "emailServerUid" => $this->emailServerUid,
@@ -476,7 +475,6 @@ class GmailOAuth
             "senderName" => $this->senderName,
             "status" => $status
         ];
-        $workspace = config("system.workspace");
-        Bootstrap::registerMonolog($channel, $severity, $message, $context, $workspace);
+        Log::channel(':GmailOAuth')->info($message, Bootstrap::context($context));
     }
 }

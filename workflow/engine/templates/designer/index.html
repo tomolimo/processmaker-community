@@ -17,6 +17,8 @@
     <link rel="stylesheet" type="text/css" href="/lib-dev/css/jquery.layout.css" />
     <link rel="stylesheet" type="text/css" href="/lib-dev/css/jquery-ui-1.10.3.custom.min.css" />
     <!--<link rel="stylesheet" type="text/css" href="/lib/css/jquery.dataTables.css">-->
+    <link rel="stylesheet" type="text/css" href="/css/fonts.css" />
+    <link rel="stylesheet" type="text/css" href="/fonts/styles.php" />
 
     <script type="text/javascript">
         var prj_uid = "{$prj_uid}";
@@ -32,6 +34,7 @@
         var HTTP_SERVER_HOSTNAME = "{$HTTP_SERVER_HOSTNAME}";
         var PMDYNAFORM_FIRST_TIME = "{$PMDYNAFORM_FIRST_TIME}" === "1";
         var maxFileSizeInformation = {$maxFileSizeInformation};
+        var tcPdfFonts = "{$tcPdfFonts}";
     </script>
     <script type="text/javascript" src="/lib-dev/js/wz_jsgraphics.js"></script>
     <script type="text/javascript" src="/lib-dev/js/jquery-1.10.2.min.js"></script>
@@ -77,6 +80,8 @@
     {foreach from=$sourceCss item=pathFile}
     <link rel="stylesheet" type="text/css" href="{$pathFile}" />
     {/foreach}
+    <link rel="stylesheet" type="text/css" href="/css/fonts.css" />
+    <link rel="stylesheet" type="text/css" href="/fonts/styles.php" />
     <script type="text/javascript">
         var prj_uid = "{$prj_uid}";
         var app_uid = "{$app_uid}";
@@ -91,6 +96,7 @@
         var HTTP_SERVER_HOSTNAME = "{$HTTP_SERVER_HOSTNAME}";
         var PMDYNAFORM_FIRST_TIME = "{$PMDYNAFORM_FIRST_TIME}" === "1";
         var maxFileSizeInformation = {$maxFileSizeInformation};
+        var tcPdfFonts = "{$tcPdfFonts}";
     </script>
     <script type="text/javascript" src="/lib/js/mafe-{$buildhash}.js"></script>
     {foreach from=$sourceJs item=pathFile}

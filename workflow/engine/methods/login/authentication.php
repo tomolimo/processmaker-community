@@ -41,7 +41,9 @@ try {
             $usr = mb_strtolower(trim($frm['USR_USERNAME']), 'UTF-8');
             $pwd = trim($frm['USR_PASSWORD']);
         }
-        $uid = $RBAC->VerifyLogin($usr , $pwd);
+        Cache::put('ldapMessageError', '', 2);
+        $uid = $RBAC->VerifyLogin($usr, $pwd);
+        $ldapMessageError = Cache::pull('ldapMessageError');
         $RBAC->cleanSessionFiles(72); //cleaning session files older than 72 hours
 
         switch ($uid) {
@@ -139,7 +141,11 @@ try {
                 $d = serialize(['u' => $usr, 'p' => $pwd, 'm' => G::LoadTranslation($errLabel)]);
                 $urlLogin = $urlLogin . '?d=' . base64_encode($d);
             } else {
-                G::SendTemporalMessage($errLabel, "warning");
+                if (empty($ldapMessageError)) {
+                    G::SendTemporalMessage($errLabel, "warning");
+                } else {
+                    G::SendTemporalMessage($ldapMessageError, "warning", "string");
+                }
             }
 
             $u = (array_key_exists('form', $_POST) && array_key_exists('URL', $_POST['form']))? 'u=' . urlencode(htmlspecialchars_decode($_POST['form']['URL'])) : '';
@@ -327,6 +333,21 @@ try {
         $userPropertyInfo['USR_LAST_UPDATE_DATE'],
         $userPropertyInfo['USR_LOGGED_NEXT_TIME']
     );
+    //The other authentication methods should not be validated by password security policies.
+    if (!empty($aUser['USR_AUTH_TYPE'])) {
+        $authType = $aUser['USR_AUTH_TYPE'];
+        if ($authType != "mysql" && $authType != "") {
+            $policiesToExclude = [
+                'ID_PPP_MINIMUM_LENGTH',
+                'ID_PPP_MAXIMUM_LENGTH',
+                'ID_PPP_NUMERICAL_CHARACTER_REQUIRED',
+                'ID_PPP_UPPERCASE_CHARACTER_REQUIRED',
+                'ID_PPP_SPECIAL_CHARACTER_REQUIRED'
+            ];
+            $errorInPassword = array_diff($errorInPassword, $policiesToExclude);
+            $errorInPassword = array_values($errorInPassword);
+        }
+    }
     //Get the policies enabled
     $policiesInPassword = $userProperty->validatePassword('', date('Y-m-d'), $userPropertyInfo['USR_LOGGED_NEXT_TIME'], true);
     //Enable change password from GAP

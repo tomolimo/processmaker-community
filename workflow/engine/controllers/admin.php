@@ -250,9 +250,9 @@ class Admin extends Controller
             }
 
             try {
-                $sMySQLVersion = $dbNetView->getDbServerVersion( DB_ADAPTER );
+                $mysqlVersion = getMysqlVersion();
             } catch (Exception $oException) {
-                $sMySQLVersion = '?????';
+                $mysqlVersion = '?????';
             }
         }
 
@@ -300,7 +300,7 @@ class Admin extends Controller
         );
 
         if (defined( "DB_HOST" )) {
-            $properties[] = array (G::LoadTranslation('ID_DATABASE') ,$dbNetView->dbName( DB_ADAPTER ) . ' (Version ' . $sMySQLVersion . ')',$pmSection
+            $properties[] = array (G::LoadTranslation('ID_DATABASE') ,$dbNetView->dbName( DB_ADAPTER ) . ' (Version ' . $mysqlVersion . ')',$pmSection
             );
             $properties[] = array (G::LoadTranslation('ID_DATABASE_SERVER') ,DB_HOST,$pmSection
             );

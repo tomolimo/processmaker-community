@@ -2,6 +2,7 @@
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use ProcessMaker\BusinessModel\Process as BmProcess;
 use ProcessMaker\Core\Installer;
 use ProcessMaker\Core\ProcessesManager;
@@ -4754,7 +4755,7 @@ class WorkspaceTools
             }
         }
 
-        $context = Bootstrap::getDefaultContextLog();
+        $context = Bootstrap::context();
         $case = new Cases();
 
         //select cases for this Process, ordered by APP_NUMBER
@@ -4822,7 +4823,8 @@ class WorkspaceTools
                         $context["message"] = $e->getMessage();
                         $context["tableName"] = $tableName;
                         $context["appUid"] = $application->APP_UID;
-                        Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
+                        $message = 'Sql Execution';
+                        Log::channel(':sqlExecution')->critical($message, Bootstrap::context($context));
                     }
                     unset($obj);
                 }
@@ -4840,7 +4842,8 @@ class WorkspaceTools
                     $context["message"] = $e->getMessage();
                     $context["tableName"] = $tableName;
                     $context["appUid"] = $application->APP_UID;
-                    Bootstrap::registerMonolog("sqlExecution", 500, "Sql Execution", $context, $context["workspace"], "processmaker.log");
+                    $message = 'Sql Execution';
+                    Log::channel(':sqlExecution')->critical($message, Bootstrap::context($context));
                 }
                 unset($obj);
             }

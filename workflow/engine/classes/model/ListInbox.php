@@ -513,7 +513,7 @@ class ListInbox extends BaseListInbox implements ListInterface
             $criteria->addSelectColumn(ProcessPeer::PRO_CATEGORY);
             $aConditions   = array();
             $aConditions[] = array(ListInboxPeer::PRO_UID, ProcessPeer::PRO_UID);
-            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . $category . "'");
+            $aConditions[] = array(ProcessPeer::PRO_CATEGORY, "'" . G::realEscapeString($category) . "'");
             $criteria->addJoinMC($aConditions, Criteria::INNER_JOIN);
         }
         //Those filters: $newestthan, $oldestthan is used from mobile GET /light/todo

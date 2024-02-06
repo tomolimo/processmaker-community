@@ -1409,6 +1409,7 @@ class Cases extends Api
      * @param string $var_name
      * @param string $doc_uid
      * @param string $app_doc_uid
+     * @param int $delIndex {@from body}
      *
      * @return array
      * @throws RestException
@@ -1416,12 +1417,16 @@ class Cases extends Api
      * @access protected
      * @class AccessControl {@permission PM_CASES}
      */
-    public function uploadDocumentToCase($app_uid, $var_name, $doc_uid = '-1', $app_doc_uid = null)
+    public function uploadDocumentToCase($app_uid, $var_name, $doc_uid = '-1', $app_doc_uid = null, $delIndex = null)
     {
         try {
             $userUid = $this->getUserId();
             $case = new BmCases();
-            $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid);
+            if (isset($delIndex)) {
+                $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid, $delIndex);
+            } else {
+                $response = $case->uploadFiles($userUid, $app_uid, $var_name, $doc_uid, $app_doc_uid);
+            }
         } catch (ExceptionRestApi $e) {
             throw new RestException($e->getCode(), $e->getMessage());
         } catch (Exception $e) {
