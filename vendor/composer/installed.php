@@ -5,7 +5,7 @@
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '975b1310d4c2ad08e2ed14ac215e6d68cf5b8a2e',
+        'reference' => '00e4ae4c0ad5dd01bc54b2707de80803f5f7e666',
         'name' => 'processmaker/processmaker',
         'dev' => false,
     ),
@@ -731,7 +731,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '975b1310d4c2ad08e2ed14ac215e6d68cf5b8a2e',
+            'reference' => '00e4ae4c0ad5dd01bc54b2707de80803f5f7e666',
             'dev_requirement' => false,
         ),
         'psr/cache' => array(

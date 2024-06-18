@@ -4,3 +4,12 @@ composer.phar
 vendor
 # IDE
 .idea
+# eclipse
+.buildpath
+.project
+.settings
+# pear
+.tarballs
+*.tgz
+# phpunit
+build

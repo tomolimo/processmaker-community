@@ -1,5 +1,11 @@
 <?php
 
+use ProcessMaker\BusinessModel\WebEntry;
+use ProcessMaker\Core\JobsManager;
+use ProcessMaker\Model\Delegation;
+use ProcessMaker\Model\Process;
+use ProcessMaker\Validation\MySQL57;
+
 CLI::taskName('info');
 CLI::taskDescription(<<<EOT
 Print information about the current system and any specified workspaces.
@@ -103,26 +109,6 @@ EOT
 CLI::taskArg('workspace', true, true);
 CLI::taskRun("run_plugins_database_upgrade");
 
-CLI::taskName('workspace-upgrade');
-CLI::taskDescription(<<<EOT
-  Upgrade the specified workspace(s).
-
-  If no workspace is specified, the command will be run in all workspaces. More
-  than one workspace can be specified.
-
-  This command is a shortcut to execute all the upgrade commands for workspaces.
-  Upgrading a workspace will make it correspond to the current version of
-  ProcessMaker.
-
-  Use this command to upgrade workspaces individually, otherwise use the
-  'processmaker upgrade' command to upgrade the entire system.
-EOT
-);
-CLI::taskArg('workspace-name', true, true);
-CLI::taskOpt('buildACV', 'If this option is enabled, the Cache View is built.', 'ACV', 'buildACV');
-CLI::taskOpt('noxml', 'If this option is enabled, the XML files translation is not built.', 'NoXml', 'no-xml');
-CLI::taskRun("run_workspace_upgrade");
-
 CLI::taskName('translation-repair');
 CLI::taskDescription(<<<EOT
   Upgrade or repair translations for the specified workspace(s).
@@ -194,7 +180,6 @@ EOT
 CLI::taskArg('workspace', true, true);
 CLI::taskRun("run_migrate_itee_to_dummytask");
 
-/*----------------------------------********---------------------------------*/
 
 CLI::taskName('migrate-indexing-acv');
 CLI::taskDescription(<<<EOT
@@ -288,7 +273,6 @@ EOT
 CLI::taskArg('workspace');
 CLI::taskRun("regenerate_pmtable_classes");
 
-/*----------------------------------********---------------------------------*/
 
 /**
  * Remove the DYN_CONTENT_HISTORY
@@ -300,6 +284,144 @@ EOT
 );
 CLI::taskArg('workspace');
 CLI::taskRun("run_clear_dyn_content_history_data");
+
+/**
+ * Sync JSON definition of the Forms with Input Documents information
+ */
+CLI::taskName('sync-forms-with-info-from-input-documents');
+CLI::taskDescription(<<<EOT
+    Sync JSON definition of the Forms with Input Documents information
+EOT
+);
+CLI::taskArg('workspace');
+CLI::taskRun("run_sync_forms_with_info_from_input_documents");
+
+/**
+ * Remove the deprecated files
+ */
+CLI::taskName('remove-unused-files');
+CLI::taskDescription(<<<EOT
+    Remove the deprecated files.
+EOT
+);
+CLI::taskRun("remove_deprecated_files");
+
+/*********************************************************************/
+CLI::taskName("check-queries-incompatibilities");
+CLI::taskDescription(<<<EOT
+  Check queries incompatibilities (MySQL 5.7) for the specified workspace(s).
+
+  This command checks the queries incompatibilities (MySQL 5.7) in the specified workspace(s).
+
+  If no workspace is specified, the command will be run in all workspaces.
+  More than one workspace can be specified.
+EOT
+);
+CLI::taskArg("workspace-name", true, true);
+CLI::taskRun("run_check_queries_incompatibilities");
+/*********************************************************************/
+
+/**
+ * This command executes "artisan" loading the workspace connection parameters
+ */
+CLI::taskName('artisan');
+CLI::taskDescription(<<<EOT
+    This command executes "artisan" loading the workspace parameters.
+Example:
+    ./processmaker artisan queue:work --workspace=workflow
+
+To see other command options please refer to the artisan help. 
+    php artisan --help
+EOT
+);
+CLI::taskRun("run_artisan");
+
+/**
+ * Add a font to be used in Documents generation (TinyMCE editor and/or TCPDF library)
+ */
+CLI::taskName('documents-add-font');
+CLI::taskDescription(<<<EOT
+Add a font to be used in Documents generation (TinyMCE editor and/or TCPDF library).
+EOT
+);
+CLI::taskOpt('type', <<<EOT
+Can be "TrueType" or "TrueTypeUnicode", if the option is not specified the default value is "TrueType"
+EOT
+,'t', 'type=');
+CLI::taskOpt('tinymce', <<<EOT
+Can be "true" or "false", if the option is not specified the default value is "true". If the value is "false" the optional arguments [FRIENDLYNAME] [FONTPROPERTIES] are omitted. 
+EOT
+    ,'tm', 'tinymce=');
+CLI::taskArg('fontFileName', false);
+CLI::taskArg('friendlyName', true);
+CLI::taskArg('fontProperties', true);
+CLI::taskRun('documents_add_font');
+
+/**
+ * List the registered fonts
+ */
+CLI::taskName('documents-list-registered-fonts');
+CLI::taskDescription(<<<EOT
+List the registered fonts.
+EOT
+);
+CLI::taskRun('documents_list_registered_fonts');
+
+/**
+ * Remove a font used in Documents generation (TinyMCE editor and/or TCPDF library)
+ */
+CLI::taskName('documents-remove-font');
+CLI::taskDescription(<<<EOT
+Remove a font used in Documents generation (TinyMCE editor and/or TCPDF library).
+EOT
+);
+CLI::taskArg('fontFileName', false);
+CLI::taskRun('documents_remove_font');
+
+/**
+ * Add +async option to scheduler commands in table SCHEDULER.
+ */
+CLI::taskName('add-async-option-to-scheduler-commands');
+CLI::taskDescription(<<<EOT
+    Add +async option to scheduler commands in table SCHEDULER.
+EOT
+);
+CLI::taskArg('workspace');
+CLI::taskRun('add_async_option_to_scheduler_commands');
+
+/**
+ * Convert Web Entries v1.0 to v2.0 for BPMN processes in order to deprecate the old version.
+ */
+CLI::taskName('convert-old-web-entries');
+CLI::taskDescription(<<<EOT
+Convert Web Entries v1.0 to v2.0 for BPMN processes in order to deprecate the old version.
+EOT
+);
+CLI::taskRun('convert_old_web_entries');
+
+/**
+ * Populate the column APP_DELEGATION.DEL_TITLE with the case title APPLICATION.APP_TITLE
+ */
+CLI::taskName('migrate-case-title-to-threads');
+CLI::taskDescription(<<<EOT
+Populate the new column APPLICATION.APP_TITLE into the APP_DELEGATION table
+EOT
+);
+CLI::taskArg('WORKSPACE', false);
+CLI::taskArg('caseNumberFrom', true);
+CLI::taskArg('caseNumberTo', true);
+CLI::taskRun('migrate_case_title_to_threads');
+
+/**
+ * Convert Output Documents generator from 'HTML2PDF' to 'TCPDF', because thirdparty related is obsolete and doesn't work over PHP 7.x.
+ */
+CLI::taskName('convert-out-docs-from-html2pdf-to-tcpdf');
+CLI::taskDescription(<<<EOT
+    Convert Output Documents generator from 'HTML2PDF' to 'TCPDF', because thirdparty related is obsolete and doesn't work over PHP 7.x.
+EOT
+);
+CLI::taskArg('workspace');
+CLI::taskRun('convert_out_docs_from_html2pdf_to_tcpdf');
 
 /**
  * Function run_info
@@ -324,69 +446,6 @@ function run_info($args, $opts)
 }
 
 /**
- * Check if we need to execute the workspace-upgrade
- * If we apply the command for all workspaces, we will need to execute one by one by redefining the constants
- *
- * @param string $args, workspace name that we need to apply the database-upgrade
- * @param string $opts, additional arguments
- *
- * @return void
- */
-function run_workspace_upgrade($args, $opts)
-{
-    //Read the additional parameters for this command
-    $parameters = '';
-    $parameters .= array_key_exists('buildACV', $opts) ? '--buildACV ' : '';
-    $parameters .= array_key_exists('noxml', $opts) ? '--no-xml ' : '';
-    $parameters .= array_key_exists("lang", $opts) ? 'lang=' . $opts['lang'] : 'lang=' . SYS_LANG;
-
-    //Check if the command is executed by a specific workspace
-    if (count($args) === 1) {
-        workspace_upgrade($args, $opts);
-    } else {
-        $workspaces = get_workspaces_from_args($args);
-        foreach ($workspaces as $workspace) {
-            passthru(PHP_BINARY . ' processmaker upgrade ' . $parameters . ' ' . $workspace->name);
-        }
-    }
-}
-
-/**
- * This function is executed only by one workspace, for the command workspace-upgrade
- *
- * @param array $args, workspace name for to apply the upgrade
- * @param array $opts, specify additional arguments for language, flag for buildACV, flag for noxml
- *
- * @return void
- */
-function workspace_upgrade($args, $opts) {
-    $first = true;
-    $workspaces = get_workspaces_from_args($args);
-    $lang = array_key_exists("lang", $opts) ? $opts['lang'] : 'en';
-    $buildCacheView = array_key_exists('buildACV', $opts);
-    $flagUpdateXml = !array_key_exists('noxml', $opts);
-
-    $wsName = $workspaces[key($workspaces)]->name;
-    Bootstrap::setConstantsRelatedWs($wsName);
-    //Loop, read all the attributes related to the one workspace
-    foreach ($workspaces as $workspace) {
-        try {
-            $workspace->upgrade(
-                $buildCacheView,
-                $workspace->name,
-                false,
-                $lang,
-                ['updateXml' => $flagUpdateXml, 'updateMafe' => $first]
-            );
-            $first = false;
-            $flagUpdateXml = false;
-        } catch (Exception $e) {
-            G::outRes("Errors upgrading workspace " . CLI::info($workspace->name) . ": " . CLI::error($e->getMessage()) . "\n");
-        }
-    }
-}
-
-/**
  * We will upgrade the CONTENT table
  * If we apply the command for all workspaces, we will need to execute one by one by redefining the constants
  * @param string $args, workspaceName that we need to apply the upgrade-content
@@ -406,6 +465,7 @@ function run_upgrade_content($args, $opts)
         }
     }
 }
+
 /**
  * This function will upgrade the CONTENT table for a workspace
  * This function is executed only for one workspace
@@ -441,7 +501,7 @@ function upgradeContent($args, $opts)
  * Verify if we need to execute an external program for each workspace
  * If we apply the command for all workspaces, we will need to execute one by one by redefining the constants
  * @param string $args, workspaceName that we need to apply the database-upgrade
- * @param string $opts
+ * @param array $opts
  *
  * @return void
  */
@@ -543,26 +603,20 @@ function run_database_import($args, $opts)
  * Check if we need to execute an external program for each workspace
  * If we apply the command for all workspaces we will need to execute one by one by redefining the constants
  * @param string $args, workspaceName that we need to apply the database-upgrade
- * @param string $opts
  *
  * @return void
  */
-function run_database_upgrade($args, $opts)
+function run_database_upgrade($args)
 {
     //Check if the command is executed by a specific workspace
     if (count($args) === 1) {
-        database_upgrade('upgrade', $args);
+        database_upgrade($args);
     } else {
         $workspaces = get_workspaces_from_args($args);
         foreach ($workspaces as $workspace) {
             passthru(PHP_BINARY . ' processmaker database-upgrade ' . $workspace->name);
         }
     }
-}
-
-function run_database_check($args, $opts)
-{
-    database_upgrade("check", $args);
 }
 
 function run_migrate_new_cases_lists($args, $opts)
@@ -582,44 +636,33 @@ function run_migrate_list_unassigned($args, $opts)
 
 /**
  * This function is executed only by one workspace
- * @param string $command, the specific actions must be: upgrade|check
  * @param array $args, workspaceName for to apply the database-upgrade
  *
  * @return void
  */
-function database_upgrade($command, $args)
+function database_upgrade($args)
 {
+    // Sanitize parameters sent
     $filter = new InputFilter();
-    $command = $filter->xssFilterHard($command);
     $args = $filter->xssFilterHard($args);
-    //Load the attributes for the workspace
-    $workspaces = get_workspaces_from_args($args);
-    $checkOnly = (strcmp($command, "check") == 0);
-    //Loop, read all the attributes related to the one workspace
-    $wsName = $workspaces[key($workspaces)]->name;
-    Bootstrap::setConstantsRelatedWs($wsName);
-    if ($checkOnly) {
-        print_r("Checking database in " . pakeColor::colorize($wsName, "INFO") . "\n");
-    } else {
-        print_r("Upgrading database in " . pakeColor::colorize($wsName, "INFO") . "\n");
-    }
 
+    // Load the attributes for the workspace
+    $workspaces = get_workspaces_from_args($args);
+
+    // Get the name of the first workspace
+    $wsName = $workspaces[key($workspaces)]->name;
+
+    // Initialize workspace values
+    Bootstrap::setConstantsRelatedWs($wsName);
+
+    // Print a informative message
+    print_r("Upgrading database in " . pakeColor::colorize($wsName, "INFO") . "\n");
+
+    // Loop to update the databases of all workspaces
     foreach ($workspaces as $workspace) {
         try {
-            $changes = $workspace->upgradeDatabase($checkOnly);
-            if ($changes != false) {
-                if ($checkOnly) {
-                    echo "> " . pakeColor::colorize("Run upgrade", "INFO") . "\n";
-                    echo "  Tables (add = " . count($changes['tablesToAdd']);
-                    echo ", alter = " . count($changes['tablesToAlter']) . ") ";
-                    echo "- Indexes (add = " . count($changes['tablesWithNewIndex']) . "";
-                    echo ", alter = " . count($changes['tablesToAlterIndex']) . ")\n";
-                } else {
-                    echo "-> Schema fixed\n";
-                }
-            } else {
-                echo "> OK\n";
-            }
+            $workspace->upgradeDatabase();
+            $workspace->close();
         } catch (Exception $e) {
             G::outRes("> Error: " . CLI::error($e->getMessage()) . "\n");
         }
@@ -800,7 +843,6 @@ function run_workspace_restore($args, $opts)
         $lang = array_key_exists("lang", $opts) ? $opts['lang'] : 'en';
         $port = array_key_exists("port", $opts) ? $opts['port'] : '';
         $optionMigrateHistoryData = [
-            /*----------------------------------********---------------------------------*/
         ];
         if ($info) {
             WorkspaceTools::getBackupInfo($filename);
@@ -934,7 +976,6 @@ function run_migrate_itee_to_dummytask($args, $opts)
         }
     }
 }
-/*----------------------------------********---------------------------------*/
 
 /**
  * Check if we need to execute an external program for each workspace
@@ -981,7 +1022,7 @@ function migrate_content($args, $opts)
     foreach ($workspaces as $workspace) {
         print_r('Regenerating content in: ' . pakeColor::colorize($workspace->name, 'INFO') . "\n");
         CLI::logging("-> Regenerating content \n");
-        $workspace->migrateContentRun($workspace->name, $lang);
+        $workspace->migrateContentRun($lang);
     }
     $stop = microtime(true);
     CLI::logging("<*>   Optimizing content data Process took " . ($stop - $start) . " seconds.\n");
@@ -1067,7 +1108,6 @@ function regenerate_pmtable_classes($args, $opts)
     }
 }
 
-/*----------------------------------********---------------------------------*/
 
 /**
  * Will be clean the History of use from the table
@@ -1077,7 +1117,7 @@ function regenerate_pmtable_classes($args, $opts)
  * @param array $opts
  *
  * @return void
-*/
+ */
 function run_clear_dyn_content_history_data($args, $opts)
 {
     $workspaces = get_workspaces_from_args($args);
@@ -1089,4 +1129,395 @@ function run_clear_dyn_content_history_data($args, $opts)
     }
     $stop = microtime(true);
     CLI::logging("<*>   Cleaning history data from APP_HISTORY process took " . ($stop - $start) . " seconds.\n");
+}
+
+/**
+ * Sync JSON definition of the Forms with Input Documents information
+ *
+ * @param array $args
+ * @param array $opts
+ *
+ * @return void
+ * @see workflow/engine/bin/tasks/cliWorkspaces.php CLI::taskRun()
+ */
+function run_sync_forms_with_info_from_input_documents($args, $opts)
+{
+    if (count($args) === 1) {
+        //This variable is not defined and does not involve its value in this
+        //task, it is removed at the end of the method.
+        $_SERVER['REQUEST_URI'] = '';
+        if (!defined('SYS_SKIN')) {
+            $config = System::getSystemConfiguration();
+            define('SYS_SKIN', $config['default_skin']);
+        }
+        CLI::logging('Sync JSON definition of the Forms with Input Documents information from workspace: ' . pakeColor::colorize($args[0], 'INFO') . "\n");
+        $workspaceTools = new WorkspaceTools($args[0]);
+        $workspaceTools->syncFormsWithInputDocumentInfo();
+        unset($_SERVER['REQUEST_URI']);
+    } else {
+        $workspaces = get_workspaces_from_args($args);
+        foreach ($workspaces as $workspace) {
+            passthru(PHP_BINARY . ' processmaker sync-forms-with-info-from-input-documents ' .
+                $workspace->name);
+        }
+    }
+}
+
+/**
+ * Remove the deprecated files
+ *
+ * @return void
+ * @see workflow/engine/bin/tasks/cliWorkspaces.php CLI::taskRun()
+ * @link https://wiki.processmaker.com/3.3/processmaker_command
+ */
+function remove_deprecated_files()
+{
+    //The constructor requires an argument, so we send an empty value in order to use the class.
+    $workspaceTools = new WorkspaceTools('');
+    $workspaceTools->removeDeprecatedFiles();
+    CLI::logging("<*> The deprecated files has been removed. \n");
+}
+
+/**
+ * This function review the queries for each workspace or for an specific workspace
+ *
+ * @param array $args
+ *
+ * @return void
+ */
+function run_check_queries_incompatibilities($args)
+{
+    try {
+        $workspaces = get_workspaces_from_args($args);
+        if (count($args) === 1) {
+            CLI::logging("> Workspace: " . $workspaces[0]->name . PHP_EOL);
+            check_queries_incompatibilities($workspaces[0]->name);
+        } else {
+            foreach ($workspaces as $workspace) {
+                passthru(PHP_BINARY . " processmaker check-queries-incompatibilities " . $workspace->name);
+            }
+        }
+        echo "Done!\n\n";
+    } catch (Exception $e) {
+        G::outRes(CLI::error($e->getMessage()) . "\n");
+    }
+}
+
+/**
+ * Check for the incompatibilities in the queries for the specific workspace
+ *
+ * @param string $wsName
+ */
+function check_queries_incompatibilities($wsName)
+{
+    Bootstrap::setConstantsRelatedWs($wsName);
+    if (!defined('DB_ADAPTER')) {
+        require_once(PATH_DB . $wsName . '/db.php');
+    }
+    System::initLaravel();
+
+    $query = Process::query()->select('PRO_UID', 'PRO_TITLE');
+    $processesToCheck = $query->get()->values()->toArray();
+
+    $obj = new MySQL57();
+    $resTriggers = $obj->checkIncompatibilityTriggers($processesToCheck);
+
+    if (!empty($resTriggers)) {
+        foreach ($resTriggers as $trigger) {
+            echo ">> The \"" . $trigger['PRO_TITLE'] . "\" process has a trigger called: \"" . $trigger['TRI_TITLE'] . "\" that contains UNION queries. Review the code to discard incompatibilities with MySQL5.7." . PHP_EOL;
+        }
+    } else {
+        echo ">> No MySQL 5.7 incompatibilities in triggers found for this workspace." . PHP_EOL;
+    }
+
+    $resDynaforms = $obj->checkIncompatibilityDynaforms($processesToCheck);
+
+    if (!empty($resDynaforms)) {
+        foreach ($resDynaforms as $dynaform) {
+            echo ">> The \"" . $dynaform['PRO_TITLE'] . "\" process has a dynaform called: \"" . $dynaform['DYN_TITLE'] . "\" that contains UNION queries. Review the code to discard incompatibilities with MySQL5.7." . PHP_EOL;
+        }
+    } else {
+        echo ">> No MySQL 5.7 incompatibilities in dynaforms found for this workspace." . PHP_EOL;
+    }
+
+    $resVariables = $obj->checkIncompatibilityVariables($processesToCheck);
+
+    if (!empty($resVariables)) {
+        foreach ($resVariables as $variable) {
+            echo ">> The \"" . $variable['PRO_TITLE'] . "\" process has a variable called: \"" . $variable['VAR_NAME'] . "\" that contains UNION queries. Review the code to discard incompatibilities with MySQL5.7." . PHP_EOL;
+        }
+    } else {
+        echo ">> No MySQL 5.7 incompatibilities in variables found for this workspace." . PHP_EOL;
+    }
+}
+
+/**
+ * This function obtains the connection parameters and passes them to the artisan. 
+ * All artisan options can be applied. For more information on artisan options use 
+ * php artisan --help
+ * @param array $args
+ */
+function run_artisan($args)
+{
+    $jobsManager = JobsManager::getSingleton()->init();
+    $workspace = $jobsManager->getOptionValueFromArguments($args, "--workspace");
+    if ($workspace !== false) {
+        config(['system.workspace' => $workspace]);
+
+        $sw = in_array($args[0], ['queue:work', 'queue:listen']);
+        $tries = $jobsManager->getOptionValueFromArguments($args, "--tries");
+        if ($sw === true && $tries === false) {
+            $tries = $jobsManager->getTries();
+            array_push($args, "--tries={$tries}");
+        }
+        array_push($args, "--processmakerPath=" . PROCESSMAKER_PATH);
+
+        $command = "artisan " . implode(" ", $args);
+        CLI::logging("> {$command}\n");
+        passthru(PHP_BINARY . " {$command}");
+    } else {
+        CLI::logging("> The --workspace option is undefined.\n");
+    }
+}
+
+/**
+ * Add a font to be used in Documents generation (TinyMCE editor and/or TCPDF library)
+ *
+ * @param array $args
+ * @param array $options
+ */
+function documents_add_font($args, $options)
+{
+    try {
+        // Validate the main required argument
+        if (empty($args)) {
+            throw new Exception('Please send the font filename.');
+        }
+
+        // Load and initialize optional arguments and options
+        $fontFileName = $args[0];
+        $fontFriendlyName = $args[1] ?? '';
+        $fontProperties = $args[2] ?? '';
+        $fontType = $options['type'] ?? 'TrueType';
+        $inTinyMce = !empty($options['tinymce']) ? $options['tinymce'] === 'true' : true;
+        $name = '';
+
+        // Check fonts path
+        OutputDocument::checkTcPdfFontsPath();
+
+        // Check if the font file exist
+        if (!file_exists(PATH_DATA . 'fonts' . PATH_SEP . $fontFileName)) {
+            throw new Exception("Font '{$fontFileName}' not exists.");
+        }
+
+        // Check if the font file was already added
+        if (OutputDocument::existTcpdfFont($fontFileName)) {
+            throw new Exception("Font '{$fontFileName}' already added.");
+        }
+
+        // Check if the friendly font name is valid
+        if (preg_match('/[^0-9A-Za-z ]/', $fontFriendlyName)) {
+            throw new Exception('The friendly font name is using an incorrect format please use only letters, numbers and spaces.');
+        }
+
+        // Check if the font type is valid
+        if (!in_array($fontType, ['TrueType', 'TrueTypeUnicode'])) {
+            throw new Exception("Font type '{$fontType}' is invalid.");
+        }
+
+        // Convert TTF file to the format required by TCPDF library
+        $tcPdfFileName = TCPDF_FONTS::addTTFfont(PATH_DATA . 'fonts' . PATH_SEP . $fontFileName, $fontType);
+
+        // Check if the conversion was successful
+        if ($tcPdfFileName === false) {
+            throw new Exception("The font file '{$fontFileName}' cannot be converted.");
+        }
+
+        // Include font definition, in order to use the variable $name
+        require_once K_PATH_FONTS . $tcPdfFileName . '.php';
+
+        // Build the font family name to be used in the styles
+        $fontFamilyName = strtolower($name);
+        $fontFamilyName = str_replace('-', ' ', $fontFamilyName);
+        $fontFamilyName = str_replace(['bold', 'oblique', 'italic', 'regular'], '', $fontFamilyName);
+        $fontFamilyName = trim($fontFamilyName);
+
+        // Add new font
+        $font = [
+            'fileName' => $fontFileName,
+            'tcPdfFileName' => $tcPdfFileName,
+            'familyName' => $fontFamilyName,
+            'inTinyMce' => $inTinyMce,
+            'friendlyName' => !empty($fontFriendlyName) ? $fontFriendlyName : $fontFamilyName,
+            'properties' => $fontProperties
+        ];
+        OutputDocument::addTcPdfFont($font);
+
+        // Print finalization message
+        CLI::logging("Font '{$fontFileName}' added successfully." . PHP_EOL . PHP_EOL);
+    } catch (Exception $e) {
+        // Display the error message
+        CLI::logging($e->getMessage() . PHP_EOL . PHP_EOL);
+    }
+}
+
+/**
+ * List the registered fonts
+ */
+function documents_list_registered_fonts()
+{
+    // Check fonts path
+    OutputDocument::checkTcPdfFontsPath();
+
+    // Get registered fonts
+    $fonts = OutputDocument::loadTcPdfFontsList();
+
+    // Display information
+    CLI::logging(PHP_EOL);
+    if (!empty($fonts)) {
+        foreach ($fonts as $fileName => $font) {
+            $inTinyMce = $font['inTinyMce'] ? 'Yes' : 'No';
+            CLI::logging("TTF Filename: {$fileName}" . PHP_EOL);
+            CLI::logging("TCPDF Filename: {$font['tcPdfFileName']}" . PHP_EOL);
+            CLI::logging("Display in TinyMCE: {$inTinyMce}" . PHP_EOL . PHP_EOL . PHP_EOL);
+        }
+    } else {
+        CLI::logging('It has not been added fonts yet.' . PHP_EOL . PHP_EOL);
+    }
+}
+
+/**
+ * Remove a font used in Documents generation (TinyMCE editor and/or TCPDF library)
+ *
+ * @param array $args
+ */
+function documents_remove_font($args)
+{
+    try {
+        // Validate the main required argument
+        if (empty($args)) {
+            throw new Exception('Please send the font filename.');
+        }
+
+        // Load arguments
+        $fontFileName = $args[0];
+
+        // Check fonts path
+        OutputDocument::checkTcPdfFontsPath();
+
+        // Check if the font file exist
+        if (!file_exists(PATH_DATA . 'fonts' . PATH_SEP . $fontFileName)) {
+            throw new Exception("Font '{$fontFileName}' not exists.");
+        }
+
+        // Check if the font file was registered
+        if (!OutputDocument::existTcpdfFont($fontFileName)) {
+            throw new Exception("Font '{$fontFileName}' was not registered.");
+        }
+
+        // Get registered font
+        $font = OutputDocument::loadTcPdfFontsList()[$fontFileName];
+
+        // Remove TCPDF font files
+        $extensions = ['ctg.z', 'php', 'z'];
+        foreach ($extensions as $extension) {
+            if (file_exists(PATH_DATA . 'fonts' . PATH_SEP . 'tcpdf' . PATH_SEP . $font['tcPdfFileName'] . '.' . $extension)) {
+                unlink(PATH_DATA . 'fonts' . PATH_SEP . 'tcpdf' . PATH_SEP . $font['tcPdfFileName'] . '.' . $extension);
+            }
+        }
+
+        // Remove font
+        OutputDocument::removeTcPdfFont($fontFileName);
+
+        // Print finalization message
+        CLI::logging("Font '{$fontFileName}' removed successfully." . PHP_EOL . PHP_EOL);
+    } catch (Exception $e) {
+        // Display the error message
+        CLI::logging($e->getMessage() . PHP_EOL . PHP_EOL);
+    }
+}
+
+/**
+ * Add +async option to scheduler commands in table SCHEDULER.
+ * @param array $args
+ * @param string $opts
+ */
+function add_async_option_to_scheduler_commands($args, $opts)
+{
+    if (count($args) === 1) {
+        Bootstrap::setConstantsRelatedWs($args[0]);
+        $workspaceTools = new WorkspaceTools($args[0]);
+
+        CLI::logging("> Adding +async option to scheduler commands...\n");
+        $start = microtime(true);
+        $workspaceTools->addAsyncOptionToSchedulerCommands(true);
+        CLI::logging("<*>   Adding +async option to scheduler commands took " . (microtime(true) - $start) . " seconds.\n");
+    } else {
+        $workspaces = get_workspaces_from_args($args);
+        foreach ($workspaces as $workspace) {
+            passthru(PHP_BINARY . ' processmaker add-async-option-to-scheduler-commands ' . $workspace->name);
+        }
+    }
+}
+
+/**
+ * Convert Web Entries v1.0 to v2.0 for BPMN processes in order to deprecate the old version.
+ *
+ * @param array $args
+ */
+function convert_old_web_entries($args)
+{
+    try {
+        if (!empty($args)) {
+            // Print initial message
+            $start = microtime(true);
+            CLI::logging("> Converting Web Entries v1.0 to v2.0 for BPMN processes...\n");
+
+            // Set workspace constants and initialize DB connection
+            Bootstrap::setConstantsRelatedWs($args[0]);
+            Propel::init(PATH_CONFIG . 'databases.php');
+
+            // Convert Web Entries
+            WebEntry::convertFromV1ToV2();
+
+            // Print last message
+            $stop = microtime(true);
+            CLI::logging("<*>   Converting Web Entries v1.0 to v2.0 for BPMN processes data took " . ($stop - $start) . " seconds.\n");
+        } else {
+            // If a workspace is not specified, get all available workspaces in the server
+            $workspaces = get_workspaces_from_args($args);
+
+            // Execute the command for each workspace
+            foreach ($workspaces as $workspace) {
+                passthru(PHP_BINARY . ' processmaker convert-old-web-entries ' . $workspace->name);
+            }
+        }
+    } catch (Exception $e) {
+        // Display the error message
+        CLI::logging($e->getMessage() . PHP_EOL . PHP_EOL);
+    }
+}
+
+/**
+ * Populate the new column APPLICATION.APP_TITLE into the APP_DELEGATION table
+ * 
+ * @param array $args
+ */
+function migrate_case_title_to_threads($args)
+{
+    //The constructor requires an argument, so we send an empty value in order to use the class.
+    $workspaceTools = new WorkspaceTools('');
+    $workspaceTools->migrateCaseTitleToThreads($args);
+}
+
+/**
+ * Convert Output Documents generator from 'HTML2PDF' to 'TCPDF', because thirdparty related is obsolete and doesn't work over PHP 7.x.
+ *
+ * @param array $args
+ */
+function convert_out_docs_from_html2pdf_to_tcpdf($args)
+{
+    // The constructor requires an argument, so we send an empty value in order to use the class.
+    $workspaceTools = new WorkspaceTools('');
+    $workspaceTools->convertOutDocsHtml2Ps2Pdf($args);
 }

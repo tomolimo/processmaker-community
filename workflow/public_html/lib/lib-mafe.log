@@ -1,30 +1,30 @@
-[7 months ago] d9826dac  PMCORE-3997:Error in the console when the Intermediate event's property is opened <Fabio Guachalla>
-[7 months ago] 72a851a1  (origin/bugfix/PMCORE-3982, composer/bugfix/PMCORE-3982) PMCORE-3982 Update composer with the branches with release/3.8.0 <Roly Gutierrez>
-[8 months ago] 8ffe6622  (origin/feature/PMCORE-3929, composer/feature/PMCORE-3929) PMCORE-3929 MS Modern Authentication / GMAIL API IMAP for ABE <Julio Cesar Laura Avendaño>
-[8 months ago] f1bad771  (origin/bugfix/PMCORE-3928-A, composer/bugfix/PMCORE-3928-A) PMCORE-3928 `Hide Active Session Warning` disabled is not saved in the processmaker log <Roly Gutierrez>
-[8 months ago] 4404d7c5  PMCORE-3909 PMCORE-3905: Add option to disable session warning in web entry when "Require user login" is selected <Roly Gutierrez>
-[10 months ago] 56a5dbbc  (origin/bugfix/PMCORE-3868, composer/bugfix/PMCORE-3868) PMCORE-3868: [28189] Slow saving issues with processes <Rodrigo Quelca>
-[11 months ago] 5578bc83  (origin/bugfix/PMCORE-3849, composer/bugfix/PMCORE-3849) PMCORE-3849 Pagination Title is not saved <Roly Gutierrez>
-[11 months ago] 32279c12  (origin/bugfix/PMCORE-3830, composer/bugfix/PMCORE-3830) PMCORE-3830 Header and Footer Logo add spaces in the Output document. <Roly Gutierrez>
-[11 months ago] 75b6cf08  (origin/bugfix/PMCORE-3825, composer/bugfix/PMCORE-3825) PMCORE-3825 Update composer with the branches with release/3.7.5 <Roly Gutierrez>
-[12 months ago] 83bf546d  (origin/bugfix/PMCORE-859-A, composer/bugfix/PMCORE-859-A) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full <Roly Gutierrez>
-[1 year ago] 43b6837b  PMCORE-3787:Negative values are accepted for Position  fields <Fabio Guachalla>
-[1 year ago] 88f393a2  PMCORE-3788:Footer and header always are disabled <Fabio Guachalla>
-[1 year ago] 027d0d76  (origin/bugfix/PMCORE-859, composer/bugfix/PMCORE-859) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full. <Roly Gutierrez>
-[1 year, 1 month ago] 1e78fa69  (origin/bugfix/PMCORE-3686, composer/bugfix/PMCORE-3686) PMCORE-3686 <Paula.Quispe>
-[1 year, 3 months ago] e106f7b8  (origin/bugfix/PMCORE-3644, composer/bugfix/PMCORE-3644) PMCORE-3644 <Andrea Adamczyk>
-[1 year, 3 months ago] 2fc13a59  PMCORE-2410:Dynaforms: importing a json - the message displayed has a grammar mistake <Fabio Guachalla>
-[1 year, 4 months ago] c41e8ef7  PMCORE-3609:UI: Send a JSON format to save the header and footer <fabio>
-[1 year, 4 months ago] d6a61dd8  (origin/bugfix/PMCORE-3603_B, composer/bugfix/PMCORE-3603_B) PMCORE-3603: Dynaform > Titles on the menu are smaller than PM 3.7.1 <Rodrigo Quelca>
-[1 year, 4 months ago] cbc52332  PMCORE-3535:UI: Add the new fields for header button <fabio>
-[1 year, 4 months ago] 433ed93d  (origin/revert-pr-1961, composer/revert-pr-1961) Revert "PMCORE-3595 (pull request #1961)" <Julio Cesar Laura Avendaño>
-[1 year, 4 months ago] a8e90e26  Revert "PMCORE-3535 (pull request #1960)" <Fabio Guachalla>
-[1 year, 4 months ago] 2b292bd9  PMCORE-3595:UI: Improve a new element for margin section <Fabio Guachalla>
-[1 year, 4 months ago] 6029e696  PMCORE-3535:UI: Add the new fields for header button <Fabio Guachalla>
-[1 year, 4 months ago] 0d382ef8  (origin/bugfix/PMCORE-3591, composer/bugfix/PMCORE-3591) PMCORE-3591 <Andrea Adamczyk>
-[1 year, 5 months ago] 5104e465  PMCORE-3496:Designer > Trigger > search > An error is displayed in the Browser's console <fabio>
-[1 year, 5 months ago] 1b7e9865  PMCORE-3497:Designer > Public File >Upload > An error is displayed in the Browser's console <Fabio Guachalla>
-[1 year, 5 months ago] 4f913d11  PMCORE-3495 <Henry Jordan>
-[1 year, 5 months ago] eec0b937  PMCORE-3494: Create/Select Variable" frame does not have a correct place. <Rodrigo Quelca>
-[1 year, 5 months ago] 387a2b58  PMCORE-3463: Vulnerable JS Library - Telefonica of Guatemala Security Analysis (Issue Rep# 1) <Rodrigo Quelca>
-[1 year, 5 months ago] f0de553f  PMCORE-3484:Date Time Picker does not close on designer PMCORE_3.7.0-5474 <Fabio Guachalla>
+[8 months ago] d9826dac  PMCORE-3997:Error in the console when the Intermediate event's property is opened <Fabio Guachalla>
+[8 months ago] 72a851a1  (origin/bugfix/PMCORE-3982, composer/bugfix/PMCORE-3982) PMCORE-3982 Update composer with the branches with release/3.8.0 <Roly Gutierrez>
+[9 months ago] 8ffe6622  (origin/feature/PMCORE-3929, composer/feature/PMCORE-3929) PMCORE-3929 MS Modern Authentication / GMAIL API IMAP for ABE <Julio Cesar Laura Avendaño>
+[9 months ago] f1bad771  (origin/bugfix/PMCORE-3928-A, composer/bugfix/PMCORE-3928-A) PMCORE-3928 `Hide Active Session Warning` disabled is not saved in the processmaker log <Roly Gutierrez>
+[9 months ago] 4404d7c5  PMCORE-3909 PMCORE-3905: Add option to disable session warning in web entry when "Require user login" is selected <Roly Gutierrez>
+[11 months ago] 56a5dbbc  (origin/bugfix/PMCORE-3868, composer/bugfix/PMCORE-3868) PMCORE-3868: [28189] Slow saving issues with processes <Rodrigo Quelca>
+[12 months ago] 5578bc83  (origin/bugfix/PMCORE-3849, composer/bugfix/PMCORE-3849) PMCORE-3849 Pagination Title is not saved <Roly Gutierrez>
+[1 year ago] 32279c12  (origin/bugfix/PMCORE-3830, composer/bugfix/PMCORE-3830) PMCORE-3830 Header and Footer Logo add spaces in the Output document. <Roly Gutierrez>
+[1 year ago] 75b6cf08  (origin/bugfix/PMCORE-3825, composer/bugfix/PMCORE-3825) PMCORE-3825 Update composer with the branches with release/3.7.5 <Roly Gutierrez>
+[1 year, 1 month ago] 83bf546d  (origin/bugfix/PMCORE-859-A, composer/bugfix/PMCORE-859-A) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full <Roly Gutierrez>
+[1 year, 1 month ago] 43b6837b  PMCORE-3787:Negative values are accepted for Position  fields <Fabio Guachalla>
+[1 year, 1 month ago] 88f393a2  PMCORE-3788:Footer and header always are disabled <Fabio Guachalla>
+[1 year, 1 month ago] 027d0d76  (origin/bugfix/PMCORE-859, composer/bugfix/PMCORE-859) PMCORE-859 ABE> properties> when we go to another tab, required fields are activated even when the fields are full. <Roly Gutierrez>
+[1 year, 2 months ago] 1e78fa69  (origin/bugfix/PMCORE-3686, composer/bugfix/PMCORE-3686) PMCORE-3686 <Paula.Quispe>
+[1 year, 4 months ago] e106f7b8  (origin/bugfix/PMCORE-3644, composer/bugfix/PMCORE-3644) PMCORE-3644 <Andrea Adamczyk>
+[1 year, 4 months ago] 2fc13a59  PMCORE-2410:Dynaforms: importing a json - the message displayed has a grammar mistake <Fabio Guachalla>
+[1 year, 5 months ago] c41e8ef7  PMCORE-3609:UI: Send a JSON format to save the header and footer <fabio>
+[1 year, 5 months ago] d6a61dd8  (origin/bugfix/PMCORE-3603_B, composer/bugfix/PMCORE-3603_B) PMCORE-3603: Dynaform > Titles on the menu are smaller than PM 3.7.1 <Rodrigo Quelca>
+[1 year, 5 months ago] cbc52332  PMCORE-3535:UI: Add the new fields for header button <fabio>
+[1 year, 5 months ago] 433ed93d  (origin/revert-pr-1961, composer/revert-pr-1961) Revert "PMCORE-3595 (pull request #1961)" <Julio Cesar Laura Avendaño>
+[1 year, 5 months ago] a8e90e26  Revert "PMCORE-3535 (pull request #1960)" <Fabio Guachalla>
+[1 year, 5 months ago] 2b292bd9  PMCORE-3595:UI: Improve a new element for margin section <Fabio Guachalla>
+[1 year, 5 months ago] 6029e696  PMCORE-3535:UI: Add the new fields for header button <Fabio Guachalla>
+[1 year, 5 months ago] 0d382ef8  (origin/bugfix/PMCORE-3591, composer/bugfix/PMCORE-3591) PMCORE-3591 <Andrea Adamczyk>
+[1 year, 6 months ago] 5104e465  PMCORE-3496:Designer > Trigger > search > An error is displayed in the Browser's console <fabio>
+[1 year, 6 months ago] 1b7e9865  PMCORE-3497:Designer > Public File >Upload > An error is displayed in the Browser's console <Fabio Guachalla>
+[1 year, 6 months ago] 4f913d11  PMCORE-3495 <Henry Jordan>
+[1 year, 6 months ago] eec0b937  PMCORE-3494: Create/Select Variable" frame does not have a correct place. <Rodrigo Quelca>
+[1 year, 7 months ago] 387a2b58  PMCORE-3463: Vulnerable JS Library - Telefonica of Guatemala Security Analysis (Issue Rep# 1) <Rodrigo Quelca>
+[1 year, 7 months ago] f0de553f  PMCORE-3484:Date Time Picker does not close on designer PMCORE_3.7.0-5474 <Fabio Guachalla>

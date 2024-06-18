@@ -44,7 +44,6 @@ pake_task('new-plugin', 'project_exists');
 pake_desc("Update the plugin attributes in all workspaces\n   args: <plugin-name>");
 pake_task("update-plugin-attributes", "project_exists");
 
-/*----------------------------------********---------------------------------*/
 
 pake_desc("pack plugin in .tar file \n   args: <plugin>");
 pake_task('pack-plugin', 'project_exists');
@@ -52,7 +51,6 @@ pake_task('pack-plugin', 'project_exists');
 pake_desc("generate basic CRUD files for an existing class\n   args: <class-name> <table-name> <plugin-name>");
 pake_task('propel-build-crud', 'project_exists');
 
-/*----------------------------------********---------------------------------*/
 
 /**
    * Function run_version
@@ -2248,9 +2246,7 @@ function checkFileStandardCode($file)
         $aFiles[] = array( 'file' => $rootFolder, 'tab' => $bTabs, 'utf' => $bUtf8, 'dos' => $bDos );
     }
 }
-/*----------------------------------********---------------------------------*/
 
-/*----------------------------------********---------------------------------*/
 function run_update_plugin_attributes($task, $args)
 {
     try {

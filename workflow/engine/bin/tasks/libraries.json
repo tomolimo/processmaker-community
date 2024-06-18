@@ -209,6 +209,12 @@
                 "minify": true
             },
             {
+                "name": "Ext.state.LocalStorageProvider",
+                "full": "gulliver/js/ext/ext-localStorage.js",
+                "mini": "gulliver/js/ext/ext-localStorage.js",
+                "minify": true
+            },
+            {
                 "name": "ext-statusbar",
                 "full": "gulliver/js/ext/ux.statusbar/ext-statusbar.js",
                 "mini": "gulliver/js/ext/ux.statusbar/ext-statusbar.js",

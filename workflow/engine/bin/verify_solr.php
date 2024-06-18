@@ -52,8 +52,6 @@ $debug = 1;//enable o disable notice, this mechanism is inherited from '/process
 
 ini_set ('display_errors', 1);
 
-ini_set ('memory_limit', '256M'); // set enough memory for the script
-
 $e_all = defined( 'E_DEPRECATED' ) ? E_ALL & ~ E_DEPRECATED : E_ALL;
 $e_all = defined( 'E_STRICT' ) ? $e_all & ~ E_STRICT : $e_all;
 $e_all = $debug ? $e_all : $e_all & ~ E_NOTICE;

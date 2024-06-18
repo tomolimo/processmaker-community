@@ -87,8 +87,6 @@ if(count ($argv) > 3) {
 $debug = 1;
 
 ini_set ('display_errors', 1);
-//error_reporting (E_ALL);
-ini_set ('memory_limit', '256M'); // set enough memory for the script
 
 $e_all = defined( 'E_DEPRECATED' ) ? E_ALL & ~ E_DEPRECATED : E_ALL;
 $e_all = defined( 'E_STRICT' ) ? $e_all & ~ E_STRICT : $e_all;

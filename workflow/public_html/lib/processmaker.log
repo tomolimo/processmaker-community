@@ -1,30 +1,30 @@
-[24 hours ago] 36eeb62c50  (origin/bugfix/PMCORE-4055) PMCORE-4055 No custom error page <Roly Gutierrez>
-[3 days ago] eaf1abeffe  Missing snippet of code related to plguin pmDMS, add links for attached files <Julio Cesar Laura Avendaño>
-[3 days ago] 32b711f6b1  PMCORE-4067 <luNunezProcessmaker>
-[3 days ago] 5d0b3afeba  PMCORE-4052 <luNunezProcessmaker>
-[7 days ago] 96a881483b  PMCORE-4065 <Paula Quispe>
-[10 days ago] a15d3e076d  (origin/feature/PMCORE-4147) PMCORE-4147 <Paula Quispe>
-[2 weeks ago] 2007460382  (origin/bugfix/PMCORE-4211) PMCORE-4211 <Paula Quispe>
-[2 weeks ago] a68a597246  (origin/bugfix/PMCORE-4209) PMCORE-4209 <Julio Cesar Laura Avendaño>
-[3 weeks ago] 672d8f4b57  (origin/bugfix/PMCORE-4204) PMCORE-4204 <Julio Cesar Laura Avendaño>
-[7 weeks ago] 1aacce650c  PMCORE-3704 <Luciana Nuñez>
-[8 weeks ago] d204f1c7a8  PMCORE-4147 <Paula Quispe>
-[8 weeks ago] 19abdb1fe9  (origin/bugfix/PMCORE-3814) Deleting a draft case sets sidebar to Inbox <Martin Laguna>
-[8 weeks ago] 5274511b55  (origin/bugfix/PMDMS-23) bugfix/PMDMS-23 <Julio Cesar Laura Avendaño>
-[8 weeks ago] c45994fd23  (origin/bugfix/PMCORE-4131) PMCORE-4131 <Paula Quispe>
-[9 weeks ago] fc3a405b42  PMCORE-4150 <Paula Quispe>
-[9 weeks ago] cac6b117d7  PMCORE-4052 <Luciana Nuñez>
-[10 weeks ago] d7f6d2e9bd  (origin/feature/PMCORE-4137) Double click opens case in Case Detail <Martin Laguna>
-[2 months ago] 46c48a9bb0  (origin/bugfix/PMCORE-4046) PMCORE-4046 User Enumeration <Roly Gutierrez>
-[2 months ago] 5f3ec06143  (origin/bugfix/PMCORE-4148) PMCORE-4148 Validation of uploaded files is currently validating the 'content type' 'application/json' <Roly Gutierrez>
-[2 months ago] 82f607ad7d  (origin/bugfix/PMCORE-4144) PMCORE-4144 <Julio Cesar Laura Avendaño>
-[3 months ago] 3308da5204  (origin/bugfix/PMCORE-4120) PMCORE-4128 <Julio Cesar Laura Avendaño>
-[3 months ago] 0b39c2693d  (origin/bugfix/PMCORE-4133) PMCORE-4133 <Julio Cesar Laura Avendaño>
-[3 months ago] 4c4b1feeb2  PMCORE-4121 <Julio Cesar Laura Avendaño>
-[3 months ago] 34b92db567  (origin/bugfix/PMCORE-4130) PMCORE-4130 <Paula Quispe>
-[3 months ago] fbf556cb4c  (origin/bugfix/PMCORE-4135) PMCORE-4135 <Paula Quispe>
-[3 months ago] 963bbdf016  PMCORE-4120 <Julio Cesar Laura Avendaño>
-[3 months ago] 2b40332e31  (origin/bugfix/PMCORE-4125) PMCORE-4125 <Julio Cesar Laura Avendaño>
-[3 months ago] 596f40b89b  (origin/bugfix/PMCORE-4126) PMCORE-4126 Steps is not showing in the open case <Roly Gutierrez>
-[3 months ago] 9dd9c51cd1  PMCORE-4119 <Luciana Nuñez>
-[3 months ago] f17bfea699  (origin/bugfix/PMCORE-4059-A) PMCORE-4059 Password Policy is not working <Roly Gutierrez>
+[2 days ago] 33559d3de4  (origin/bugfix/PMCORE-4241) PMCORE-4241 ./processmaker command is not working correctly when a upgrading from PM 3.7.x to PM 3.8.2 <Roly Gutierrez>
+[5 weeks ago] 36eeb62c50  (origin/bugfix/PMCORE-4055) PMCORE-4055 No custom error page <Roly Gutierrez>
+[5 weeks ago] eaf1abeffe  Missing snippet of code related to plguin pmDMS, add links for attached files <Julio Cesar Laura Avendaño>
+[5 weeks ago] 32b711f6b1  PMCORE-4067 <luNunezProcessmaker>
+[5 weeks ago] 5d0b3afeba  PMCORE-4052 <luNunezProcessmaker>
+[6 weeks ago] 96a881483b  PMCORE-4065 <Paula Quispe>
+[6 weeks ago] a15d3e076d  (origin/feature/PMCORE-4147) PMCORE-4147 <Paula Quispe>
+[7 weeks ago] 2007460382  (origin/bugfix/PMCORE-4211) PMCORE-4211 <Paula Quispe>
+[7 weeks ago] a68a597246  (origin/bugfix/PMCORE-4209) PMCORE-4209 <Julio Cesar Laura Avendaño>
+[8 weeks ago] 672d8f4b57  (origin/bugfix/PMCORE-4204) PMCORE-4204 <Julio Cesar Laura Avendaño>
+[3 months ago] 1aacce650c  PMCORE-3704 <Luciana Nuñez>
+[3 months ago] d204f1c7a8  PMCORE-4147 <Paula Quispe>
+[3 months ago] 19abdb1fe9  (origin/bugfix/PMCORE-3814) Deleting a draft case sets sidebar to Inbox <Martin Laguna>
+[3 months ago] 5274511b55  (origin/bugfix/PMDMS-23) bugfix/PMDMS-23 <Julio Cesar Laura Avendaño>
+[3 months ago] c45994fd23  (origin/bugfix/PMCORE-4131) PMCORE-4131 <Paula Quispe>
+[3 months ago] fc3a405b42  PMCORE-4150 <Paula Quispe>
+[3 months ago] cac6b117d7  PMCORE-4052 <Luciana Nuñez>
+[3 months ago] d7f6d2e9bd  (origin/feature/PMCORE-4137) Double click opens case in Case Detail <Martin Laguna>
+[4 months ago] 46c48a9bb0  (origin/bugfix/PMCORE-4046) PMCORE-4046 User Enumeration <Roly Gutierrez>
+[4 months ago] 5f3ec06143  (origin/bugfix/PMCORE-4148) PMCORE-4148 Validation of uploaded files is currently validating the 'content type' 'application/json' <Roly Gutierrez>
+[4 months ago] 82f607ad7d  (origin/bugfix/PMCORE-4144) PMCORE-4144 <Julio Cesar Laura Avendaño>
+[4 months ago] 3308da5204  (origin/bugfix/PMCORE-4120) PMCORE-4128 <Julio Cesar Laura Avendaño>
+[4 months ago] 0b39c2693d  (origin/bugfix/PMCORE-4133) PMCORE-4133 <Julio Cesar Laura Avendaño>
+[4 months ago] 4c4b1feeb2  PMCORE-4121 <Julio Cesar Laura Avendaño>
+[4 months ago] 34b92db567  (origin/bugfix/PMCORE-4130) PMCORE-4130 <Paula Quispe>
+[4 months ago] fbf556cb4c  (origin/bugfix/PMCORE-4135) PMCORE-4135 <Paula Quispe>
+[4 months ago] 963bbdf016  PMCORE-4120 <Julio Cesar Laura Avendaño>
+[4 months ago] 2b40332e31  (origin/bugfix/PMCORE-4125) PMCORE-4125 <Julio Cesar Laura Avendaño>
+[4 months ago] 596f40b89b  (origin/bugfix/PMCORE-4126) PMCORE-4126 Steps is not showing in the open case <Roly Gutierrez>
+[4 months ago] 9dd9c51cd1  PMCORE-4119 <Luciana Nuñez>

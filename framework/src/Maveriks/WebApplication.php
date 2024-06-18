@@ -553,8 +553,7 @@ class WebApplication
 
         Bootstrap::LoadTranslationObject((defined("SYS_LANG")) ? SYS_LANG : "en");
 
-        // In this case, we cannot make a strict comparison because the workspace value can arrive as a string or integer.
-        if (empty($workspace) && $workspace != 0) {
+        if (empty($workspace)) {
             // If the workspace is empty the function should be return the control to the previous file
             return true;
         }

@@ -1,30 +1,30 @@
-[3 months ago] fef7e248  (origin/bugfix/PMCORE-4133, composer/bugfix/PMCORE-4133) PMCORE-4133 <Julio Cesar Laura Avendaño>
-[5 months ago] c06dd685  (origin/bugfix/PMCORE-2332, composer/bugfix/PMCORE-2332) PMCORE-2332:[21963]Grid Sum Function Displays Wrong Decimal <Fabio Guachalla>
-[7 months ago] 02496926  PMCORE-3978:Loading icon when a checkbox control inside a grid control when it is set from trigger <Fabio Guachalla>
-[8 months ago] 1332774b  (origin/bugfix/PMCORE-3900, composer/bugfix/PMCORE-3900) CheckBox.js edited online with Bitbucket update braces <Henry Jonathan Quispe Quispe>
-[8 months ago] 26a6d021  PMCORE-3900: Checkbox field use the FieldR to dependents <henry jordan>
-[11 months ago] bd437155  (origin/bugfix/PMCORE-3860, composer/bugfix/PMCORE-3860) PMCORE-3860 <henry jordan>
-[12 months ago] 69a78c5d  PMCORE-3809:Ada Compliant for pmDynaform <Fabio Guachalla>
-[12 months ago] d81368b4  (origin/revert-pr-1124, composer/revert-pr-1124) Revert "PMCORE-3679 (pull request #1124)" <Paula Quispe>
-[1 year ago] 6b1a69e8  (origin/bugfix/PMCORE-3679, composer/bugfix/PMCORE-3679) PMCORE-3679: Vulnerable javascript dependency (JQuery) <Rodrigo Quelca>
-[1 year, 3 months ago] 5d171c9d  PMCORE-653:[18834] Multiple File control misaligned <Fabio Guachalla>
-[1 year, 4 months ago] 93ecb21a  (origin/bugfix/PMCORE-3153, composer/bugfix/PMCORE-3153) PMCORE-3153 <Henry Jordan>
-[1 year, 4 months ago] 693408ac  (origin/bugfix/PMCORE-3588, composer/bugfix/PMCORE-3588) PMCORE-3588: grid.enableDelete does not work <Rodrigo Quelca>
-[1 year, 4 months ago] cc4b3e23  (origin/feature/PMCORE-3550, composer/feature/PMCORE-3550) PMCORE-3550: source [26366] Javascript to hide the delete button from a grid is not working in version 3.6.5 <Rodrigo Quelca>
-[1 year, 5 months ago] 5ea069aa  PMCORE-3508:Documents has not the same validation in 3.6.1 and 3.7.0 <fabio>
-[1 year, 5 months ago] d1161f52  (origin/bugfix/PMCORE-1062, composer/bugfix/PMCORE-1062) PMCORE-1062 [18214] Warning message of multiple file upload control is not translating <Roly Rudy Gutierrez Pinto>
-[1 year, 7 months ago] 876776a3  (origin/bugfix/PMCORE-3200, composer/bugfix/PMCORE-3200) PMCORE-3200 <Henry Jordan>
-[1 year, 11 months ago] e1b1c242  PMCORE-2981:[24108]Dynaform: Issue in Datetime field in Grid <fabio>
-[1 year, 11 months ago] 1cf7b5a2  (origin/bugfix/PMCORE-3013, composer/bugfix/PMCORE-3013) PMCORE-3013: DateTime > setText() helper function does not work <Rodrigo Quelca>
-[2 years ago] 208898c3  (origin/feature/PMCORE-2993_B, composer/feature/PMCORE-2993_B) PMCORE-2993:  Dependent fields improvement: remove the failure alert messages <Rodrigo Quelca>
-[2 years ago] fa1db1e8  (origin/bugfix/PMCORE-1456, composer/bugfix/PMCORE-1456) update <Henry Jordan>
-[2 years ago] 09a8da37  PMCORE-1456 <Henry Jordan>
-[2 years ago] 189f0d1b  PMCORE-2981:[24108]Dynaform: Issue in Datetime field in Grid <fabio>
-[2 years ago] 2b6676dc  (origin/bugfix/PMCORE-1234, composer/bugfix/PMCORE-1234) PMCORE-1234: Helper setValue is not working properly in view mode <Rodrigo Quelca>
-[2 years ago] 066de11e  (origin/bugfix/PMCORE-558, composer/bugfix/PMCORE-558) PMCORE-558:[Zendesk - 6764-18320] Hints affect the right alignment in controls <fabio>
-[2 years ago] e585c71e  (origin/dependentPromises, origin/bugfix/PMCORE-2806_B, composer/dependentPromises, composer/bugfix/PMCORE-2806_B) add promisess to dependent fields <Rodrigo Quelca>
-[2 years ago] 5c318571  PMCORE-1637 <Henry Jordan>
-[2 years, 1 month ago] aabf9315  (origin/bugfix/PMCORE-2906, composer/bugfix/PMCORE-2906) PMCORE-2906:  Error with dependent fields <Rodrigo Quelca>
-[2 years, 2 months ago] 260df55c  PMCORE-2830:[23379] Grid functions are not working with dependent fields <fabio>
-[2 years, 2 months ago] 1a35f628  (origin/bugfix/PMCORE-2801, composer/bugfix/PMCORE-2801) PMCORE-2801 <Henry Jordan>
-[2 years, 2 months ago] e1bad599  (origin/bugfix/PMCORE-2856, composer/bugfix/PMCORE-2856) PMCORE-2856: Grid control > Required field does not validate after pressing the submit button <Rodrigo Quelca>
+[4 months ago] fef7e248  (origin/bugfix/PMCORE-4133, composer/bugfix/PMCORE-4133) PMCORE-4133 <Julio Cesar Laura Avendaño>
+[6 months ago] c06dd685  (origin/bugfix/PMCORE-2332, composer/bugfix/PMCORE-2332) PMCORE-2332:[21963]Grid Sum Function Displays Wrong Decimal <Fabio Guachalla>
+[8 months ago] 02496926  PMCORE-3978:Loading icon when a checkbox control inside a grid control when it is set from trigger <Fabio Guachalla>
+[9 months ago] 1332774b  (origin/bugfix/PMCORE-3900, composer/bugfix/PMCORE-3900) CheckBox.js edited online with Bitbucket update braces <Henry Jonathan Quispe Quispe>
+[10 months ago] 26a6d021  PMCORE-3900: Checkbox field use the FieldR to dependents <henry jordan>
+[12 months ago] bd437155  (origin/bugfix/PMCORE-3860, composer/bugfix/PMCORE-3860) PMCORE-3860 <henry jordan>
+[1 year, 1 month ago] 69a78c5d  PMCORE-3809:Ada Compliant for pmDynaform <Fabio Guachalla>
+[1 year, 1 month ago] d81368b4  (origin/revert-pr-1124, composer/revert-pr-1124) Revert "PMCORE-3679 (pull request #1124)" <Paula Quispe>
+[1 year, 1 month ago] 6b1a69e8  (origin/bugfix/PMCORE-3679, composer/bugfix/PMCORE-3679) PMCORE-3679: Vulnerable javascript dependency (JQuery) <Rodrigo Quelca>
+[1 year, 4 months ago] 5d171c9d  PMCORE-653:[18834] Multiple File control misaligned <Fabio Guachalla>
+[1 year, 5 months ago] 93ecb21a  (origin/bugfix/PMCORE-3153, composer/bugfix/PMCORE-3153) PMCORE-3153 <Henry Jordan>
+[1 year, 5 months ago] 693408ac  (origin/bugfix/PMCORE-3588, composer/bugfix/PMCORE-3588) PMCORE-3588: grid.enableDelete does not work <Rodrigo Quelca>
+[1 year, 6 months ago] cc4b3e23  (origin/feature/PMCORE-3550, composer/feature/PMCORE-3550) PMCORE-3550: source [26366] Javascript to hide the delete button from a grid is not working in version 3.6.5 <Rodrigo Quelca>
+[1 year, 6 months ago] 5ea069aa  PMCORE-3508:Documents has not the same validation in 3.6.1 and 3.7.0 <fabio>
+[1 year, 6 months ago] d1161f52  (origin/bugfix/PMCORE-1062, composer/bugfix/PMCORE-1062) PMCORE-1062 [18214] Warning message of multiple file upload control is not translating <Roly Rudy Gutierrez Pinto>
+[1 year, 8 months ago] 876776a3  (origin/bugfix/PMCORE-3200, composer/bugfix/PMCORE-3200) PMCORE-3200 <Henry Jordan>
+[2 years ago] e1b1c242  PMCORE-2981:[24108]Dynaform: Issue in Datetime field in Grid <fabio>
+[2 years ago] 1cf7b5a2  (origin/bugfix/PMCORE-3013, composer/bugfix/PMCORE-3013) PMCORE-3013: DateTime > setText() helper function does not work <Rodrigo Quelca>
+[2 years, 1 month ago] 208898c3  (origin/feature/PMCORE-2993_B, composer/feature/PMCORE-2993_B) PMCORE-2993:  Dependent fields improvement: remove the failure alert messages <Rodrigo Quelca>
+[2 years, 1 month ago] fa1db1e8  (origin/bugfix/PMCORE-1456, composer/bugfix/PMCORE-1456) update <Henry Jordan>
+[2 years, 1 month ago] 09a8da37  PMCORE-1456 <Henry Jordan>
+[2 years, 1 month ago] 189f0d1b  PMCORE-2981:[24108]Dynaform: Issue in Datetime field in Grid <fabio>
+[2 years, 1 month ago] 2b6676dc  (origin/bugfix/PMCORE-1234, composer/bugfix/PMCORE-1234) PMCORE-1234: Helper setValue is not working properly in view mode <Rodrigo Quelca>
+[2 years, 1 month ago] 066de11e  (origin/bugfix/PMCORE-558, composer/bugfix/PMCORE-558) PMCORE-558:[Zendesk - 6764-18320] Hints affect the right alignment in controls <fabio>
+[2 years, 2 months ago] e585c71e  (origin/dependentPromises, origin/bugfix/PMCORE-2806_B, composer/dependentPromises, composer/bugfix/PMCORE-2806_B) add promisess to dependent fields <Rodrigo Quelca>
+[2 years, 2 months ago] 5c318571  PMCORE-1637 <Henry Jordan>
+[2 years, 2 months ago] aabf9315  (origin/bugfix/PMCORE-2906, composer/bugfix/PMCORE-2906) PMCORE-2906:  Error with dependent fields <Rodrigo Quelca>
+[2 years, 3 months ago] 260df55c  PMCORE-2830:[23379] Grid functions are not working with dependent fields <fabio>
+[2 years, 3 months ago] 1a35f628  (origin/bugfix/PMCORE-2801, composer/bugfix/PMCORE-2801) PMCORE-2801 <Henry Jordan>
+[2 years, 3 months ago] e1bad599  (origin/bugfix/PMCORE-2856, composer/bugfix/PMCORE-2856) PMCORE-2856: Grid control > Required field does not validate after pressing the submit button <Rodrigo Quelca>

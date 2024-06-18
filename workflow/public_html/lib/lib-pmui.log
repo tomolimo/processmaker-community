@@ -1,19 +1,19 @@
-[10 months ago] 9567368a  (origin/bugfix/PMCORE-3868, composer/bugfix/PMCORE-3868) PMCORE-3868:[28189] Slow saving issues with processes <Rodrigo Quelca>
-[1 year, 4 months ago] 902f8cf4  PMCORE-3535:UI: Add the new fields for header button <Fabio Guachalla>
-[1 year, 4 months ago] d3fd1502  (origin/revert-pr-178, composer/revert-pr-178) Revert "PMCORE-3535 (pull request #178)" <Julio Cesar Laura Avendaño>
-[1 year, 4 months ago] 92d20df5  PMCORE-3535: UI: Add the new fields for header button <Fabio Guachalla>
-[1 year, 5 months ago] 9747047f  PMCORE-3497:Designer > Public File >Upload > An error is displayed in the Browser's console <Fabio Guachalla>
-[1 year, 5 months ago] 0fbad379  PMCORE-3463: Vulnerable JS Library - Telefonica of Guatemala Security Analysis (Issue Rep# 1) <Rodrigo Quelca>
-[2 years, 7 months ago] 582f50cd  (origin/bugfix/PMCORE-2044, composer/bugfix/PMCORE-2044) PMCORE-2044 <Henry Jordan>
-[2 years, 8 months ago] 48b618c1  (origin/bugfix/PMCORE-2011, composer/bugfix/PMCORE-2011) PMCORE-2011 <Henry Jordan>
-[4 years ago] 581a6f26  (origin/bugfix/PMC-166, composer/bugfix/PMC-166) PMC-166 <Andrea Adamczyk>
-[4 years, 4 months ago] 62cc5a80  PMC-322:[Mantis 25900] Add the labels for some English fields in the English .po file} <Fabio Guachalla>
-[4 years, 4 months ago] bcb72023  PMC-320:Does not works the "Del/Supr" Key after press "Enter" key in the "Confirm" frame <Fabio Guachalla>
-[4 years, 4 months ago] be0c1479  PMC-171:The line to connect elements BPMN aren't delete using the Del/Supr key <Fabio Guachalla>
-[4 years, 5 months ago] 984ddb1f  FBI-2394:Task deleted on CTRL+ALT+DELETE - Windows 10 <Fabio Guachalla>
-[4 years, 5 months ago] 29bcda88  (origin/bugfix/PMC-4, composer/bugfix/PMC-4) PMC-4: [Mantis-25811]When assigning triggers to execute before a dynaform, the sequence is getting out of order and the cardinal number is repeated or misplaced <Rodrigo Quelca>
+[11 months ago] 9567368a  (origin/bugfix/PMCORE-3868, composer/bugfix/PMCORE-3868) PMCORE-3868:[28189] Slow saving issues with processes <Rodrigo Quelca>
+[1 year, 5 months ago] 902f8cf4  PMCORE-3535:UI: Add the new fields for header button <Fabio Guachalla>
+[1 year, 5 months ago] d3fd1502  (origin/revert-pr-178, composer/revert-pr-178) Revert "PMCORE-3535 (pull request #178)" <Julio Cesar Laura Avendaño>
+[1 year, 5 months ago] 92d20df5  PMCORE-3535: UI: Add the new fields for header button <Fabio Guachalla>
+[1 year, 6 months ago] 9747047f  PMCORE-3497:Designer > Public File >Upload > An error is displayed in the Browser's console <Fabio Guachalla>
+[1 year, 7 months ago] 0fbad379  PMCORE-3463: Vulnerable JS Library - Telefonica of Guatemala Security Analysis (Issue Rep# 1) <Rodrigo Quelca>
+[2 years, 8 months ago] 582f50cd  (origin/bugfix/PMCORE-2044, composer/bugfix/PMCORE-2044) PMCORE-2044 <Henry Jordan>
+[2 years, 9 months ago] 48b618c1  (origin/bugfix/PMCORE-2011, composer/bugfix/PMCORE-2011) PMCORE-2011 <Henry Jordan>
+[4 years, 1 month ago] 581a6f26  (origin/bugfix/PMC-166, composer/bugfix/PMC-166) PMC-166 <Andrea Adamczyk>
+[4 years, 5 months ago] 62cc5a80  PMC-322:[Mantis 25900] Add the labels for some English fields in the English .po file} <Fabio Guachalla>
+[4 years, 5 months ago] bcb72023  PMC-320:Does not works the "Del/Supr" Key after press "Enter" key in the "Confirm" frame <Fabio Guachalla>
+[4 years, 5 months ago] be0c1479  PMC-171:The line to connect elements BPMN aren't delete using the Del/Supr key <Fabio Guachalla>
+[4 years, 6 months ago] 984ddb1f  FBI-2394:Task deleted on CTRL+ALT+DELETE - Windows 10 <Fabio Guachalla>
+[4 years, 6 months ago] 29bcda88  (origin/bugfix/PMC-4, composer/bugfix/PMC-4) PMC-4: [Mantis-25811]When assigning triggers to execute before a dynaform, the sequence is getting out of order and the cardinal number is repeated or misplaced <Rodrigo Quelca>
 [5 years ago] 9eb86aa8  FBI-2383:Triggers > when we are going to edit the code of a trigger, the code is superimposed on the alert "required field" <Fabio Guachalla>
-[5 years ago] 0aad8c90  (origin/improvement/FBI-2144, composer/improvement/FBI-2144) FBI-2144 <Daniel>
+[6 years ago] 0aad8c90  (origin/improvement/FBI-2144, composer/improvement/FBI-2144) FBI-2144 <Daniel>
 [6 years ago] f78ce304  FBI-636 <duhnnie>
 [6 years ago] 9c30bd36  FBI-1140 (Task Steps) Label "No Records Found" even if there is a trigger assigned <dheeyi william>
 [6 years ago] 809acfe1  FBI-1464: Improved solution <duhnnie>
@@ -23,7 +23,7 @@
 [6 years ago] 1db5a6b7  FBI-1513 Grammar mistakes found in the Create a Variable window <Marco A. Nina Mena>
 [6 years ago] 7e5e9d35  FBI-1008 <alex_santos>
 [6 years ago] 73fa18e2  FBI-1415: The lasso does not work when we move the process flow <Rodrigo Quelca>
-[6 years ago] e1d0f9ae  FBI-1237: [PMUI] No es posible adicionar una nueva opcin en un checkgroupField <richardnoel>
+[7 years ago] e1d0f9ae  FBI-1237: [PMUI] No es posible adicionar una nueva opcin en un checkgroupField <richardnoel>
 [7 years ago] f8386bca  FBI-1074 <alex_santos>
 [7 years ago] 68134906  FBI-1041: Cost&Units: Al hacer click en SAVE después de dejar vacíos estos elementos, no es posible editarlos <alex_santos>
 [7 years ago] 612abd38  FBI-1009 <duhnnie>

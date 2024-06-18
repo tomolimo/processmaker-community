@@ -7,8 +7,8 @@ function cliListIds($command, $args)
     $workspaces = get_workspaces_from_args($command);
 
     foreach ($workspaces as $index => $workspace) {
-        $hostPort1 = explode(":", $workspace->dbInfo['DB_HOST']);
-        $hostPort = $hostPort1[0] . (isset($hostPort[1]) ? ";port=" . $hostPort[1] : "");
+        $hostPort = explode(":", $workspace->dbInfo['DB_HOST']);
+        $hostPort = $hostPort[0] . (isset($hostPort[1]) ? ";port=" . $hostPort[1] : "");
         $connectionString = sprintf(
             "%s:host=%s;dbname=%s",
             $workspace->dbInfo['DB_ADAPTER'],

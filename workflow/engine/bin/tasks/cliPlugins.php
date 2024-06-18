@@ -53,20 +53,30 @@ CLI::taskRun("run_create");
 
 function run_create($command, $args)
 {
-    CLI::logging("Create .po file ...\n");
 
-    $language = new Language();
-    $language->createLanguagePlugin($command[0], $command[1]);
-    CLI::logging("Create successful\n");
+    if (!empty($command) && count($command) == 2) {
+        CLI::logging("Create .po file ...\n");
+
+        $language = new Language();
+        $language->createLanguagePlugin($command[0], $command[1]);
+        CLI::logging("Create successful\n");
+    } else {
+        CLI::logging("The command requires that the plugin name and the language be sent\n");
+    }
 
 }
 
 function run_update($command, $args)
 {
-    CLI::logging("Updating...\n");
 
-    $language = new Language();
-    $language->updateLanguagePlugin($command[0], $command[1]);
-    CLI::logging("Update successful\n");
+    if (!empty($command) && count($command) == 2) {
+        CLI::logging("Updating...\n");
+
+        $language = new Language();
+        $language->updateLanguagePlugin($command[0], $command[1]);
+        CLI::logging("Update successful\n");
+    } else {
+        CLI::logging("The command requires that the plugin name and the language be sent\n");
+    }
 
 }
